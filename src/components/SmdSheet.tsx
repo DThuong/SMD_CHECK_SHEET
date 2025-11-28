@@ -366,6 +366,37 @@ const SmdSheet = () => {
                 <td colSpan={2} className="border border-black px-2 py-2 text-left! text-xs">Người kiểm tra:</td>
             </tr>
 
+            {/** Row 27.1 */}
+            <tr>
+                <th colSpan={1} rowSpan={2} className="border border-black px-2 py-2 text-xs bg-gray-100">OUTPUT</th>
+                <th colSpan={8} className="border border-black px-2 py-2 text-left! text-xs bg-gray-100">Kiểm tra tình trạng setting. khoảng cách input magazine tại unloader ?</th>
+                <td colSpan={2} rowSpan={2} className="border border-black px-2 py-2">
+                    <div className="flex items-center justify-center flex-row gap-2"><label className="font-bold text-xs">OK</label><input type="checkbox" /></div>
+                </td>
+                <td colSpan={2} rowSpan={2} className="border border-black px-2 py-2 text-left! text-xs">Người kiểm tra:</td>
+            </tr>
+            {/** Row 27.2 */}
+            <tr>
+                <th colSpan={8} className=" border border-black px-2 py-2 text-left! text-xs bg-gray-100">
+                  <th className="px-3">Giá trị cài đặt theo yêu cầu </th>
+                  <td colSpan={2} className="border border-black px-2 py-2">
+                <div className="flex flex-row justify-center items-center gap-3">
+                  <div className="flex flex-row items-center justify-center gap-1"><label className="flex items-center justify-center gap-2">
+                     Model:
+                  </label><input type="text" className="border border-gray-400 px-2 py-4 text-xs w-full h-4 focus:bg-blue-50 focus:border-blue-500 outline-none hover:bg-blue-100 hover:border-blue-400 transition-colors"/>
+</div>
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    
+                    <label className="flex items-center justify-center gap-2">
+                     Pitch:
+                  </label>
+                  <input type="text" className="border border-gray-400 px-2 py-4 text-xs w-full h-4 focus:bg-blue-50 focus:border-blue-500 outline-none hover:bg-blue-100 hover:border-blue-400 transition-colors"/>
+                  </div>
+                </div>
+              </td>
+                </th>
+            </tr>
+
             {/** Row 28 */}
             <tr>
                 <th colSpan={1} className="border border-black px-2 py-2 text-xs bg-gray-100">Công nhân</th>
@@ -396,6 +427,7 @@ const SmdSheet = () => {
                 <td colSpan={1} className="border border-black px-2 py-2 text-xs"></td>
                 <td colSpan={1} className="border border-black px-2 py-2 text-xs"></td>
             </tr>
+
 
             {/** Row 31 */}
             <tr>

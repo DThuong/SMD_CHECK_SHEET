@@ -383,14 +383,14 @@ const SmdSheet = () => {
                 <div className="flex flex-row justify-center items-center gap-3">
                   <div className="flex flex-row items-center justify-center gap-1"><label className="flex items-center justify-center gap-2">
                      Model:
-                  </label><input type="text" className="border border-gray-600-400 px-2 py-4 text-xs w-full h-4 focus:bg-blue-50 focus:border-blue-500 outline-none hover:bg-blue-100 hover:border-blue-400 transition-colors"/>
+                  </label><input type="text" className="border border-gray-600-400 px-2 py-4 text-xs w-full h-4 focus:bg-white focus:border-blue-500 outline-none hover:bg-white hover:border-blue-400 transition-colors"/>
 </div>
                   <div className="flex flex-row items-center justify-center gap-1">
                     
                     <label className="flex items-center justify-center gap-2">
                      Pitch:
                   </label>
-                  <input type="text" className="border border-gray-600-400 px-2 py-4 text-xs w-full h-4 focus:bg-blue-50 focus:border-blue-500 outline-none hover:bg-blue-100 hover:border-blue-400 transition-colors"/>
+                  <input type="text" className="border border-gray-600-400 px-2 py-4 text-xs w-full h-4 focus:bg-white focus:border-blue-500 outline-none hover:bg-white hover:border-blue-400 transition-colors"/>
                   </div>
                 </div>
               </td>

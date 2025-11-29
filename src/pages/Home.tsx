@@ -1,8 +1,8 @@
-import SmdSheet from "../components/SmdSheet"
+import SmdSheetUser from "../components/SmdSheetUser"
 const Home = () => {
   return (
     <div>
-        <SmdSheet />
+        <SmdSheetUser />
     </div>
   )
 }

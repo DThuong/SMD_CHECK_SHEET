@@ -7,4 +7,9 @@
 
 table tr td{
   height: 40px;
+  min-width: 120px;
+}
+
+input{
+  outline: none;
 }

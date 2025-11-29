@@ -142,7 +142,7 @@ const TimeChangeModels = () => {
 
       {/* Mobile View - Card dọc */}
       <div className="lg:hidden">
-        <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4">
+        <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
           <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200">Result</h3>
           
           {/* Thời gian bắt đầu */}
@@ -178,7 +178,7 @@ const TimeChangeModels = () => {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm">
+        <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm" onClick={() => setOpen(true)}>
           <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200">QC</h3>
           
           {/* Thời gian bắt đầu */}

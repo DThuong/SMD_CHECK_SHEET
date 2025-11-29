@@ -114,7 +114,7 @@ export default function CheckModels() {
 
       {/* Mobile View - Card dọc */}
       <div className="lg:hidden">
-        <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm">
+        <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm" onClick={() => setOpen(true)}>
           <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Check Model</h3>
 
           {/* Row 1 */}

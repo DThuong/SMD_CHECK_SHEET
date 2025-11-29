@@ -74,7 +74,7 @@ const ProgramChecks = () => {
           {/* Responsive for mobile */}
       {/* Mobile View - Card dọc */}
 <div className="lg:hidden">
-  <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm">
+  <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm" onClick={() => setOpen(true)}>
     <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Program</h3>
     {/* Row 1: Printer & SPI */}
     <div className="grid grid-cols-2 gap-4 mb-3">

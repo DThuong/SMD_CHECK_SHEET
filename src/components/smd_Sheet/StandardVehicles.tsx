@@ -368,7 +368,7 @@ const StandardVehicles = () => {
     {/* Mobile View */}
   <div className="lg:hidden space-y-4">
     {/* Printer Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4">
+    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
       <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200">Printer</h3>
       
       <div className="grid grid-cols-2 gap-3 mb-3">
@@ -462,7 +462,7 @@ const StandardVehicles = () => {
     </div>
 
     {/* SPI Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4">
+    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
       <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">SPI</h3>
       
       <div className="mb-3">
@@ -488,7 +488,7 @@ const StandardVehicles = () => {
     </div>
 
     {/* Mount Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4">
+    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
       <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Mount</h3>
       
       <div className="mb-3">
@@ -521,7 +521,7 @@ const StandardVehicles = () => {
     </div>
 
     {/* Reflow Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4">
+    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
       <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Reflow</h3>
       
       <div className="mb-3">
@@ -569,7 +569,7 @@ const StandardVehicles = () => {
     </div>
 
     {/* AOI Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4">
+    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
       <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">AOI</h3>
       
       <div className="mb-3">
@@ -588,7 +588,7 @@ const StandardVehicles = () => {
     </div>
 
     {/* Output Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4">
+    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
       <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Output</h3>
       
       <div className="mb-3">
@@ -622,7 +622,7 @@ const StandardVehicles = () => {
     </div>
 
     {/* Worker Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4">
+    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
       <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Công nhân</h3>
       
       <div className="mb-4">
@@ -663,7 +663,7 @@ const StandardVehicles = () => {
     </div>
 
     {/* Sample Inspection Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm">
+    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm" onClick={() => setOpen(true)}>
       <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Mẫu kiểm tra (5PCB)</h3>
       
       <div className="mb-4">

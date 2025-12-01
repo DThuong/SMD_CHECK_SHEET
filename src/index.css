@@ -13,3 +13,7 @@ table tr td{
 input{
   outline: none;
 }
+
+.user-search-admin{
+  padding-left: 32px;
+}

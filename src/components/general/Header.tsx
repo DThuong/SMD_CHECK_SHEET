@@ -19,7 +19,7 @@ const Header = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
+            <Link to="/" className="flex items-center mx-2">
               <div className="w-64 h-20 rounded-lg overflow-hidden">
                 <img className="w-full h-full object-cover" src={logo} alt="brand" />
               </div>
@@ -65,7 +65,7 @@ const Header = () => {
             ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}
           `}
         >
-          <div className="h-full flex flex-col">
+          <div className="h-full flex flex-col ">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-300">
               <div className="flex items-center gap-3">
                 <div className="w-40 h-20 rounded overflow-hidden">
@@ -87,7 +87,7 @@ const Header = () => {
               <Link
                 to="/login"
                 onClick={() => setIsMenuOpen(false)}
-                className="block px-3 py-3 rounded-lg font-medium hover:bg-gray-500 border border-gray-300 text-decoration-none text-white bg-gray-700 mb-2"
+                className="block px-3 py-3 rounded-lg font-medium hover:bg-gray-500 border border-gray-300 text-decoration-none text-white bg-gray-700 mb-3"
               >
                 Login
               </Link>

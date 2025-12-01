@@ -1,6 +1,6 @@
 const SmdSheet = () => {
   return (
-    <div className="p-4 w-full">
+    <div className="w-full">
       <div className='w-full overflow-x-auto'>
         <table className="border border-gray-600-400 w-full min-w-[1400px] text-center">
           <thead>

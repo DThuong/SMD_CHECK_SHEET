@@ -85,7 +85,7 @@ const Footer = () => {
             </div>
             <div 
               ref={mapRef}
-              className="bg-gray-600 rounded-lg overflow-hidden h-48 w-full"
+              className="bg-gray-600 rounded-lg overflow-hidden h-48 w-full z-0"
             />
           </div>
         </div>

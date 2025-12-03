@@ -18,6 +18,9 @@ const Home = () => {
   const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
   const [loadingCreate, setLoadingCreate] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  // show sheets
+  const [showSheets, setShowSheets] = useState(false);
+  const [loadingSheets, setLoadingSheets] = useState(false);
 
     //useAuth
     const { user } = useAuth();
@@ -126,7 +129,14 @@ const Home = () => {
         {/* Tabs */}
         <div className="flex gap-2 mb-4 mx-3">
           <button
-            onClick={() => setActiveTab('create')}
+            onClick={async () => {
+              setActiveTab('create');
+              setLoadingSheets(true);
+              setShowSheets(false);
+              await new Promise(res => setTimeout(res, 1000));
+              setShowSheets(true);
+              setLoadingSheets(false);
+            }}
             className={`px-4 py-2 rounded-md ${activeTab === 'create' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
           >
             Create New Sheet
@@ -143,12 +153,19 @@ const Home = () => {
         {/* Tab content */}
         {activeTab === 'create' && (
           <div className="my-4">
-            {/* Option B: truyền props filter và sheets cho SmdSheetUser */}
-            <div className="mt-4">
-              <SmdSheetUser />
-            </div>
+            {loadingSheets && (
+              <div className="flex justify-center items-center py-6">
+                {/* Spinner quay: Vòng tròn border, làm mờ một cạnh và áp dụng hiệu ứng quay */}
+                <div 
+                  className="w-8 h-8 border-4 border-blue-500 border-opacity-75 border-t-transparent border-r-transparent rounded-full animate-spin"
+                  role="status"
+                >
+                  <span className="sr-only">Loading...</span> 
+                </div>
+              </div>
+            )}
+            {showSheets && <div className="mt-4"><SmdSheetUser /></div>}
           </div>
-          
         )}
 
         {activeTab === 'list' && (

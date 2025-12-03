@@ -7,6 +7,7 @@ import {
 } from 'react-icons/ai';
 import { FaRegUserCircle } from "react-icons/fa";
 import SmdSheetUser from '../../components/SmdSheetUser';
+import { useAuth } from '../authLoginSample/AuthContext';
 
 // Types & Interfaces
 interface SmdSheetData {
@@ -28,6 +29,9 @@ const Logs: React.FC = () => {
   const [selectedLog, setSelectedLog] = useState<SmdLog | null>(null);
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+
+  // useAuth
+  const { user } = useAuth();
 
   // Sample data for testing
   const createSampleData = (): void => {
@@ -234,7 +238,7 @@ const Logs: React.FC = () => {
       const updatedLog: SmdLog = {
         ...log,
         confirmed: true,
-        confirmedBy: 'MANAGER KOREA', // Replace with actual admin name from auth context
+        confirmedBy: user?.role, // Replace with actual admin name from auth context
         confirmedAt: new Date().toISOString()
       };
 

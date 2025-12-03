@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from './authLoginSample/AuthContext';
 
 const inputClass = "w-full px-4 py-3 border rounded-lg outline-none transition focus:border-blue-500 focus:shadow";
 
@@ -6,10 +7,21 @@ const Login = () => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [remember, setRemember] = useState<boolean>(false);
+  // mới thêm
+  const [error, setError] = useState<string>('');
+  const {login} = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: replace with real authentication (call API, redux action, etc.)
+    setError('');
+
+    const success = login(username, password);
+    sessionStorage.setItem("justLoggedIn", "1");
+    if (!success) {
+      setError('Invalid username or password');
+      return;
+    }
     console.log({ username, password, remember });
   };
 
@@ -67,6 +79,41 @@ const Login = () => {
           <a href="#support" className="text-blue-500 font-semibold text-decoration-none">Contact IT</a>
         </p>
         </div>
+        {/* Hiển thị lỗi nếu có */}
+        {error && (
+          <div className="mx-4 mt-3 p-3 bg-red-50 border-l-4 border-red-500 rounded text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
+        {/** Dữ liệu mẫu */}
+        <div className="my-2 text-sm px-4">
+  <div>
+    username:
+    <strong> pqc1</strong> / password: 123456  
+    <span className="text-gray-500 ml-2">    (role: PQC)</span>
+  </div>
+
+  <div>
+    <strong>eng1</strong> / 123456  
+    <span className="text-gray-500 ml-2">    (role: ENG)</span>
+  </div>
+
+  <div>
+    <strong>sup1</strong> / 123456  
+    <span className="text-gray-500 ml-2">     (role: SUPERVISOR)</span>
+  </div>
+
+  <div>
+    <strong>mgr1</strong> / 123456  
+    <span className="text-gray-500 ml-2">      (role: MANAGER)</span>
+  </div>
+
+  <div>
+    <strong>kmgr1</strong> / 123456  
+    <span className="text-gray-500 ml-2">       (role: MANAGER_KOREA)</span>
+  </div>
+</div>
       </form>
     </div>
   );

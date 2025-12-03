@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { ChangeEvent } from 'react';
-import { FaUser, FaEnvelope, FaPhone, FaSearch, FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaBriefcase } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaPhone, FaSearch, FaPlus, FaEdit, FaTrash, FaSave, FaTimes } from 'react-icons/fa';
 
 interface User {
   id: string;
   fullName: string;
   email: string;
   phone: string;
-  position: string;
-  department: string;
   role: 'PQC' | 'ENG' | 'MANAGER' | 'MANAGER KOREA' | 'SUPERVISOR';
   status: 'active' | 'inactive';
 }
@@ -20,8 +18,6 @@ const User = () => {
       fullName: 'Nguyễn Văn A',
       email: 'nguyenvana@company.com',
       phone: '0123456789',
-      position: 'System Administrator',
-      department: 'IT Department',
       role: 'ENG',
       status: 'active'
     },
@@ -30,8 +26,6 @@ const User = () => {
       fullName: 'Trần Thị B',
       email: 'tranthib@company.com',
       phone: '0987654321',
-      position: 'Project Manager',
-      department: 'Development',
       role: 'MANAGER',
       status: 'active'
     },
@@ -40,8 +34,6 @@ const User = () => {
       fullName: 'Lê Văn C',
       email: 'levanc@company.com',
       phone: '0369852147',
-      position: 'Developer',
-      department: 'Development',
       role: 'MANAGER KOREA',
       status: 'inactive'
     }
@@ -57,8 +49,6 @@ const User = () => {
     fullName: '',
     email: '',
     phone: '',
-    position: '',
-    department: '',
     role: 'PQC',
     status: 'active'
   });
@@ -68,8 +58,6 @@ const User = () => {
       fullName: '',
       email: '',
       phone: '',
-      position: '',
-      department: '',
       role: 'ENG',
       status: 'active'
     });
@@ -91,8 +79,6 @@ const User = () => {
         fullName: user.fullName,
         email: user.email,
         phone: user.phone,
-        position: user.position,
-        department: user.department,
         role: user.role,
         status: user.status
       });
@@ -145,8 +131,7 @@ const User = () => {
   const filteredUsers = users.filter(user =>
     user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.position.toLowerCase().includes(searchTerm.toLowerCase())
+    user.phone.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getRoleBadgeColor = (role: string): string => {
@@ -211,12 +196,11 @@ const User = () => {
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Người dùng</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Liên hệ</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Vị trí</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Quyền</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Trạng thái</th>
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">Thao tác</th>
+                  <th className="px-4 py-3 lg:text-left! md:text-left text-center text-sm font-semibold text-slate-700">Người dùng</th>
+                  <th className="px-4 py-3 lg:text-left! md:text-left text-center text-sm font-semibold text-slate-700">Liên hệ</th>
+                  <th className="px-4 py-3 lg:text-left! md:text-left text-center text-sm font-semibold text-slate-700">Quyền</th>
+                  <th className="px-4 py-3 lg:text-left! md:text-left text-center text-sm font-semibold text-slate-700">Trạng thái</th>
+                  <th className="px-4 py-3 lg:text-left! md:text-left text-center text-sm font-semibold text-slate-700">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -224,46 +208,40 @@ const User = () => {
                   filteredUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
+                        <div className="flex lg:flex-row flex-col items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                             <FaUser className="text-gray-600" />
                           </div>
                           <div className='flex flex-col gap-1'>
-                            <div className="font-semibold text-slate-800">{user.fullName}</div>
-                            <div className="text-sm text-slate-500">{user.department}</div>
+                            <div className="font-semibold text-slate-800 lg:text-sm text-xs text-center">{user.fullName}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-2 my-1">
                           <div className="text-sm text-slate-800 flex items-center gap-2">
-                            <FaEnvelope className="text-slate-400" />
-                            {user.email}
-                          </div>
-                          <div className="text-sm text-slate-800 flex items-center gap-2">
                             <FaPhone className="text-slate-400" />
                             {user.phone}
                           </div>
+                          <div className="text-sm text-slate-800 flex items-center gap-2">
+                            <FaEnvelope className="text-slate-400" />
+                            {user.email}
+                          </div>
+                          
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <p className="text-sm text-slate-800 flex items-center gap-2">
-                          <FaBriefcase className="text-slate-400" />
-                          {user.position}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">
+                      <td className="lg:px-4 lg:py-3 px-2 py-2 text-center lg:text-left!">
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeColor(user.role)}`}>
                           {user.role}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="lg:px-4 lg:py-3 px-2 py-2 text-center lg:text-left!">
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeColor(user.status)}`}>
                           {user.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center lg:justify-start! gap-2">
                           <button
                             onClick={() => handleOpenModal(user)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -352,36 +330,6 @@ const User = () => {
                     type="tel"
                     name="phone"
                     value={formData.phone}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* Position */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Vị trí *
-                  </label>
-                  <input
-                    type="text"
-                    name="position"
-                    value={formData.position}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* Department */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Phòng ban *
-                  </label>
-                  <input
-                    type="text"
-                    name="department"
-                    value={formData.department}
                     onChange={handleInputChange}
                     required
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"

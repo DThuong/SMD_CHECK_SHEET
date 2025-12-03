@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SmdSheetUser from "../components/SmdSheetUser";
+import { useAuth } from './authLoginSample/AuthContext';
 
 // Home.tsx
 // - Hiển thị tab: "Create New Sheet" và "Existing Sheets"
@@ -17,6 +18,28 @@ const Home = () => {
   const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
   const [loadingCreate, setLoadingCreate] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+    //useAuth
+    const { user } = useAuth();
+
+     // --- Notification logic ---
+    const [showNoti, setShowNoti] = useState(() => {
+      try {
+        return sessionStorage.getItem("justLoggedIn") === "1";
+      } catch {
+        return false;
+      }
+    });
+  
+    useEffect(() => {
+      if (!showNoti) return;
+  
+      // Xóa flag ngay khi dashboard mount lần đầu
+      try { sessionStorage.removeItem("justLoggedIn"); } catch {}
+  
+      const timer = setTimeout(() => setShowNoti(false), 4000);
+      return () => clearTimeout(timer);
+    }, [showNoti]);
 
   // filter state
   const [filter, setFilter] = useState<SheetFilter>({
@@ -86,6 +109,19 @@ const Home = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-4">
+      {/** Thông báo user role pqc đăng nhập thành công */}
+      {showNoti && 
+      <div className="slide-noti w-full max-w-[900px] left-1/2 -translate-x-1/2">
+        <div className="noti-inner bg-green-50 border-l-4 border-green-600 p-3 rounded shadow">
+                  <p className="font-bold text-green-800 text-lg">Đăng nhập thành công!</p>
+                  <p className="text-green-700 text-sm mt-1">
+                    User: <strong>{user?.fullName}</strong> - Role: <strong>{user?.role}</strong>
+                    
+                  </p>
+          </div>
+      </div>
+      }
+      {/** component home render */}
       <div className="bg-white rounded-lg shadow p-4">
         {/* Tabs */}
         <div className="flex gap-2 mb-4 mx-3">
@@ -107,7 +143,7 @@ const Home = () => {
         {/* Tab content */}
         {activeTab === 'create' && (
           <div className="my-4">
-                      {/* Option B: truyền props filter và sheets cho SmdSheetUser */}
+            {/* Option B: truyền props filter và sheets cho SmdSheetUser */}
             <div className="mt-4">
               <SmdSheetUser />
             </div>

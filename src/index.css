@@ -17,3 +17,73 @@ input{
 .user-search-admin{
   padding-left: 32px;
 }
+
+/* animation: xuống, đứng, rồi lướt lên biến mất */
+@keyframes dropHoldLift {
+  0% {
+    transform: translateY(-140%);
+    opacity: 0;
+  }
+  10% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-140%);
+    opacity: 0;
+  }
+}
+
+/* class chính cho thông báo overlay */
+.slide-noti {
+  position: fixed;         /* overlay, không ảnh hưởng layout */
+  top: 20px;               /* vị trí ban đầu */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  animation: dropHoldLift 5s ease-in-out forwards;
+  width: min(900px, calc(100% - 48px)); /* trên web dài, trên mobile chừa margin */
+  max-width: 95%;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  border-radius: 0.5rem;
+}
+
+/* nội dung mặc định */
+.slide-noti .noti-inner {
+  padding: 12px 16px;
+  background: #ecfdf5; /* xanh nhạt */
+  border-left: 4px solid #16a34a; /* green-600 */
+  color: #065f46; /* green-800 */
+  font-size: 15px;
+}
+
+/* responsive: tablet */
+@media (max-width: 900px) {
+  .slide-noti {
+    top: 14px;
+    width: calc(100% - 32px);
+  }
+  .slide-noti .noti-inner {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+}
+
+/* responsive: mobile */
+@media (max-width: 480px) {
+  .slide-noti {
+    top: 10px;
+    width: calc(100% - 24px);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .slide-noti .noti-inner {
+    padding: 10px 12px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+}

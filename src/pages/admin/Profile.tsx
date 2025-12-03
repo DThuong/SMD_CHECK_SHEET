@@ -7,9 +7,7 @@ interface ProfileData {
   email: string;
   phone: string;
   address: string;
-  position: string;
-  department: string;
-  joinDate: string;
+  role: string;
   avatar: string | null;
 }
 
@@ -22,9 +20,7 @@ const Profile: React.FC = () => {
     email: 'admin@company.com',
     phone: '0123456789',
     address: 'Biên Hòa, Đồng Nai, Việt Nam',
-    position: 'System Administrator',
-    department: 'IT Department',
-    joinDate: '01/01/2020',
+    role: 'MANAGER KOREA',
     avatar: null
   });
 
@@ -69,7 +65,7 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <div className="min-h-dvh p-4 md:p-4 pb-4 mb-4">
+    <div className="min-h-dvh lg:p-4 md:p-4 pb-4 mb-4">
       <div className="mx-auto">
         {/* Success Message */}
         {showSuccess && (
@@ -113,7 +109,7 @@ const Profile: React.FC = () => {
               {/* Name and Actions */}
               <div className="md:ml-4 flex-1 text-center md:text-left flex flex-col justify-center">
                 <h1 className="text-3xl font-bold text-slate-800 mb-1">{profileData.fullName}</h1>
-                <p className="text-slate-600 mb-3">{profileData.position}</p>
+                <p className="text-slate-600 mb-3">{profileData.role}</p>
               </div>
 
               {/* Edit/Save Buttons */}
@@ -221,41 +217,13 @@ const Profile: React.FC = () => {
                 <input
                   type="text"
                   name="position"
-                  value={editData.position}
+                  value={editData.role}
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <p className="px-4 py-2 bg-slate-50 rounded-lg text-slate-800">{profileData.position}</p>
+                <p className="px-4 py-2 bg-slate-50 rounded-lg text-slate-800">{profileData.role}</p>
               )}
-            </div>
-
-            {/* Department */}
-            <div>
-              <div className="flex items-center justify-start gap-1 text-sm font-semibold text-slate-700 mb-2">
-                <FaBriefcase className="inline text-gray-600" />
-                <span>Phòng ban</span>
-              </div>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="department"
-                  value={editData.department}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <p className="px-4 py-2 bg-slate-50 rounded-lg text-slate-800">{profileData.department}</p>
-              )}
-            </div>
-
-            {/* Join Date */}
-            <div>
-              <div className="flex items-center justify-start gap-1 text-sm font-semibold text-slate-700 mb-2">
-                <FaBriefcase className="inline text-gray-600" />
-                Ngày vào làm
-              </div>
-              <p className="px-4 py-2 bg-slate-50 rounded-lg text-slate-800">{profileData.joinDate}</p>
             </div>
 
             {/* Address */}

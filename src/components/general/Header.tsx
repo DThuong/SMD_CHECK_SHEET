@@ -1,17 +1,46 @@
 import { useState, useEffect } from 'react';
 import logo from '../../assets/image/brand_image_3.webp';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../pages/authLoginSample/AuthContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  
+  const { logout, user } = useAuth();
 
-  // disable body scroll when menu open
+
+  // Disable body scroll when menu open
   useEffect(() => {
     document.body.style.overflow = isMenuOpen ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
   }, [isMenuOpen]);
+
+  // Close dropdown when click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.user-dropdown')) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+
+  const handleLogout = () => {
+    logout();
+    setIsMenuOpen(false);
+    setIsDropdownOpen(false);
+  };
 
   return (
     <header className="bg-white text-black border-b border-gray-200 px-3 lg:px-0">
@@ -28,9 +57,68 @@ const Header = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-4">
-            <Link to="/login" className="text-gray-700! no-underline font-semibold hover:opacity-75 text-decoration-none">
-              Login →
-            </Link>
+            {user ? (
+              // Hiển thị khi đã login
+              <div className="flex items-center gap-1">
+                {/* Welcome message */}
+                <span className="text-gray-700 font-medium">
+                  Welcome, <span className="text-blue-600 font-semibold">{user.fullName}</span>
+                  
+                </span>
+
+                {/* User dropdown */}
+                <div className="relative user-dropdown">
+                  <button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition"
+                  >
+                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                      {user.fullName.charAt(0)}
+                    </div>
+                    <svg 
+                      className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {/* Dropdown menu */}
+                  {isDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+                      
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-decoration"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Profile
+                      </Link>
+
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              // Hiển thị khi chưa login
+              <Link to="/login" className="text-gray-700! no-underline font-semibold hover:opacity-75 text-decoration-none">
+                Login →
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -65,11 +153,13 @@ const Header = () => {
             ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}
           `}
         >
-          <div className="h-full flex flex-col ">
+          <div className="h-full flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-300">
               <div className="flex items-center gap-3">
                 <div className="w-40 h-20 rounded overflow-hidden">
-                  <Link to="/"><img src={logo} alt="logo" className="w-full h-full object-cover" /></Link>
+                  <Link to="/" onClick={() => setIsMenuOpen(false)}>
+                    <img src={logo} alt="logo" className="w-full h-full object-cover" />
+                  </Link>
                 </div>
               </div>
               <button
@@ -83,28 +173,76 @@ const Header = () => {
               </button>
             </div>
 
-            <div className="flex-1 px-4 py-6 my-3">
-              <Link
-                to="/login"
-                onClick={() => setIsMenuOpen(false)}
-                className="block px-3 py-3 rounded-lg font-medium hover:bg-gray-500 border border-gray-300 text-decoration-none text-white bg-gray-700 mb-3"
-              >
-                Login
-              </Link>
+            <div className="flex-1 px-4 py-6 mt-3">
+              {user ? (
+                // Menu khi đã login
+                <>
+                  {/* User info */}
+          
 
-              <Link
-                to="/profile"
-                onClick={() => setIsMenuOpen(false)}
-                className="block px-3 py-3 rounded-lg font-medium hover:bg-gray-500 border border-gray-300 text-decoration-none text-white bg-gray-700"
-              >
-                Profile
-              </Link>
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-3 rounded-lg font-medium hover:bg-gray-100 border border-gray-300 text-gray-700! text-decoration-none mb-3 "
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Profile
+                  </Link>
 
-              {/* thêm link khác */}
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-lg font-medium bg-red-500 hover:bg-red-600 text-white transition"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Logout
+                  </button>
+                </>
+              ) : (
+                // Menu khi chưa login
+                <>
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-3 py-3 rounded-lg font-medium hover:bg-gray-600 border border-gray-300 no-underline text-white bg-gray-700 mb-3"
+                  >
+                    Login
+                  </Link>
+
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-3 py-3 rounded-lg font-medium hover:bg-gray-500 border border-gray-300 no-underline text-white bg-gray-700"
+                  >
+                    Profile
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </aside>
       </nav>
+
+      {/* CSS cho animation fade-in */}
+      <style>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
+        }
+      `}</style>
     </header>
   );
 };

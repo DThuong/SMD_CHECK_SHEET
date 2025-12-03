@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { FaUsers, FaFileAlt, FaChartLine, FaChartBar } from 'react-icons/fa';
+import { useAuth } from '../authLoginSample/AuthContext';
 
 const Dashboard = () => {
     // Responsive font size cho XAxis
@@ -51,6 +52,7 @@ useEffect(() => {
 
   return (
     <div className="min-h-dvh bg-linear-to-br from-slate-50 to-slate-100 pb-4">
+      
       <div className="max-w-screen-2xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -59,52 +61,44 @@ useEffect(() => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
-          <div className="bg-white rounded-xl shadow-lg p-4 border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
+        <div className="flex flex-col gap-4 md:gap-4 mb-4 lg:grid lg:grid-cols-4">
+          <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-600 text-sm font-medium mb-1">Tổng Users</p>
-                <p className="text-3xl font-bold text-slate-800">{stats.totalUsers}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-600 text-xs md:text-sm mb-1 md:mb-2 truncate">Tổng Users</p>
+                <p className="text-2xl md:text-3xl font-bold text-gray-800">{stats.totalUsers}</p>
               </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <FaUsers className="w-8 h-8 text-blue-600" />
-              </div>
+              <FaUsers className="w-10 h-10 md:w-12 md:h-12 text-blue-500 shrink-0 ml-2" />
             </div>
           </div>
-
-          <div className="bg-white rounded-xl shadow-lg border-l-4 border-green-500 hover:shadow-xl transition-shadow p-4">
+          
+          <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border-l-4 border-green-500">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-600 text-sm font-medium mb-1">SMD Sheets</p>
-                <p className="text-3xl font-bold text-slate-800">{stats.totalSMDSheets}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-600 text-xs md:text-sm mb-1 md:mb-2 truncate">SMD Sheets</p>
+                <p className="text-2xl md:text-3xl font-bold text-gray-800">{stats.totalSMDSheets}</p>
               </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <FaFileAlt className="w-8 h-8 text-green-600" />
-              </div>
+              <FaFileAlt className="w-10 h-10 md:w-12 md:h-12 text-green-500 shrink-0 ml-2" />
             </div>
           </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-4 border-l-4 border-orange-500 hover:shadow-xl transition-shadow">
+          
+          <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border-l-4 border-orange-500">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-600 text-sm font-medium mb-1">Phiên hoạt động</p>
-                <p className="text-3xl font-bold text-slate-800">{stats.activeSessions}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-600 text-xs md:text-sm mb-1 md:mb-2 truncate">Phiên hoạt động</p>
+                <p className="text-2xl md:text-3xl font-bold text-gray-800">{stats.activeSessions}</p>
               </div>
-              <div className="bg-orange-100 p-3 rounded-lg">
-                <FaChartLine className="w-8 h-8 text-orange-600" />
-              </div>
+              <FaChartBar className="w-10 h-10 md:w-12 md:h-12 text-orange-500 shrink-0 ml-2" />
             </div>
           </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-4 border-l-4 border-purple-500 hover:shadow-xl transition-shadow">
+          
+          <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border-l-4 border-purple-500">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-600 text-sm font-medium mb-1">Tỷ lệ hoàn thành</p>
-                <p className="text-3xl font-bold text-slate-800">{stats.completionRate}%</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-600 text-xs md:text-sm mb-1 md:mb-2 truncate">Tỷ lệ hoàn thành</p>
+                <p className="text-2xl md:text-3xl font-bold text-gray-800">{stats.completionRate}%</p>
               </div>
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <FaChartBar className="w-8 h-8 text-purple-600" />
-              </div>
+              <FaChartLine className="w-10 h-10 md:w-12 md:h-12 text-purple-500 shrink-0 ml-2" />
             </div>
           </div>
         </div>

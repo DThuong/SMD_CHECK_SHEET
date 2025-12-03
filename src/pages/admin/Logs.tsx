@@ -3,10 +3,10 @@ import {
   AiOutlineEye, 
   AiOutlineCheckCircle, 
   AiOutlineClockCircle, 
-  AiOutlineUser, 
   AiOutlineCalendar 
 } from 'react-icons/ai';
-import SmdSheet from '../../components/SmdSheet';
+import { FaRegUserCircle } from "react-icons/fa";
+import SmdSheetUser from '../../components/SmdSheetUser';
 
 // Types & Interfaces
 interface SmdSheetData {
@@ -304,7 +304,7 @@ const Logs: React.FC = () => {
   // Detail View Component
   if (showDetail && selectedLog) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4">
+      <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white rounded-lg shadow-lg p-4">
             <div className="flex justify-between items-center mb-4">
@@ -320,13 +320,13 @@ const Logs: React.FC = () => {
             <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center gap-2">
-                  <AiOutlineUser className="w-5 h-5 text-blue-600" />
+                  <FaRegUserCircle className="w-5 h-5" />
                   <span className="text-sm text-gray-700">
                     <strong>Người gửi:</strong> {selectedLog.submittedBy}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <AiOutlineCalendar className="w-5 h-5 text-blue-600" />
+                  <AiOutlineCalendar className="w-5 h-5" />
                   <span className="text-sm text-gray-700">
                     <strong>Thời gian:</strong> {formatDateTime(selectedLog.submittedAt)}
                   </span>
@@ -373,7 +373,7 @@ const Logs: React.FC = () => {
 
             <div className="border-t pt-6">
               {/* <h3 className="text-lg font-semibold mb-4 text-gray-800">Nội dung SMD Sheet</h3> */}
-              <SmdSheet />
+              <SmdSheetUser />
               {/* <div className="text-sm text-gray-600 p-4 bg-gray-50 rounded"> */}
                 {/* Component SmdSheet sẽ được import và hiển thị ở đây */}
                 {/* <SmdSheet data={selectedLog.data} /> lưu ý sau này khi call api */}
@@ -393,15 +393,15 @@ const Logs: React.FC = () => {
 
   // List View Component
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-8xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-4">
           <h1 className="text-3xl font-bold text-gray-800 mb-4">Quản lý SMD Sheet Logs</h1>
 
-          <div className="mb-4 flex gap-2">
+          <div className="mb-4 lg:flex lg:flex-row flex flex-col gap-2">
             <button
               onClick={createSampleData}
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-purple-700 transition-colors text-sm font-medium"
+              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm font-medium"
             >
               Tạo dữ liệu mẫu (Sample Data)
             </button>
@@ -455,16 +455,16 @@ const Logs: React.FC = () => {
                       <td className="border border-gray-300 px-4 py-3 text-sm text-gray-700">
                         {index + 1}
                       </td>
-                      <td className="border border-gray-300 px-4 py-3 text-sm text-gray-700">
-                        <div className="flex items-center gap-2">
-                          <AiOutlineUser className="w-4 h-4 text-gray-500" />
+                      <td className="border border-gray-300 lg:px-4 md:px-4 px-2 py-3 text-sm text-gray-700">
+                        <div className="flex lg:flex-row flex-col items-center gap-2">
+                          <FaRegUserCircle className="w-4 h-4 text-gray-500" />
                           {log.submittedBy}
                         </div>
                       </td>
                       <td className="border border-gray-300 px-4 py-3 text-sm text-gray-700">
                         {formatDateTime(log.submittedAt)}
                       </td>
-                      <td className="border border-gray-300 px-4 py-3 text-center">
+                      <td className="border border-gray-300 lg:px-4 md:px-4 px-2 py-3 text-center">
                         {log.confirmed ? (
                           <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
                             <AiOutlineCheckCircle className="w-4 h-4" />
@@ -492,10 +492,10 @@ const Logs: React.FC = () => {
                           />
                         )}
                       </td>
-                      <td className="border border-gray-300 px-4 py-3 text-center">
+                      <td className="border border-gray-300 lg:px-4 md:px-4 px-2 py-3 text-center text-xs">
                         <button
                           onClick={() => handleViewDetail(log)}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors lg:text-sm text-xs font-medium"
                         >
                           <AiOutlineEye className="w-4 h-4" />
                           Xem chi tiết

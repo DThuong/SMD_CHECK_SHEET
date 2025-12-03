@@ -180,7 +180,7 @@ const SheetHeader = () => {
         {/* Modal để chỉnh sửa/tải lên file */}
         <Modal
           open={open}
-          title="Chi tiết Header Files"
+          title="Chi tiết LCR, REFLOW Files"
           onClose={() => setOpen(false)}
           onSave={submit}
         >

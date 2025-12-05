@@ -52,7 +52,7 @@ const SmdSheetDetail: React.FC<SmdSheetDetailProps> = ({ logId, data, canEdit })
   return (
     <div className="max-w-4xl mx-auto">
       {/* Banner thông báo mode */}
-      <div className={`mb-4 p-3 rounded-lg border ${
+      <div className={`mb-4 p-3 py-2 rounded-lg border ${
         canEdit 
           ? 'bg-green-50 border-green-200' 
           : 'bg-yellow-50 border-yellow-200'
@@ -83,10 +83,10 @@ const SmdSheetDetail: React.FC<SmdSheetDetailProps> = ({ logId, data, canEdit })
 
       {/* Nút lưu (chỉ hiện nếu có quyền edit) */}
       {canEdit && (
-        <div className="sticky bottom-0 bg-white border-t border-gray-300 p-4 flex gap-3 justify-end shadow-lg mt-6">
+        <div className="sticky bottom-0 bg-white border-t border-gray-300 p-4 flex gap-3 justify-end shadow-lg mt-4 w-full">
           <button
             onClick={handleSaveEdit}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-md"
+            className="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-md"
           >
             Lưu thay đổi
           </button>

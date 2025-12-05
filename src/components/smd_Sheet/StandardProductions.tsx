@@ -1,6 +1,7 @@
 import ViewDetailButton from "../ViewDetailButton";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Modal from "../Modal";
+import { useSmdSheet } from "../../contexts/SmdSheetContext";
 
 type StandardProductState = {
   numMask?: string;
@@ -24,6 +25,10 @@ const initialStandardProductState: StandardProductState = {
 
 // Standard Production Section
 const StandardProductionSection = () => {
+  const {sheetData  , updateStandardProduction} = useSmdSheet();
+  useEffect(() => {
+    setForm(sheetData.standardProduction);
+  }, [sheetData.standardProduction]);
       const [form, setForm] = useState<StandardProductState>(initialStandardProductState);
         const [open, setOpen] = useState(false);
     
@@ -31,11 +36,12 @@ const StandardProductionSection = () => {
         setForm((s) => ({ ...s, [k]: v }));
     
         const submit = () => {
-          console.log("submit", form);
+          updateStandardProduction(form);
           setOpen(false);
+          alert('Standard Production updated successfully!');
         };
   return (
-    <div className="p-3 sm:p-4 w-full">
+    <div className="p-0 py-4 w-full">
         {/** repsponsive for website */}
         <div className='hidden lg:block w-full overflow-x-auto'>
         <table className="border border-gray-600 w-full text-center opacity-60">
@@ -79,7 +85,7 @@ const StandardProductionSection = () => {
         
         </div>
         
-                 {/* Responsive for mobile */}
+{/* Responsive for mobile */}
 {/* Mobile View - Card dọc */}
 <div className="lg:hidden">
   <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm" onClick={() => setOpen(true)}>
@@ -150,7 +156,7 @@ const StandardProductionSection = () => {
       {/** buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
         <ViewDetailButton onOpen={() => setOpen(true)}>Chỉnh sửa</ViewDetailButton>
-        <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton>
+        {/* <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton> */}
       </div>
 
 <Modal

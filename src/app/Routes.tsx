@@ -10,11 +10,12 @@ import ErrorPage from '../pages/ErrorPage';
 // admin pages
 import Dashboard from '../pages/admin/Dashboard';
 import Profile from '../pages/admin/Profile';
-import User from '../pages/admin/User';
+// import User from '../pages/admin/User';
 import Settings from '../pages/admin/Settings';
 import Logs from '../pages/admin/Logs';
 // useAuth
 import { useAuth } from '../pages/authLoginSample/AuthContext';
+import SmdSheetDetail from '../components/SmdSheetDetail';
 
 // Component bảo vệ route cho PQC (chỉ cho phép PQC vào)
 const PQCRoute = ({ children }: { children: React.ReactNode }) => {
@@ -103,7 +104,7 @@ const App = () => {
       >
         <Route path="/admin/dashboard" element={<Dashboard />} />
         <Route path="/admin/profile" element={<Profile />} />
-        <Route path="/admin/user" element={<User />} />
+        {/* <Route path="/admin/user" element={<User />} /> */}
         <Route path="/admin/logs" element={<Logs />} />
         <Route path="/admin/settings" element={<Settings />} />
         

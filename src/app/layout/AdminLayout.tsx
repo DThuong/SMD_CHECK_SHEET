@@ -22,11 +22,10 @@ const AdminLayout = () => {
   
    useEffect(() => {
       if (!showNoti) return;
-  
       // Xóa flag ngay khi dashboard mount lần đầu
       try { sessionStorage.removeItem("justLoggedIn"); } catch {}
   
-      const timer = setTimeout(() => setShowNoti(false), 4000);
+      const timer = setTimeout(() => setShowNoti(false), 2000);
       return () => clearTimeout(timer);
     }, [showNoti]);
 
@@ -37,7 +36,6 @@ const AdminLayout = () => {
   const menuItems = [
     { name: "Dashboard", path: "dashboard" },
     { name: "Profile", path: "profile" },
-    { name: "User", path: "user" },
     { name: "Logs", path: "logs" },
     { name: "Settings", path: "settings" },
   ];

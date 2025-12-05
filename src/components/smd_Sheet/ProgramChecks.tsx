@@ -1,6 +1,7 @@
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import ViewDetailButton from '../ViewDetailButton';
 import Modal from '../Modal';
+import { useSmdSheet } from '../../contexts/SmdSheetContext';
 type ProgramFormState = {
     printer?: string;
     spi?: string;
@@ -19,16 +20,24 @@ const ProgramChecks = () => {
     const [form, setForm] = useState<ProgramFormState>(initialProgramForm);
     const [open, setOpen] = useState(false);
 
+    // lấy dữ liệu từ context
+    const { sheetData, updateProgramChecks } = useSmdSheet();
+
+    // sync form với context khi data thay đổi
+    useEffect(() => {
+      setForm(sheetData.programChecks);
+    }, [sheetData.programChecks])
     const set = <K extends keyof ProgramFormState>(k: K, v: ProgramFormState[K]) =>
     setForm((s) => ({ ...s, [k]: v }));
 
     const submit = () => {
-      console.log("submit", form);
+      updateProgramChecks(form);
       setOpen(false);
+      alert('Program Checks updated successfully!');
     };
 
   return (
-    <div className="p-3 sm:p-4 w-full">
+    <div className="p-0 w-full">
       {/** repsponsive for website */}
       <div className='hidden lg:block w-full overflow-x-auto'>
         <table className="border border-gray-600 w-full text-center opacity-60">
@@ -160,7 +169,7 @@ const ProgramChecks = () => {
       {/** buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
         <ViewDetailButton onOpen={() => setOpen(true)}>Chỉnh sửa</ViewDetailButton>
-        <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton>
+        {/* <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton> */}
       </div>
 
       <Modal

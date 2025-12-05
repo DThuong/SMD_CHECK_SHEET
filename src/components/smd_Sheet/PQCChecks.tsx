@@ -1,18 +1,18 @@
 import ViewDetailButton from "../ViewDetailButton"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Modal from "../Modal";
+import { useSmdSheet } from "../../contexts/SmdSheetContext";
 type PQCChecksState = {
-  // Dựa vào các trường trong bảng
-  icPlan: string;              // "IC nạp kế hoạch"
-  realChecksum: string;        // "Checksum thực tế"
-  checksumConfirmed: boolean;  // "Xác nhận có thay đổi check sum mới"
-  acceptedChecksum?: string;   // nếu muốn lưu checksum mới (chuỗi)
-  tuner: string;               // "Tuner"
-  processStage: string;        // "Công đoạn" (tên công đoạn)
-  startTimeLCR: string;        // "Thời gian bắt đầu đo LCR" (ISO date/time string)
-  endTimeLCR: string;          // "Thời gian kết thúc đo LCR"
-  pqcName: string;             // "tên" (PQC)
-  resultLCROk: boolean;        // "Kết quả đo LCR" (OK checkbox)
+  icPlan?: string;
+  realChecksum?: string;
+  checksumConfirmed?: boolean;
+  acceptedChecksum?: string;
+  tuner?: string;
+  processStage?: string;
+  startTimeLCR?: string;
+  endTimeLCR?: string;
+  pqcName?: string;
+  resultLCROk?: boolean;
 };
 
 const initialPQCChecksState: PQCChecksState = {
@@ -29,21 +29,27 @@ const initialPQCChecksState: PQCChecksState = {
 };
 
 const PQCChecks = () => {
+  const {sheetData, updatePQCChecks} = useSmdSheet();
     const [open, setOpen] = useState(false);
     const [form, setForm] = useState<PQCChecksState>(initialPQCChecksState);
 
+    // useEffect for store sheetData into contexts
+    useEffect(() => {
+      setForm(sheetData.pqcChecks);
+    }, [sheetData.pqcChecks])
   // helper set kiểu-safe
   const set = <K extends keyof PQCChecksState>(k: K, v: PQCChecksState[K]) =>
     setForm((s) => ({ ...s, [k]: v }));
 
   const submit = () => {
     // TODO: thay bằng call API
-    console.log("PQCChecks submit:", form);
+    updatePQCChecks(form);
     setOpen(false);
+    alert('PQC Checks updated successfully!');
   };
 
   return (
-    <div className="p-3 sm:p-4 w-full">
+    <div className="p-0 py-4 w-full">
       {/* Website View - Bảng ngang */}
       <div className="hidden lg:block w-full overflow-x-auto">
             <table className="border border-gray-600 w-full text-center opacity-60">
@@ -163,9 +169,7 @@ const PQCChecks = () => {
       {/* Buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
         <ViewDetailButton onOpen={() => setOpen(true)}>Chỉnh sửa</ViewDetailButton>
-        <ViewDetailButton color="green" onOpen={() => submit()}>
-          Lưu
-        </ViewDetailButton>
+        {/* <ViewDetailButton color="green" onOpen={() => submit()}>Lưu</ViewDetailButton> */}
       </div>
 
         {/* Modal chỉnh sửa — style & input */}

@@ -165,7 +165,7 @@ useEffect(() => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b-2 border-slate-200">
+                <tr className="border-b-2 border-slate-200 lg:text-lg text-sm">
                   <th className="text-left py-3 px-4 text-slate-700 font-semibold">Vai trò</th>
                   <th className="text-left py-3 px-4 text-slate-700 font-semibold">Số lượng</th>
                   <th className="text-left py-3 px-4 text-slate-700 font-semibold">Tỷ lệ</th>

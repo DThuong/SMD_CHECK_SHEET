@@ -1,84 +1,69 @@
 import ViewDetailButton from "../ViewDetailButton"
 import Modal from "../Modal";
-import { useState } from "react";
-
-type PrinterState = {
-  screenSprintSetting?: string;
-  screenSprintSpec?: string;
-  screenSprintActual?: string;
-  pressureSpec?: string;
-  pressureActual?: string;
-  scanSpeedSpec?: string;
-  scanSpeedActual?: string;
-  separationSpeedSpec?: string;
-  separationSpeedActual?: string;
-  wipeCountSpec?: string;
-  wipeCountActual?: string;
-  bladeUsedSpec?: string;
-  bladeUsedActual?: string;
-  vacuumBlockOk?: boolean;
-  vacuumBlockNote?: string;
-};
-
-type SPIState = {
-  inspectionCheck?: string;
-  inspectionSettingOk?: boolean;
-  inspectionSettingNote?: string;
-};
-
-type MountState = {
-  firstThreeBoardsOk?: boolean;
-  firstThreeBoardsNote?: string;
-  bottomBoardOk?: boolean;
-  bottomBoardNote?: string;
-};
-
-type ReflowState = {
-  conveyorWidthOk?: boolean;
-  conveyorWidthNote?: string;
-  railSettingValue?: string;
-  railActualValue?: string;
-  railCheckOk?: boolean;
-  railCheckNote?: string;
-};
-
-type AOIState = {
-  xrayThreeBoardsOk?: boolean;
-  xrayInspector?: string;
-};
-
-type OutputState = {
-  magazineDistanceOk?: boolean;
-  magazineInspector?: string;
-  settingModel?: string;
-  settingPitch?: string;
-};
-
-type WorkerState = {
-  opName?: string;
-  opNote?: string;
-  aoiName?: string;
-  aoiNote?: string;
-};
-
-type SampleInspectionState = {
-  errorName1?: string;
-  errorCount1?: string;
-  repairStatus1?: string;
-  errorName2?: string;
-  errorCount2?: string;
-  repairStatus2?: string;
-};
+import { useEffect, useState } from "react";
+import { useSmdSheet } from "../../contexts/SmdSheetContext";
 
 type StandardVehiclesState = {
-  printer: PrinterState;
-  spi: SPIState;
-  mount: MountState;
-  reflow: ReflowState;
-  aoi: AOIState;
-  output: OutputState;
-  worker: WorkerState;
-  sampleInspection: SampleInspectionState;
+  printer: {
+    screenSprintSetting?: string;
+    screenSprintSpec?: string;
+    screenSprintActual?: string;
+    pressureSpec?: string;
+    pressureActual?: string;
+    scanSpeedSpec?: string;
+    scanSpeedActual?: string;
+    separationSpeedSpec?: string;
+    separationSpeedActual?: string;
+    wipeCountSpec?: string;
+    wipeCountActual?: string;
+    bladeUsedSpec?: string;
+    bladeUsedActual?: string;
+    vacuumBlockOk: boolean;
+    vacuumBlockNote?: string;
+  };
+  spi: {
+    inspectionCheck?: string;
+    inspectionSettingOk: boolean;
+    inspectionSettingNote?: string;
+  };
+  mount: {
+    firstThreeBoardsOk: boolean;
+    firstThreeBoardsNote?: string;
+    bottomBoardOk: boolean;
+    bottomBoardNote?: string;
+  };
+  reflow: {
+    conveyorWidthOk: boolean;
+    conveyorWidthNote?: string;
+    railSettingValue?: string;
+    railActualValue?: string;
+    railCheckOk: boolean;
+    railCheckNote?: string;
+  };
+  aoi: {
+    xrayThreeBoardsOk: boolean;
+    xrayInspector?: string;
+  };
+  output: {
+    magazineDistanceOk: boolean;
+    magazineInspector?: string;
+    settingModel?: string;
+    settingPitch?: string;
+  };
+  worker: {
+    opName?: string;
+    opNote?: string;
+    aoiName?: string;
+    aoiNote?: string;
+  };
+  sampleInspection: {
+    errorName1?: string;
+    errorCount1?: string;
+    repairStatus1?: string;
+    errorName2?: string;
+    errorCount2?: string;
+    repairStatus2?: string;
+  };
 };
 
 const initialStandardVehiclesState: StandardVehiclesState = {
@@ -147,34 +132,49 @@ const initialStandardVehiclesState: StandardVehiclesState = {
 const StandardVehicles = () => {
     const [open, setOpen] = useState(false);
   const [form, setForm] = useState<StandardVehiclesState>(initialStandardVehiclesState);
+  const { sheetData, updateStandardVehicles } = useSmdSheet();
+  useEffect(() => {
+    setForm(sheetData.standardVehicles);
+  }, [sheetData.standardVehicles]);
 
-  const setPrinter = <K extends keyof PrinterState>(k: K, v: PrinterState[K]) =>
+  const setPrinter = <K extends keyof StandardVehiclesState["printer"]>(k: K, v: StandardVehiclesState["printer"][K]) =>
     setForm((s) => ({ ...s, printer: { ...s.printer, [k]: v } }));
 
-  const setSPI = <K extends keyof SPIState>(k: K, v: SPIState[K]) =>
+  const setSPI = <K extends keyof StandardVehiclesState["spi"]>(k: K, v: StandardVehiclesState["spi"][K]) =>
     setForm((s) => ({ ...s, spi: { ...s.spi, [k]: v } }));
 
-  const setMount = <K extends keyof MountState>(k: K, v: MountState[K]) =>
+  const setMount = <K extends keyof StandardVehiclesState["mount"]>(k: K, v: StandardVehiclesState["mount"][K]) =>
     setForm((s) => ({ ...s, mount: { ...s.mount, [k]: v } }));
 
-  const setReflow = <K extends keyof ReflowState>(k: K, v: ReflowState[K]) =>
+  const setReflow = <K extends keyof StandardVehiclesState["reflow"]>(k: K, v: StandardVehiclesState["reflow"][K]) =>
     setForm((s) => ({ ...s, reflow: { ...s.reflow, [k]: v } }));
 
-  const setAOI = <K extends keyof AOIState>(k: K, v: AOIState[K]) =>
+  const setAOI = <K extends keyof StandardVehiclesState["aoi"]>(k: K, v: StandardVehiclesState["aoi"][K]) =>
     setForm((s) => ({ ...s, aoi: { ...s.aoi, [k]: v } }));
 
-  const setOutput = <K extends keyof OutputState>(k: K, v: OutputState[K]) =>
+  const setOutput = <K extends keyof StandardVehiclesState["output"]>(k: K, v: StandardVehiclesState["output"][K]) =>
     setForm((s) => ({ ...s, output: { ...s.output, [k]: v } }));
 
-  const setWorker = <K extends keyof WorkerState>(k: K, v: WorkerState[K]) =>
+  const setWorker = <K extends keyof StandardVehiclesState["worker"]>(k: K, v: StandardVehiclesState["worker"][K]) =>
     setForm((s) => ({ ...s, worker: { ...s.worker, [k]: v } }));
 
+  // const setSampleInspection = <K extends keyof StandardVehiclesState["sampleInspection"]>(
+  //   k: K,
+  //   v: StandardVehiclesState["sampleInspection"][K]
+  // ) =>
+  //   setForm((s) => ({
+  //     ...s,
+  //     sampleInspection: { ...s.sampleInspection, [k]: v },
+  //   }));
+
   const submit = () => {
-    console.log("submit", form);
+    // console.log("submit", form);
+    updateStandardVehicles(form);
     setOpen(false);
+    alert("Standard Vehicles updated successfully!");
   };
   return (
-    <div className="p-3 sm:p-4 w-full">
+    <div className="p-0 py-4 w-full">
       {/* Desktop View */}
       <div className="hidden lg:block w-full overflow-x-auto">
             <table className="border border-gray-600 w-full text-center opacity-60">
@@ -719,7 +719,7 @@ const StandardVehicles = () => {
   {/* Buttons */}
   <div className="flex flex-row justify-end w-full gap-2 mt-3">
     <ViewDetailButton onOpen={() => setOpen(true)}>Chỉnh sửa</ViewDetailButton>
-    <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton>
+    {/* <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton> */}
   </div>
 
    {/* Modal */}

@@ -86,32 +86,56 @@ const Login = () => {
           </div>
         )}
 
-        {/** Dữ liệu mẫu */}
-        <div className="my-2 text-sm px-4">
-  <div>
-    username:
-    <strong> pqc1</strong> / password: 123456  
-    <span className="text-gray-500 ml-2">    (role: PQC)</span>
-  </div>
+<div className="my-4 px-4">
+  <div className="my-2">
+    
+    {/* PQC 1 */}
+    <div className="flex items-center gap-2 text-sm">
+      <span className="w-16 text-right text-gray-500 text-xs">PQC:</span>
+      <code className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">pqc1</code>
+      <span className="text-gray-300">/</span>
+      <code className="px-2 py-1 bg-gray-100 text-gray-700 rounded font-semibold">123</code>
+    </div>
 
-  <div>
-    <strong>eng1</strong> / 123456  
-    <span className="text-gray-500 ml-2">    (role: ENG)</span>
-  </div>
+    {/* PQC 2 */}
+    <div className="flex items-center gap-2 text-sm">
+      <span className="w-16 text-right text-gray-500 text-xs">PQC:</span>
+      <code className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">pqc2</code>
+      <span className="text-gray-300">/</span>
+      <code className="px-2 py-1 bg-gray-100 text-gray-700 rounded font-semibold">123</code>
+    </div>
 
-  <div>
-    <strong>sup1</strong> / 123456  
-    <span className="text-gray-500 ml-2">     (role: SUPERVISOR)</span>
-  </div>
+    {/* ENG */}
+    <div className="flex items-center gap-2 text-sm">
+      <span className="w-16 text-right text-gray-500 text-xs">ENG:</span>
+      <code className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">eng1</code>
+      <span className="text-gray-300">/</span>
+      <code className="px-2 py-1 bg-gray-100 text-gray-700 rounded font-semibold">123</code>
+    </div>
 
-  <div>
-    <strong>mgr1</strong> / 123456  
-    <span className="text-gray-500 ml-2">      (role: MANAGER)</span>
-  </div>
+    {/* SUPERVISOR */}
+    <div className="flex items-center gap-2 text-sm">
+      <span className="w-16 text-right text-gray-500 text-xs">SUP:</span>
+      <code className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">sup1</code>
+      <span className="text-gray-300">/</span>
+      <code className="px-2 py-1 bg-gray-100 text-gray-700 rounded font-semibold">123</code>
+    </div>
 
-  <div>
-    <strong>kmgr1</strong> / 123456  
-    <span className="text-gray-500 ml-2">       (role: MANAGER_KOREA)</span>
+    {/* MANAGER */}
+    <div className="flex items-center gap-2 text-sm">
+      <span className="w-16 text-right text-gray-500 text-xs">MGR:</span>
+      <code className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">mgr1</code>
+      <span className="text-gray-300">/</span>
+      <code className="px-2 py-1 bg-gray-100 text-gray-700 rounded font-semibold">123</code>
+    </div>
+
+    {/* MANAGER KOREA */}
+    <div className="flex items-center gap-2 text-sm">
+      <span className="w-16 text-right text-gray-500 text-xs">MGR_KR:</span>
+      <code className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">kmgr1</code>
+      <span className="text-gray-300">/</span>
+      <code className="px-2 py-1 bg-gray-100 text-gray-700 rounded font-semibold">123</code>
+    </div>
   </div>
 </div>
       </form>

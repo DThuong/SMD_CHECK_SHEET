@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Modal from "../Modal";
 import ViewDetailButton from "../ViewDetailButton";
+import { useSmdSheet } from "../../contexts/SmdSheetContext";
 
 type FormState = {
   lineDoi?: string;
@@ -24,7 +25,7 @@ const initialFormState: FormState = {
   modelSide: "",
   fCode: "",
   pcbVer: "",
-  workOrder: "PD2025",
+  workOrder: "",
   qty: "",
   revS15: "",
   feederList: "",
@@ -38,19 +39,25 @@ const initialFormState: FormState = {
 
 
 export default function CheckModels() {
+  const {sheetData , updateCheckModels} = useSmdSheet();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(initialFormState);
+
+  useEffect(() => {
+  setForm(sheetData.checkModels);
+}, [sheetData.checkModels]);
 
     const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((s) => ({ ...s, [k]: v }));
 
   const submit = () => {
-    console.log("submit", form);
+    updateCheckModels(form);
     setOpen(false);
+    alert('Check Models updated successfully!');
   };
 
   return (
-    <div className="p-3 sm:p-4 w-full">
+    <div className="p-0 py-4 w-full">
       {/* Website View - Bảng ngang */}
       <div className="hidden lg:block w-full overflow-x-auto">
         <table className="border border-gray-600 w-full text-center opacity-60">
@@ -232,7 +239,7 @@ export default function CheckModels() {
       {/** buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
         <ViewDetailButton onOpen={() => setOpen(true)}>Chỉnh sửa</ViewDetailButton>
-        <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton>
+        {/* <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton> */}
       </div>
 
       <Modal

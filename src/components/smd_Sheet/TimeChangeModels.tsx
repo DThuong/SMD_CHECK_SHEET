@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Modal from "../Modal";
 import ViewDetailButton from "../ViewDetailButton";
+import { useSmdSheet } from "../../contexts/SmdSheetContext";
 
 type TimeChangeState = {
   resultStart?: string;      // Thời gian bắt đầu Result
@@ -27,19 +28,24 @@ const initialTimeChangeState: TimeChangeState = {
 const TimeChangeModels = () => {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<TimeChangeState>(initialTimeChangeState);
-
+  const { sheetData, updateTimeChange } = useSmdSheet();
+  useEffect(() => {
+    setForm(sheetData.timeChange);
+  }, [sheetData.timeChange]);
   const set = <K extends keyof TimeChangeState>(
     k: K,
     v: TimeChangeState[K]
   ) => setForm((s) => ({ ...s, [k]: v }));
 
   const submit = () => {
-    console.log("submit", form);
+    // console.log("submit", form);
+    updateTimeChange(form);
     setOpen(false);
+    alert("Time Change Models updated successfully!");
   };
 
   return (
-    <div className="p-3 sm:p-4 w-full">
+    <div className="p-0 py-4 w-full">
       {/* Desktop View */}
       <div className="hidden lg:block w-full overflow-x-auto">
         <table className="border border-gray-600 w-full min-w-[1400px] text-center opacity-60">
@@ -218,7 +224,7 @@ const TimeChangeModels = () => {
       {/* Buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
         <ViewDetailButton onOpen={() => setOpen(true)}>Chỉnh sửa</ViewDetailButton>
-        <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton>
+        {/* <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton> */}
       </div>
 
       {/* Modal */}

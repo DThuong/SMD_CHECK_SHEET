@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { use, useEffect, useState } from "react";
 // Giả định rằng bạn đã có sẵn các component này trong dự án của bạn
 import Modal from "../Modal";
 import ViewDetailButton from "../ViewDetailButton";
+import { useSmdSheet } from "../../contexts/SmdSheetContext";
 
 /**
  * @type SheetHeaderProps
@@ -10,15 +11,9 @@ import ViewDetailButton from "../ViewDetailButton";
  * Ở đây, tôi dùng `File | undefined` để quản lý việc chọn File trong React State.
  */
 type SheetHeaderProps = {
-  lcr: File | undefined;
-  reflow: File | undefined;
+  lcr?: File | undefined;
+  reflow?: File | undefined;
 };
-
-// Dùng string để hiển thị tên file cho cả hai môi trường (bảng và modal)
-type DisplayProps = {
-    lcrName: string;
-    reflowName: string;
-}
 
 const initialHeaderProps: SheetHeaderProps = {
   lcr: undefined,
@@ -26,7 +21,13 @@ const initialHeaderProps: SheetHeaderProps = {
 };
 
 const SheetHeader = () => {
+  const { sheetData, updateSheetHeader} = useSmdSheet();
   const [open, setOpen] = useState(false);
+  // useEffect
+  useEffect(() => {
+    setForm(sheetData.sheetHeader);
+  }, [sheetData.sheetHeader]);
+
   // State lưu trữ đối tượng File đã chọn
   const [form, setForm] = useState<SheetHeaderProps>(initialHeaderProps);
   
@@ -45,15 +46,9 @@ const SheetHeader = () => {
    * Hàm xử lý khi nhấn nút Lưu trong Modal.
    */
   const submit = () => {
-    // Cập nhật state chính từ state tạm thời
-    setForm(tempForm);
-    
-    // Logic xử lý lưu dữ liệu (ví dụ: gọi API upload file)
-    console.log("Submit Header Files:", {
-        lcr: tempForm.lcr?.name,
-        reflow: tempForm.reflow?.name,
-    });
+    updateSheetHeader(form);
     setOpen(false);
+    alert('Sheet Header updated successfully!');
   };
   
   /**
@@ -88,7 +83,7 @@ const SheetHeader = () => {
   // *** PHẦN RENDER GIAO DIỆN ***
   return (
     <div>
-      <div className="p-3 sm:p-4 w-full">
+      <div className="p-0 w-full">
         {/* Website View - Bảng ngang */}
         <div className="hidden lg:block w-full overflow-x-auto">
           <table className="border border-gray-600 w-full min-w-[1400px] text-center">
@@ -174,7 +169,7 @@ const SheetHeader = () => {
         {/* Buttons */}
         <div className="flex flex-row justify-end w-full gap-2 mt-3">
           <ViewDetailButton onOpen={handleOpenModal}>Chỉnh sửa</ViewDetailButton>
-          <ViewDetailButton color="green" onOpen={submit}>Lưu</ViewDetailButton>
+          {/* <ViewDetailButton color="green" onOpen={submit}>Lưu</ViewDetailButton> */}
         </div>
 
         {/* Modal để chỉnh sửa/tải lên file */}

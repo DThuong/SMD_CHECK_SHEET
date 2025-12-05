@@ -1,26 +1,28 @@
 import React, { useState} from 'react';
 import type { ChangeEvent } from 'react';
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaBriefcase, FaEdit, FaSave, FaTimes, FaCamera } from 'react-icons/fa';
+import { useAuth } from '../authLoginSample/AuthContext';
 
 interface ProfileData {
-  fullName: string;
-  email: string;
-  phone: string;
-  address: string;
-  role: string;
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  role?: string;
   avatar: string | null;
 }
 
 const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
+  const { user } = useAuth();
   
   const [profileData, setProfileData] = useState<ProfileData>({
-    fullName: 'Nguyễn Văn A',
-    email: 'admin@company.com',
-    phone: '0123456789',
-    address: 'Biên Hòa, Đồng Nai, Việt Nam',
-    role: 'MANAGER KOREA',
+    fullName: user?.fullName,
+    email: user?.email,
+    phone: user?.phone,
+    address: user?.address,
+    role: user?.role,
     avatar: null
   });
 

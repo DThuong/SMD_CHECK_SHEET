@@ -76,7 +76,7 @@ export default function CheckModels() {
               <td rowSpan={2} className="border px-2 py-2">
                 <input
                   type="date"
-                  className="border rounded w-full px-1 text-sm"
+                  className="border rounded w-full px-1 text-base"
                   value={form.date ?? ""}
                   onChange={(e) => set("date", e.target.value)}
                 />
@@ -122,20 +122,20 @@ export default function CheckModels() {
       {/* Mobile View - Card dọc */}
       <div className="lg:hidden">
         <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm" onClick={() => setOpen(true)}>
-          <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Check Model</h3>
+          <h3 className="text-base font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Check Model</h3>
 
           {/* Row 1 */}
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div className="min-w-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">Line đổi</div>
-              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
                 {form.lineDoi || "—"}
               </div>
             </div>
 
             <div className="min-w-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">Model/Side</div>
-              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
                 {form.modelSide || "—"}
               </div>
             </div>
@@ -145,14 +145,14 @@ export default function CheckModels() {
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div className="min-w-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">REV S15</div>
-              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
                 {form.revS15 || "—"}
               </div>
             </div>
 
             <div className="min-w-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">REV MOUNTER</div>
-              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
                 {form.revMounter || "—"}
               </div>
             </div>
@@ -162,14 +162,14 @@ export default function CheckModels() {
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div className="min-w-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">Thời gian kiểm tra feeder</div>
-              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
                 {form.feederList || "—"}
               </div>
             </div>
 
             <div className="min-w-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">OP Mounter xác nhận</div>
-              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
                 {form.opMounter || "—"}
               </div>
             </div>
@@ -179,14 +179,14 @@ export default function CheckModels() {
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div className="min-w-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">F Code (3in1)</div>
-              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
                 {form.fCode || "—"}
               </div>
             </div>
 
             <div className="min-w-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">PCB ver</div>
-              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
                 {form.pcbVer || "—"}
               </div>
             </div>
@@ -196,14 +196,14 @@ export default function CheckModels() {
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div className="min-w-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">Work Order</div>
-              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
                 {form.workOrder || "—"}
               </div>
             </div>
 
             <div className="min-w-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">Qty</div>
-              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
                 {form.qty || "—"}
               </div>
             </div>
@@ -212,7 +212,7 @@ export default function CheckModels() {
           {/* Mã PCB */}
           <div className="mb-3">
             <div className="text-xs font-semibold text-gray-600 mb-1">Mã PCB</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words">
+            <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words">
               {form.maPcb || "—"}
             </div>
           </div>
@@ -221,14 +221,14 @@ export default function CheckModels() {
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div className="min-w-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">Sử dụng CN card</div>
-              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100">
                 {form.useCnCard === "yes" ? "Yes" : form.useCnCard === "no" ? "No" : "—"}
               </div>
             </div>
 
             <div className="min-w-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">JIG</div>
-              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100">
                 {form.jig === "yes" ? "Yes" : form.jig === "no" ? "No" : "—"}
               </div>
             </div>
@@ -254,7 +254,7 @@ export default function CheckModels() {
             <input 
               value={form.lineDoi ?? ""} 
               onChange={(e) => set("lineDoi", e.target.value)} 
-              className="mt-1 block w-full border rounded px-3 py-2 text-sm wrap-break-words"
+              className="mt-1 block w-full border rounded px-3 py-2 text-base wrap-break-words"
             />
           </label>
 
@@ -263,7 +263,7 @@ export default function CheckModels() {
             <input 
               value={form.modelSide ?? ""} 
               onChange={(e) => set("modelSide", e.target.value)} 
-              className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+              className="mt-1 block w-full border rounded px-3 py-2 text-base"
             />
           </label>
 
@@ -272,7 +272,7 @@ export default function CheckModels() {
             <input 
               value={form.fCode ?? ""} 
               onChange={(e) => set("fCode", e.target.value)} 
-              className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+              className="mt-1 block w-full border rounded px-3 py-2 text-base"
             />
           </label>
 
@@ -282,7 +282,7 @@ export default function CheckModels() {
               <input 
                 value={form.revS15 ?? ""} 
                 onChange={(e) => set("revS15", e.target.value)} 
-                className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+                className="mt-1 block w-full border rounded px-3 py-2 text-base"
               />
             </label>
 
@@ -291,7 +291,7 @@ export default function CheckModels() {
               <input 
                 value={form.revMounter ?? ""} 
                 onChange={(e) => set("revMounter", e.target.value)} 
-                className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+                className="mt-1 block w-full border rounded px-3 py-2 text-base"
               />
             </label>
           </div>
@@ -303,7 +303,7 @@ export default function CheckModels() {
                 type="date" 
                 value={form.feederList ?? ""} 
                 onChange={(e) => set("feederList", e.target.value)} 
-                className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+                className="mt-1 block w-full border rounded px-3 py-2 text-base"
               />
             </label>
 
@@ -313,7 +313,7 @@ export default function CheckModels() {
                 type="date" 
                 value={form.opMounter ?? ""} 
                 onChange={(e) => set("opMounter", e.target.value)} 
-                className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+                className="mt-1 block w-full border rounded px-3 py-2 text-base"
               />
             </label>
           </div>
@@ -324,7 +324,7 @@ export default function CheckModels() {
               <input 
                 value={form.pcbVer ?? ""} 
                 onChange={(e) => set("pcbVer", e.target.value)} 
-                className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+                className="mt-1 block w-full border rounded px-3 py-2 text-base"
               />
             </label>
 
@@ -333,7 +333,7 @@ export default function CheckModels() {
               <input 
                 value={form.workOrder ?? ""} 
                 onChange={(e) => set("workOrder", e.target.value)} 
-                className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+                className="mt-1 block w-full border rounded px-3 py-2 text-base"
               />
             </label>
           </div>
@@ -343,7 +343,7 @@ export default function CheckModels() {
             <input 
               value={form.qty ?? ""} 
               onChange={(e) => set("qty", e.target.value)} 
-              className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+              className="mt-1 block w-full border rounded px-3 py-2 text-base"
             />
           </label>
           
@@ -352,7 +352,7 @@ export default function CheckModels() {
             <textarea 
               value={form.maPcb ?? ""} 
               onChange={(e) => set("maPcb", e.target.value)} 
-              className="mt-1 block w-full border rounded px-3 py-2 text-sm min-h-[60px] resize-y"
+              className="mt-1 block w-full border rounded px-3 py-2 text-base min-h-[60px] resize-y"
               placeholder="Nhập mã PCB..."
             />
           </label>
@@ -364,14 +364,14 @@ export default function CheckModels() {
                 <button 
                   type="button" 
                   onClick={() => set("useCnCard", "yes")} 
-                  className={`px-3 py-2 rounded text-sm border ${form.useCnCard === "yes" ? "bg-blue-100 border-blue-500" : ""}`}
+                  className={`px-3 py-2 rounded text-base border ${form.useCnCard === "yes" ? "bg-blue-100 border-blue-500" : ""}`}
                 >
                   Yes
                 </button>
                 <button 
                   type="button" 
                   onClick={() => set("useCnCard", "no")} 
-                  className={`px-3 py-2 rounded text-sm border ${form.useCnCard === "no" ? "bg-blue-100 border-blue-500" : ""}`}
+                  className={`px-3 py-2 rounded text-base border ${form.useCnCard === "no" ? "bg-blue-100 border-blue-500" : ""}`}
                 >
                   No
                 </button>
@@ -384,14 +384,14 @@ export default function CheckModels() {
                 <button 
                   type="button" 
                   onClick={() => set("jig", "yes")} 
-                  className={`px-3 py-2 rounded text-sm border ${form.jig === "yes" ? "bg-blue-100 border-blue-500" : ""}`}
+                  className={`px-3 py-2 rounded text-base border ${form.jig === "yes" ? "bg-blue-100 border-blue-500" : ""}`}
                 >
                   Yes
                 </button>
                 <button 
                   type="button" 
                   onClick={() => set("jig", "no")} 
-                  className={`px-3 py-2 rounded text-sm border ${form.jig === "no" ? "bg-blue-100 border-blue-500" : ""}`}
+                  className={`px-3 py-2 rounded text-base border ${form.jig === "no" ? "bg-blue-100 border-blue-500" : ""}`}
                 >
                   No
                 </button>

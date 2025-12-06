@@ -63,7 +63,7 @@ const AdminLayout = () => {
     <header className="bg-white shadow-md z-40 relative flex">
         {/* Phần header sidebar - chỉ hiện trên desktop */}
         <div className="hidden md:block w-64 lg:w-96 px-4 py-3 border-gray-200">
-          <Link to="/admin/dashboard" className="text-decoration-none lg:text-4xl md:text-2xl font-bold text-gray-800!">Admin Dashboard</Link>
+          <Link to="/admin/dashboard" className="text-decoration-none lg:text-4xl md:text-2xl font-bold text-gray-800!">{user?.role} Dashboard</Link>
         </div>
 
         {/* Phần header chính */}
@@ -82,8 +82,8 @@ const AdminLayout = () => {
           </button>
 
           {/* Logo/Title - Hiện trên mobile khi sidebar đóng */}
-          <h1 className={`text-xl font-bold text-gray-800 ${sidebarOpen ? 'hidden' : 'block'} md:hidden`}>
-            Admin Dashboard
+          <h1 className={`text-xl font-bold! text-blue-800! ${sidebarOpen ? 'hidden' : 'block'} md:hidden`}>
+            {user?.role} Dashboard
           </h1>
 
           {/* User Menu - Bên phải header, ẩn khi sidebar mở trên mobile */}

@@ -327,22 +327,22 @@ const Home = () => {
                   {filteredSheets.map((sheet) => (
                     <div 
                       key={sheet.id} 
-                      className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-white"
+                      className="lg:p-4 p-3 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-white "
                     >
-                      <div className="flex flex-col items-start justify-between">
+                      <div className="flex flex-row gap-2 items-center justify-between">
                         <div className="flex-1">
                           {/* Work Order */}
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+                          <div className="lg:flex md:flex flex flex-col lg:items-start md:items-center items-start lg:justify-start md:justify-start gap-2">
+                            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full lg:text-sm md:text-sm text-xs font-semibold">
                               {sheet.data?.checkModels?.workOrder || 'N/A'}
                             </span>
                             {sheet.confirmed && (
-                              <div className="w-full px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                              <div className="px-2 py-1 bg-green-100 text-green-700 rounded-full lg:text-sm md:text-sm text-xs font-medium">
                                 ✓ Đã xác nhận
                               </div>
                             )}
                             {!sheet.confirmed && (
-                              <div className="w-full flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                              <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
                                 <FaRegClock /> <span>Chưa xác nhận</span>
                               </div>
                             )}

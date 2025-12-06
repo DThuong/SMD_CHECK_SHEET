@@ -540,7 +540,7 @@ const Logs: React.FC = () => {
                         <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 justify-center">
                           <button
                             onClick={() => handleViewDetail(log)}
-                            className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs font-medium whitespace-nowrap"
+                            className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs font-medium whitespace-nowrap"
                           >
                             <AiOutlineEye className="w-3 h-3 sm:w-4 sm:h-4" />
                             <span>Xem</span>
@@ -548,7 +548,7 @@ const Logs: React.FC = () => {
                           {canEdit(log) && (
                             <button
                               onClick={() => handleViewDetail(log)}
-                              className="inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium whitespace-nowrap"
+                              className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium whitespace-nowrap"
                             >
                               <AiOutlineEdit className="w-3 h-3 sm:w-4 sm:h-4" />
                               <span>Sửa</span>

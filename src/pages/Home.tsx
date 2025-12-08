@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import SmdSheetUser from "../components/SmdSheetUser";
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from './authLoginSample/AuthContext';
 import { AiOutlineSearch, AiOutlineClose } from 'react-icons/ai';
 import { MdFavoriteBorder } from "react-icons/md";
 import { BsCalendarDate } from "react-icons/bs";
 import { FaRegClock } from "react-icons/fa";
+import { Link } from 'react-router-dom';
+
+// redux
+import {useAppSelector } from '../redux/hooks';
 
 interface SmdLog {
   id: string;
@@ -36,7 +39,15 @@ const Home = () => {
   const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
   const [showSheets, setShowSheets] = useState(false);
   const [loadingSheets, setLoadingSheets] = useState(false);
-  const { user } = useAuth();
+
+  const { user, isAuthenticated, loading} = useAppSelector(state => state.auth);
+
+  useEffect(() => {
+    // nếu chưa login redirect về login page
+    if(!loading && !isAuthenticated){
+      navigate('/login');
+    }
+  }, [loading, isAuthenticated]);
 
   // Notification logic
   const [showNoti, setShowNoti] = useState(() => {
@@ -68,6 +79,7 @@ const Home = () => {
 
   // HÀM LOAD SHEETS TỪ LOCALSTORAGE - CHỈ CỦA USER HIỆN TẠI
   const loadSheetsFromLocalStorage = () => {
+    if(!user?.username) return;
     setLoadingList(true);
     try {
       const allSheets: SmdLog[] = [];
@@ -91,7 +103,7 @@ const Home = () => {
       // FILTER CHỈ SHEETS CỦA USER HIỆN TẠI
       const mySheets = allSheets.filter(sheet => {
         // So sánh theo fullName của user đang đăng nhập
-        return sheet.submittedBy === user?.fullName;
+        return sheet.submittedBy === user?.username;
       });
       
       // Sort by date (newest first)
@@ -101,7 +113,7 @@ const Home = () => {
       
       setSheets(sortedSheets);
       setFilteredSheets(sortedSheets);
-      console.log(`✅ Loaded ${sortedSheets.length} sheets của ${user?.fullName}`);
+      console.log(`✅ Loaded ${sortedSheets.length} sheets của ${user?.username}`);
     } catch (error) {
       console.error('Error loading sheets:', error);
     } finally {
@@ -174,16 +186,16 @@ const Home = () => {
   return (
     <div className="max-w-8xl mx-auto p-4">
       {/* Thông báo đăng nhập thành công */}
-      {showNoti && (
+      {user && isAuthenticated ? (
         <div className="slide-noti w-full max-w-[900px] left-1/2 -translate-x-1/2">
           <div className="noti-inner bg-green-50 border-l-4 border-green-600 p-3 rounded shadow">
             <p className="font-bold text-green-800 text-lg">Đăng nhập thành công!</p>
             <p className="text-green-700 text-sm mt-1">
-              User: <strong>{user?.fullName}</strong> - Role: <strong>{user?.role}</strong>
+              User: <strong>{user?.username}</strong> - Role: <strong>{user?.role}</strong>
             </p>
           </div>
         </div>
-      )}
+      ): (<Link to="/login"></Link>)}
 
       {/* Component home render */}
       <div className="bg-white rounded-lg shadow p-4">
@@ -245,7 +257,7 @@ const Home = () => {
             {/* Info banner */}
             <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800">
-                Hiển thị sheets của: <strong>{user?.fullName}</strong> ({user?.role})
+                Hiển thị sheets của: <strong>{user?.username}</strong> ({user?.role})
               </p>
             </div>
 

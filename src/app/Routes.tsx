@@ -9,55 +9,78 @@ import Login from '../pages/Login';
 import ErrorPage from '../pages/ErrorPage';
 // boss pages
 // import Dashboard from '../pages/admin/Dashboard';
-import Profile from '../pages/admin/Profile';
+// import Profile from '../pages/admin/Profile';
 // import User from '../pages/admin/User';
 import Settings from '../pages/admin/Settings';
 import Logs from '../pages/admin/Logs';
-// useAuth
-import { useAuth } from '../pages/authLoginSample/AuthContext';
 
+// Import Redux hooks
+import { useAppSelector } from '../redux/hooks';
+// import spinner
+import LoadingSpinner from '../components/LoadingSpinner';
+
+// ========================================
 // Component bảo vệ route cho PQC (chỉ cho phép PQC vào)
+// ========================================
 const PQCRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
-
+  const { user, isAuthenticated, loading } = useAppSelector(
+    (state) => state.auth
+  );
+  // Xử lý loading state
+  if (loading) {
+    return <LoadingSpinner />;
+  }
   // Chưa login -> redirect về /login
-  if (!user) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-
+  // Thêm optional chaining cho user?.role
   // Đã login nhưng không phải PQC -> redirect về /admin/dashboard
-  if (user.role !== 'PQC') {
+  if (user?.role !== 'PQC') {
     return <Navigate to="/admin/dashboard" replace />;
   }
-
   // Đúng role PQC -> cho vào
   return <>{children}</>;
 };
 
+// ========================================
 // Component bảo vệ route cho Admin (ENG, SUPERVISOR, MANAGER, MANAGER_KOREA)
+// ========================================
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
-
+  const { user, isAuthenticated, loading } = useAppSelector(
+    (state) => state.auth
+  );
+  // Xử lý loading state
+  if (loading) {
+    return <LoadingSpinner />;
+  }
   // Chưa login -> redirect về /login
-  if (!user) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-
+  // Thêm optional chaining
   // Đã login nhưng là PQC -> redirect về /
-  if (user.role === 'PQC') {
+  if (user?.role === 'PQC') {
     return <Navigate to="/" replace />;
   }
-
   // Đúng role Admin -> cho vào
   return <>{children}</>;
 };
 
+// ========================================
 // Component cho trang Login (nếu đã login thì redirect về trang tương ứng)
+// ========================================
 const LoginRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
-
+  // Dùng Redux thay vì useAuth
+  const { user, isAuthenticated, loading } = useAppSelector(
+    (state) => state.auth
+  );
+  // Xử lý loading state (optional cho login page)
+  if (loading) {
+    return <LoadingSpinner />;
+  }
   // Nếu đã login
-  if (user) {
+  if (isAuthenticated && user) {
     // PQC -> về /
     if (user.role === 'PQC') {
       return <Navigate to="/" replace />;
@@ -65,11 +88,13 @@ const LoginRoute = ({ children }: { children: React.ReactNode }) => {
     // Admin -> về /admin/dashboard
     return <Navigate to="/admin/dashboard" replace />;
   }
-
   // Chưa login -> hiển thị trang Login
   return <>{children}</>;
 };
 
+// ========================================
+// MAIN APP ROUTES
+// ========================================
 const App = () => {
   return (
     <Routes>
@@ -102,8 +127,7 @@ const App = () => {
         }
       >
         <Route path="/admin/dashboard" element={<h1>Dashboard</h1>} />
-        <Route path="/admin/profile" element={<Profile />} />
-        {/* <Route path="/admin/user" element={<User />} /> */}
+        <Route path="/admin/profile" element={<h1>Profile</h1>} />
         <Route path='/admin/smd-sheet-logs' element={<Logs />} />
         <Route path="/admin/settings" element={<Settings />} />
         

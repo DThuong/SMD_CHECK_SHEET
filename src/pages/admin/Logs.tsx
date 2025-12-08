@@ -9,11 +9,11 @@ import {
   AiOutlineClose 
 } from 'react-icons/ai';
 import { FaCalendarAlt, FaRegUserCircle } from "react-icons/fa";
-import { useAuth } from '../authLoginSample/AuthContext';
 import { SmdSheetProvider } from '../../contexts/SmdSheetContext';
 import SmdSheetDetail from '../../components/SmdSheetDetail';
 import { FaUserAlt } from "react-icons/fa";
 import { MdSignalWifiStatusbar2Bar } from "react-icons/md";
+import { useAppSelector } from '../../redux/hooks';
 
 // Types
 interface ConfirmationStep {
@@ -60,7 +60,7 @@ const Logs: React.FC = () => {
   const [searchName, setSearchName] = useState<string>('');
   const [searchStatus, setSearchStatus] = useState<string>('all');
 
-  const { user } = useAuth();
+  const { user } = useAppSelector(state => state.auth);
 
   // Load logs từ localStorage
   const loadLogs = (): void => {
@@ -201,7 +201,7 @@ const Logs: React.FC = () => {
         ...confirmations,
         [role]: {
           role: role,
-          confirmedBy: user.fullName,
+          confirmedBy: user.username,
           confirmedAt: new Date().toISOString()
         }
       };
@@ -219,7 +219,7 @@ const Logs: React.FC = () => {
         confirmed: allConfirmed,
         // Cập nhật thông tin xác nhận cuối cùng nếu hoàn tất tất cả
         ...(allConfirmed && {
-          confirmedBy: user.fullName,
+          confirmedBy: user.username,
           confirmedByRole: user.role,
           confirmedAt: new Date().toISOString()
         })

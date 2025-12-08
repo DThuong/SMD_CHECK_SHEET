@@ -2,13 +2,15 @@ import { useState, useEffect } from "react";
 import { Link,NavLink, Outlet } from "react-router-dom";
 import { HiMenu, HiX, HiLogout, HiUser } from "react-icons/hi";
 import logo from "../../assets/image/brand_image_3.webp";
-import { useAuth } from "../../pages/authLoginSample/AuthContext";
+import { useAppSelector, useAppDispatch } from "../../redux/hooks";
+import {logout} from "../../redux/slices/authSlice";
 
 const AdminLayout = () => {
   // State quản lý trạng thái mở/đóng sidebar trên mobile
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // State quản lý trạng thái mở/đóng dropdown user menu
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+
 
     // trạng thái thông báo
     // --- Notification logic ---
@@ -29,8 +31,10 @@ const AdminLayout = () => {
       return () => clearTimeout(timer);
     }, [showNoti]);
 
-  // useAuth 
-  const { logout, user } = useAuth();
+  // redux 
+  const { user, isAuthenticated } = useAppSelector(state => state.auth);
+  // usedispatch logout
+  const dispatch = useAppDispatch();
 
   // Danh sách menu items cho sidebar
   const menuItems = [
@@ -42,22 +46,22 @@ const AdminLayout = () => {
 
   // Hàm xử lý logout
   const handleLogout = () => {
-    logout();
+    dispatch(logout());
     setUserMenuOpen(false);
   };
 
   return (
     <div className="flex flex-col h-screen bg-gray-100 ">
-      {showNoti && 
+      {user && isAuthenticated ? (
       <div className="slide-noti w-full max-w-[900px] left-1/2 -translate-x-1/2">
         <div className="noti-inner bg-green-50 border-l-4 border-green-600 p-3 rounded shadow">
                   <p className="font-bold text-green-800 text-lg">Đăng nhập thành công!</p>
                   <p className="text-green-700 text-sm mt-1">
-                    User: <strong>{user?.fullName}</strong> - Role: <strong>{user?.role}</strong>
+                    User: <strong>{user?.username}</strong> - Role: <strong>{user?.role}</strong>
                   </p>
           </div>
       </div>
-      }
+      ) : (<Link to={'/login'}></Link>)}
       {/* Header - Fixed top */}
       <header className="bg-white shadow-md z-40 relative flex">
         {/* Phần header sidebar - chỉ hiện trên desktop */}
@@ -92,7 +96,7 @@ const AdminLayout = () => {
               onClick={() => setUserMenuOpen(!userMenuOpen)}
             >
               <HiUser className="w-5 h-5 text-gray-700" />
-              <span className="hidden sm:inline text-gray-700">Welcome, {user?.fullName}</span>
+              <span className="hidden sm:inline text-gray-700">Welcome, {user?.username}</span>
             </button>
 
             {/* Dropdown menu */}

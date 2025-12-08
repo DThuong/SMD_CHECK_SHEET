@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { useAuth } from '../pages/authLoginSample/AuthContext';
+import { useAppSelector } from '../redux/hooks';
 
 // Định nghĩa kiểu dữ liệu cho từng form
 // checkModels
@@ -201,7 +201,12 @@ export function SmdSheetProvider({ children }: { children: ReactNode }) {
   const [isReadOnly, setIsReadOnly] = useState<boolean>(false);
   const [currentLogId, setCurrentLogId] = useState<string | null>(null);
   
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAppSelector(state => state.auth);
+    useEffect(() => {
+    if (!isAuthenticated) {
+      console.warn('User not authenticated');
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     loadFromLocalStorage();
@@ -241,6 +246,13 @@ export function SmdSheetProvider({ children }: { children: ReactNode }) {
     try {
       if (!user) {
         alert("❌ Không tìm thấy thông tin user!");
+        console.log("❌ Không tìm thấy thông tin user!");
+        return false;
+      }
+
+      if (!user.fullName || !user.role) {
+        console.error('❌ User missing required fields:', user);
+        alert("❌ Thông tin user không đầy đủ!");
         return false;
       }
 
@@ -295,6 +307,13 @@ export function SmdSheetProvider({ children }: { children: ReactNode }) {
   // Load log để xem/edit (ENG, SUPERVISOR dùng)
   const loadLogData = (logId: string) => {
     try {
+      // Validate logId
+      if (!logId) {
+        console.error('❌ Invalid logId');
+        alert("❌ ID log không hợp lệ!");
+        return;
+      }
+
       const logString = localStorage.getItem(`smd_logs:${logId}`);
       if (!logString) {
         alert("❌ Không tìm thấy log!");
@@ -304,6 +323,13 @@ export function SmdSheetProvider({ children }: { children: ReactNode }) {
       const log: SmdLog = JSON.parse(logString);
       setSheetData(log.data);
       setCurrentLogId(logId);
+
+      // Check user trước khi set permissions
+      if (!user) {
+        console.warn('⚠️ No user found, setting read-only');
+        setIsReadOnly(true);
+        return;
+      }
       
       // Kiểm tra quyền edit
       const canEdit = user?.role === 'ENG' || user?.role === 'SUPERVISOR';
@@ -321,6 +347,13 @@ export function SmdSheetProvider({ children }: { children: ReactNode }) {
     try {
       if (!user) {
         alert("❌ Không tìm thấy thông tin user!");
+        return false;
+      }
+
+      // Check required fields
+      if (!user.fullName || !user.role) {
+        console.error('❌ User missing required fields:', user);
+        alert("❌ Thông tin user không đầy đủ!");
         return false;
       }
 

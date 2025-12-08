@@ -1,96 +1,128 @@
-import { createSlice } from '@reduxjs/toolkit';
+// quản lý trạng thái authentication
+// createSlice: hàm của redux toolkit giúp tạo Slice (gồm reducer + action)
+// createAsyncThunk: hàm của redux toolkit giúp tạo action async với các tham số (payloadAction) với các trạng thái (pending, fulfilled, rejected) sinh tự động
+// payloadAction: type helper cho action có payload
+// axios: thư viện call api
+import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import type { RootState } from '../store';
+import axios from 'axios';
 
-/**
- * 🔐 AUTH SLICE - Quản lý authentication state
- */
-
-// ===================================
-// 📝 TYPES
-// ===================================
-
-export interface User {
-  id: string;
-  fullName: string;
-  email: string;
-  role: 'PQC' | 'ENG' | 'SUPERVISOR' | 'MANAGER' | 'MANAGER_KOREA';
+// định nghĩa kiểu dữ liệu khi post login api
+interface LoginRequest {
+  username: string;
+  password: string;
 }
 
+// mô tả kiểu dữ liệu user server trả về. ? nghĩa là field đó có thể không có. response data thực tế được trả về
+interface User {
+  id?: string;
+  username?: string;
+  fullName?: string;
+  phoneNumber?: string;
+  role?: string;
+  token?: string;
+}
+
+// authState; lưu trạng thái authentication trong store
 interface AuthState {
-  user: User | null;
-  token: string | null;
-  isAuthenticated: boolean;
+  user: User;
+  token: string;
   loading: boolean;
+  error: string;
+  isAuthenticated: boolean;
 }
 
-// ===================================
-// 🎨 INITIAL STATE
-// ===================================
-
+// state ban đầu
 const initialState: AuthState = {
-  user: null,
-  token: localStorage.getItem('token'),
-  isAuthenticated: false,
+  user: {},
+  token: '',
   loading: false,
+  error: '',
+  isAuthenticated: false,
 };
 
-// ===================================
-// 🔧 SLICE
-// ===================================
+// tạo async thunk action login để gọi api login
+export const loginUser = createAsyncThunk(
+  'auth/login', // action type prefix
+  async (credentials: LoginRequest, {rejectWithValue}) => {
+    try {
+      const response = await axios.post('https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account/login', credentials, 
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+        }
+      );
+      if(response?.data?.token){
+        localStorage.setItem('token', response.data.token);
+      }
+      return response.data;
+    } catch (error: any) {
+      if(error.response && error.response.data){
+        return rejectWithValue(error.response.data);
+      }
+      return rejectWithValue(error.message);
+    }
+    
+  }
+);
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    // Login success
-    loginSuccess: (state, action: PayloadAction<{ user: User; token: string }>) => {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
-      state.isAuthenticated = true;
-      state.loading = false;
-      
-      // Lưu vào localStorage
-      localStorage.setItem('token', action.payload.token);
-      localStorage.setItem('user', JSON.stringify(action.payload.user));
-    },
-    
-    // Logout
-    logout: (state) => {
-      state.user = null;
-      state.token = null;
+    // action logout
+    logout(state) {
+      state.user = {};
+      state.token = '';
       state.isAuthenticated = false;
-      
-      // Xóa localStorage
+      state.error = '';
       localStorage.removeItem('token');
-      localStorage.removeItem('user');
     },
-    
-    // Set loading
-    setLoading: (state, action: PayloadAction<boolean>) => {
-      state.loading = action.payload;
+    //action để clear error
+    clearError(state) {
+      state.error = '';
     },
-    
-    // Update user
-    updateUser: (state, action: PayloadAction<Partial<User>>) => {
-      if (state.user) {
-        state.user = { ...state.user, ...action.payload };
-        localStorage.setItem('user', JSON.stringify(state.user));
-      }
-    },
+
+    //action để restore token từ localStorage khi reload trang
+    restoreToken(state, action: PayloadAction<string>) {
+      state.token = action.payload;
+      state.isAuthenticated = true;
+    }
   },
-});
-
-// ===================================
-// 🎁 EXPORT
-// ===================================
-
-export const { loginSuccess, logout, setLoading, updateUser } = authSlice.actions;
-
-// Selectors
-export const selectUser = (state: RootState) => state.auth.user;
-export const selectToken = (state: RootState) => state.auth.token;
-export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
-export const selectAuthLoading = (state: RootState) => state.auth.loading;
-
+  extraReducers: (builder) => {
+    // Xử lý các trạng thái của loginUser async thunk
+    builder
+      // Khi bắt đầu gọi API (pending)
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = '';
+      })
+      // Khi API trả về thành công (fulfilled)
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload;
+        state.token = action.payload.token || null;
+        state.error = '';
+      })
+      // Khi API trả về lỗi (rejected)
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = false;
+        state.user = {};
+        state.token = '';
+        state.error = action.payload as string || 'Login failed';
+      });
+  },
+})
+// export action
+export const { logout, clearError, restoreToken } = authSlice.actions;
+// export reducer
 export default authSlice.reducer;
+
+
+
+
+

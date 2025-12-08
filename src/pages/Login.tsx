@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { useAuth } from './authLoginSample/AuthContext';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { loginUser } from '../redux/slices/authSlice';
+// import { useNavigate } from 'react-router-dom';
 
 const inputClass = "w-full px-4 py-3 border rounded-lg outline-none transition focus:border-blue-500 focus:shadow";
 
@@ -8,21 +10,18 @@ const Login = () => {
   const [password, setPassword] = useState<string>('');
   const [remember, setRemember] = useState<boolean>(false);
   // mới thêm
-  const [error, setError] = useState<string>('');
-  const {login} = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const dispatch = useAppDispatch();
+  // const navigate = useNavigate();
+  const { loading, error} = useAppSelector((state) => state.auth);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: replace with real authentication (call API, redux action, etc.)
-    setError('');
-
-    const success = login(username, password);
-    sessionStorage.setItem("justLoggedIn", "1");
-    if (!success) {
-      setError('Invalid username or password');
-      return;
+    try {
+      await dispatch(loginUser({username, password}));
+    } catch (error) {
+      console.error('Login failed: ', error)
     }
-    console.log({ username, password, remember });
   };
 
   return (
@@ -38,6 +37,7 @@ const Login = () => {
             aria-label="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            disabled = {loading}
             placeholder="Username"
             className={inputClass}
           />
@@ -47,6 +47,7 @@ const Login = () => {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled = {loading}
             placeholder="Password"
             className={inputClass}
           />

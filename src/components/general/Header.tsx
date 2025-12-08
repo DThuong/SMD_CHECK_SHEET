@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import logo from '../../assets/image/brand_image_3.webp';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../../pages/authLoginSample/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { logout } from '../../redux/slices/authSlice';
 import { FaUser } from "react-icons/fa";
 import { TbLogout } from "react-icons/tb";
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  const { logout, user } = useAuth();
-
+  const { user } = useAppSelector(state => state.auth);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   // Disable body scroll when menu open
   useEffect(() => {
@@ -38,9 +40,10 @@ const Header = () => {
   }, [isDropdownOpen]);
 
   const handleLogout = () => {
-    logout();
+    dispatch(logout());
     setIsMenuOpen(false);
     setIsDropdownOpen(false);
+    navigate('/login');
   };
 
   return (
@@ -74,7 +77,7 @@ const Header = () => {
                     className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition"
                   >
                     <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                      {user.fullName.charAt(0)}
+                      {user?.username?.charAt(0).toUpperCase() }
                     </div>
                     <svg 
                       className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
@@ -203,14 +206,6 @@ const Header = () => {
                     className="block px-3 py-3 rounded-lg font-medium hover:bg-gray-600 border border-gray-300 no-underline text-white bg-gray-700 mb-3"
                   >
                     Login
-                  </Link>
-
-                  <Link
-                    to="/profile"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block px-3 py-3 rounded-lg font-medium hover:bg-gray-500 border border-gray-300 no-underline text-white bg-gray-700"
-                  >
-                    Profile
                   </Link>
                 </>
               )}

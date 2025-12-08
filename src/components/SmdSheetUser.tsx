@@ -7,12 +7,12 @@ import StandardProductionSection from "./smd_Sheet/StandardProductions";
 import StandardVehicles from "./smd_Sheet/StandardVehicles";
 import TimeChangeModels from "./smd_Sheet/TimeChangeModels";
 import { useSmdSheet, SmdSheetProvider } from "../contexts/SmdSheetContext";
-import { useAuth } from "../pages/authLoginSample/AuthContext";
+import  { useAppSelector } from '../redux/hooks';
 
 // Component con - Nội dung sheet
 function SmdSheetContent() {
   const { submitToLogs, clearData, metadata } = useSmdSheet();
-  const { user } = useAuth();
+  const { user } = useAppSelector(state => state.auth);
   const navigate = useNavigate();
 
   // Kiểm tra quyền (CHỈ PQC được tạo sheet mới)

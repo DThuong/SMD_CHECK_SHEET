@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import CheckModels from "./smd_Sheet/CheckModels";
 import PQCChecks from "./smd_Sheet/PQCChecks";
 import ProgramChecks from "./smd_Sheet/ProgramChecks";
@@ -8,7 +7,6 @@ import StandardProductionSection from "./smd_Sheet/StandardProductions";
 import StandardVehicles from "./smd_Sheet/StandardVehicles";
 import TimeChangeModels from "./smd_Sheet/TimeChangeModels";
 import { useSmdSheet } from "../contexts/SmdSheetContext";
-import { useAuth } from "../pages/authLoginSample/AuthContext";
 
 interface SmdSheetDetailProps {
   logId: string;
@@ -20,11 +18,7 @@ const SmdSheetDetail: React.FC<SmdSheetDetailProps> = ({ logId, data, canEdit })
   const { 
     loadLogData,
     updateLogData,
-    sheetData
   } = useSmdSheet();
-
-  const { user } = useAuth();
-  const navigate = useNavigate();
 
   // Load dữ liệu khi component mount
   useEffect(() => {

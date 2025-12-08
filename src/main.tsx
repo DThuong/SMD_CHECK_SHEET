@@ -4,14 +4,16 @@ import App from './App.tsx'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter } from 'react-router-dom'
 import { ThemeProvider } from './contexts/ThemeContext.tsx';
-import AuthProvider from './pages/authLoginSample/AuthContext.tsx';
+import { Provider } from 'react-redux';
+import { store } from './redux/store.ts';
 
 createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
-        <ThemeProvider>
-            <AuthProvider>
-                <App />
-            </AuthProvider>
-        </ThemeProvider>
+     {/** redux provider */}
+        <Provider store={store}>
+            <ThemeProvider>
+                    <App />
+            </ThemeProvider>
+        </Provider>
     </BrowserRouter>,
 )

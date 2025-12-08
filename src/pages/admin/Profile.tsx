@@ -12,7 +12,7 @@ interface ProfileData {
   avatar: string | null;
 }
 
-const Profile: React.FC = () => {
+const Profile = () => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const { user } = useAuth();

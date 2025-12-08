@@ -64,39 +64,34 @@ export default function CheckModels() {
           <thead>
             <tr>
               <th rowSpan={2} className="border px-2 py-2 text-xs bg-gray-100">Line đổi</th>
-              <td rowSpan={2} className="border px-2 py-2 text-xs text-left"></td>
-              <td rowSpan={2} className="border px-2 py-2 text-xs text-left"></td>
+              <td rowSpan={2} className="border px-2 py-2 text-xs">{form.lineDoi || ""}</td>
+              <td rowSpan={2} className="border px-2 py-2 text-xs bg-gray-300"></td>
               <th className="border px-2 py-2 text-xs bg-gray-100">Model/Side</th>
               <th colSpan={2} className="border px-2 py-2 text-xs bg-gray-100">T/B</th>
               <th className="border px-2 py-2 text-xs bg-gray-100">REV S15</th>
-              <td className="border px-2 py-2"></td>
+              <td className="border px-2 py-2">{form.revS15 || ""}</td>
               <th rowSpan={2} className="border px-2 py-2 text-xs bg-gray-100">DATE</th>
               <th colSpan={2} className="border px-2 py-2 text-xs bg-gray-100">Thời gian kiểm tra xong Feeder list</th>
-              <td className="border px-2 py-2"></td>
-              <td rowSpan={2} className="border px-2 py-2">
-                <input
-                  type="date"
-                  className="border rounded w-full px-1 text-base"
-                  value={form.date ?? ""}
-                  onChange={(e) => set("date", e.target.value)}
-                />
-              </td>
+              <td className="border px-2 py-2 text-xs">{form.feederList || ""}</td>
+              <td rowSpan={2} className="border px-2 py-2 bg-gray-300"></td>
+              <td rowSpan={2} className="border px-2 py-2 bg-gray-300"></td>
             </tr>
 
             <tr>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">F Code(3in1)</th>
-              <td colSpan={2} className="border px-2 py-2 text-xs"></td>
+              <td colSpan={2} className="border px-2 py-2 text-xs">{form.modelSide || ""}</td>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">REV MOUNTER</th>
-              <td className="border px-2 py-2 text-xs"></td>
+              <td className="border px-2 py-2 text-xs">{form.revMounter || ""}</td>
               <th colSpan={2} className="border px-2 py-2 text-xs bg-gray-100">OP Mounter xác nhận</th>
-              <td className="border px-2 py-2 text-xs"></td>
+              <td className="border px-2 py-2 text-xs">{form.opMounter || ""}</td>
+
             </tr>
 
             <tr>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">PCB ver</th>
-              <td colSpan={2} className="border px-2 py-2 text-xs"></td>
+              <td colSpan={2} className="border px-2 py-2 text-xs">{form.fCode || ""}</td>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">Work Order</th>
-              <td className="border px-2 py-2">PD2025</td>
+              <td className="border px-2 py-2">{form.pcbVer || ""}</td>
               <th colSpan={2} className="border px-2 py-2 text-xs bg-gray-100">Sử dụng CN card</th>
               <td className="border px-2 py-2">
                 <div className="flex flex-col items-center gap-1">
@@ -105,7 +100,7 @@ export default function CheckModels() {
                 </div>
               </td>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">Qty</th>
-              <td className="border px-2 py-2 text-xs">{form.qty}</td>
+              <td className="border px-2 py-2 text-xs">{form.qty || ""}</td>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">JIG</th>
               <td className="border px-2 py-2">
                 <div className="flex flex-col items-center gap-1">
@@ -114,6 +109,7 @@ export default function CheckModels() {
                 </div>
               </td>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">Mã PCB</th>
+              <td className="border px-2 py-2 text-xs">{form.maPcb || ""}</td>
             </tr>
           </thead>
         </table>
@@ -300,7 +296,7 @@ export default function CheckModels() {
             <label className="text-xs">
               Thời gian kiểm tra xong Feeder List
               <input 
-                type="date" 
+                type="datetime-local" 
                 value={form.feederList ?? ""} 
                 onChange={(e) => set("feederList", e.target.value)} 
                 className="mt-1 block w-full border rounded px-3 py-2 text-base"
@@ -310,7 +306,7 @@ export default function CheckModels() {
             <label className="text-xs">
               Thời gian OP Mounter xác nhận
               <input 
-                type="date" 
+                type="datetime-local" 
                 value={form.opMounter ?? ""} 
                 onChange={(e) => set("opMounter", e.target.value)} 
                 className="mt-1 block w-full border rounded px-3 py-2 text-base"

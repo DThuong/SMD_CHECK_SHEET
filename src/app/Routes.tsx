@@ -7,15 +7,14 @@ import { Route, Routes, Navigate } from 'react-router-dom';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
 import ErrorPage from '../pages/ErrorPage';
-// admin pages
-import Dashboard from '../pages/admin/Dashboard';
+// boss pages
+// import Dashboard from '../pages/admin/Dashboard';
 import Profile from '../pages/admin/Profile';
 // import User from '../pages/admin/User';
 import Settings from '../pages/admin/Settings';
 import Logs from '../pages/admin/Logs';
 // useAuth
 import { useAuth } from '../pages/authLoginSample/AuthContext';
-import SmdSheetDetail from '../components/SmdSheetDetail';
 
 // Component bảo vệ route cho PQC (chỉ cho phép PQC vào)
 const PQCRoute = ({ children }: { children: React.ReactNode }) => {
@@ -102,10 +101,10 @@ const App = () => {
           </AdminRoute>
         }
       >
-        <Route path="/admin/dashboard" element={<Dashboard />} />
+        <Route path="/admin/dashboard" element={<h1>Dashboard</h1>} />
         <Route path="/admin/profile" element={<Profile />} />
         {/* <Route path="/admin/user" element={<User />} /> */}
-        <Route path="/admin/logs" element={<Logs />} />
+        <Route path='/admin/smd-sheet-logs' element={<Logs />} />
         <Route path="/admin/settings" element={<Settings />} />
         
         {/* Default admin route */}

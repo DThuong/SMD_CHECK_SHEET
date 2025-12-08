@@ -172,7 +172,7 @@ const Home = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4">
+    <div className="max-w-8xl mx-auto p-4">
       {/* Thông báo đăng nhập thành công */}
       {showNoti && (
         <div className="slide-noti w-full max-w-[900px] left-1/2 -translate-x-1/2">
@@ -337,13 +337,15 @@ const Home = () => {
                               {sheet.data?.checkModels?.workOrder || 'N/A'}
                             </span>
                             {sheet.confirmed && (
-                              <div className="px-2 py-1 bg-green-100 text-green-700 rounded-full lg:text-sm md:text-sm text-xs font-medium">
-                                ✓ Đã xác nhận
+                              <div className="px-2 py-1 lg:text-sm md:text-sm text-xs font-medium">
+                                {sheet?.submittedAt ? `(${formatDateTime(sheet.submittedAt)})` : ''}
+                                <div className='flex items-center gap-1 bg-green-100 text-green-700 rounded-full px-2 py-1 text-xs'><FaRegClock /> <span>Đã xác nhận</span></div>
                               </div>
                             )}
                             {!sheet.confirmed && (
-                              <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
-                                <FaRegClock /> <span>Chưa xác nhận</span>
+                              <div className="flex flex-col items-center gap-1 px-2 py-1  text-xs font-medium">
+                                <div>{sheet?.submittedAt ? `(${formatDateTime(sheet.submittedAt)})` : ''}</div>
+                                <div className='flex items-center gap-1 bg-orange-100 text-orange-700 rounded-full px-2 py-1'><FaRegClock /> <span>Chưa xác nhận</span></div>
                               </div>
                             )}
                           </div>

@@ -50,9 +50,9 @@ const SmdSheetDetail: React.FC<SmdSheetDetailProps> = ({ logId, data, canEdit })
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-8xl mx-auto my-4">
       {/* Banner thông báo mode */}
-      <div className={`mb-4 p-3 py-2 rounded-lg border ${
+      <div className={`mb-4 p-3 py-2 rounded-lg border border-gray-300 ${
         canEdit 
           ? 'bg-green-50 border-green-200' 
           : 'bg-yellow-50 border-yellow-200'

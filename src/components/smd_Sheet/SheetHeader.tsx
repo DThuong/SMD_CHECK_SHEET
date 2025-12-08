@@ -23,30 +23,28 @@ const initialHeaderProps: SheetHeaderProps = {
 const SheetHeader = () => {
   const { sheetData, updateSheetHeader} = useSmdSheet();
   const [open, setOpen] = useState(false);
-  // useEffect
-  useEffect(() => {
-    setForm(sheetData.sheetHeader);
-  }, [sheetData.sheetHeader]);
-
+  
   // State lưu trữ đối tượng File đã chọn
   const [form, setForm] = useState<SheetHeaderProps>(initialHeaderProps);
   
   // State tạm thời để lưu trữ file khi chỉnh sửa trong modal
   const [tempForm, setTempForm] = useState<SheetHeaderProps>(initialHeaderProps);
 
-  /**
-   * Hàm helper để cập nhật state form.
-   * @param k - key của thuộc tính cần cập nhật.
-   * @param v - giá trị mới (là đối tượng File hoặc undefined).
-   */
+  // useEffect - sync form với context khi data thay đổi
+  useEffect(() => {
+    setForm(sheetData.sheetHeader);
+  }, [sheetData.sheetHeader]);
+
   const set = <K extends keyof SheetHeaderProps>(k: K, v: SheetHeaderProps[K]) =>
     setTempForm((s) => ({ ...s, [k]: v }));
 
   /**
    * Hàm xử lý khi nhấn nút Lưu trong Modal.
+   * CẬP NHẬT: Lưu tempForm vào form chính, sau đó update context
    */
   const submit = () => {
-    updateSheetHeader(form);
+    setForm(tempForm); // Cập nhật form chính từ tempForm
+    updateSheetHeader(tempForm); // Cập nhật vào context
     setOpen(false);
     alert('Sheet Header updated successfully!');
   };
@@ -59,9 +57,6 @@ const SheetHeader = () => {
     setOpen(true);
   };
 
-  /**
-   * Xử lý khi người dùng chọn file thật trong Modal.
-   */
   const handleFileChange = (type: keyof SheetHeaderProps, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -69,16 +64,14 @@ const SheetHeader = () => {
     } else {
       set(type, undefined);
     }
-    // Sau khi chọn file, reset input để có thể chọn lại file cùng tên
     e.target.value = ''; 
   };
   
-  // Lấy tên file để hiển thị
+  // Lấy tên file để hiển thị - SỬ DỤNG FORM CHÍNH
   const lcrName = form.lcr?.name || "Chưa có file";
   const reflowName = form.reflow?.name || "Chưa có file";
   const tempLcrName = tempForm.lcr?.name || "Chưa có file";
   const tempReflowName = tempForm.reflow?.name || "Chưa có file";
-
 
   // *** PHẦN RENDER GIAO DIỆN ***
   return (

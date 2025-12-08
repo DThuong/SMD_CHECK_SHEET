@@ -5,27 +5,23 @@ import { useSmdSheet } from "../../contexts/SmdSheetContext";
 type PQCChecksState = {
   icPlan?: string;
   realChecksum?: string;
-  checksumConfirmed?: boolean;
-  acceptedChecksum?: string;
+  checksumConfirmed?: string;
   tuner?: string;
-  processStage?: string;
   startTimeLCR?: string;
   endTimeLCR?: string;
   pqcName?: string;
-  resultLCROk?: boolean;
+  resultLCR?: boolean;
 };
 
 const initialPQCChecksState: PQCChecksState = {
   icPlan: "",
   realChecksum: "",
-  checksumConfirmed: false,
-  acceptedChecksum: "",
+  checksumConfirmed: "",
   tuner: "",
-  processStage: "",
   startTimeLCR: "",
   endTimeLCR: "",
   pqcName: "",
-  resultLCROk: false,
+  resultLCR: false,
 };
 
 const PQCChecks = () => {
@@ -52,56 +48,70 @@ const PQCChecks = () => {
     <div className="p-0 py-4 w-full">
       {/* Website View - Bảng ngang */}
       <div className="hidden lg:block w-full overflow-x-auto">
-            <table className="border border-gray-600 w-full text-center opacity-60">
-                <tbody>
-         {/** Row 31 */}
-            <tr>
-                <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">PQC kiểm tra board đầu</th>
-                <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs"></td>
-            </tr>
+  <table className="border border-gray-600 w-full text-center opacity-60">
+    <tbody>
+      {/** Row 31 */}
+      <tr>
+        <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">PQC kiểm tra board đầu</th>
+        <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
+      </tr>
 
-            {/** Row 32 */}
-            <tr>
-                <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">IC nạp kế hoạch</th>
-                <td colSpan={8} className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Checksum thực tế</th>
-                <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Xác nhận có thay đổi <br /> check sum mới</th>
-                <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs"></td>
-            </tr>
+      {/** Row 32 */}
+      <tr>
+        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">IC nạp kế hoạch</th>
+        <td colSpan={8} className="border border-gray-600 px-2 py-2 text-xs">{form.icPlan || ""}</td>
+        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Checksum thực tế</th>
+        <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.realChecksum || ""}</td>
+        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Xác nhận có thay đổi <br /> check sum mới</th>
+        <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">
+          <div className="flex items-center justify-center">
+            <input 
+              type="text"
+              value={form.checksumConfirmed || ""}
+              onChange={(e) => set("checksumConfirmed", e.target.value)}
+            />
+          </div>
+        </td>
+      </tr>
 
-            {/** Row 33 */}
-            <tr>
-                <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Tuner</th>
-                <td colSpan={8} className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs"></td>
-            </tr>
+      {/** Row 33 */}
+      <tr>
+        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Tuner</th>
+        <td colSpan={8} className="border border-gray-600 px-2 py-2 text-xs">{form.tuner || ""}</td>
+        <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
+        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
+        <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
+      </tr>
 
-            {/** Row 34 */}
-            <tr>
-                <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Công đoạn</th>
-                <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Thời gian bắt đầu đo LCR</th>
-                <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Thời gian kết thúc đo LCR</th>
-                <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">tên</th>
-                <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Kết quả đo LCR</th>
-            </tr>
+      {/** Row 34 */}
+      <tr>
+        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Công đoạn</th>
+        <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Thời gian bắt đầu đo LCR</th>
+        <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Thời gian kết thúc đo LCR</th>
+        <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">tên</th>
+        <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Kết quả đo LCR</th>
+      </tr>
 
-            {/** Row 35 */}
-            <tr>
-                <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">PQC</th>
-                <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">
-                    <div className="flex items-center justify-center flex-row gap-2"><label className="font-bold">OK</label><input type="checkbox" /></div>
-              </td>
-            </tr>
-                </tbody>
-            </table>
- 
-    </div>
+      {/** Row 35 */}
+      <tr>
+        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">PQC</th>
+        <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">{form.startTimeLCR || ""}</td>
+        <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">{form.endTimeLCR || ""}</td>
+        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.pqcName || ""}</td>
+        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">
+          <div className="flex items-center justify-center flex-row gap-2">
+            <label className="font-bold">OK</label>
+            <input 
+              type="checkbox"
+              checked={!!form.resultLCR}
+              onChange={(e) => set("resultLCR", e.target.checked)}
+            />
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
       {/* Mobile View - Card dọc (mỗi trường 1 dòng full-width) */}
       <div className="lg:hidden">
@@ -125,7 +135,7 @@ const PQCChecks = () => {
           <div className="mb-3 min-w-0">
             <div className="text-xs font-semibold text-gray-600 mb-1">Xác nhận khi có thay đổi Checksum mới</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
-              {form.acceptedChecksum || (form.checksumConfirmed ? "Đã xác nhận" : "—")}
+              {form.checksumConfirmed || "—"}
             </div>
           </div>
 
@@ -160,7 +170,7 @@ const PQCChecks = () => {
           <div className="mb-0 min-w-0">
             <div className="text-xs font-semibold text-gray-600 mb-1">Kết quả đo LCR</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.resultLCROk ? "OK" : "NG"}
+              {form.resultLCR ? "OK" : "NG"}
             </div>
           </div>
         </div>
@@ -196,8 +206,8 @@ const PQCChecks = () => {
           <label className="text-xs">
             Xác nhận khi có thay đổi Checksum mới
             <input
-              value={form.acceptedChecksum ?? ""}
-              onChange={(e) => set("acceptedChecksum", e.target.value)}
+              value={form.checksumConfirmed ?? ""}
+              onChange={(e) => set("checksumConfirmed", e.target.value)}
               className="mt-1 block w-full border rounded px-3 py-2 text-sm"
             />
           </label>
@@ -212,31 +222,29 @@ const PQCChecks = () => {
               />
             </label>
 
-            <label className="text-xs">
-              Công đoạn
-              <input
-                value={form.processStage ?? ""}
-                onChange={(e) => set("processStage", e.target.value)}
-                className="mt-1 block w-full border rounded px-3 py-2 text-sm"
-              />
-            </label>
           </div>
 
-            <div className="grid grid-cols-2 gap-3">
-            <label className="text-xs">
-                Thời gian bắt đầu đo LCR
-                <div className="mt-2">
-                    <input type="time" name="" id="" className="border border-gray-200 py-2 px-2 w-full" />
-                </div>
-            </label>
+         <div className="grid grid-cols-2 gap-3">
+      <label className="text-xs">
+        Thời gian bắt đầu đo LCR
+        <input 
+          type="time" 
+          value={form.startTimeLCR ?? ""}
+          onChange={(e) => set("startTimeLCR", e.target.value)}
+          className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+        />
+      </label>
 
-            <label className="text-xs">
-                Thời gian kết thúc đo LCR
-                <div className="mt-2">
-                    <input type="time" name="" id="" className="border border-gray-200 py-2 px-2 w-full" />
-                </div>
-            </label>
-        </div>
+      <label className="text-xs">
+        Thời gian kết thúc đo LCR
+        <input 
+          type="time" 
+          value={form.endTimeLCR ?? ""}
+          onChange={(e) => set("endTimeLCR", e.target.value)}
+          className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+        />
+      </label>
+    </div>
 
           <label className="text-xs">
             Tên PQC
@@ -249,20 +257,7 @@ const PQCChecks = () => {
 
           <div className="flex items-center gap-2">
             <div className="text-xs">Kết quả đo LCR</div>
-            <button
-              type="button"
-              onClick={() => set("resultLCROk", true)}
-              className={`px-3 py-2 rounded text-sm border ${form.resultLCROk ? "bg-blue-100 border-blue-500" : ""}`}
-            >
-              OK
-            </button>
-            <button
-              type="button"
-              onClick={() => set("resultLCROk", false)}
-              className={`px-3 py-2 rounded text-sm border ${form.resultLCROk === false ? "bg-blue-100 border-blue-500" : ""}`}
-            >
-              NG
-            </button>
+            <input type="checkbox" checked={form.resultLCR} onChange={(e) => set("resultLCR", e.target.checked)} />
           </div>
 
         </div>

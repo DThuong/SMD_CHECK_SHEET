@@ -36,7 +36,7 @@ const AdminLayout = () => {
   const menuItems = [
     { name: "Dashboard", path: "dashboard" },
     { name: "Profile", path: "profile" },
-    { name: "Logs", path: "logs" },
+    { name: "SMD SHEET", path: "smd-sheet-logs" },
     { name: "Settings", path: "settings" },
   ];
 
@@ -54,13 +54,12 @@ const AdminLayout = () => {
                   <p className="font-bold text-green-800 text-lg">Đăng nhập thành công!</p>
                   <p className="text-green-700 text-sm mt-1">
                     User: <strong>{user?.fullName}</strong> - Role: <strong>{user?.role}</strong>
-                    
                   </p>
           </div>
       </div>
       }
       {/* Header - Fixed top */}
-    <header className="bg-white shadow-md z-40 relative flex">
+      <header className="bg-white shadow-md z-40 relative flex">
         {/* Phần header sidebar - chỉ hiện trên desktop */}
         <div className="hidden md:block w-64 lg:w-96 px-4 py-3 border-gray-200">
           <Link to="/admin/dashboard" className="text-decoration-none lg:text-4xl md:text-2xl font-bold text-gray-800!">{user?.role} Dashboard</Link>

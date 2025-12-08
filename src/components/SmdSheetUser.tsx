@@ -35,19 +35,19 @@ function SmdSheetContent() {
 
   // Xử lý submit
   const handleSubmitToLogs = () => {
-    if (window.confirm('Bạn có chắc chắn muốn gửi sheet này? Sau khi gửi, chỉ ENG và SUPERVISOR mới có thể chỉnh sửa.')) {
       const success = submitToLogs();
       if (success) {
         alert('✅ Sheet đã được gửi thành công! Form đã được reset để tạo sheet mới.');
         // Form đã tự động reset trong submitToLogs()
         // Không cần navigate, user ở lại trang để tạo sheet mới
         window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+      } else {
+        alert('❌ Lỗi khi gửi sheet.');
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-8xl mx-auto">
       {/* Hiển thị thông tin draft */}
       {metadata.submittedAt && (
         <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -77,12 +77,12 @@ function SmdSheetContent() {
       <PQCChecks />
 
       {/* Nút hành động - Sticky bottom */}
-      <div className="sticky bottom-0 bg-white border-gray-300 p-4 flex gap-3 justify-end shadow-lg flex-col">
+      <div className="max-w-4xl sticky bottom-0 left-1/4 bg-white border-gray-300 p-4 flex gap-3 justify-center shadow-lg flex-col">
         <button
           onClick={clearData}
           className="px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition-colors"
         >
-          Xóa draft
+          Xóa (Draft)
         </button>
         
         {/* <button

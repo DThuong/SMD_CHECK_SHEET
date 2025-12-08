@@ -51,7 +51,7 @@ const ProgramChecks = () => {
                 <th rowSpan={2} colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chương trình Mounter</th>
                 <th className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Point</th>
                 <th rowSpan={2} colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chương trình M-AOI</th>
-                <td className="border border-gray-600 px-2 py-2 text-xs"></td>
+                <td className="border border-gray-600 px-2 py-2 text-xs bg-gray-100"></td>
                 <th rowSpan={2} colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chương trình S-AOI</th>
                 <th className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Point</th>
                 <th rowSpan={2} colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chương trình Reflow</th>
@@ -60,20 +60,20 @@ const ProgramChecks = () => {
 
               {/* Row 8 */}
               <tr>
+                <td className="border border-gray-600 px-2 py-2 text-xs">{form.pointMounter || ""}</td>
                 <td className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td className="border border-gray-600 px-2 py-2 text-xs"></td>
+                <td className="border border-gray-600 px-2 py-2 text-xs">{form.pointSaoi || ""}</td>
+                <td className="border border-gray-600 px-2 py-2 text-xs">{form.reflowSpeed || ""}</td>
               </tr>
 
               {/* Row 9 */}
               <tr>
-                <td className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td colSpan={3} className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td colSpan={3} className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td colSpan={3} className="border border-gray-600 px-2 py-2 text-xs"></td>
+                <td className="border border-gray-600 px-2 py-2 text-xs">{form.printer || ""}</td>
+                <td className="border border-gray-600 px-2 py-2 text-xs">{form.spi || ""}</td>
+                <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.mounter || ""}</td>
+                <td colSpan={3} className="border border-gray-600 px-2 py-2 text-xs">{form.mAoi || ""}</td>
+                <td colSpan={3} className="border border-gray-600 px-2 py-2 text-xs">{form.sAoi || ""}</td>
+                <td colSpan={3} className="border border-gray-600 px-2 py-2 text-xs">{form.reflow || ""}</td>
               </tr>
 
           </tbody>
@@ -180,7 +180,7 @@ const ProgramChecks = () => {
 >
   <div className="grid gap-3 max-h-[60vh] overflow-y-auto">
     <label className="text-xs">
-      Line đổi (Printer)
+      Chương trình Printer
       <input
         value={form.printer ?? ""}
         onChange={(e) => set("printer", e.target.value)}
@@ -190,7 +190,7 @@ const ProgramChecks = () => {
     </label>
 
     <label className="text-xs">
-      SPI
+      Chương trình SPI
       <input
         value={form.spi ?? ""}
         onChange={(e) => set("spi", e.target.value)}
@@ -200,7 +200,7 @@ const ProgramChecks = () => {
     </label>
 
     <label className="text-xs">
-      Mounter
+      Chương trình Mounter
       <input
         value={form.mounter ?? ""}
         onChange={(e) => set("mounter", e.target.value)}

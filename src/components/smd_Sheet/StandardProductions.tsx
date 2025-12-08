@@ -26,64 +26,78 @@ const initialStandardProductState: StandardProductState = {
 // Standard Production Section
 const StandardProductionSection = () => {
   const {sheetData  , updateStandardProduction} = useSmdSheet();
+  const [form, setForm] = useState<StandardProductState>(initialStandardProductState);
+  const [open, setOpen] = useState(false);
+
+
   useEffect(() => {
     setForm(sheetData.standardProduction);
   }, [sheetData.standardProduction]);
-      const [form, setForm] = useState<StandardProductState>(initialStandardProductState);
-        const [open, setOpen] = useState(false);
+
+  const set = <K extends keyof StandardProductState>(k: K, v: StandardProductState[K]) =>
+  setForm((s) => ({ ...s, [k]: v }));
     
-        const set = <K extends keyof StandardProductState>(k: K, v: StandardProductState[K]) =>
-        setForm((s) => ({ ...s, [k]: v }));
-    
-        const submit = () => {
-          updateStandardProduction(form);
-          setOpen(false);
-          alert('Standard Production updated successfully!');
-        };
+  const submit = () => {
+    updateStandardProduction(form);
+    setOpen(false);
+    alert('Standard Production updated successfully!');
+  };
   return (
     <div className="p-0 py-4 w-full">
         {/** repsponsive for website */}
         <div className='hidden lg:block w-full overflow-x-auto'>
         <table className="border border-gray-600 w-full text-center opacity-60">
-            <tbody>
+          <tbody>
             {/* Row 10 */}
-                <tr>
-                <th rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Tiêu chuẩn sản xuất</th>
-                <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số quản lý trên Mask</th>
-                <td className="border border-gray-600 px-2 py-2"></td>
-                <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số dao quét numMask</th>
-                <td className="border border-gray-600 px-2 py-2"></td>
-                <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Liệu MSL3 mở đóng gói</th>
-                <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chỉ sử dụng</th>
-                <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chương trình máy label</th>
-                </tr>
+            <tr>
+              <th rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Tiêu chuẩn sản xuất</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số quản lý trên Mask</th>
+              <td className="border border-gray-600 px-2 py-2 text-xs">{form.numMask || ""}</td>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số dao quét Printer</th>
+              <td className="border border-gray-600 px-2 py-2 text-xs">{form.numDaoPrinter || ""}</td>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Liệu MSL3 mở đóng gói</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chỉ sử dụng</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chương trình máy label</th>
+            </tr>
 
-                {/* Row 11 */}
-                <tr>
-                <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số đăng ký trên MES</th>
-                <td className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số đăng ký dao quét trên MES</th>
-                <td className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs"></td>
-                <td colSpan={2} className="border border-gray-600 px-2 py-2">
-                    <div className="flex flex-row justify-center items-center gap-3">
-                    <div className="flex flex-row items-center justify-center gap-1"><input type="checkbox" className="w-4 h-4"/><label className="flex items-center justify-center gap-2">
-                        Duksan
-                    </label></div>
-                    <div className="flex flex-row items-center justify-center gap-1">
-                        <input type="checkbox" className="w-4 h-4"/>
-                        <label className="flex items-center justify-center gap-2">
-                        Heesung
+            {/* Row 11 */}
+            <tr>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số đăng ký trên MES</th>
+              <td className="border border-gray-600 px-2 py-2 text-xs">{form.numMes || ""}</td>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số đăng ký dao quét trên MES</th>
+              <td className="border border-gray-600 px-2 py-2 text-xs">{form.numDaoMes || ""}</td>
+              <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.msl3Closed || ""}</td>
+              <td colSpan={2} className="border border-gray-600 px-2 py-2">
+                <div className="flex flex-row justify-center items-center gap-3">
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4"
+                      checked={form.exclusiveUse === "Duksan"}
+                      onChange={() => set("exclusiveUse", form.exclusiveUse === "Duksan" ? undefined : "Duksan")}
+                    />
+                    <label className="flex items-center justify-center gap-2 text-xs">
+                      Duksan
                     </label>
-                    </div>
-                    </div>
-                </td>
-                <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs"></td>
-                </tr>
-            </tbody>
+                  </div>
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4"
+                      checked={form.exclusiveUse === "Heesung"}
+                      onChange={() => set("exclusiveUse", form.exclusiveUse === "Heesung" ? undefined : "Heesung")}
+                    />
+                    <label className="flex items-center justify-center gap-2 text-xs">
+                      Heesung
+                    </label>
+                  </div>
+                </div>
+              </td>
+              <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.labelProgram || ""}</td>
+            </tr>
+          </tbody>
         </table>
-        
-        </div>
+      </div>
         
 {/* Responsive for mobile */}
 {/* Mobile View - Card dọc */}

@@ -48,91 +48,66 @@ type StandardProductData = {
 // standardVehicles
 type StandardVehiclesData = {
   printer: {
-    screenSprintSetting?: string;
-    screenSprintSpec?: string;
-    screenSprintActual?: string;
-    pressureSpec?: string;
-    pressureActual?: string;
-    scanSpeedSpec?: string;
-    scanSpeedActual?: string;
-    separationSpeedSpec?: string;
-    separationSpeedActual?: string;
-    wipeCountSpec?: string;
-    wipeCountActual?: string;
-    bladeUsedSpec?: string;
-    bladeUsedActual?: string;
-    vacuumBlockOk: boolean;
-    vacuumBlockNote?: string;
+    pressureSpec?: string;                    // Giá trị áp lực Spec (kg)
+    scanSpeedSpec?: string;                   // Tốc độ quét Spec (mm/s)
+    separationSpeedSpec?: string;             // Tốc độ khoảng cách tách bàn Spec (mm/s)
+    wipeCountSpec?: string;                   // Số lần lau Spec
+    bladeUsedSpec?: string;                   // Dao sử dụng Spec
+    pressureActual?: string;                  // Giá trị áp lực thực tế trên máy (kg)
+    scanSpeedActual?: string;                 // Tốc độ quét thực tế trên máy (mm/s)
+    separationSpeedActual?: string;           // Tốc độ tách bàn thực tế trên máy (mm/s)
+    wipeCountActual?: string;                 // Số lần lau thực tế trên máy
+    bladeUsedActual?: string;                 // Dao sử dụng thực tế trên máy
+    vacuumBlockOk: boolean;                   // Sau khi sử dụng Vaccum Block
   };
   spi: {
-    inspectionCheck?: string;
-    inspectionSettingOk: boolean;
-    inspectionSettingNote?: string;
+    inspectionSettingOk: boolean;             // Điều kiện setting Inspection
   };
   mount: {
-    firstThreeBoardsOk: boolean;
-    firstThreeBoardsNote?: string;
-    bottomBoardOk: boolean;
-    bottomBoardNote?: string;
+    firstThreeBoardsOk: boolean;              // Kiểm tra 3 board đầu tiên
+    bottomBoardOk: boolean;                   // Kiểm tra 1 tấm ở mặt dưới
   };
   reflow: {
-    conveyorWidthOk: boolean;
-    conveyorWidthNote?: string;
-    railSettingValue?: string;
-    railActualValue?: string;
-    railCheckOk: boolean;
-    railCheckNote?: string;
+    conveyorWidthOk: boolean;                 // Kiểm tra tình trạng chiều rộng của Conveyor
+    railSettingValue?: string;                // Giá trị cài đặt Rail (mm)
+    railActualValue?: string;                 // Giá trị thực tế Rail (mm)
   };
   aoi: {
-    xrayThreeBoardsOk: boolean;
-    xrayInspector?: string;
+    xrayThreeBoardsOk: boolean;               // Xoay 3 board đầu tiên
+    xrayInspector?: string;                   // Người kiểm tra
   };
   output: {
-    magazineDistanceOk: boolean;
-    magazineInspector?: string;
-    settingModel?: string;
-    settingPitch?: string;
+    magazineDistanceOk: boolean;              // Kiểm tra tình trạng setting
+    magazineInspector?: string;               // Người kiểm tra
+    settingModel?: string;                    // Giá trị cài đặt theo yêu cầu Model
+    settingPitch?: string;                    // Giá trị cài đặt theo yêu cầu Pitch
   };
   worker: {
-    opName?: string;
-    opNote?: string;
-    aoiName?: string;
-    aoiNote?: string;
-  };
-  sampleInspection: {
-    errorName1?: string;
-    errorCount1?: string;
-    repairStatus1?: string;
-    errorName2?: string;
-    errorCount2?: string;
-    repairStatus2?: string;
+    opName?: string;                          // Tên OP
+    aoiName?: string;                         // Tên AOI
   };
 };
 
 // timeChangeData
 type TimeChangeData = {
-  resultStart?: string;
-  resultEnd?: string;
-  resultMinutes?: number;
-  resultHistory?: string;
-  qcStart?: string;
-  qcEnd?: string;
-  qcMinutes?: number;
-  qcHistory?: string;
+  resultName?: string;   
+  timeStart?: string;
+  timeEnd?: string;        
+  minutes?: number;    
+  history?: string;  
+  qcName?: string;  
 };
 
 // pqcChecks
 type PQCChecksData = {
   icPlan?: string;
   realChecksum?: string;
-  checksumConfirmed?: boolean;
-  acceptedChecksum?: string;
+  checksumConfirmed?: string;
   tuner?: string;
-  processStage?: string;
   startTimeLCR?: string;
   endTimeLCR?: string;
   pqcName?: string;
-  resultLCROk?: boolean;
+  resultLCR?: boolean;
 };
 
 // sheetHeader
@@ -159,7 +134,7 @@ type SheetMetadata = {
   role?: string;
 };
 
-// ✅ Định nghĩa kiểu cho Log
+// Định nghĩa kiểu cho Log
 type SmdLog = {
   id: string;
   submittedBy: string;
@@ -209,11 +184,10 @@ const getInitialSheetData = (): SmdSheetData => ({
     printer: { vacuumBlockOk: false },
     spi: { inspectionSettingOk: false },
     mount: { firstThreeBoardsOk: false, bottomBoardOk: false },
-    reflow: { conveyorWidthOk: false, railCheckOk: false },
+    reflow: { conveyorWidthOk: false },
     aoi: { xrayThreeBoardsOk: false },
     output: { magazineDistanceOk: false },
     worker: {},
-    sampleInspection: {},
   },
   timeChange: {},
   pqcChecks: {},
@@ -262,31 +236,7 @@ export function SmdSheetProvider({ children }: { children: ReactNode }) {
     setSheetData((prev) => ({ ...prev, sheetHeader: data }));
   };
 
-//   // Lưu tạm (Draft) - CHỈ PQC dùng
-//   const saveToLocalStorage = () => {
-//     try {
-//       const dataToSave = {
-//         sheetData,
-//         metadata: {
-//           ...metadata,
-//           submittedBy: user?.fullName || 'Unknown User',
-//           submittedAt: new Date().toISOString(),
-//           role: user?.role || 'Unknown Role',
-//         },
-//       };
-
-//       localStorage.setItem("smd_sheet_data", JSON.stringify(dataToSave));
-//       setMetadata(dataToSave.metadata);
-
-//       alert("✅ Dữ liệu đã được lưu tạm thành công!");
-//       console.log("Draft saved:", dataToSave);
-//     } catch (error) {
-//       console.error("Error saving to localStorage:", error);
-//       alert("❌ Có lỗi khi lưu dữ liệu!");
-//     }
-//   };
-
-  // ✅ Submit sheet vào logs (PQC gửi lần đầu)
+  // Submit sheet vào logs (PQC gửi lần đầu)
   const submitToLogs = (): boolean => {
     try {
       if (!user) {
@@ -435,7 +385,6 @@ export function SmdSheetProvider({ children }: { children: ReactNode }) {
         updateTimeChange,
         updatePQCChecks,
         updateSheetHeader,
-        // saveToLocalStorage,
         submitToLogs,
         loadFromLocalStorage,
         loadLogData,

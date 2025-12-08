@@ -4,25 +4,21 @@ import ViewDetailButton from "../ViewDetailButton";
 import { useSmdSheet } from "../../contexts/SmdSheetContext";
 
 type TimeChangeState = {
-  resultStart?: string;      // Thời gian bắt đầu Result
-  resultEnd?: string;         // Thời gian kết thúc Result
-  resultMinutes?: number;     // Số phút Result
-  resultHistory?: string;     // Lịch sử Result
-  qcStart?: string;          // Thời gian bắt đầu QC
-  qcEnd?: string;            // Thời gian kết thúc QC
-  qcMinutes?: number;        // Số phút QC
-  qcHistory?: string;        // Lịch sử QC
+  resultName?: string;   
+  timeStart?: string;
+  timeEnd?: string;        
+  minutes?: number;    
+  history?: string;  
+  qcName?: string;          
 };
 
 const initialTimeChangeState: TimeChangeState = {
-  resultStart: "",
-  resultEnd: "",
-  resultMinutes: undefined,
-  resultHistory: "",
-  qcStart: "",
-  qcEnd: "",
-  qcMinutes: undefined,
-  qcHistory: "",
+  resultName: "",   
+  timeStart: "",
+  timeEnd: "",        
+  minutes: undefined,    
+  history: "",  
+  qcName: "",   
 };
 
 const TimeChangeModels = () => {
@@ -55,12 +51,13 @@ const TimeChangeModels = () => {
               <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">
                 Thời gian đổi model
               </th>
-              <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs"></td>
+              <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
             </tr>
 
             {/* Row 13 - Section Headers */}
             <tr>
               <th className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Hạng mục</th>
+              <th className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Tên</th>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Thời gian bắt đầu</th>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Thời gian kết thúc</th>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số phút</th>
@@ -70,77 +67,17 @@ const TimeChangeModels = () => {
             {/* Row 14 - Result */}
             <tr>
               <th className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Result</th>
-              <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">
-                <input
-                  type="time"
-                  value={form.resultStart ?? ""}
-                  onChange={(e) => set("resultStart", e.target.value)}
-                  className="w-full px-2 py-1 text-sm border rounded"
-                />
-              </td>
-              <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">
-                <input
-                  type="time"
-                  value={form.resultEnd ?? ""}
-                  onChange={(e) => set("resultEnd", e.target.value)}
-                  className="w-full px-2 py-1 text-sm border rounded"
-                />
-              </td>
-              <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">
-                <input
-                  type="number"
-                  value={form.resultMinutes ?? ""}
-                  onChange={(e) => set("resultMinutes", e.target.value ? Number(e.target.value) : undefined)}
-                  className="w-full px-2 py-1 text-sm border rounded"
-                  placeholder="Phút"
-                />
-              </td>
-              <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">
-                <textarea
-                  value={form.resultHistory ?? ""}
-                  onChange={(e) => set("resultHistory", e.target.value)}
-                  className="w-full px-2 py-1 text-sm border rounded min-h-[40px] resize-y"
-                  placeholder="Nhập lịch sử..."
-                />
-              </td>
+              <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.resultName || ""}</td>
+              <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.timeStart || ""}</td>
+              <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.timeEnd || ""}</td>
+              <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.minutes ?? ""}</td>
+              <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.history || ""}</td>
             </tr>
 
             {/* Row 15 - QC */}
             <tr>
               <th className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">QC</th>
-              <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">
-                <input
-                  type="time"
-                  value={form.qcStart ?? ""}
-                  onChange={(e) => set("qcStart", e.target.value)}
-                  className="w-full px-2 py-1 text-sm border rounded"
-                />
-              </td>
-              <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">
-                <input
-                  type="time"
-                  value={form.qcEnd ?? ""}
-                  onChange={(e) => set("qcEnd", e.target.value)}
-                  className="w-full px-2 py-1 text-sm border rounded"
-                />
-              </td>
-              <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">
-                <input
-                  type="number"
-                  value={form.qcMinutes ?? ""}
-                  onChange={(e) => set("qcMinutes", e.target.value ? Number(e.target.value) : undefined)}
-                  className="w-full px-2 py-1 text-sm border rounded"
-                  placeholder="Phút"
-                />
-              </td>
-              <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">
-                <textarea
-                  value={form.qcHistory ?? ""}
-                  onChange={(e) => set("qcHistory", e.target.value)}
-                  className="w-full px-2 py-1 text-sm border rounded min-h-[40px] resize-y"
-                  placeholder="Nhập lịch sử..."
-                />
-              </td>
+              <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.qcName || ""}</td>
             </tr>
           </tbody>
         </table>
@@ -149,13 +86,29 @@ const TimeChangeModels = () => {
       {/* Mobile View - Card dọc */}
       <div className="lg:hidden">
         <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
-          <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200">Result</h3>
+          <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200">Thời gian đổi model</h3>
+
+          {/* tên QC */}
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">Tên QC</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
+              {form.qcName || "—"}
+            </div>
+          </div>
+
+          {/* Tên Result */}
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">Tên Result</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
+              {form.resultName || "—"}
+            </div>
+          </div>
           
           {/* Thời gian bắt đầu */}
           <div className="mb-3">
             <div className="text-xs font-semibold text-gray-600 mb-1">Thời gian bắt đầu</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.resultStart || "—"}
+              {form.timeStart || "—"}
             </div>
           </div>
 
@@ -163,7 +116,7 @@ const TimeChangeModels = () => {
           <div className="mb-3">
             <div className="text-xs font-semibold text-gray-600 mb-1">Thời gian kết thúc</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.resultEnd || "—"}
+              {form.timeEnd || "—"}
             </div>
           </div>
 
@@ -171,7 +124,7 @@ const TimeChangeModels = () => {
           <div className="mb-3">
             <div className="text-xs font-semibold text-gray-600 mb-1">Số phút</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.resultMinutes ?? "—"}
+              {form.minutes ?? "—"}
             </div>
           </div>
 
@@ -179,46 +132,11 @@ const TimeChangeModels = () => {
           <div className="mb-3 min-w-0">
             <div className="text-xs font-semibold text-gray-600 mb-1">Lịch sử</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 whitespace-pre-wrap wrap-break-word">
-              {form.resultHistory || "—"}
+              {form.history || "—"}
             </div>
           </div>
         </div>
 
-        <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm" onClick={() => setOpen(true)}>
-          <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200">QC</h3>
-          
-          {/* Thời gian bắt đầu */}
-          <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Thời gian bắt đầu</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.qcStart || "—"}
-            </div>
-          </div>
-
-          {/* Thời gian kết thúc */}
-          <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Thời gian kết thúc</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.qcEnd || "—"}
-            </div>
-          </div>
-
-          {/* Số phút */}
-          <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Số phút</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.qcMinutes ?? "—"}
-            </div>
-          </div>
-
-          {/* Lịch sử */}
-          <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Lịch sử</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 whitespace-pre-wrap wrap-break-word">
-              {form.qcHistory || "—"}
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Buttons */}
@@ -235,17 +153,36 @@ const TimeChangeModels = () => {
   onSave={submit}
 >
   <div className="grid gap-3 max-h-[60vh] overflow-y-auto px-1">
-    {/* Result Section */}
+    {/* Time change model Section */}
     <div className="pb-3 border-b border-gray-200">
-      <h4 className="text-sm font-semibold mb-3 text-gray-700">Result</h4>
-      
       <div className="grid grid-cols-2 gap-3 mb-3">
+
+        <div className="min-w-0">
+          <label className="text-xs block mb-1">Tên QC</label>
+          <input
+            type="text"
+            value={form.qcName ?? ""}
+            onChange={(e) => set("qcName", e.target.value)}
+            className="block w-full border rounded px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div className="min-w-0">
+          <label className="text-xs block mb-1">Tên Result</label>
+          <input
+            type="text"
+            value={form.resultName ?? ""}
+            onChange={(e) => set("resultName", e.target.value)}
+            className="block w-full border rounded px-3 py-2 text-sm"
+          />
+        </div>
+        
         <div className="min-w-0">
           <label className="text-xs block mb-1">Thời gian bắt đầu</label>
           <input
             type="time"
-            value={form.resultStart ?? ""}
-            onChange={(e) => set("resultStart", e.target.value)}
+            value={form.timeStart ?? ""}
+            onChange={(e) => set("timeStart", e.target.value)}
             className="block w-full border rounded px-3 py-2 text-sm"
           />
         </div>
@@ -254,8 +191,8 @@ const TimeChangeModels = () => {
           <label className="text-xs block mb-1">Thời gian kết thúc</label>
           <input
             type="time"
-            value={form.resultEnd ?? ""}
-            onChange={(e) => set("resultEnd", e.target.value)}
+            value={form.timeEnd ?? ""}
+            onChange={(e) => set("timeEnd", e.target.value)}
             className="block w-full border rounded px-3 py-2 text-sm"
           />
         </div>
@@ -265,8 +202,8 @@ const TimeChangeModels = () => {
         <label className="text-xs block mb-1">Số phút</label>
         <input
           type="number"
-          value={form.resultMinutes ?? ""}
-          onChange={(e) => set("resultMinutes", e.target.value ? Number(e.target.value) : undefined)}
+          value={form.minutes ?? ""}
+          onChange={(e) => set("minutes", e.target.value ? Number(e.target.value) : undefined)}
           className="block w-full border rounded px-3 py-2 text-sm"
           placeholder="Nhập số phút..."
         />
@@ -275,56 +212,8 @@ const TimeChangeModels = () => {
       <div className="min-w-0">
         <label className="text-xs block mb-1">Lịch sử</label>
         <textarea
-          value={form.resultHistory ?? ""}
-          onChange={(e) => set("resultHistory", e.target.value)}
-          className="focus:outline-none block w-full border rounded px-3 py-2 text-sm min-h-20 resize-y wrap-break-words"
-          placeholder="Nhập lịch sử..."
-        />
-      </div>
-    </div>
-
-    {/* QC Section */}
-    <div className="">
-      <h4 className="text-sm font-semibold mb-3 text-gray-700">QC</h4>
-      
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="min-w-0">
-          <label className="text-xs block mb-1">Thời gian bắt đầu</label>
-          <input
-            type="time"
-            value={form.qcStart ?? ""}
-            onChange={(e) => set("qcStart", e.target.value)}
-            className="block w-full border rounded px-3 py-2 text-sm"
-          />
-        </div>
-
-        <div className="min-w-0">
-          <label className="text-xs block mb-1">Thời gian kết thúc</label>
-          <input
-            type="time"
-            value={form.qcEnd ?? ""}
-            onChange={(e) => set("qcEnd", e.target.value)}
-            className="block w-full border rounded px-3 py-2 text-sm"
-          />
-        </div>
-      </div>
-
-      <div className="mb-3 min-w-0">
-        <label className="text-xs block mb-1">Số phút</label>
-        <input
-          type="number"
-          value={form.qcMinutes ?? ""}
-          onChange={(e) => set("qcMinutes", e.target.value ? Number(e.target.value) : undefined)}
-          className="block w-full border rounded px-3 py-2 text-sm"
-          placeholder="Nhập số phút..."
-        />
-      </div>
-
-      <div className="min-w-0">
-        <label className="text-xs block mb-1">Lịch sử</label>
-        <textarea
-          value={form.qcHistory ?? ""}
-          onChange={(e) => set("qcHistory", e.target.value)}
+          value={form.history ?? ""}
+          onChange={(e) => set("history", e.target.value)}
           className="focus:outline-none block w-full border rounded px-3 py-2 text-sm min-h-20 resize-y wrap-break-words"
           placeholder="Nhập lịch sử..."
         />

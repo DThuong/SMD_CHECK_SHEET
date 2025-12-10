@@ -24,21 +24,16 @@ const initialFormState: CheckModelData = {
 
 export default function CheckModels() {
   const dispatch = useAppDispatch();
-  // khai báo loading để xử lý loading state trong modal
   const { completedTables } = useAppSelector(state => state.subTable);
-  // lấy checkModel data từ redux store
   const {checkModel} = useAppSelector(state => state.subTable);
-  // lấy checkModel id từ currentSheet trong changeModel Slice
   const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
   const checkModelId = currentSheet?.checkModelId;
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<CheckModelData>(initialFormState);
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isSaved = completedTables.includes('CheckModel');
 
-  // sync form với redux store thay vì sử dụng context
   useEffect(() => {
       if (checkModel) {
         setForm(checkModel);
@@ -48,38 +43,8 @@ export default function CheckModels() {
   const set = <K extends keyof CheckModelData>(k: K, v: CheckModelData[K]) =>
     setForm((s) => ({ ...s, [k]: v }));
 
-  // VALIDATION
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    // Required fields
-    if (!form.lineChange?.trim()) {
-      newErrors.lineChange = "Vui lòng nhập Line đổi";
-    }
-    if (!form.model?.trim()) {
-      newErrors.model = "Vui lòng nhập Model/Side";
-    }
-    if (!form.workOrder?.trim()) {
-      newErrors.workOrder = "Vui lòng nhập WorkOrder";
-    }
-
-    // Number validation
-    if (form.qty !== undefined && form.qty < 0) {
-      newErrors.qty = "Qty phải là số dương";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // thay đổi submit
+  // ✅ SUBMIT WITHOUT VALIDATION
   const submit = async () => {
-    // Validate
-    if (!validate()) {
-      alert('❌ Vui lòng kiểm tra lại các trường bắt buộc!');
-      return;
-    }
-
     if (!checkModelId) {
       alert('❌ Không có CheckModel ID!');
       return;
@@ -109,7 +74,6 @@ export default function CheckModels() {
       })).unwrap();
       
       setOpen(false);
-      setErrors({});
       
     } catch (error: any) {
       console.error('❌ Lỗi:', error);
@@ -131,7 +95,7 @@ export default function CheckModels() {
         </div>
       )}
 
-      {/* Website View - Table (giữ nguyên từ component gốc) */}
+      {/* Website View - Table */}
       <div className="hidden lg:block w-full overflow-x-auto">
         <table className="border border-gray-600 w-full text-center opacity-60">
           <thead>
@@ -212,51 +176,40 @@ export default function CheckModels() {
         </ViewDetailButton>
       </div>
 
-      {/* Modal with Validation */}
+     {/* Modal without Validation */}
       <Modal
         open={open}
         title="Chi tiết Check Model"
         onClose={() => {
           setOpen(false);
-          setErrors({});
         }}
         onSave={submit}
-        // saveButtonDisabled={loading}
-        // saveButtonText={loading ? 'Đang lưu...' : 'Lưu'}
       >
         <div className="grid gap-3 max-h-[60vh] overflow-y-auto">
-          {/* Line đổi - Required */}
+          {/* Line đổi */}
           <label className="text-xs">
-            Line đổi <span className="text-red-500">*</span>
+            Line đổi
             <input 
               value={form.lineChange ?? ""} 
               onChange={(e) => {
                 set("lineChange", e.target.value);
-                if (errors.lineChange) setErrors(prev => ({ ...prev, lineChange: '' }));
               }}
-              className={`mt-1 block w-full border rounded px-3 py-2 text-base ${
-                errors.lineChange ? 'border-red-500' : ''
-              }`}
+              className="mt-1 block w-full border rounded px-3 py-2 text-base"
               placeholder="Nhập line đổi..."
             />
-            {errors.lineChange && <p className="text-red-500 text-xs mt-1">{errors.lineChange}</p>}
           </label>
 
-          {/* Model/Side - Required */}
+          {/* Model/Side */}
           <label className="text-xs">
-            Model/Side <span className="text-red-500">*</span>
+            Model/Side
             <input 
               value={form.model ?? ""} 
               onChange={(e) => {
                 set("model", e.target.value);
-                if (errors.model) setErrors(prev => ({ ...prev, model: '' }));
               }}
-              className={`mt-1 block w-full border rounded px-3 py-2 text-base ${
-                errors.model ? 'border-red-500' : ''
-              }`}
+              className="mt-1 block w-full border rounded px-3 py-2 text-base"
               placeholder="Nhập model/side..."
             />
-            {errors.model && <p className="text-red-500 text-xs mt-1">{errors.model}</p>}
           </label>
 
           {/* F Code (3in1) */}
@@ -327,21 +280,17 @@ export default function CheckModels() {
               />
             </label>
 
-            {/* Work Order - Required */}
+            {/* Work Order */}
             <label className="text-xs">
-              Work Order <span className="text-red-500">*</span>
+              Work Order
               <input 
                 value={form.workOrder ?? ""} 
                 onChange={(e) => {
                   set("workOrder", e.target.value);
-                  if (errors.workOrder) setErrors(prev => ({ ...prev, workOrder: '' }));
                 }}
-                className={`mt-1 block w-full border rounded px-3 py-2 text-base ${
-                  errors.workOrder ? 'border-red-500' : ''
-                }`}
+                className="mt-1 block w-full border rounded px-3 py-2 text-base"
                 placeholder="Nhập work order..."
               />
-              {errors.workOrder && <p className="text-red-500 text-xs mt-1">{errors.workOrder}</p>}
             </label>
           </div>
 
@@ -354,14 +303,10 @@ export default function CheckModels() {
               onChange={(e) => {
                 const val = e.target.value ? Number(e.target.value) : undefined;
                 set("qty", val);
-                if (errors.qty) setErrors(prev => ({ ...prev, qty: '' }));
               }}
-              className={`mt-1 block w-full border rounded px-3 py-2 text-base ${
-                errors.qty ? 'border-red-500' : ''
-              }`}
+              className="mt-1 block w-full border rounded px-3 py-2 text-base"
               min="0"
             />
-            {errors.qty && <p className="text-red-500 text-xs mt-1">{errors.qty}</p>}
           </label>
           
           {/* Mã PCB */}

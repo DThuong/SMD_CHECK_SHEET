@@ -77,7 +77,7 @@ const StandardVehicles = () => {
       
     const submit = async() => {
             if (!standardVehicleId) {
-              alert('Không tìm thấy Program Check ID');
+              alert('Không tìm thấy StandardVehicle ID');
               return;
             }
       
@@ -95,8 +95,8 @@ const StandardVehicles = () => {
               
               setOpen(false);
             } catch (error) {
-              console.error('Failed to update program checks:', error);
-              alert('Có lỗi xảy ra khi cập nhật Program Checks');
+              console.error('Failed to update StandardVehicles:', error);
+              alert('Có lỗi xảy ra khi cập nhật StandardVehicles');
             }
     };
   return (

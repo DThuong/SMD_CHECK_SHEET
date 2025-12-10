@@ -49,7 +49,7 @@ const PQCChecks = () => {
        const submit = async () => {
          // kiểm tra id
          if (!pqcCheckId) {
-           alert('Không tìm thấy Program Check ID');
+           alert('Không tìm thấy pqcCheck ID');
            return;
          }
    
@@ -67,8 +67,8 @@ const PQCChecks = () => {
            
            setOpen(false);
          } catch (error) {
-           console.error('Failed to update program checks:', error);
-           alert('Có lỗi xảy ra khi cập nhật Program Checks');
+           console.error('Failed to update pqc checks:', error);
+           alert('Có lỗi xảy ra khi cập nhật pqc Checks');
          }
        };
 

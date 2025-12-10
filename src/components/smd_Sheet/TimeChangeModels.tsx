@@ -46,7 +46,7 @@ const TimeChangeModels = () => {
       const submit = async () => {
         // kiểm tra program Check id
         if (!timeChangeModelId) {
-          alert('Không tìm thấy Program Check ID');
+          alert('Không tìm thấy timeChangeModel ID');
           return;
         }
   
@@ -64,8 +64,8 @@ const TimeChangeModels = () => {
           
           setOpen(false);
         } catch (error) {
-          console.error('Failed to update program checks:', error);
-          alert('Có lỗi xảy ra khi cập nhật Program Checks');
+          console.error('Failed to update timeChangeModel:', error);
+          alert('Có lỗi xảy ra khi cập nhật timeChangeModel');
         }
       };
 

@@ -57,7 +57,7 @@ const StandardProductionSection = () => {
   const submit = async() => {
     // kiểm tra program Check id
           if (!standardProductionId) {
-            alert('Không tìm thấy Program Check ID');
+            alert('Không tìm thấy StandardProduction ID');
             return;
           }
     
@@ -75,8 +75,8 @@ const StandardProductionSection = () => {
             
             setOpen(false);
           } catch (error) {
-            console.error('Failed to update program checks:', error);
-            alert('Có lỗi xảy ra khi cập nhật Program Checks');
+            console.error('Failed to update StandardProductions:', error);
+            alert('Có lỗi xảy ra khi cập nhật StandardProductions');
           }
   };
   return (

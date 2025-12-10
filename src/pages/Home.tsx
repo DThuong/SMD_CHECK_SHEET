@@ -416,7 +416,7 @@ const Home = () => {
                   >
                     <option value="all">Tất cả</option>
                     <option value="pending">Pending</option>
-                    <option value="PQCDone">PQC đã tạo</option>
+                    <option value="PQCDone">PQC đã ký</option>
                     <option value="ENGDone">Engineer đã ký</option>
                     <option value="SupervisiorDone">Supervisor đã ký</option>
                     <option value="ManagerDone">Manager đã ký</option>

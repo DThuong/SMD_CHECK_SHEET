@@ -6,7 +6,7 @@ import SheetHeader from "./smd_Sheet/SheetHeader";
 import StandardProductionSection from "./smd_Sheet/StandardProductions";
 import StandardVehicles from "./smd_Sheet/StandardVehicles";
 import TimeChangeModels from "./smd_Sheet/TimeChangeModels";
-import { useSmdSheet } from "../contexts/SmdSheetContext";
+// import { useSmdSheet } from "../contexts/SmdSheetContext";
 
 interface SmdSheetDetailProps {
   logId: string;
@@ -15,15 +15,15 @@ interface SmdSheetDetailProps {
 }
 
 const SmdSheetDetail: React.FC<SmdSheetDetailProps> = ({ logId, data, canEdit }) => {
-  const { 
-    loadLogData,
-    updateLogData,
-  } = useSmdSheet();
+  // const { 
+  //   loadLogData,
+  //   updateLogData,
+  // } = useSmdSheet();
 
   // Load dữ liệu khi component mount
-  useEffect(() => {
-    loadLogData(logId);
-  }, [logId]);
+  // useEffect(() => {
+  //   loadLogData(logId);
+  // }, [logId]);
 
   // Xử lý lưu sau khi edit
   const handleSaveEdit = () => {
@@ -33,13 +33,13 @@ const SmdSheetDetail: React.FC<SmdSheetDetailProps> = ({ logId, data, canEdit })
     }
 
     if (window.confirm('Bạn có chắc chắn muốn lưu các thay đổi?')) {
-      const success = updateLogData(logId);
-      if (success) {
-        // Có thể reload hoặc quay lại logs
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      }
+      // const success = updateLogData(logId);
+      // if (success) {
+      //   // Có thể reload hoặc quay lại logs
+      //   setTimeout(() => {
+      //     window.location.reload();
+      //   }, 1000);
+      // }
     }
   };
 

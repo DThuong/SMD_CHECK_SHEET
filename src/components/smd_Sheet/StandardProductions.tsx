@@ -1,49 +1,97 @@
 import ViewDetailButton from "../ViewDetailButton";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Modal from "../Modal";
-import { useSmdSheet } from "../../contexts/SmdSheetContext";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { fetchStandardProduction, updateStandardProduction } from "../../redux/slices/subTableSlice";
+import type { StandardProductionData } from "../../redux/slices/subTableSlice";
+import SmdSheet from "../SmdSheet";
 
-type StandardProductState = {
-  numMask?: string;
-  numMes?: string;
-  numDaoPrinter?: string;
-  numDaoMes?: string;
-  msl3Closed?: string;
-  exclusiveUse?: "Duksan" | "Heesung";
-  labelProgram?: string;
-};
 
-const initialStandardProductState: StandardProductState = {
-  numMask: "",
-  numMes: "",
-  numDaoPrinter: "",
-  numDaoMes: "",
-  msl3Closed: "",
-  exclusiveUse: undefined,
-  labelProgram: ""
+const initialStandardProductState: StandardProductionData = {
+    id: undefined,
+    numMASK: "",
+    numMES: "",
+    numScanPrinter: undefined,
+    numScanSignMES: undefined,
+    mlS3Closed: "",
+    useOnly: "",
+    labelProgram: ""
 };
 
 // Standard Production Section
 const StandardProductionSection = () => {
-  const {sheetData  , updateStandardProduction} = useSmdSheet();
-  const [form, setForm] = useState<StandardProductState>(initialStandardProductState);
+
+  const dispatch = useAppDispatch();
+    // khai báo loading để xử lý loading state trong modal
+  const { completedTables } = useAppSelector(state => state.subTable);
+    // lấy checkModel data từ redux store
+  const {standardProduction} = useAppSelector(state => state.subTable);
+    // lấy checkModel id từ currentSheet trong changeModel Slice
+  const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
+  const smdSheetId = currentSheet?.id;
+  const standardProductionId = currentSheet?.standardProductionId;
+  
   const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<StandardProductionData>(initialStandardProductState);
+  
+  const isSaved = completedTables.includes('StandardProduction');
+  
 
+  // fetch data khi programcheck thay đổi
+      useEffect(() => {
+        if (standardProductionId) {
+          dispatch(fetchStandardProduction(standardProductionId));
+        }
+      }, [standardProductionId, dispatch]);
+      // sync form với redux store thay vì sử dụng context
+      useEffect(() => {
+        if (standardProduction) {
+          setForm(standardProduction);
+        }
+      }, [standardProduction]);
+  
 
-  useEffect(() => {
-    setForm(sheetData.standardProduction);
-  }, [sheetData.standardProduction]);
-
-  const set = <K extends keyof StandardProductState>(k: K, v: StandardProductState[K]) =>
+  const set = <K extends keyof StandardProductionData>(k: K, v: StandardProductionData[K]) =>
   setForm((s) => ({ ...s, [k]: v }));
     
-  const submit = () => {
-    updateStandardProduction(form);
-    setOpen(false);
-    alert('Standard Production updated successfully!');
+  const submit = async() => {
+    // kiểm tra program Check id
+          if (!standardProductionId) {
+            alert('Không tìm thấy Program Check ID');
+            return;
+          }
+    
+          if (!smdSheetId) {
+            alert('Không tìm thấy SMD Sheet ID');
+            return;
+          }
+    
+          try {
+            // Dispatch action để update
+            await dispatch(updateStandardProduction({
+              id: smdSheetId,
+              data: form
+            })).unwrap();
+            
+            setOpen(false);
+          } catch (error) {
+            console.error('Failed to update program checks:', error);
+            alert('Có lỗi xảy ra khi cập nhật Program Checks');
+          }
   };
   return (
     <div className="p-0 py-4 w-full">
+      {/* Status indicator */}
+      {standardProductionId && (
+        <div className={`mb-2 text-xs p-2 rounded flex items-center gap-2 ${
+          isSaved ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-50 text-gray-600 border border-gray-200'
+        }`}>
+          {isSaved && <span className="text-green-600">✓</span>}
+          <span>ProgramCheck ID: <strong>{standardProductionId}</strong></span>
+          {currentSheet?.id && <span>| ChangeModel ID: <strong>{currentSheet.id}</strong></span>}
+          {isSaved && <span className="ml-auto font-semibold">Đã lưu</span>}
+        </div>
+      )}
         {/** repsponsive for website */}
         <div className='hidden lg:block w-full overflow-x-auto'>
         <table className="border border-gray-600 w-full text-center opacity-60">
@@ -52,9 +100,9 @@ const StandardProductionSection = () => {
             <tr>
               <th rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Tiêu chuẩn sản xuất</th>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số quản lý trên Mask</th>
-              <td className="border border-gray-600 px-2 py-2 text-xs">{form.numMask || ""}</td>
+              <td className="border border-gray-600 px-2 py-2 text-xs">{form.numMASK || ""}</td>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số dao quét Printer</th>
-              <td className="border border-gray-600 px-2 py-2 text-xs">{form.numDaoPrinter || ""}</td>
+              <td className="border border-gray-600 px-2 py-2 text-xs">{form.numScanPrinter || ""}</td>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Liệu MSL3 mở đóng gói</th>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chỉ sử dụng</th>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chương trình máy label</th>
@@ -63,18 +111,18 @@ const StandardProductionSection = () => {
             {/* Row 11 */}
             <tr>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số đăng ký trên MES</th>
-              <td className="border border-gray-600 px-2 py-2 text-xs">{form.numMes || ""}</td>
+              <td className="border border-gray-600 px-2 py-2 text-xs">{form.numMES || ""}</td>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số đăng ký dao quét trên MES</th>
-              <td className="border border-gray-600 px-2 py-2 text-xs">{form.numDaoMes || ""}</td>
-              <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.msl3Closed || ""}</td>
+              <td className="border border-gray-600 px-2 py-2 text-xs">{form.numScanSignMES || ""}</td>
+              <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.mlS3Closed || ""}</td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
                 <div className="flex flex-row justify-center items-center gap-3">
                   <div className="flex flex-row items-center justify-center gap-1">
                     <input 
                       type="checkbox" 
                       className="w-4 h-4"
-                      checked={form.exclusiveUse === "Duksan"}
-                      onChange={() => set("exclusiveUse", form.exclusiveUse === "Duksan" ? undefined : "Duksan")}
+                      checked={form.useOnly === "Duksan"}
+                      onChange={() => set("useOnly", form.useOnly === "Duksan" ? undefined : "Duksan")}
                     />
                     <label className="flex items-center justify-center gap-2 text-xs">
                       Duksan
@@ -84,8 +132,8 @@ const StandardProductionSection = () => {
                     <input 
                       type="checkbox" 
                       className="w-4 h-4"
-                      checked={form.exclusiveUse === "Heesung"}
-                      onChange={() => set("exclusiveUse", form.exclusiveUse === "Heesung" ? undefined : "Heesung")}
+                      checked={form.useOnly === "Heesung"}
+                      onChange={() => set("useOnly", form.useOnly === "Heesung" ? undefined : "Heesung")}
                     />
                     <label className="flex items-center justify-center gap-2 text-xs">
                       Heesung
@@ -109,14 +157,14 @@ const StandardProductionSection = () => {
       <div className="min-w-0">
         <div className="text-xs font-semibold text-gray-600 mb-1">Số quản lý trên Mask</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
-          {form.numMask || "—"}
+          {form.numMASK || "—"}
         </div>
       </div>
 
       <div className="min-w-0">
         <div className="text-xs font-semibold text-gray-600 mb-1">Số đăng ký trên MES</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
-          {form.numMes || "—"}
+          {form.numMES || "—"}
         </div>
       </div>
     </div>
@@ -125,7 +173,7 @@ const StandardProductionSection = () => {
         <div className="mb-3">
         <div className="text-xs font-semibold text-gray-600 mb-1">Số dao quét Printer</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
-            {form.numDaoPrinter || "—"}
+            {form.numScanPrinter || "—"}
         </div>
         </div>
 
@@ -133,7 +181,7 @@ const StandardProductionSection = () => {
         <div className="mb-3">
         <div className="text-xs font-semibold text-gray-600 mb-1">Số đăng ký dao quét trên MES</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
-            {form.numDaoMes || "—"}
+            {form.numScanSignMES || "—"}
         </div>
         </div>
 
@@ -142,7 +190,7 @@ const StandardProductionSection = () => {
       <div className="min-w-0">
         <div className="text-xs font-semibold text-gray-600 mb-1">Liệu MSL3 mở đóng gói</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
-          {form.msl3Closed || "—"}
+          {form.mlS3Closed || "—"}
         </div>
       </div>
 
@@ -158,9 +206,9 @@ const StandardProductionSection = () => {
     <div className="mb-3">
       <div className="text-xs font-semibold text-gray-600 mb-1">Chỉ sử dụng</div>
       <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-        {form.exclusiveUse === "Duksan" 
+        {form.useOnly === "Duksan" 
           ? "Duksan" 
-          : form.exclusiveUse === "Heesung" 
+          : form.useOnly === "Heesung" 
           ? "Heesung" 
           : "—"}
       </div>
@@ -184,8 +232,8 @@ const StandardProductionSection = () => {
       <label className="text-xs">
         Số quản lý trên Mask
         <input 
-          value={form.numMask ?? ""} 
-          onChange={(e) => set("numMask", e.target.value)} 
+          value={form.numMASK ?? ""} 
+          onChange={(e) => set("numMASK", e.target.value)} 
           className="mt-1 block w-full border rounded px-3 py-2 text-sm"
           placeholder=""
         />
@@ -194,8 +242,8 @@ const StandardProductionSection = () => {
       <label className="text-xs">
         Số đăng ký trên MES
         <input 
-          value={form.numMes ?? ""} 
-          onChange={(e) => set("numMes", e.target.value)} 
+          value={form.numMES ?? ""} 
+          onChange={(e) => set("numMES", e.target.value)} 
           className="mt-1 block w-full border rounded px-3 py-2 text-sm"
           placeholder=""
         />
@@ -205,8 +253,8 @@ const StandardProductionSection = () => {
     <label className="text-xs">
     Số dao quét Printer
     <input 
-        value={form.numDaoPrinter ?? ""} 
-        onChange={(e) => set("numDaoPrinter", e.target.value)} 
+        value={form.numScanPrinter ?? ""} 
+        onChange={(e) => set("numScanPrinter", e.target.value ? Number(e.target.value) : undefined)}
         className="mt-1 block w-full border rounded px-3 py-2 text-sm"
         placeholder=""
     />
@@ -215,8 +263,8 @@ const StandardProductionSection = () => {
     <label className="text-xs">
     Số đăng ký dao quét trên MES
     <input 
-        value={form.numDaoMes ?? ""} 
-        onChange={(e) => set("numDaoMes", e.target.value)} 
+        value={form.numScanSignMES ?? ""} 
+        onChange={(e) => set("numScanSignMES", e.target.value ? Number(e.target.value) : undefined)}
         className="mt-1 block w-full border rounded px-3 py-2 text-sm"
         placeholder=""
     />
@@ -225,8 +273,8 @@ const StandardProductionSection = () => {
     <label className="text-xs">
       Liệu MSL3 mở đóng gói
       <input 
-        value={form.msl3Closed ?? ""} 
-        onChange={(e) => set("msl3Closed", e.target.value)} 
+        value={form.mlS3Closed ?? ""} 
+        onChange={(e) => set("mlS3Closed", e.target.value)} 
         className="mt-1 block w-full border rounded px-3 py-2 text-sm"
         placeholder=""
       />
@@ -248,21 +296,21 @@ const StandardProductionSection = () => {
         <div className="flex gap-2">
           <button 
             type="button" 
-            onClick={() => set("exclusiveUse", "Duksan")} 
-            className={`px-3 py-2 rounded text-sm border ${form.exclusiveUse === "Duksan" ? "bg-blue-100 border-blue-500" : ""}`}
+            onClick={() => set("useOnly", "Duksan")} 
+            className={`px-3 py-2 rounded text-sm border ${form.useOnly === "Duksan" ? "bg-blue-100 border-blue-500" : ""}`}
           >
             Duksan
           </button>
           <button 
             type="button" 
-            onClick={() => set("exclusiveUse", "Heesung")} 
-            className={`px-3 py-2 rounded text-sm border ${form.exclusiveUse === "Heesung" ? "bg-blue-100 border-blue-500" : ""}`}
+            onClick={() => set("useOnly", "Heesung")} 
+            className={`px-3 py-2 rounded text-sm border ${form.useOnly === "Heesung" ? "bg-blue-100 border-blue-500" : ""}`}
           >
             Heesung
           </button>
           <button 
             type="button" 
-            onClick={() => set("exclusiveUse", undefined)} 
+            onClick={() => set("useOnly", undefined)} 
             className="px-3 py-2 rounded text-sm border border-gray-300 text-gray-600 hover:bg-gray-50"
           >
             Xóa

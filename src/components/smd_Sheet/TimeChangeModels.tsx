@@ -1,47 +1,87 @@
 import { useEffect, useState } from "react";
 import Modal from "../Modal";
 import ViewDetailButton from "../ViewDetailButton";
-import { useSmdSheet } from "../../contexts/SmdSheetContext";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { updateTimeChangeModel, fetchTimeChangeModel } from "../../redux/slices/subTableSlice";
+import type { TimeChangeModelData } from "../../redux/slices/subTableSlice";
 
-type TimeChangeState = {
-  resultName?: string;   
-  timeStart?: string;
-  timeEnd?: string;        
-  minutes?: number;    
-  history?: string;  
-  qcName?: string;          
-};
-
-const initialTimeChangeState: TimeChangeState = {
-  resultName: "",   
-  timeStart: "",
-  timeEnd: "",        
-  minutes: undefined,    
-  history: "",  
-  qcName: "",   
+const initialTimeChangeState: TimeChangeModelData = {
+    qc: "",
+    result: "",
+    startTime: "", // time
+    endTime: "", // time
+    countTime: undefined,
+    history: "",
 };
 
 const TimeChangeModels = () => {
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<TimeChangeState>(initialTimeChangeState);
-  const { sheetData, updateTimeChange } = useSmdSheet();
-  useEffect(() => {
-    setForm(sheetData.timeChange);
-  }, [sheetData.timeChange]);
-  const set = <K extends keyof TimeChangeState>(
-    k: K,
-    v: TimeChangeState[K]
-  ) => setForm((s) => ({ ...s, [k]: v }));
-
-  const submit = () => {
-    // console.log("submit", form);
-    updateTimeChange(form);
-    setOpen(false);
-    alert("Time Change Models updated successfully!");
-  };
+  const [form, setForm] = useState<TimeChangeModelData>(initialTimeChangeState);
+      const [open, setOpen] = useState(false);
+  
+      const dispatch = useAppDispatch();
+      
+      // Lấy dữ liệu từ Redux store
+      const { timeChangeModel ,completedTables } = useAppSelector(state => state.subTable);
+      const smdSheetId = useAppSelector(state => state.changeModel?.currentSheet?.id);
+      const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
+      const timeChangeModelId = currentSheet?.timeChangeModelId;
+      const isSaved = completedTables.includes('TimeChangeModel');
+  
+      // fetch data khi programcheck thay đổi
+      useEffect(() => {
+        if (timeChangeModelId) {
+          dispatch(fetchTimeChangeModel(timeChangeModelId));
+        }
+      }, [timeChangeModelId, dispatch]);
+      // sync form với redux store thay vì sử dụng context
+      useEffect(() => {
+        if (timeChangeModel) {
+          setForm(timeChangeModel);
+        }
+      }, [timeChangeModel]);
+  
+      const set = <K extends keyof TimeChangeModelData>(k: K, v: TimeChangeModelData[K]) =>
+        setForm((s) => ({ ...s, [k]: v }));
+  
+      const submit = async () => {
+        // kiểm tra program Check id
+        if (!timeChangeModelId) {
+          alert('Không tìm thấy Program Check ID');
+          return;
+        }
+  
+        if (!smdSheetId) {
+          alert('Không tìm thấy SMD Sheet ID');
+          return;
+        }
+  
+        try {
+          // Dispatch action để update
+          await dispatch(updateTimeChangeModel({
+            id: smdSheetId,
+            data: form
+          })).unwrap();
+          
+          setOpen(false);
+        } catch (error) {
+          console.error('Failed to update program checks:', error);
+          alert('Có lỗi xảy ra khi cập nhật Program Checks');
+        }
+      };
 
   return (
     <div className="p-0 py-4 w-full">
+      {/* Status indicator */}
+      {timeChangeModelId && (
+        <div className={`mb-2 text-xs p-2 rounded flex items-center gap-2 ${
+          isSaved ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-50 text-gray-600 border border-gray-200'
+        }`}>
+          {isSaved && <span className="text-green-600">✓</span>}
+          <span>TimeChangeModel ID: <strong>{timeChangeModelId}</strong></span>
+          {currentSheet?.id && <span>| ChangeModel ID: <strong>{currentSheet.id}</strong></span>}
+          {isSaved && <span className="ml-auto font-semibold">Đã lưu</span>}
+        </div>
+      )}
       {/* Desktop View */}
       <div className="hidden lg:block w-full overflow-x-auto">
         <table className="border border-gray-600 w-full min-w-[1400px] text-center opacity-60">
@@ -67,17 +107,17 @@ const TimeChangeModels = () => {
             {/* Row 14 - Result */}
             <tr>
               <th className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Result</th>
-              <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.resultName || ""}</td>
-              <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.timeStart || ""}</td>
-              <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.timeEnd || ""}</td>
-              <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.minutes ?? ""}</td>
+              <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.result || ""}</td>
+              <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.startTime}</td>
+              <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.endTime || ""}</td>
+              <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.countTime ?? ""}</td>
               <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.history || ""}</td>
             </tr>
 
             {/* Row 15 - QC */}
             <tr>
               <th className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">QC</th>
-              <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.qcName || ""}</td>
+              <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.qc || ""}</td>
             </tr>
           </tbody>
         </table>
@@ -92,7 +132,7 @@ const TimeChangeModels = () => {
           <div className="mb-3">
             <div className="text-xs font-semibold text-gray-600 mb-1">Tên QC</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.qcName || "—"}
+              {form.qc || "—"}
             </div>
           </div>
 
@@ -100,7 +140,7 @@ const TimeChangeModels = () => {
           <div className="mb-3">
             <div className="text-xs font-semibold text-gray-600 mb-1">Tên Result</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.resultName || "—"}
+              {form.result || "—"}
             </div>
           </div>
           
@@ -108,7 +148,7 @@ const TimeChangeModels = () => {
           <div className="mb-3">
             <div className="text-xs font-semibold text-gray-600 mb-1">Thời gian bắt đầu</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.timeStart || "—"}
+              {form.startTime || "—"}
             </div>
           </div>
 
@@ -116,7 +156,7 @@ const TimeChangeModels = () => {
           <div className="mb-3">
             <div className="text-xs font-semibold text-gray-600 mb-1">Thời gian kết thúc</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.timeEnd || "—"}
+              {form.endTime || "—"}
             </div>
           </div>
 
@@ -124,7 +164,7 @@ const TimeChangeModels = () => {
           <div className="mb-3">
             <div className="text-xs font-semibold text-gray-600 mb-1">Số phút</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.minutes ?? "—"}
+              {form.countTime ?? "—"}
             </div>
           </div>
 
@@ -161,8 +201,8 @@ const TimeChangeModels = () => {
           <label className="text-xs block mb-1">Tên QC</label>
           <input
             type="text"
-            value={form.qcName ?? ""}
-            onChange={(e) => set("qcName", e.target.value)}
+            value={form.qc ?? ""}
+            onChange={(e) => set("qc", e.target.value)}
             className="block w-full border rounded px-3 py-2 text-sm"
           />
         </div>
@@ -171,8 +211,8 @@ const TimeChangeModels = () => {
           <label className="text-xs block mb-1">Tên Result</label>
           <input
             type="text"
-            value={form.resultName ?? ""}
-            onChange={(e) => set("resultName", e.target.value)}
+            value={form.result ?? ""}
+            onChange={(e) => set("result", e.target.value)}
             className="block w-full border rounded px-3 py-2 text-sm"
           />
         </div>
@@ -180,9 +220,9 @@ const TimeChangeModels = () => {
         <div className="min-w-0">
           <label className="text-xs block mb-1">Thời gian bắt đầu</label>
           <input
-            type="time"
-            value={form.timeStart ?? ""}
-            onChange={(e) => set("timeStart", e.target.value)}
+            type="datetime-local"
+            value={form.startTime ?? ""}
+            onChange={(e) => set("startTime", e.target.value)}
             className="block w-full border rounded px-3 py-2 text-sm"
           />
         </div>
@@ -190,9 +230,9 @@ const TimeChangeModels = () => {
         <div className="min-w-0">
           <label className="text-xs block mb-1">Thời gian kết thúc</label>
           <input
-            type="time"
-            value={form.timeEnd ?? ""}
-            onChange={(e) => set("timeEnd", e.target.value)}
+            type="datetime-local"
+            value={form.endTime ?? ""}
+            onChange={(e) => set("endTime", e.target.value)}
             className="block w-full border rounded px-3 py-2 text-sm"
           />
         </div>
@@ -202,8 +242,8 @@ const TimeChangeModels = () => {
         <label className="text-xs block mb-1">Số phút</label>
         <input
           type="number"
-          value={form.minutes ?? ""}
-          onChange={(e) => set("minutes", e.target.value ? Number(e.target.value) : undefined)}
+          value={form.countTime ?? ""}
+          onChange={(e) => set("countTime", e.target.value ? Number(e.target.value) : undefined)}
           className="block w-full border rounded px-3 py-2 text-sm"
           placeholder="Nhập số phút..."
         />

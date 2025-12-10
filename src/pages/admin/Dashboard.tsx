@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { FaUsers, FaFileAlt, FaChartLine, FaChartBar } from 'react-icons/fa';
-import { useAuth } from '../authLoginSample/AuthContext';
+// import { useAuth } from '../authLoginSample/AuthContext';
 
 const Dashboard = () => {
     // Responsive font size cho XAxis

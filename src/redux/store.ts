@@ -1,10 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
+import changeModelSlice from "./slices/changeModelSlice";
+import subTableSlice from "./slices/subTableSlice";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    // thêm các reducer khác
+    changeModel: changeModelSlice,
+    subTable: subTableSlice
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

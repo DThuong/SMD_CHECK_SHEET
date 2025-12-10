@@ -1,138 +1,117 @@
 import ViewDetailButton from "../ViewDetailButton"
 import Modal from "../Modal";
 import { useEffect, useState } from "react";
-import { useSmdSheet } from "../../contexts/SmdSheetContext";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { fetchStandardVehicle, updateStandardVehicle } from "../../redux/slices/subTableSlice";
+import type { StandardVehicleData } from "../../redux/slices/subTableSlice";
 
-type StandardVehiclesState = {
-  printer: {
-    pressureSpec?: string;                    // Giá trị áp lực Spec (kg)
-    scanSpeedSpec?: string;                   // Tốc độ quét Spec (mm/s)
-    separationSpeedSpec?: string;             // Tốc độ khoảng cách tách bàn Spec (mm/s)
-    wipeCountSpec?: string;                   // Số lần lau Spec
-    bladeUsedSpec?: string;                   // Dao sử dụng Spec
-    pressureActual?: string;                  // Giá trị áp lực thực tế trên máy (kg)
-    scanSpeedActual?: string;                 // Tốc độ quét thực tế trên máy (mm/s)
-    separationSpeedActual?: string;           // Tốc độ tách bàn thực tế trên máy (mm/s)
-    wipeCountActual?: string;                 // Số lần lau thực tế trên máy
-    bladeUsedActual?: string;                 // Dao sử dụng thực tế trên máy
-    vacuumBlockOk: boolean;                   // Sau khi sử dụng Vaccum Block
-  };
-  spi: {
-    inspectionSettingOk: boolean;             // Điều kiện setting Inspection
-  };
-  mount: {
-    firstThreeBoardsOk: boolean;              // Kiểm tra 3 board đầu tiên
-    bottomBoardOk: boolean;                   // Kiểm tra 1 tấm ở mặt dưới
-  };
-  reflow: {
-    conveyorWidthOk: boolean;                 // Kiểm tra tình trạng chiều rộng của Conveyor
-    railSettingValue?: string;                // Giá trị cài đặt Rail (mm)
-    railActualValue?: string;                 // Giá trị thực tế Rail (mm)
-  };
-  aoi: {
-    xrayThreeBoardsOk: boolean;               // Xoay 3 board đầu tiên
-    xrayInspector?: string;                   // Người kiểm tra
-  };
-  output: {
-    magazineDistanceOk: boolean;              // Kiểm tra tình trạng setting
-    magazineInspector?: string;               // Người kiểm tra
-    settingModel?: string;                    // Giá trị cài đặt theo yêu cầu Model
-    settingPitch?: string;                    // Giá trị cài đặt theo yêu cầu Pitch
-  };
-  worker: {
-    opName?: string;                          // Tên OP
-    aoiName?: string;                         // Tên AOI
-  };
-};
+const initialStandardVehiclesState: StandardVehicleData = {
+  printerSpecGTAL: 0,
+  printerSpecTDQ: 0,
+  printerSpecTDKC: 0,
+  printerSpecSLL: 0,
+  printerSpecDSL: 0,
 
-const initialStandardVehiclesState: StandardVehiclesState = {
-  printer: {
-    pressureSpec: "",
-    scanSpeedSpec: "",
-    separationSpeedSpec: "",
-    wipeCountSpec: "",
-    bladeUsedSpec: "",
-    pressureActual: "",
-    scanSpeedActual: "",
-    separationSpeedActual: "",
-    wipeCountActual: "",
-    bladeUsedActual: "",
-    vacuumBlockOk: false,
-  },
-  spi: {
-    inspectionSettingOk: false,
-  },
-  mount: {
-    firstThreeBoardsOk: false,
-    bottomBoardOk: false,
-  },
-  reflow: {
-    conveyorWidthOk: false,
-    railSettingValue: "",
-    railActualValue: "",
-  },
-  aoi: {
-    xrayThreeBoardsOk: false,
-    xrayInspector: "",
-  },
-  output: {
-    magazineDistanceOk: false,
-    magazineInspector: "",
-    settingModel: "",
-    settingPitch: "",
-  },
-  worker: {
-    opName: "",
-    aoiName: "",
-  },
+  printerRealGTAL: 0,
+  printerRealTDQ: 0,
+  printerRealTDKC: 0,
+  printerRealSLL: 0,
+  printerRealDSL: 0,
+
+  printerQ1: false,
+  spiQ1: false,
+  mountQ1: false,
+  mountQ2: false,
+
+  reflowQ1: false,
+  reFlowSettingRail: 0,
+  reFlowRealRail: 0,
+
+  aoiQ1: false,
+  aoiCheck: "",
+
+  outputQ1: false,
+  outputModelValue: "",
+  outputPitchValue: "",
+  outputChecker: "",
+
+  nameOP: "",
+  nameAOI: "",
+
+  id: 0,
 };
 
 const StandardVehicles = () => {
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<StandardVehiclesState>(initialStandardVehiclesState);
-  const { sheetData, updateStandardVehicles } = useSmdSheet();
-  useEffect(() => {
-    setForm(sheetData.standardVehicles);
-  }, [sheetData.standardVehicles]);
-
-  const setPrinter = <K extends keyof StandardVehiclesState["printer"]>(k: K, v: StandardVehiclesState["printer"][K]) =>
-    setForm((s) => ({ ...s, printer: { ...s.printer, [k]: v } }));
-
-  const setSPI = <K extends keyof StandardVehiclesState["spi"]>(k: K, v: StandardVehiclesState["spi"][K]) =>
-    setForm((s) => ({ ...s, spi: { ...s.spi, [k]: v } }));
-
-  const setMount = <K extends keyof StandardVehiclesState["mount"]>(k: K, v: StandardVehiclesState["mount"][K]) =>
-    setForm((s) => ({ ...s, mount: { ...s.mount, [k]: v } }));
-
-  const setReflow = <K extends keyof StandardVehiclesState["reflow"]>(k: K, v: StandardVehiclesState["reflow"][K]) =>
-    setForm((s) => ({ ...s, reflow: { ...s.reflow, [k]: v } }));
-
-  const setAOI = <K extends keyof StandardVehiclesState["aoi"]>(k: K, v: StandardVehiclesState["aoi"][K]) =>
-    setForm((s) => ({ ...s, aoi: { ...s.aoi, [k]: v } }));
-
-  const setOutput = <K extends keyof StandardVehiclesState["output"]>(k: K, v: StandardVehiclesState["output"][K]) =>
-    setForm((s) => ({ ...s, output: { ...s.output, [k]: v } }));
-
-  const setWorker = <K extends keyof StandardVehiclesState["worker"]>(k: K, v: StandardVehiclesState["worker"][K]) =>
-    setForm((s) => ({ ...s, worker: { ...s.worker, [k]: v } }));
-
-  // const setSampleInspection = <K extends keyof StandardVehiclesState["sampleInspection"]>(
-  //   k: K,
-  //   v: StandardVehiclesState["sampleInspection"][K]
-  // ) =>
-  //   setForm((s) => ({
-  //     ...s,
-  //     sampleInspection: { ...s.sampleInspection, [k]: v },
-  //   }));
-
-  const submit = () => {
-    // console.log("submit", form);
-    updateStandardVehicles(form);
-    setOpen(false);
-    alert("Standard Vehicles updated successfully!");
-  };
+   const dispatch = useAppDispatch();
+      // khai báo loading để xử lý loading state trong modal
+    const { completedTables } = useAppSelector(state => state.subTable);
+      // lấy checkModel data từ redux store
+    const {standardVehicle} = useAppSelector(state => state.subTable);
+      // lấy checkModel id từ currentSheet trong changeModel Slice
+    const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
+    const smdSheetId = currentSheet?.id;
+    const standardVehicleId = currentSheet?.standardVehicleId;
+    
+    const [open, setOpen] = useState(false);
+    const [form, setForm] = useState<StandardVehicleData>(initialStandardVehiclesState);
+    
+    const isSaved = completedTables.includes('StandardVehicle');
+    
+  
+    // fetch data khi programcheck thay đổi
+        useEffect(() => {
+          if (standardVehicleId) {
+            dispatch(fetchStandardVehicle(standardVehicleId));
+          }
+        }, [standardVehicleId, dispatch]);
+        // sync form với redux store thay vì sử dụng context
+        useEffect(() => {
+          if (standardVehicle) {
+            setForm(standardVehicle);
+          }
+        }, [standardVehicle]);
+    
+  
+    const set = <K extends keyof StandardVehicleData>(k: K, v: StandardVehicleData[K]) =>
+    setForm((s) => ({ ...s, [k]: v }));
+      
+    const submit = async() => {
+            if (!standardVehicleId) {
+              alert('Không tìm thấy Program Check ID');
+              return;
+            }
+      
+            if (!smdSheetId) {
+              alert('Không tìm thấy SMD Sheet ID');
+              return;
+            }
+      
+            try {
+              // Dispatch action để update
+              await dispatch(updateStandardVehicle({
+                id: smdSheetId,
+                data: form
+              })).unwrap();
+              
+              setOpen(false);
+            } catch (error) {
+              console.error('Failed to update program checks:', error);
+              alert('Có lỗi xảy ra khi cập nhật Program Checks');
+            }
+    };
   return (
     <div className="p-0 py-4 w-full">
+        {/* Status indicator */}
+      {standardVehicleId && (
+        <div className={`mb-2 text-xs p-2 rounded flex items-center gap-2 ${
+          isSaved ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-50 text-gray-600 border border-gray-200'
+        }`}>
+          {isSaved && <span className="text-green-600">✓</span>}
+          <span>StandardVehicle ID: <strong>{standardVehicleId}</strong></span>
+          {currentSheet?.id && <span>| ChangeModel ID: <strong>{currentSheet.id}</strong></span>}
+          {isSaved && <span className="ml-auto font-semibold">Đã lưu</span>}
+        </div>
+      )}
       {/* Desktop View */}
       <div className="hidden lg:block w-full overflow-x-auto">
   <table className="border border-gray-600 w-full text-center opacity-60">
@@ -158,21 +137,21 @@ const StandardVehicles = () => {
       {/** Row 18 */}
       <tr>
         <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Tiêu chuẩn Spec đưa ra</th>
-        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printer.pressureSpec || ""} kg</td>
-        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printer.scanSpeedSpec || ""} mm/s</td>
-        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printer.separationSpeedSpec || ""} mm/s</td>
-        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printer.wipeCountSpec || ""}</td>
-        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printer.bladeUsedSpec || ""}</td>
+        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerSpecGTAL || ""} kg</td>
+        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerSpecTDQ || ""} mm/s</td>
+        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerSpecTDKC || ""} mm/s</td>
+        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerSpecSLL || ""}</td>
+        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerSpecDSL || ""}</td>
       </tr>
 
       {/** Row 19 */}
       <tr>
         <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Giá trị cài đặt thực tế trên máy</th>
-        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printer.pressureActual || ""} kg</td>
-        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printer.scanSpeedActual || ""} mm/s</td>
-        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printer.separationSpeedActual || ""} mm/s</td>
-        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printer.wipeCountActual || ""}</td>
-        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printer.bladeUsedActual || ""}</td>
+        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerRealGTAL || ""} kg</td>
+        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerRealTDQ || ""} mm/s</td>
+        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerRealTDKC || ""} mm/s</td>
+        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerRealSLL || ""}</td>
+        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerRealDSL || ""}</td>
       </tr>
 
       {/** Row 20 */}
@@ -185,8 +164,8 @@ const StandardVehicles = () => {
             <label className="font-bold text-xs">OK</label>
             <input 
               type="checkbox" 
-              checked={!!form.printer.vacuumBlockOk}
-              onChange={(e) => setPrinter("vacuumBlockOk", e.target.checked)}
+              checked={!!form.printerQ1 || false}
+              onChange={(e) => set("printerQ1", e.target.checked)}
             />
           </div>
         </td>
@@ -209,8 +188,8 @@ const StandardVehicles = () => {
             <label className="font-bold text-xs">OK</label>
             <input 
               type="checkbox"
-              checked={!!form.spi.inspectionSettingOk}
-              onChange={(e) => setSPI("inspectionSettingOk", e.target.checked)}
+              checked={!!form.spiQ1}
+              onChange={(e) => set("spiQ1", e.target.checked)}
             />
           </div>
         </td>
@@ -226,8 +205,8 @@ const StandardVehicles = () => {
             <label className="font-bold text-xs">OK</label>
             <input 
               type="checkbox"
-              checked={!!form.mount.firstThreeBoardsOk}
-              onChange={(e) => setMount("firstThreeBoardsOk", e.target.checked)}
+              checked={!!form.mountQ1}
+              onChange={(e) => set("mountQ1", e.target.checked)}
             />
           </div>
         </td>
@@ -242,8 +221,8 @@ const StandardVehicles = () => {
             <label className="font-bold text-xs">OK</label>
             <input 
               type="checkbox"
-              checked={!!form.mount.bottomBoardOk}
-              onChange={(e) => setMount("bottomBoardOk", e.target.checked)}
+              checked={!!form.mountQ2}
+              onChange={(e) => set("mountQ2", e.target.checked)}
             />
           </div>
         </td>
@@ -259,8 +238,8 @@ const StandardVehicles = () => {
             <label className="font-bold text-xs">OK</label>
             <input 
               type="checkbox"
-              checked={!!form.reflow.conveyorWidthOk}
-              onChange={(e) => setReflow("conveyorWidthOk", e.target.checked)}
+              checked={!!form.reflowQ1}
+              onChange={(e) => set("reflowQ1", e.target.checked)}
             />
           </div>
         </td>
@@ -270,9 +249,9 @@ const StandardVehicles = () => {
       {/** Row 26 */}
       <tr>
         <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Giá trị cài đặt Rail</th>
-        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.reflow.railSettingValue || ""} mm</th>
+        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.reFlowSettingRail || ""} mm</th>
         <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Giá trị thực tế Rail</th>
-        <th colSpan={3} className="border border-gray-600 px-2 py-2 text-xs">{form.reflow.railActualValue || ""} mm</th>
+        <th colSpan={3} className="border border-gray-600 px-2 py-2 text-xs">{form.reFlowRealRail || ""} mm</th>
         <td colSpan={2} className="border border-gray-600 px-2 py-2 bg-gray-300"></td>
         <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
       </tr>
@@ -286,12 +265,12 @@ const StandardVehicles = () => {
             <label className="font-bold text-xs">OK</label>
             <input 
               type="checkbox"
-              checked={!!form.aoi.xrayThreeBoardsOk}
-              onChange={(e) => setAOI("xrayThreeBoardsOk", e.target.checked)}
+              checked={!!form.aoiQ1}
+              onChange={(e) => set("aoiQ1", e.target.checked)}
             />
           </div>
         </td>
-        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-left! text-xs">Người kiểm tra: {form.aoi.xrayInspector || ""}</td>
+        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-left! text-xs">Người kiểm tra: {form.aoiCheck || ""}</td>
       </tr>
 
       {/** Row 27.1 */}
@@ -303,12 +282,12 @@ const StandardVehicles = () => {
             <label className="font-bold text-xs">OK</label>
             <input 
               type="checkbox"
-              checked={!!form.output.magazineDistanceOk}
-              onChange={(e) => setOutput("magazineDistanceOk", e.target.checked)}
+              checked={!!form.outputQ1}
+              onChange={(e) => set("outputQ1", e.target.checked)}
             />
           </div>
         </td>
-        <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-left! text-xs">Người kiểm tra: {form.output.magazineInspector || ""}</td>
+        <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-left! text-xs">Người kiểm tra: {form.outputChecker || ""}</td>
       </tr>
 
       {/** Row 27.2 */}
@@ -318,11 +297,11 @@ const StandardVehicles = () => {
           <div className="flex flex-row justify-center items-center gap-3">
             <div className="flex flex-row items-center gap-1">
               <label className="flex items-center gap-2">Model:</label>
-              <span className="text-xs">{form.output.settingModel || ""}</span>
+              <span className="text-xs">{form.outputModelValue || ""}</span>
             </div>
             <div className="flex flex-row items-center gap-1">
               <label className="flex items-center gap-2">Pitch:</label>
-              <span className="text-xs">{form.output.settingPitch || ""}</span>
+              <span className="text-xs">{form.outputPitchValue || ""}</span>
             </div>
           </div>
         </th>
@@ -342,7 +321,7 @@ const StandardVehicles = () => {
       {/** Row 29 */}
       <tr>
         <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">OP</th>
-        <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">{form.worker.opName || ""}</td>
+        <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">{form.nameOP || ""}</td>
         <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
         <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
         <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
@@ -352,7 +331,7 @@ const StandardVehicles = () => {
       {/** Row 30 */}
       <tr>
         <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">AOI</th>
-        <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">{form.worker.aoiName || ""}</td>
+        <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">{form.nameAOI || ""}</td>
         <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
         <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
         <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
@@ -371,13 +350,13 @@ const StandardVehicles = () => {
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-600 mb-1">Áp lực Spec (kg)</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printer.pressureSpec || "—"}
+            {form.printerSpecGTAL || "—"}
           </div>
         </div>
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-600 mb-1">Áp lực thực tế (kg)</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printer.pressureActual || "—"}
+            {form.printerRealGTAL || "—"}
           </div>
         </div>
       </div>
@@ -386,13 +365,13 @@ const StandardVehicles = () => {
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-600 mb-1">Tốc độ quét Spec (mm/s)</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printer.scanSpeedSpec || "—"}
+            {form.printerSpecTDQ || "—"}
           </div>
         </div>
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-600 mb-1">Tốc độ quét thực tế (mm/s)</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printer.scanSpeedActual || "—"}
+            {form.printerRealTDQ || "—"}
           </div>
         </div>
       </div>
@@ -401,13 +380,13 @@ const StandardVehicles = () => {
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-600 mb-1">Tốc độ tách bàn Spec (mm/s)</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printer.separationSpeedSpec || "—"}
+            {form.printerSpecTDKC || "—"}
           </div>
         </div>
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-600 mb-1">Tốc độ tách bàn thực tế (mm/s)</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printer.separationSpeedActual || "—"}
+            {form.printerRealTDKC || "—"}
           </div>
         </div>
       </div>
@@ -416,13 +395,13 @@ const StandardVehicles = () => {
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-600 mb-1">Số lần lau Spec</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printer.wipeCountSpec || "—"}
+            {form.printerSpecSLL || "—"}
           </div>
         </div>
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-600 mb-1">Số lần lau thực tế</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printer.wipeCountActual || "—"}
+            {form.printerRealSLL || "—"}
           </div>
         </div>
       </div>
@@ -431,13 +410,13 @@ const StandardVehicles = () => {
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-600 mb-1">Dao sử dụng Spec</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printer.bladeUsedSpec || "—"}
+            {form.printerSpecDSL || "—"}
           </div>
         </div>
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-600 mb-1">Dao sử dụng thực tế</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printer.bladeUsedActual || "—"}
+            {form.printerRealDSL || "—"}
           </div>
         </div>
       </div>
@@ -445,42 +424,23 @@ const StandardVehicles = () => {
       <div className="mb-3">
         <div className="text-xs font-semibold text-gray-600 mb-1">Vacuum Block</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-          {form.printer.vacuumBlockOk ? "✓ OK" : "—"}
+          {form.printerQ1 ? "✓ OK" : "—"}
         </div>
       </div>
 
-      {/* <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Ghi chú Vacuum Block</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 whitespace-pre-wrap">
-          {form.printer.vacuumBlockNote || "—"}
-        </div>
-      </div> */}
     </div>
 
     {/* SPI Section */}
     <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
       <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">SPI</h3>
-      
-      {/* <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Hạng mục check</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 whitespace-pre-wrap">
-          {form.spi.inspectionCheck || "—"}
-        </div>
-      </div> */}
 
       <div className="mb-3">
         <div className="text-xs font-semibold text-gray-600 mb-1">Inspection Setting OK</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-          {form.spi.inspectionSettingOk ? "✓ OK" : "—"}
+          {form.spiQ1 ? "✓ OK" : "—"}
         </div>
       </div>
 
-      {/* <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Ghi chú</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 whitespace-pre-wrap">
-          {form.spi.inspectionSettingNote || "—"}
-        </div>
-      </div> */}
     </div>
 
     {/* Mount Section */}
@@ -490,14 +450,14 @@ const StandardVehicles = () => {
       <div className="mb-3">
         <div className="text-xs font-semibold text-gray-600 mb-1">Kiểm tra 3 board đầu tiên sau khi cắm linh kiện có OK không ?</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-          {form.mount.firstThreeBoardsOk ? "✓ OK" : "—"}
+          {form.mountQ1 ? "✓ OK" : "—"}
         </div>
       </div>
 
       <div className="mb-3">
         <div className="text-xs font-semibold text-gray-600 mb-1">Kiểm tra 1 tấm ở mặt dưới có NG hay bể linh kiện không ?</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-          {form.mount.bottomBoardOk ? "✓ OK" : "—"}
+          {form.mountQ2 ? "✓ OK" : "—"}
         </div>
       </div>
     </div>
@@ -509,7 +469,7 @@ const StandardVehicles = () => {
       <div className="mb-3">
         <div className="text-xs font-semibold text-gray-600 mb-1">Chiều rộng Conveyor</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-          {form.reflow.conveyorWidthOk ? "✓ OK" : "—"}
+          {form.reflowQ1 ? "✓ OK" : "—"}
         </div>
       </div>
 
@@ -517,13 +477,13 @@ const StandardVehicles = () => {
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-600 mb-1">Rail cài đặt (mm)</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.reflow.railSettingValue || "—"}
+            {form.reFlowSettingRail || "—"}
           </div>
         </div>
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-600 mb-1">Rail thực tế (mm)</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.reflow.railActualValue || "—"}
+            {form.reFlowRealRail || "—"}
           </div>
         </div>
       </div>
@@ -536,14 +496,14 @@ const StandardVehicles = () => {
       <div className="mb-3">
         <div className="text-xs font-semibold text-gray-600 mb-1">Xray 3 board đầu tiên có OK hay không ?</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-          {form.aoi.xrayThreeBoardsOk ? "✓ OK" : "—"}
+          {form.aoiQ1 ? "✓ OK" : "—"}
         </div>
       </div>
 
       <div className="mb-3">
         <div className="text-xs font-semibold text-gray-600 mb-1">Người kiểm tra</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-          {form.aoi.xrayInspector || "—"}
+          {form.aoiCheck || "—"}
         </div>
       </div>
     </div>
@@ -555,14 +515,14 @@ const StandardVehicles = () => {
       <div className="mb-3">
         <div className="text-xs font-semibold text-gray-600 mb-1">Khoảng cách input magazine tại uploader</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-          {form.output.magazineDistanceOk ? "✓ OK" : "—"}
+          {form.outputQ1 ? "✓ OK" : "—"}
         </div>
       </div>
 
       <div className="mb-3">
         <div className="text-xs font-semibold text-gray-600 mb-1">Người kiểm tra</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-          {form.output.magazineInspector || "—"}
+          {form.outputChecker || "—"}
         </div>
       </div>
 
@@ -570,13 +530,13 @@ const StandardVehicles = () => {
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-600 mb-1">Model</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.output.settingModel || "—"}
+            {form.outputModelValue || "—"}
           </div>
         </div>
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-600 mb-1">Pitch</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.output.settingPitch || "—"}
+            {form.outputPitchValue || "—"}
           </div>
         </div>
       </div>
@@ -590,7 +550,7 @@ const StandardVehicles = () => {
           <div className="min-w-0">
             <div className="text-xs font-semibold text-gray-600 mb-1">Tên</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-              {form.worker.opName || "—"}
+              {form.nameOP|| "—"}
             </div>
           </div>
       </div>
@@ -600,7 +560,7 @@ const StandardVehicles = () => {
           <div className="min-w-0">
             <div className="text-xs font-semibold text-gray-600 mb-1">Tên</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-              {form.worker.aoiName || "—"}
+              {form.nameAOI || "—"}
             </div>
           </div>
       </div>
@@ -626,8 +586,9 @@ const StandardVehicles = () => {
           <label className="text-xs block mb-1">Giá trị áp lực Spec (kg)</label>
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-            value={form.printer.pressureSpec ?? ""}
-            onChange={(e) => setPrinter("pressureSpec", e.target.value)}
+            value={form.printerSpecGTAL ?? ""}
+            onChange={(e) => set("printerSpecGTAL", Number(e.target.value))}
+            type="number"
           />
         </div>
 
@@ -635,8 +596,9 @@ const StandardVehicles = () => {
           <label className="text-xs block mb-1">Tốc độ quét Spec (mm/s)</label>
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-            value={form.printer.scanSpeedSpec ?? ""}
-            onChange={(e) => setPrinter("scanSpeedSpec", e.target.value)}
+            value={form.printerSpecTDQ ?? ""}
+            onChange={(e) => set("printerSpecTDQ", Number(e.target.value))}
+            type="number"
           />
         </div>
       </div>
@@ -645,8 +607,9 @@ const StandardVehicles = () => {
         <label className="text-xs block mb-1">Tốc độ khoảng cách tách bàn Spec (mm/s)</label>
         <input
           className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-          value={form.printer.separationSpeedSpec ?? ""}
-          onChange={(e) => setPrinter("separationSpeedSpec", e.target.value)}
+          value={form.printerSpecTDKC ?? ""}
+          onChange={(e) => set("printerSpecTDKC", Number(e.target.value))}
+          type="number"
         />
       </div>
 
@@ -655,8 +618,9 @@ const StandardVehicles = () => {
           <label className="text-xs block mb-1">Số lần lau Spec</label>
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-            value={form.printer.wipeCountSpec ?? ""}
-            onChange={(e) => setPrinter("wipeCountSpec", e.target.value)}
+            value={form.printerSpecSLL ?? ""}
+            onChange={(e) => set("printerSpecSLL", Number(e.target.value))}
+            type="number"
           />
         </div>
 
@@ -664,8 +628,9 @@ const StandardVehicles = () => {
           <label className="text-xs block mb-1">Dao sử dụng Spec</label>
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-            value={form.printer.bladeUsedSpec ?? ""}
-            onChange={(e) => setPrinter("bladeUsedSpec", e.target.value)}
+            value={form.printerSpecDSL ?? ""}
+            onChange={(e) => set("printerSpecDSL", Number(e.target.value))}
+            type="number"
           />
         </div>
       </div>
@@ -675,8 +640,9 @@ const StandardVehicles = () => {
           <label className="text-xs block mb-1">Giá trị áp lực thực tế trên máy (kg)</label>
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-            value={form.printer.pressureActual ?? ""}
-            onChange={(e) => setPrinter("pressureActual", e.target.value)}
+            value={form.printerRealGTAL ?? ""}
+            onChange={(e) => set("printerRealGTAL", Number(e.target.value))}
+            type="number"
           />
         </div>
 
@@ -684,8 +650,9 @@ const StandardVehicles = () => {
           <label className="text-xs block mb-1">Tốc độ quét thực tế trên máy (mm/s)</label>
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-            value={form.printer.scanSpeedActual ?? ""}
-            onChange={(e) => setPrinter("scanSpeedActual", e.target.value)}
+            value={form.printerRealTDQ ?? ""}
+            onChange={(e) => set("printerRealTDQ", Number(e.target.value))}
+            type="number"
           />
         </div>
       </div>
@@ -694,8 +661,9 @@ const StandardVehicles = () => {
         <label className="text-xs block mb-1">Tốc độ tách bàn thực tế trên máy (mm/s)</label>
         <input
           className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-          value={form.printer.separationSpeedActual ?? ""}
-          onChange={(e) => setPrinter("separationSpeedActual", e.target.value)}
+          value={form.printerRealTDKC ?? ""}
+          onChange={(e) => set("printerRealTDKC", Number(e.target.value))}
+          type="number"
         />
       </div>
 
@@ -704,8 +672,9 @@ const StandardVehicles = () => {
           <label className="text-xs block mb-1">Số lần lau thực tế trên máy</label>
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-            value={form.printer.wipeCountActual ?? ""}
-            onChange={(e) => setPrinter("wipeCountActual", e.target.value)}
+            value={form.printerRealSLL ?? ""}
+            onChange={(e) => set("printerRealSLL", Number(e.target.value))}
+            type="number"
           />
         </div>
 
@@ -713,8 +682,9 @@ const StandardVehicles = () => {
           <label className="text-xs block mb-1">Dao sử dụng thực tế trên máy</label>
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-            value={form.printer.bladeUsedActual ?? ""}
-            onChange={(e) => setPrinter("bladeUsedActual", e.target.value)}
+            value={form.printerRealDSL ?? ""}
+            onChange={(e) => set("printerRealDSL", Number(e.target.value))}
+            type="number"
           />
         </div>
       </div>
@@ -723,8 +693,8 @@ const StandardVehicles = () => {
         <input
           id="vacuumBlockOk"
           type="checkbox"
-          checked={!!form.printer.vacuumBlockOk}
-          onChange={(e) => setPrinter("vacuumBlockOk", e.target.checked)}
+          checked={!!form.printerQ1}
+          onChange={(e) => set("printerQ1", e.target.checked)}
           className=""
         />
         <label htmlFor="vacuumBlockOk" className="text-xs mx-2">
@@ -742,8 +712,8 @@ const StandardVehicles = () => {
           <input
             id="inspectionSettingOk"
             type="checkbox"
-            checked={!!form.spi.inspectionSettingOk}
-            onChange={(e) => setSPI("inspectionSettingOk", e.target.checked)}
+            checked={!!form.spiQ1}
+            onChange={(e) => set("spiQ1", e.target.checked)}
             className=""
           />
           <label htmlFor="inspectionSettingOk" className="text-xs">
@@ -762,8 +732,8 @@ const StandardVehicles = () => {
           <input
             id="firstThreeBoardsOk"
             type="checkbox"
-            checked={!!form.mount.firstThreeBoardsOk}
-            onChange={(e) => setMount("firstThreeBoardsOk", e.target.checked)}
+            checked={!!form.mountQ1}
+            onChange={(e) => set("mountQ1", e.target.checked)}
             className="mr-2"
           />
           <label htmlFor="firstThreeBoardsOk" className="text-xs">
@@ -775,8 +745,8 @@ const StandardVehicles = () => {
           <input
             id="bottomBoardOk"
             type="checkbox"
-            checked={!!form.mount.bottomBoardOk}
-            onChange={(e) => setMount("bottomBoardOk", e.target.checked)}
+            checked={!!form.mountQ2}
+            onChange={(e) => set("mountQ2", e.target.checked)}
             className="mr-2"
           />
           <label htmlFor="bottomBoardOk" className="text-xs">
@@ -795,8 +765,8 @@ const StandardVehicles = () => {
           <input
             id="conveyorWidthOk"
             type="checkbox"
-            checked={!!form.reflow.conveyorWidthOk}
-            onChange={(e) => setReflow("conveyorWidthOk", e.target.checked)}
+            checked={!!form.reflowQ1}
+            onChange={(e) => set("reflowQ1", e.target.checked)}
             className="mr-2"
           />
           <label htmlFor="conveyorWidthOk" className="text-xs">
@@ -809,16 +779,18 @@ const StandardVehicles = () => {
             <label className="text-xs block mb-1">Giá trị cài đặt Rail (mm)</label>
             <input
               className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-              value={form.reflow.railSettingValue ?? ""}
-              onChange={(e) => setReflow("railSettingValue", e.target.value)}
+              value={form.reFlowSettingRail ?? ""}
+              onChange={(e) => set("reFlowSettingRail", Number(e.target.value))}
+              type="number"
             />
           </div>
           <div className="min-w-0">
             <label className="text-xs block mb-1">Giá trị thực tế Rail (mm)</label>
             <input
               className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-              value={form.reflow.railActualValue ?? ""}
-              onChange={(e) => setReflow("railActualValue", e.target.value)}
+              value={form.reFlowRealRail ?? ""}
+              onChange={(e) => set("reFlowRealRail", Number(e.target.value))}
+              type="number"
             />
           </div>
         </div>
@@ -834,8 +806,8 @@ const StandardVehicles = () => {
           <input
             id="xrayThreeBoardsOk"
             type="checkbox"
-            checked={!!form.aoi.xrayThreeBoardsOk}
-            onChange={(e) => setAOI("xrayThreeBoardsOk", e.target.checked)}
+            checked={!!form.aoiQ1}
+            onChange={(e) => set("aoiQ1", e.target.checked)}
             className="mr-2"
           />
           <label htmlFor="xrayThreeBoardsOk" className="text-xs">
@@ -847,8 +819,8 @@ const StandardVehicles = () => {
           <label className="text-xs block mb-1">Người kiểm tra</label>
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-            value={form.aoi.xrayInspector ?? ""}
-            onChange={(e) => setAOI("xrayInspector", e.target.value)}
+            value={form.aoiCheck ?? ""}
+            onChange={(e) => set("aoiCheck", e.target.value)}
           />
         </div>
       </div>
@@ -863,8 +835,8 @@ const StandardVehicles = () => {
           <input
             id="magazineDistanceOk"
             type="checkbox"
-            checked={!!form.output.magazineDistanceOk}
-            onChange={(e) => setOutput("magazineDistanceOk", e.target.checked)}
+            checked={!!form.outputQ1}
+            onChange={(e) => set("outputQ1", e.target.checked)}
             className="mr-2"
           />
           <label htmlFor="magazineDistanceOk" className="text-xs">
@@ -876,8 +848,8 @@ const StandardVehicles = () => {
           <label className="text-xs block mb-1">Người kiểm tra</label>
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-            value={form.output.magazineInspector ?? ""}
-            onChange={(e) => setOutput("magazineInspector", e.target.value)}
+            value={form.outputChecker ?? ""}
+            onChange={(e) => set("outputChecker", e.target.value)}
           />
         </div>
 
@@ -886,16 +858,16 @@ const StandardVehicles = () => {
             <label className="text-xs block mb-1">Giá trị cài đặt theo yêu cầu Model</label>
             <input
               className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-              value={form.output.settingModel ?? ""}
-              onChange={(e) => setOutput("settingModel", e.target.value)}
+              value={form.outputModelValue ?? ""}
+              onChange={(e) => set("outputModelValue", e.target.value)}
             />
           </div>
           <div className="min-w-0">
             <label className="text-xs block mb-1">Giá trị cài đặt theo yêu cầu Pitch</label>
             <input
               className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-              value={form.output.settingPitch ?? ""}
-              onChange={(e) => setOutput("settingPitch", e.target.value)}
+              value={form.outputPitchValue ?? ""}
+              onChange={(e) => set("outputPitchValue", e.target.value)}
             />
           </div>
         </div>
@@ -911,8 +883,8 @@ const StandardVehicles = () => {
           <label className="text-xs block mb-1">Tên OP</label>
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-            value={form.worker.opName ?? ""}
-            onChange={(e) => setWorker("opName", e.target.value)}
+            value={form.nameOP ?? ""}
+            onChange={(e) => set("nameOP", e.target.value)}
           />
         </div>
 
@@ -920,8 +892,8 @@ const StandardVehicles = () => {
           <label className="text-xs block mb-1">Tên AOI</label>
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
-            value={form.worker.aoiName ?? ""}
-            onChange={(e) => setWorker("aoiName", e.target.value)}
+            value={form.nameAOI ?? ""}
+            onChange={(e) => set("nameAOI", e.target.value)}
           />
         </div>
       </div>

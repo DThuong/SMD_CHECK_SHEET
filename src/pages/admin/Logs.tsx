@@ -9,7 +9,6 @@ import {
   AiOutlineClose 
 } from 'react-icons/ai';
 import { FaCalendarAlt, FaRegUserCircle } from "react-icons/fa";
-import { SmdSheetProvider } from '../../contexts/SmdSheetContext';
 import SmdSheetDetail from '../../components/SmdSheetDetail';
 import { FaUserAlt } from "react-icons/fa";
 import { MdSignalWifiStatusbar2Bar } from "react-icons/md";
@@ -494,13 +493,13 @@ const Logs: React.FC = () => {
             </div>
 
             <div className="border-t border-gray-300 pt-6">
-              <SmdSheetProvider>
+
                 <SmdSheetDetail 
                   logId={selectedLog.id} 
                   data={selectedLog.data}
                   canEdit={canEdit(selectedLog)}
                 />
-              </SmdSheetProvider>
+          
             </div>
           </div>
         </div>

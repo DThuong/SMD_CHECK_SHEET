@@ -17,7 +17,7 @@ import {
   setPQCCheck,
   clearAllSubTableData
 } from '../redux/slices/subTableSlice';
-import { setCurrentSheet, updateSheetStatus } from '../redux/slices/changeModelSlice';
+import { setCurrentSheet, updateSheetStatusToPQCDone } from '../redux/slices/changeModelSlice';
 
 const SmdSheetDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -112,12 +112,12 @@ const SmdSheetDetail = () => {
       return;
     }
     try {
-    await dispatch(updateSheetStatus(sheetData.id)).unwrap();
-    alert('✅ Đã ký thành công!');
-    // chuyển trang sau 2s
-    setTimeout(() => {
-      navigate(0); // reload lại component
-    }, 2000);
+      await dispatch(updateSheetStatusToPQCDone(sheetData.id)).unwrap();
+      alert('✅ Đã ký thành công!');
+      // chuyển trang sau 2s
+      setTimeout(() => {
+        navigate(0); // reload lại component
+      }, 2000);
   } catch (error) {
     console.error('updateSheetStatus failed', error);
   }

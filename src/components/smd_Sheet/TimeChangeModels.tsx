@@ -14,7 +14,7 @@ const initialTimeChangeState: TimeChangeModelData = {
     history: "",
 };
 
-const TimeChangeModels = () => {
+const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
   const [form, setForm] = useState<TimeChangeModelData>(initialTimeChangeState);
       const [open, setOpen] = useState(false);
   
@@ -24,7 +24,7 @@ const TimeChangeModels = () => {
       const { timeChangeModel ,completedTables } = useAppSelector(state => state.subTable);
       const smdSheetId = useAppSelector(state => state.changeModel?.currentSheet?.id);
       const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
-      const timeChangeModelId = currentSheet?.timeChangeModelId;
+      const timeChangeModelId = currentSheet?.timeChangeModelId || timeChangeModel?.id;
       const isSaved = completedTables.includes('TimeChangeModel');
   
       // fetch data khi programcheck thay đổi
@@ -181,7 +181,7 @@ const TimeChangeModels = () => {
 
       {/* Buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
-        <ViewDetailButton onOpen={() => setOpen(true)}>Chỉnh sửa</ViewDetailButton>
+        <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>Chỉnh sửa</ViewDetailButton>
         {/* <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton> */}
       </div>
 

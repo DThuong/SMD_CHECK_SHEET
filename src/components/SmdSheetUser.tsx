@@ -8,7 +8,7 @@ import StandardVehicles from "./smd_Sheet/StandardVehicles";
 import TimeChangeModels from "./smd_Sheet/TimeChangeModels";
 import { useAppSelector, useAppDispatch } from '../redux/hooks';
 import type { ChangeModelResponse } from '../redux/slices/changeModelSlice';
-import { updateSheetStatus } from '../redux/slices/changeModelSlice';
+import { updateSheetStatusToPQCDone } from '../redux/slices/changeModelSlice';
 import { useState, useEffect } from 'react';
 
 interface SmdSheetUserProps {
@@ -85,7 +85,7 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
       setIsCompleting(true);
 
       // Update status to PQCDone
-      await dispatch(updateSheetStatus(sheetData.id)).unwrap();
+      await dispatch(updateSheetStatusToPQCDone(sheetData.id)).unwrap();
 
       setIsSaved(true);
       setTimeout(() => {
@@ -170,22 +170,22 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
       </div>
 
       {/* Các component form */}
-      <SheetHeader />
+      <SheetHeader canEdit />
       
-      <CheckModels />
+      <CheckModels canEdit />
       
-      <ProgramChecks />
+      <ProgramChecks canEdit />
       
-      <StandardProductionSection 
+      <StandardProductionSection canEdit
       />
       
-      <TimeChangeModels 
+      <TimeChangeModels canEdit
       />
       
-      <StandardVehicles 
+      <StandardVehicles canEdit
       />
       
-      <PQCChecks 
+      <PQCChecks canEdit
       />
 
       {/* NÚT HOÀN THÀNH SHEET - Sticky Bottom */}

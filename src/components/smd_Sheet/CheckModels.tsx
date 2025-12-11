@@ -22,12 +22,12 @@ const initialFormState: CheckModelData = {
 };
 
 
-export default function CheckModels() {
+export default function CheckModels({canEdit}: {canEdit: boolean}) {
   const dispatch = useAppDispatch();
   const { completedTables } = useAppSelector(state => state.subTable);
-  const {checkModel} = useAppSelector(state => state.subTable);
+  const checkModel = useAppSelector(state => state.subTable.checkModel);
   const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
-  const checkModelId = currentSheet?.checkModelId;
+  const checkModelId = currentSheet?.checkModelId || checkModel?.id;
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<CheckModelData>(initialFormState);
@@ -43,8 +43,9 @@ export default function CheckModels() {
   const set = <K extends keyof CheckModelData>(k: K, v: CheckModelData[K]) =>
     setForm((s) => ({ ...s, [k]: v }));
 
-  // ✅ SUBMIT WITHOUT VALIDATION
+  // SUBMIT WITHOUT VALIDATION
   const submit = async () => {
+    console.log("checkmodelid được tìm thấy khi chỉnh sửa: ",checkModelId); // log ra undefined khi cập nhật thông tin sheet nhưng khi tạo sheet và sửa lại bình thường ?
     if (!checkModelId) {
       alert('❌ Không có CheckModel ID!');
       return;
@@ -72,7 +73,7 @@ export default function CheckModels() {
         id: checkModelId,
         data: apiData
       })).unwrap();
-      
+
       setOpen(false);
       
     } catch (error: any) {
@@ -171,7 +172,7 @@ export default function CheckModels() {
 
       {/* Buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
-        <ViewDetailButton onOpen={() => setOpen(true)}>
+        <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>
           {isSaved ? 'Chỉnh sửa' : 'Chỉnh sửa'}
         </ViewDetailButton>
       </div>

@@ -41,7 +41,7 @@ const initialStandardVehiclesState: StandardVehicleData = {
   id: 0,
 };
 
-const StandardVehicles = () => {
+const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
    const dispatch = useAppDispatch();
       // khai báo loading để xử lý loading state trong modal
     const { completedTables } = useAppSelector(state => state.subTable);
@@ -50,7 +50,7 @@ const StandardVehicles = () => {
       // lấy checkModel id từ currentSheet trong changeModel Slice
     const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
     const smdSheetId = currentSheet?.id;
-    const standardVehicleId = currentSheet?.standardVehicleId;
+    const standardVehicleId = currentSheet?.standardVehicleId || standardVehicle?.id;
     
     const [open, setOpen] = useState(false);
     const [form, setForm] = useState<StandardVehicleData>(initialStandardVehiclesState);
@@ -570,7 +570,7 @@ const StandardVehicles = () => {
 
   {/* Buttons */}
   <div className="flex flex-row justify-end w-full gap-2 mt-3">
-    <ViewDetailButton onOpen={() => setOpen(true)}>Chỉnh sửa</ViewDetailButton>
+    <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>Chỉnh sửa</ViewDetailButton>
     {/* <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton> */}
   </div>
 

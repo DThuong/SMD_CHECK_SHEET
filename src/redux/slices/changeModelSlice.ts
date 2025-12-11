@@ -177,12 +177,12 @@ export const createChangeModel = createAsyncThunk(
 );
 
 /**
- * UPDATE STATUS
+ * UPDATE STATUS TO PQCDONE - Dùng cho PQC
  * PUT /api/ChangeModel/status/{id}
  * Tự động cập nhật status thành "PQCDone"
  */
-export const updateSheetStatus = createAsyncThunk(
-  'changeModel/updateStatus',
+export const updateSheetStatusToPQCDone = createAsyncThunk(
+  'changeModel/updateStatusToPQCDone',
   async (sheetId: number, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('token');
@@ -194,6 +194,103 @@ export const updateSheetStatus = createAsyncThunk(
       const response = await axios.put(
         `${API_BASE_URL}/ChangeModel/status/${sheetId}`,
         { status: 'PQCDone' }, // Auto set to PQCDone
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return response.data as ChangeModelResponse;
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        return rejectWithValue('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+      }
+      if (error.response?.status === 404) {
+        return rejectWithValue('Không tìm thấy sheet với ID này.');
+      }
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.message || 
+        'Không thể cập nhật status'
+      );
+    }
+  }
+);
+
+/**
+ * UPDATE STATUS - FLEXIBLE (Dùng cho ENG, SUPERVISOR, MANAGER, MANAGER_KOREA)
+ * PUT /api/ChangeModel/status/{id}
+ * Cho phép cập nhật status tùy theo role
+ */
+export const updateSheetStatus = createAsyncThunk(
+  'changeModel/updateStatusByRole',
+  async ({ sheetId, currentStatus, userRole }: { 
+    sheetId: number; 
+    currentStatus: string;
+    userRole: string;
+  }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        return rejectWithValue('Không tìm thấy token. Vui lòng đăng nhập lại.');
+      }
+
+      // MAP ROLE → STATUS CHUẨN
+      let newStatus = '';
+      const currentStatusLower = currentStatus.toLowerCase();
+      
+      switch (userRole) {
+        case 'PQC':
+          if (currentStatusLower === 'pending') {
+            newStatus = 'PQCDone';
+          } else {
+            return rejectWithValue('PQC chỉ có thể xác nhận sheet ở trạng thái Pending');
+          }
+          break;
+          
+        case 'ENG':
+          if (currentStatusLower === 'pqcdone') {
+            newStatus = 'ENGDone';
+          } else {
+            return rejectWithValue('ENG chỉ có thể xác nhận sau khi PQC hoàn thành');
+          }
+          break;
+          
+        case 'Supervisior':
+          if (currentStatusLower === 'engdone') {
+            newStatus = 'SupervisiorDone';
+          } else {
+            return rejectWithValue('Supervisor chỉ có thể xác nhận sau khi ENG hoàn thành');
+          }
+          break;
+          
+        case 'Manager':
+          if (currentStatusLower === 'supervisiordone') {
+            newStatus = 'ManagerDone';
+          } else {
+            return rejectWithValue('Manager chỉ có thể xác nhận sau khi Supervisor hoàn thành');
+          }
+          break;
+          
+        case 'KoreaManager':
+          if (currentStatusLower === 'managerdone') {
+            newStatus = 'KoreaManagerDone';
+          } else {
+            return rejectWithValue('Korea Manager chỉ có thể xác nhận sau khi Manager hoàn thành');
+          }
+          break;
+          
+        default:
+          return rejectWithValue(`Role ${userRole} không có quyền xác nhận sheet`);
+      }
+
+      // Call API
+      const response = await axios.put(
+        `${API_BASE_URL}/ChangeModel/status/${sheetId}`,
+        { status: newStatus },
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -523,6 +620,21 @@ const changeModelSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
+      // update status for pqc done
+      builder
+      .addCase(updateSheetStatusToPQCDone.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateSheetStatusToPQCDone.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentSheet = action.payload;
+        state.error = null;
+      })
+      .addCase(updateSheetStatusToPQCDone.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
       // filter 
       // ==================== GET ALL SHEETS ====================
     builder

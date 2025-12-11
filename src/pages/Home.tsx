@@ -50,31 +50,31 @@ const Home = () => {
   }, [loading, isAuthenticated]);
 
   // Notification logic
-  const [showNoti, setShowNoti] = useState(() => {
-    try {
-      return sessionStorage.getItem("justLoggedIn") === "1";
-    } catch {
-      return false;
-    }
-  });
+  const [showLoginNoti, setShowLoginNoti] = useState(() => {
+  try {
+    return sessionStorage.getItem("justLoggedIn") === "1";
+  } catch {
+    return false;
+  }
+});
 
-  useEffect(() => {
-    if (!showNoti) return;
+    useEffect(() => {
+    if (!showLoginNoti) return;
     try { sessionStorage.removeItem("justLoggedIn"); } catch {}
-    const timer = setTimeout(() => setShowNoti(false), 4000);
+    const timer = setTimeout(() => setShowLoginNoti(false), 4000);
     return () => clearTimeout(timer);
-  }, [showNoti]);
+  }, [showLoginNoti]);
 
   // Notification khi tạo sheet thành công
-  const [showSuccessNoti, setShowSuccessNoti] = useState(false);
+  const [showCreateSheetNoti, setShowCreateSheetNoti] = useState(false);
 
   useEffect(() => {
     if (success && currentSheet) {
-      setShowSuccessNoti(true);
+      setShowCreateSheetNoti(true);
       const timer = setTimeout(() => {
-        setShowSuccessNoti(false);
+        setShowCreateSheetNoti(false);
         dispatch(clearSheet());
-      }, 4000);
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [success, currentSheet]);
@@ -284,7 +284,7 @@ const Home = () => {
   return (
     <div className="max-w-8xl mx-auto p-4">
       {/* Thông báo đăng nhập thành công */}
-      {user && isAuthenticated && showNoti && (
+      {user && isAuthenticated && showLoginNoti && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[900px] animate-slide-down">
           <div className="bg-green-50 border-l-4 border-green-600 p-3 rounded shadow">
             <p className="font-bold text-green-800 text-lg">Đăng nhập thành công!</p>
@@ -295,8 +295,7 @@ const Home = () => {
         </div>
       )}
 
-      {/* Thông báo tạo sheet thành công */}
-      {showSuccessNoti && currentSheet && (
+      {currentSheet && showCreateSheetNoti && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[900px] animate-slide-down">
           <div className="bg-green-50 border-l-4 border-green-600 p-3 rounded shadow">
             <p className="font-bold text-green-800 text-lg">✅ Tạo sheet thành công!</p>
@@ -527,7 +526,7 @@ const Home = () => {
                           {/* Actions */}
                           <div className="w-full lg:w-auto">
                             <button
-                              onClick={() => navigate(`/my-sheet/${sheet.id}`)}
+                              onClick={() => navigate(`/pqc-sheet-detail/${sheet.id}`)}
                               className="w-full lg:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                             >
                               Xem chi tiết
@@ -538,7 +537,7 @@ const Home = () => {
                     ))}
                   </div>
 
-                  {/* ✅ PAGINATION COMPONENT */}
+                  {/* PAGINATION COMPONENT */}
                   {pageCount > 1 && (
                     <div className="mt-4 flex justify-center">
                       <ReactPaginate

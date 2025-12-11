@@ -19,7 +19,7 @@ const initialStandardProductState: StandardProductionData = {
 };
 
 // Standard Production Section
-const StandardProductionSection = () => {
+const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
 
   const dispatch = useAppDispatch();
     // khai báo loading để xử lý loading state trong modal
@@ -29,7 +29,7 @@ const StandardProductionSection = () => {
     // lấy checkModel id từ currentSheet trong changeModel Slice
   const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
   const smdSheetId = currentSheet?.id;
-  const standardProductionId = currentSheet?.standardProductionId;
+  const standardProductionId = currentSheet?.standardProductionId || standardProduction?.id;
   
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<StandardProductionData>(initialStandardProductState);
@@ -87,7 +87,7 @@ const StandardProductionSection = () => {
           isSaved ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-50 text-gray-600 border border-gray-200'
         }`}>
           {isSaved && <span className="text-green-600">✓</span>}
-          <span>ProgramCheck ID: <strong>{standardProductionId}</strong></span>
+          <span>StandardProduction ID: <strong>{standardProductionId}</strong></span>
           {currentSheet?.id && <span>| ChangeModel ID: <strong>{currentSheet.id}</strong></span>}
           {isSaved && <span className="ml-auto font-semibold">Đã lưu</span>}
         </div>
@@ -217,7 +217,7 @@ const StandardProductionSection = () => {
 </div>
       {/** buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
-        <ViewDetailButton onOpen={() => setOpen(true)}>Chỉnh sửa</ViewDetailButton>
+        <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>Chỉnh sửa</ViewDetailButton>
         {/* <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton> */}
       </div>
 

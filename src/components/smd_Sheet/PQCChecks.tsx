@@ -17,17 +17,18 @@ const initialPQCChecksState: PQCCheckData = {
   resultLCR: false
 };
 
-const PQCChecks = () => {
+const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
       const [form, setForm] = useState<PQCCheckData>(initialPQCChecksState);
        const [open, setOpen] = useState(false);
    
        const dispatch = useAppDispatch();
        
        // Lấy dữ liệu từ Redux store
-       const { pqcCheck ,completedTables } = useAppSelector(state => state.subTable);
+       const {completedTables } = useAppSelector(state => state.subTable);
+       const pqcCheck = useAppSelector(state => state.subTable.pqcCheck);
        const smdSheetId = useAppSelector(state => state.changeModel?.currentSheet?.id);
        const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
-       const pqcCheckId = currentSheet?.pqcCheckId;
+       const pqcCheckId = currentSheet?.pqcCheckId || pqcCheck?.id;
        const isSaved = completedTables.includes('PQCCheck');
    
        // fetch data khi programcheck thay đổi
@@ -52,7 +53,8 @@ const PQCChecks = () => {
            alert('Không tìm thấy pqcCheck ID');
            return;
          }
-   
+         
+         console.log("smdSheet id của pqc: ",smdSheetId)
          if (!smdSheetId) {
            alert('Không tìm thấy SMD Sheet ID');
            return;
@@ -217,7 +219,7 @@ const PQCChecks = () => {
 
       {/* Buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
-        <ViewDetailButton onOpen={() => setOpen(true)}>Chỉnh sửa</ViewDetailButton>
+        <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>Chỉnh sửa</ViewDetailButton>
         {/* <ViewDetailButton color="green" onOpen={() => submit()}>Lưu</ViewDetailButton> */}
       </div>
 

@@ -3,17 +3,15 @@
 // createAsyncThunk: hàm của redux toolkit giúp tạo action async với các tham số (payloadAction) với các trạng thái (pending, fulfilled, rejected) sinh tự động
 // payloadAction: type helper cho action có payload
 // axios: thư viện call api
-import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-// định nghĩa kiểu dữ liệu khi post login api
 interface LoginRequest {
   username: string;
   password: string;
 }
 
-// mô tả kiểu dữ liệu user server trả về. ? nghĩa là field đó có thể không có. response data thực tế được trả về
 interface User {
   id?: string;
   username?: string;
@@ -23,103 +21,128 @@ interface User {
   token?: string;
 }
 
-// authState; lưu trạng thái authentication trong store
 interface AuthState {
-  user: User;
-  token: string;
+  user: User | null;
+  token: string | null;
   loading: boolean;
-  error: string;
+  error: string | null;
   isAuthenticated: boolean;
+  lastActivity: number | null; // Track thời gian hoạt động cuối
 }
 
-// state ban đầu
 const initialState: AuthState = {
-  user: {},
-  token: '',
+  user: null,
+  token: null,
   loading: false,
-  error: '',
+  error: null,
   isAuthenticated: false,
+  lastActivity: null,
 };
 
-// tạo async thunk action login để gọi api login
+// API login
 export const loginUser = createAsyncThunk(
-  'auth/login', // action type prefix
-  async (credentials: LoginRequest, {rejectWithValue}) => {
+  'auth/login',
+  async (credentials: LoginRequest, { rejectWithValue }) => {
     try {
-      const response = await axios.post('https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account/login', credentials, 
+      const response = await axios.post(
+        'https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account/login',
+        credentials,
         {
           headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
           },
         }
       );
-      if(response?.data?.token){
+      
+      if (response.data?.token) {
         localStorage.setItem('token', response.data.token);
       }
+      // Set flag để hiển thị notification
+      try {
+        sessionStorage.setItem("justLoggedIn", "1");
+      } catch (error) {
+        console.error('Failed to set session storage:', error);
+      }
+      
       return response.data;
     } catch (error: any) {
-      if(error.response && error.response.data){
-        return rejectWithValue(error.response.data);
+      if (error.response && error.response.data) {
+        // Xử lý error message từ server
+        const errorMessage = error.response.data.message || error.response.data;
+        return rejectWithValue(errorMessage);
       }
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.message || 'Đăng nhập thất bại');
     }
-    
   }
 );
+
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    // action logout
     logout(state) {
-      state.user = {};
-      state.token = '';
+      state.user = null;
+      state.token = null;
       state.isAuthenticated = false;
-      state.error = '';
-      localStorage.removeItem('token');
+      state.error = null;
+      state.lastActivity = null;
+      // xóa token khỏi localStorage
+      try {
+        localStorage.removeItem('token');
+        sessionStorage.removeItem("justLoggedIn");
+      } catch (error) {
+        console.error('Failed to remove storage:', error);
+      }
     },
-    //action để clear error
+    
     clearError(state) {
-      state.error = '';
+      state.error = null;
     },
 
-    //action để restore token từ localStorage khi reload trang
-    restoreToken(state, action: PayloadAction<string>) {
-      state.token = action.payload;
-      state.isAuthenticated = true;
-    }
+    // Update activity timestamp
+    updateActivity(state) {
+      state.lastActivity = Date.now();
+    },
   },
   extraReducers: (builder) => {
-    // Xử lý các trạng thái của loginUser async thunk
     builder
-      // Khi bắt đầu gọi API (pending)
+      // Login
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
-        state.error = '';
+        state.error = null;
       })
-      // Khi API trả về thành công (fulfilled)
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload;
         state.token = action.payload.token || null;
-        state.error = '';
+        state.error = null;
+        state.lastActivity = Date.now();
+        // backup lưu token vào localstorage
+        if (action.payload.token) {
+          localStorage.setItem('token', action.payload.token);
+        }
       })
-      // Khi API trả về lỗi (rejected)
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.isAuthenticated = false;
-        state.user = {};
-        state.token = '';
+        state.user = null;
+        state.token = null;
         state.error = action.payload as string || 'Login failed';
-      });
+        state.lastActivity = null;
+        try {
+          localStorage.removeItem('token');
+        } catch(error) {
+          console.error('Failed to remove storage:', error);
+        }
+      })
+      
   },
-})
-// export action
-export const { logout, clearError, restoreToken } = authSlice.actions;
-// export reducer
+});
+
+export const { logout, clearError, updateActivity } = authSlice.actions;
 export default authSlice.reducer;
 
 

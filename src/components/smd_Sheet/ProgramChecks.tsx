@@ -18,7 +18,7 @@ const initialProgramForm: ProgramCheckData = {
     reflowSpeed: undefined
 };
 
-const ProgramChecks = () => {
+const ProgramChecks = ({canEdit}: {canEdit: boolean}) => {
     const [form, setForm] = useState<ProgramCheckData>(initialProgramForm);
     const [open, setOpen] = useState(false);
 
@@ -28,7 +28,7 @@ const ProgramChecks = () => {
     const { programCheck ,completedTables } = useAppSelector(state => state.subTable);
     const smdSheetId = useAppSelector(state => state.changeModel?.currentSheet?.id);
     const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
-    const programCheckId = currentSheet?.programCheckId;
+    const programCheckId = currentSheet?.programCheckId || programCheck?.id;
     const isSaved = completedTables.includes('ProgramCheck');
 
     // fetch data khi programcheck thay đổi
@@ -213,7 +213,7 @@ const ProgramChecks = () => {
 
       {/** buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
-        <ViewDetailButton onOpen={() => setOpen(true)}>Chỉnh sửa</ViewDetailButton>
+        <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>Chỉnh sửa</ViewDetailButton>
       </div>
 
       <Modal

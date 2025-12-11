@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { loginUser } from '../redux/slices/authSlice';
+import { loginUser, clearError } from '../redux/slices/authSlice';
 // import { useNavigate } from 'react-router-dom';
 
 const inputClass = "w-full px-4 py-3 border rounded-lg outline-none transition focus:border-blue-500 focus:shadow";
@@ -9,11 +9,15 @@ const Login = () => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [remember, setRemember] = useState<boolean>(false);
-  // mới thêm
-
   const dispatch = useAppDispatch();
-  // const navigate = useNavigate();
   const { loading, error} = useAppSelector((state) => state.auth);
+
+    // Clear error khi component unmount
+  useEffect(() => {
+    return () => {
+      dispatch(clearError());
+    };
+  }, [dispatch]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,59 +90,6 @@ const Login = () => {
             {error}
           </div>
         )}
-
-<div className="my-4 px-4">
-  <div className="my-2">
-    
-    {/* PQC 1 */}
-    <div className="flex items-center gap-2 text-sm">
-      <span className="w-16 text-right text-gray-500 text-xs">PQC:</span>
-      <code className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">pqc1</code>
-      <span className="text-gray-300">/</span>
-      <code className="px-2 py-1 bg-gray-100 text-gray-700 rounded font-semibold">123</code>
-    </div>
-
-    {/* PQC 2 */}
-    <div className="flex items-center gap-2 text-sm">
-      <span className="w-16 text-right text-gray-500 text-xs">PQC:</span>
-      <code className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">pqc2</code>
-      <span className="text-gray-300">/</span>
-      <code className="px-2 py-1 bg-gray-100 text-gray-700 rounded font-semibold">123</code>
-    </div>
-
-    {/* ENG */}
-    <div className="flex items-center gap-2 text-sm">
-      <span className="w-16 text-right text-gray-500 text-xs">ENG:</span>
-      <code className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">eng1</code>
-      <span className="text-gray-300">/</span>
-      <code className="px-2 py-1 bg-gray-100 text-gray-700 rounded font-semibold">123</code>
-    </div>
-
-    {/* SUPERVISOR */}
-    <div className="flex items-center gap-2 text-sm">
-      <span className="w-16 text-right text-gray-500 text-xs">SUP:</span>
-      <code className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">sup1</code>
-      <span className="text-gray-300">/</span>
-      <code className="px-2 py-1 bg-gray-100 text-gray-700 rounded font-semibold">123</code>
-    </div>
-
-    {/* MANAGER */}
-    <div className="flex items-center gap-2 text-sm">
-      <span className="w-16 text-right text-gray-500 text-xs">MGR:</span>
-      <code className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">mgr1</code>
-      <span className="text-gray-300">/</span>
-      <code className="px-2 py-1 bg-gray-100 text-gray-700 rounded font-semibold">123</code>
-    </div>
-
-    {/* MANAGER KOREA */}
-    <div className="flex items-center gap-2 text-sm">
-      <span className="w-16 text-right text-gray-500 text-xs">MGR_KR:</span>
-      <code className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">kmgr1</code>
-      <span className="text-gray-300">/</span>
-      <code className="px-2 py-1 bg-gray-100 text-gray-700 rounded font-semibold">123</code>
-    </div>
-  </div>
-</div>
       </form>
     </div>
   );

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// src/pages/admin/Logs.tsx
+import { useState, useEffect, useRef } from 'react';
 import { 
   AiOutlineEye, 
   AiOutlineCheckCircle, 
@@ -8,286 +9,249 @@ import {
   AiOutlineSearch,
   AiOutlineClose 
 } from 'react-icons/ai';
-import { FaCalendarAlt, FaRegUserCircle } from "react-icons/fa";
-import SmdSheetDetail from '../../components/SmdSheetDetail';
-import { FaUserAlt } from "react-icons/fa";
+import { FaCalendarAlt, FaRegUserCircle, FaUserAlt } from "react-icons/fa";
 import { MdSignalWifiStatusbar2Bar } from "react-icons/md";
-import { useAppSelector } from '../../redux/hooks';
+import { useAppSelector, useAppDispatch } from '../../redux/hooks';
+import ReactPaginate from 'react-paginate';
 
-// Types
-interface ConfirmationStep {
-  role: 'ENG' | 'SUPERVISOR' | 'MANAGER' | 'MANAGER_KOREA';
-  confirmedBy: string;
-  confirmedAt: string;
-}
+// Redux actions
+import { 
+  fetchChangeModel, 
+  getSheetByFilter,
+  updateSheetStatus 
+} from '../../redux/slices/changeModelSlice';
+import type { ChangeModelResponse } from '../../redux/slices/changeModelSlice';
 
-// ✅ FIX: Định nghĩa rõ ràng type cho confirmations
-interface Confirmations {
-  ENG?: ConfirmationStep;
-  SUPERVISOR?: ConfirmationStep;
-  MANAGER?: ConfirmationStep;
-  MANAGER_KOREA?: ConfirmationStep;
-}
+// ==================== CONSTANTS ====================
+const ROLES = {
+  PQC: 'PQC',
+  ENG: 'ENG',
+  SUPERVISOR: 'Supervisior', // ✅ Đúng chính tả trong DB
+  MANAGER: 'Manager',
+  KOREA_MANAGER: 'KoreaManager'
+} as const;
 
-interface SmdLog {
-  id: string;
-  submittedBy: string;
-  submittedByRole: string;
-  submittedAt: string;
-  confirmed: boolean;
-  confirmedBy?: string;
-  confirmedByRole?: string;
-  confirmedAt?: string;
-  confirmations?: Confirmations;
-  data: any;
-  editHistory?: {
-    editedBy: string;
-    editedByRole: string;
-    editedAt: string;
-    changes: string;
-  }[];
-}
+const STATUS = {
+  PENDING: 'pending',
+  PQC_DONE: 'PQCDone',
+  ENG_DONE: 'ENGDone',
+  SUPERVISOR_DONE: 'SupervisiorDone',
+  MANAGER_DONE: 'ManagerDone',
+  KOREA_MANAGER_DONE: 'KoreaManagerDone'
+} as const;
 
-const Logs: React.FC = () => {
-  const [logs, setLogs] = useState<SmdLog[]>([]);
-  const [filteredLogs, setFilteredLogs] = useState<SmdLog[]>([]);
-  const [selectedLog, setSelectedLog] = useState<SmdLog | null>(null);
-  const [showDetail, setShowDetail] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
-  
-  const [searchDate, setSearchDate] = useState<string>('');
-  const [searchName, setSearchName] = useState<string>('');
-  const [searchStatus, setSearchStatus] = useState<string>('all');
+// ==================== TYPES ====================
+type SheetFilter = {
+  workOrder: string;
+  fromDate: string;
+  toDate: string;
+  status: string;
+};
 
+const Logs = () => {
+  const dispatch = useAppDispatch();
   const { user } = useAppSelector(state => state.auth);
+  const { 
+    filteredSheets, 
+    loadingList, 
+    error: sheetError 
+  } = useAppSelector(state => state.changeModel);
 
-  // Load logs từ localStorage
-  const loadLogs = (): void => {
-    setLoading(true);
+  // ==================== STATE ====================
+  const [selectedSheet, setSelectedSheet] = useState<ChangeModelResponse | null>(null);
+  const [showDetail, setShowDetail] = useState<boolean>(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Filter state
+  const [filter, setFilter] = useState<SheetFilter>({
+    workOrder: '',
+    fromDate: '',
+    toDate: '',
+    status: 'all'
+  });
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 10;
+
+  // ==================== LOAD SHEETS ====================
+  const loadSheets = async () => {
     try {
-      const allLogs: SmdLog[] = [];
-      
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('smd_logs:')) {
-          const value = localStorage.getItem(key);
-          if (value) {
-            try {
-              const log = JSON.parse(value) as SmdLog;
-              allLogs.push(log);
-            } catch (err) {
-              console.error('Error parsing log:', key, err);
-            }
-          }
-        }
+      const hasWorkOrder = filter.workOrder.trim() !== '';
+      const hasDateRange = filter.fromDate !== '' && filter.toDate !== '';
+      const hasStatus = filter.status !== '' && filter.status !== 'all';
+
+      if (hasWorkOrder || hasDateRange || hasStatus) {
+        console.log('🔍 Using Filter API');
+        
+        await dispatch(getSheetByFilter({
+          workOrder: hasWorkOrder ? filter.workOrder.trim() : undefined,
+          fromDate: hasDateRange ? filter.fromDate : undefined,
+          toDate: hasDateRange ? filter.toDate : undefined,
+          status: hasStatus ? filter.status : undefined,
+        })).unwrap();
+        
+        return;
       }
+
+      console.log('📋 Using Get All API');
+      await dispatch(fetchChangeModel()).unwrap();
       
-      const sortedLogs = allLogs.sort((a, b) => 
-        new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
-      );
-      
-      setLogs(sortedLogs);
-      setFilteredLogs(sortedLogs);
-      console.log('✅ Loaded logs:', sortedLogs.length);
-    } catch (error) {
-      console.error('Error loading logs:', error);
-      alert('Lỗi khi tải dữ liệu: ' + error);
-    } finally {
-      setLoading(false);
+    } catch (error: any) {
+      console.error('❌ Lỗi khi tải sheets:', error);
+      if (error?.message) {
+        alert(`Lỗi: ${error.message}`);
+      }
     }
   };
 
+  // ==================== EFFECTS ====================
   useEffect(() => {
-    loadLogs();
+    loadSheets();
   }, []);
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      loadLogs();
-    }, 5000);
-
-    return () => clearInterval(intervalId);
-  }, []);
-
-  useEffect(() => {
-    let filtered = [...logs];
-
-    if (searchDate) {
-      filtered = filtered.filter(log => {
-        const logDate = new Date(log.submittedAt);
-        const searchDateObj = new Date(searchDate);
-        
-        return (
-          logDate.getDate() === searchDateObj.getDate() &&
-          logDate.getMonth() === searchDateObj.getMonth() &&
-          logDate.getFullYear() === searchDateObj.getFullYear()
-        );
-      });
+  // ==================== FILTER HANDLERS ====================
+  const applyFilter = () => {
+    setCurrentPage(0);
+    
+    if (filter.fromDate && !filter.toDate) {
+      alert('Vui lòng chọn "Đến ngày"');
+      return;
+    }
+    if (!filter.fromDate && filter.toDate) {
+      alert('Vui lòng chọn "Từ ngày"');
+      return;
     }
 
-    if (searchName.trim()) {
-      filtered = filtered.filter(log => 
-        log.submittedBy.toLowerCase().includes(searchName.toLowerCase()) ||
-        log.submittedByRole.toLowerCase().includes(searchName.toLowerCase())
-      );
+    if (filter.fromDate && filter.toDate) {
+      const from = new Date(filter.fromDate);
+      const to = new Date(filter.toDate);
+      if (from > to) {
+        alert('"Từ ngày" không thể lớn hơn "Đến ngày"');
+        return;
+      }
     }
 
-    if (searchStatus !== 'all') {
-      filtered = filtered.filter(log => {
-        if (searchStatus === 'confirmed') return log.confirmed;
-        if (searchStatus === 'pending') return !log.confirmed;
-        return true;
-      });
-    }
+    loadSheets();
+  };
 
-    setFilteredLogs(filtered);
-  }, [searchDate, searchName, searchStatus, logs]);
+  const resetFilter = async () => {
+    setFilter({ 
+      workOrder: '', 
+      fromDate: '', 
+      toDate: '',
+      status: 'all'
+    });
+    
+    try {
+      await dispatch(fetchChangeModel()).unwrap();
+      setCurrentPage(0);
+    } catch (error) {
+      console.error('❌ Lỗi khi reset filter:', error);
+    }
+  };
 
   const clearFilters = () => {
-    setSearchDate('');
-    setSearchName('');
-    setSearchStatus('all');
+    resetFilter();
   };
 
-  // ✅ FIX: Kiểm tra role có thể xác nhận ở bước nào
-  const canConfirmAtStep = (log: SmdLog, role: string): boolean => {
+  // ==================== CONFIRMATION LOGIC ====================
+  
+  // ✅ Kiểm tra role có thể xác nhận ở bước nào (CHUẨN)
+  const canConfirmAtStep = (sheet: ChangeModelResponse, role: string): boolean => {
     if (!user || user.role !== role) return false;
 
-    const confirmations = log.confirmations || {};
+    const status = sheet.status?.toLowerCase();
 
     switch (role) {
-      case 'ENG':
-        // ENG luôn có thể xác nhận nếu chưa xác nhận
-        return !confirmations.ENG;
+      case ROLES.ENG:
+        return status === STATUS.PQC_DONE.toLowerCase();
       
-      case 'SUPERVISOR':
-        // SUPERVISOR chỉ xác nhận được khi ENG đã xác nhận
-        return !!confirmations.ENG && !confirmations.SUPERVISOR;
+      case ROLES.SUPERVISOR:
+        return status === STATUS.ENG_DONE.toLowerCase();
       
-      case 'MANAGER':
-        // MANAGER chỉ xác nhận được khi ENG và SUPERVISOR đã xác nhận
-        return !!confirmations.ENG && !!confirmations.SUPERVISOR && !confirmations.MANAGER;
+      case ROLES.MANAGER:
+        return status === STATUS.SUPERVISOR_DONE.toLowerCase();
       
-      case 'MANAGER_KOREA':
-        // MANAGER_KOREA chỉ xác nhận được khi cả 3 bước trước đã xác nhận
-        return !!confirmations.ENG && !!confirmations.SUPERVISOR && !!confirmations.MANAGER && !confirmations.MANAGER_KOREA;
+      case ROLES.KOREA_MANAGER:
+        return status === STATUS.MANAGER_DONE.toLowerCase();
       
       default:
         return false;
     }
   };
 
-  // FIX: Xác nhận theo bước
-  const handleConfirmStep = (logId: string, role: 'ENG' | 'SUPERVISOR' | 'MANAGER' | 'MANAGER_KOREA'): void => {
+  // ✅ Xác nhận theo bước (CHUẨN - Sử dụng updateSheetStatusByRole)
+  const handleConfirmStep = async (
+    sheetId: number, 
+    role: typeof ROLES.ENG | typeof ROLES.SUPERVISOR | typeof ROLES.MANAGER | typeof ROLES.KOREA_MANAGER
+  ) => {
     try {
       if (!user) {
         alert("❌ Bạn chưa đăng nhập!");
         return;
       }
 
-      const log = logs.find((l) => l.id === logId);
-      if (!log) return;
+      const sheet = filteredSheets?.find((s) => s.id === sheetId);
+      if (!sheet) return;
 
-      if (!canConfirmAtStep(log, role)) {
+      if (!canConfirmAtStep(sheet, role)) {
         alert("❌ Bạn không thể xác nhận ở bước này!");
         return;
       }
 
-      const confirmations = log.confirmations || {};
-      
-      // Cập nhật xác nhận cho bước hiện tại
-      const updatedConfirmations: Confirmations = {
-        ...confirmations,
-        [role]: {
-          role: role,
-          confirmedBy: user.username,
-          confirmedAt: new Date().toISOString()
-        }
-      };
-
-      // Kiểm tra xem tất cả các bước đã hoàn thành chưa
-      const allConfirmed = 
-        !!updatedConfirmations.ENG &&
-        !!updatedConfirmations.SUPERVISOR &&
-        !!updatedConfirmations.MANAGER &&
-        !!updatedConfirmations.MANAGER_KOREA;
-
-      const updatedLog: SmdLog = {
-        ...log,
-        confirmations: updatedConfirmations,
-        confirmed: allConfirmed,
-        // Cập nhật thông tin xác nhận cuối cùng nếu hoàn tất tất cả
-        ...(allConfirmed && {
-          confirmedBy: user.username,
-          confirmedByRole: user.role,
-          confirmedAt: new Date().toISOString()
-        })
-      };
-
-      localStorage.setItem(`smd_logs:${logId}`, JSON.stringify(updatedLog));
-      
-      setLogs((prevLogs) => 
-        prevLogs.map((l) => l.id === logId ? updatedLog : l)
-      );
-
-      if (selectedLog && selectedLog.id === logId) {
-        setSelectedLog(updatedLog);
-      }
+      // ✅ GỌI API TỰ ĐỘNG XÁC ĐỊNH STATUS
+      await dispatch(updateSheetStatus({
+        sheetId,
+        currentStatus: sheet.status || STATUS.PENDING,
+        userRole: role
+      })).unwrap();
 
       const roleNames: Record<string, string> = {
-        'ENG': 'Engineering',
-        'SUPERVISOR': 'Supervisor',
-        'MANAGER': 'Manager',
-        'MANAGER_KOREA': 'Manager Korea'
+        [ROLES.ENG]: 'Engineering',
+        [ROLES.SUPERVISOR]: 'Supervisor',
+        [ROLES.MANAGER]: 'Manager',
+        [ROLES.KOREA_MANAGER]: 'Korea Manager'
       };
 
-      if (allConfirmed) {
+      // Check if completed
+      const newStatus = sheet.status?.toLowerCase();
+      if (newStatus === STATUS.KOREA_MANAGER_DONE.toLowerCase()) {
         alert(`🎉 Sheet đã được xác nhận hoàn tất bởi tất cả các cấp!`);
       } else {
         alert(`✅ Xác nhận thành công bởi ${roleNames[role]}!`);
       }
-    } catch (error) {
-      console.error('Error confirming log:', error);
-      alert('Có lỗi xảy ra khi xác nhận. Vui lòng thử lại.');
+
+      await loadSheets();
+
+      if (selectedSheet && selectedSheet.id === sheetId) {
+        const updatedSheet = filteredSheets?.find((s) => s.id === sheetId);
+        if (updatedSheet) {
+          setSelectedSheet(updatedSheet);
+        }
+      }
+
+    } catch (error: any) {
+      console.error('Error confirming sheet:', error);
+      alert(error || 'Có lỗi xảy ra khi xác nhận. Vui lòng thử lại.');
     }
   };
 
-  const handleViewDetail = (log: SmdLog): void => {
-    setSelectedLog(log);
+  // ==================== VIEW HANDLERS ====================
+  const handleViewDetail = (sheet: ChangeModelResponse): void => {
+    setSelectedSheet(sheet);
     setShowDetail(true);
   };
 
   const handleCloseDetail = (): void => {
     setShowDetail(false);
-    setSelectedLog(null);
-    loadLogs();
+    setSelectedSheet(null);
+    loadSheets();
   };
 
-  const clearStorage = (): void => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa tất cả dữ liệu logs?')) {
-      try {
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith('smd_logs:')) {
-            keysToRemove.push(key);
-          }
-        }
-        
-        keysToRemove.forEach(key => localStorage.removeItem(key));
-        
-        console.log(`Cleared ${keysToRemove.length} logs from storage`);
-        alert(`Đã xóa ${keysToRemove.length} bản ghi thành công!`);
-        
-        loadLogs();
-      } catch (error) {
-        console.error('Error clearing storage:', error);
-        alert('Có lỗi xảy ra khi xóa dữ liệu: ' + error);
-      }
-    }
-  };
-
-  const formatDateTime = (dateString: string): string => {
+  // ==================== UTILITIES ====================
+  const formatDateTime = (dateString?: string): string => {
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleString('vi-VN', {
       year: 'numeric',
@@ -298,28 +262,94 @@ const Logs: React.FC = () => {
     });
   };
 
-  const canEdit = (log: SmdLog): boolean => {
+  // ✅ CẬP NHẬT canEdit (CHUẨN)
+  const canEdit = (sheet: ChangeModelResponse): boolean => {
     if (!user) return false;
-    if (user.role !== 'ENG' && user.role !== 'SUPERVISOR') return false;
-    return true;
+    
+    // Chỉ ENG và Supervisior mới được edit
+    if (user.role !== ROLES.ENG && user.role !== ROLES.SUPERVISOR) return false;
+    
+    const status = sheet.status?.toLowerCase();
+    
+    // ENG edit khi PQCDone
+    if (user.role === ROLES.ENG && status === STATUS.PQC_DONE.toLowerCase()) return true;
+    
+    // Supervisior edit khi ENGDone
+    if (user.role === ROLES.SUPERVISOR && status === STATUS.ENG_DONE.toLowerCase()) return true;
+    
+    return false;
   };
 
-  // ✅ COMPONENT HIỂN THỊ TRẠNG THÁI XÁC NHẬN
-  const ConfirmationStatus: React.FC<{ log: SmdLog }> = ({ log }) => {
-    const confirmations = log.confirmations || {};
+  // ✅ Get status badge (CHUẨN)
+  const getStatusBadge = (sheet: ChangeModelResponse) => {
+    const status = sheet.status?.toLowerCase();
+    
+    const statusConfig: Record<string, { bg: string; text: string; label: string; icon: string }> = {
+      [STATUS.PENDING.toLowerCase()]: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Pending', icon: '⏳' },
+      [STATUS.PQC_DONE.toLowerCase()]: { bg: 'bg-green-100', text: 'text-green-700', label: 'PQC Done', icon: '' },
+      [STATUS.ENG_DONE.toLowerCase()]: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'ENG Done', icon: '' },
+      [STATUS.SUPERVISOR_DONE.toLowerCase()]: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'SUP Done', icon: '' },
+      [STATUS.MANAGER_DONE.toLowerCase()]: { bg: 'bg-indigo-100', text: 'text-indigo-700', label: 'MGR Done', icon: '' },
+      [STATUS.KOREA_MANAGER_DONE.toLowerCase()]: { bg: 'bg-teal-100', text: 'text-teal-700', label: 'KMGR Done', icon: '' },
+    };
+
+    const config = statusConfig[status || STATUS.PENDING.toLowerCase()] || { 
+      bg: 'bg-gray-100', 
+      text: 'text-gray-700', 
+      label: status || 'Unknown',
+      icon: '❓'
+    };
+
+    return (
+      <div className={`inline-flex items-center gap-1 ${config.bg} ${config.text} rounded-full px-3 py-1 text-xs font-semibold`}>
+        <span>{config.icon}</span>
+        <span>{config.label}</span>
+      </div>
+    );
+  };
+
+  // ✅ COMPONENT HIỂN THỊ TRẠNG THÁI XÁC NHẬN (CHUẨN)
+  const ConfirmationStatus: React.FC<{ sheet: ChangeModelResponse }> = ({ sheet }) => {
+    const status = sheet.status?.toLowerCase();
+    
     const steps = [
-      { key: 'ENG' as const, label: 'ENG', color: 'blue' },
-      { key: 'SUPERVISOR' as const, label: 'SUP', color: 'purple' },
-      { key: 'MANAGER' as const, label: 'MGR', color: 'orange' },
-      { key: 'MANAGER_KOREA' as const, label: 'KMGR', color: 'red' }
+      { key: ROLES.ENG, label: 'ENG', color: 'blue' },
+      { key: ROLES.SUPERVISOR, label: 'SUP', color: 'purple' },
+      { key: ROLES.MANAGER, label: 'MGR', color: 'orange' },
+      { key: ROLES.KOREA_MANAGER, label: 'KMGR', color: 'red' }
     ];
+
+    const getStepStatus = (stepKey: string) => {
+      const statusOrder = [
+        STATUS.PENDING.toLowerCase(),
+        STATUS.PQC_DONE.toLowerCase(),
+        STATUS.ENG_DONE.toLowerCase(),
+        STATUS.SUPERVISOR_DONE.toLowerCase(),
+        STATUS.MANAGER_DONE.toLowerCase(),
+        STATUS.KOREA_MANAGER_DONE.toLowerCase()
+      ];
+      
+      const currentIndex = statusOrder.indexOf(status || STATUS.PENDING.toLowerCase());
+      
+      switch (stepKey) {
+        case ROLES.ENG:
+          return currentIndex >= 2;
+        case ROLES.SUPERVISOR:
+          return currentIndex >= 3;
+        case ROLES.MANAGER:
+          return currentIndex >= 4;
+        case ROLES.KOREA_MANAGER:
+          return currentIndex >= 5;
+        default:
+          return false;
+      }
+    };
 
     return (
       <div className="flex flex-col gap-1">
         {steps.map((step) => {
-          const confirmation = confirmations[step.key];
-          const isConfirmed = !!confirmation;
-          const canConfirm = canConfirmAtStep(log, step.key);
+          const isConfirmed = getStepStatus(step.key);
+          const canConfirm = canConfirmAtStep(sheet, step.key);
           
           return (
             <div key={step.key} className="flex items-center gap-2">
@@ -330,14 +360,12 @@ const Logs: React.FC = () => {
               {isConfirmed ? (
                 <div className="flex items-center gap-1">
                   <AiOutlineCheckCircle className={`w-4 h-4 text-${step.color}-600`} />
-                  <span className="text-xs text-gray-600 truncate max-w-20" title={confirmation.confirmedBy}>
-                    {confirmation.confirmedBy}
-                  </span>
+                  <span className="text-xs text-gray-600">Done</span>
                 </div>
               ) : canConfirm ? (
                 <input
                   type="checkbox"
-                  onChange={() => handleConfirmStep(log.id, step.key)}
+                  onChange={() => handleConfirmStep(sheet.id, step.key)}
                   className={`w-4 h-4 cursor-pointer accent-${step.color}-600`}
                   title={`Xác nhận bởi ${step.label}`}
                 />
@@ -351,10 +379,57 @@ const Logs: React.FC = () => {
     );
   };
 
-  // Detail View Component
-  if (showDetail && selectedLog) {
-    const confirmations = selectedLog.confirmations || {};
-    const roles: Array<keyof Confirmations> = ['ENG', 'SUPERVISOR', 'MANAGER', 'MANAGER_KOREA'];
+  // ==================== PAGINATION ====================
+  const sortedSheets = [...(filteredSheets || [])].sort((a, b) => {
+    const dateA = new Date(a.createAt || 0).getTime();
+    const dateB = new Date(b.createAt || 0).getTime();
+    return dateB - dateA;
+  });
+
+  const pageCount = Math.ceil(sortedSheets.length / itemsPerPage);
+  const offset = currentPage * itemsPerPage;
+  const currentSheets = sortedSheets.slice(offset, offset + itemsPerPage);
+
+  const handlePageChange = (selectedItem: { selected: number }) => {
+    setCurrentPage(selectedItem.selected);
+    
+    if (resultsRef.current) {
+      resultsRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+  // ==================== DETAIL VIEW ====================
+  if (showDetail && selectedSheet) {
+    const status = selectedSheet.status?.toLowerCase();
+    const roles = [ROLES.ENG, ROLES.SUPERVISOR, ROLES.MANAGER, ROLES.KOREA_MANAGER];
+    
+    const getStepConfirmed = (role: string) => {
+      const statusOrder = [
+        STATUS.PENDING.toLowerCase(),
+        STATUS.PQC_DONE.toLowerCase(),
+        STATUS.ENG_DONE.toLowerCase(),
+        STATUS.SUPERVISOR_DONE.toLowerCase(),
+        STATUS.MANAGER_DONE.toLowerCase(),
+        STATUS.KOREA_MANAGER_DONE.toLowerCase()
+      ];
+      const currentIndex = statusOrder.indexOf(status || STATUS.PENDING.toLowerCase());
+      
+      switch (role) {
+        case ROLES.ENG:
+          return currentIndex >= 2;
+        case ROLES.SUPERVISOR:
+          return currentIndex >= 3;
+        case ROLES.MANAGER:
+          return currentIndex >= 4;
+        case ROLES.KOREA_MANAGER:
+          return currentIndex >= 5;
+        default:
+          return false;
+      }
+    };
     
     return (
       <div className="min-h-screen bg-gray-50">
@@ -375,61 +450,46 @@ const Logs: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <FaRegUserCircle className="w-5 h-5" />
                   <span className="text-sm text-gray-700">
-                    <strong>Người gửi:</strong> {selectedLog.submittedBy} ({selectedLog.submittedByRole})
+                    <strong>Người tạo:</strong> {selectedSheet.account?.fullName || selectedSheet.account?.userName} ({selectedSheet.account?.role})
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <AiOutlineCalendar className="w-5 h-5" />
                   <span className="text-sm text-gray-700">
-                    <strong>Thời gian:</strong> {formatDateTime(selectedLog.submittedAt)}
+                    <strong>Thời gian:</strong> {formatDateTime(selectedSheet.createAt)}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  {selectedLog.confirmed ? (
-                    <>
-                      <AiOutlineCheckCircle className="w-5 h-5 text-green-600" />
-                      <span className="text-sm text-green-700 font-semibold">
-                        Hoàn tất xác nhận
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <AiOutlineClockCircle className="w-5 h-5 text-orange-600" />
-                      <span className="text-sm text-orange-700 font-semibold">
-                        Đang xác nhận
-                      </span>
-                    </>
-                  )}
+                  {getStatusBadge(selectedSheet)}
                 </div>
               </div>
 
-              {/* Hiển thị trạng thái xác nhận từng bước */}
+              {/* Tiến trình xác nhận */}
               <div className="mt-4 pt-4 border-t border-blue-200">
                 <strong className="text-sm text-gray-700 mb-2 block">Tiến trình xác nhận:</strong>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   {roles.map((role) => {
-                    const confirmation = confirmations[role];
-                    const labels: Record<keyof Confirmations, string> = { 
-                      ENG: 'Engineering', 
-                      SUPERVISOR: 'Supervisor', 
-                      MANAGER: 'Manager', 
-                      MANAGER_KOREA: 'Manager Korea' 
+                    const isConfirmed = getStepConfirmed(role);
+                    const labels: Record<string, string> = { 
+                      [ROLES.ENG]: 'Engineering', 
+                      [ROLES.SUPERVISOR]: 'Supervisor', 
+                      [ROLES.MANAGER]: 'Manager', 
+                      [ROLES.KOREA_MANAGER]: 'Manager Korea' 
                     };
                     
                     return (
-                      <div key={role} className={`p-3 rounded-lg border-2 ${confirmation ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-300'}`}>
+                      <div key={role} className={`p-3 rounded-lg border-2 ${isConfirmed ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-300'}`}>
                         <div className="flex items-center gap-2 mb-1">
-                          {confirmation ? (
+                          {isConfirmed ? (
                             <AiOutlineCheckCircle className="w-5 h-5 text-green-600" />
                           ) : (
                             <AiOutlineClockCircle className="w-5 h-5 text-gray-400" />
                           )}
                           <span className="font-semibold text-xs">{labels[role]}</span>
                         </div>
-                        {confirmation ? (
+                        {isConfirmed ? (
                           <div className="text-xs text-gray-600">
-                            <div>{confirmation.confirmedBy}</div>
-                            <div className="text-[10px] text-gray-500">{formatDateTime(confirmation.confirmedAt)}</div>
+                            <div className="text-green-700 font-medium">✓ Đã xác nhận</div>
                           </div>
                         ) : (
                           <div className="text-xs text-gray-400">Chưa xác nhận</div>
@@ -439,51 +499,40 @@ const Logs: React.FC = () => {
                   })}
                 </div>
               </div>
-
-              {selectedLog.editHistory && selectedLog.editHistory.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-blue-200">
-                  <strong className="text-sm text-gray-700">Lịch sử chỉnh sửa:</strong>
-                  {selectedLog.editHistory.map((edit, idx) => (
-                    <div key={idx} className="text-xs text-gray-600 ml-4 mt-1">
-                      • {edit.editedBy} ({edit.editedByRole}) - {formatDateTime(edit.editedAt)}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
-            {/* Nút xác nhận theo role */}
+            {/* Nút xác nhận */}
             <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
-              {user?.role === 'ENG' && canConfirmAtStep(selectedLog, 'ENG') && (
+              {user?.role === ROLES.ENG && canConfirmAtStep(selectedSheet, ROLES.ENG) && (
                 <button
-                  onClick={() => handleConfirmStep(selectedLog.id, 'ENG')}
+                  onClick={() => handleConfirmStep(selectedSheet.id, ROLES.ENG)}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 font-semibold"
                 >
                   <AiOutlineCheckCircle className="w-5 h-5" />
                   Xác nhận ENG
                 </button>
               )}
-              {user?.role === 'SUPERVISOR' && canConfirmAtStep(selectedLog, 'SUPERVISOR') && (
+              {user?.role === ROLES.SUPERVISOR && canConfirmAtStep(selectedSheet, ROLES.SUPERVISOR) && (
                 <button
-                  onClick={() => handleConfirmStep(selectedLog.id, 'SUPERVISOR')}
+                  onClick={() => handleConfirmStep(selectedSheet.id, ROLES.SUPERVISOR)}
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 font-semibold"
                 >
                   <AiOutlineCheckCircle className="w-5 h-5" />
                   Xác nhận SUP
                 </button>
               )}
-              {user?.role === 'MANAGER' && canConfirmAtStep(selectedLog, 'MANAGER') && (
+              {user?.role === ROLES.MANAGER && canConfirmAtStep(selectedSheet, ROLES.MANAGER) && (
                 <button
-                  onClick={() => handleConfirmStep(selectedLog.id, 'MANAGER')}
+                  onClick={() => handleConfirmStep(selectedSheet.id, ROLES.MANAGER)}
                   className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 font-semibold"
                 >
                   <AiOutlineCheckCircle className="w-5 h-5" />
                   Xác nhận MGR
                 </button>
               )}
-              {user?.role === 'MANAGER_KOREA' && canConfirmAtStep(selectedLog, 'MANAGER_KOREA') && (
+              {user?.role === ROLES.KOREA_MANAGER && canConfirmAtStep(selectedSheet, ROLES.KOREA_MANAGER) && (
                 <button
-                  onClick={() => handleConfirmStep(selectedLog.id, 'MANAGER_KOREA')}
+                  onClick={() => handleConfirmStep(selectedSheet.id, ROLES.KOREA_MANAGER)}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 font-semibold"
                 >
                   <AiOutlineCheckCircle className="w-5 h-5" />
@@ -492,14 +541,22 @@ const Logs: React.FC = () => {
               )}
             </div>
 
+            {/* ✅ Link đến trang detail theo role */}
             <div className="border-t border-gray-300 pt-6">
-
-                <SmdSheetDetail 
-                  logId={selectedLog.id} 
-                  data={selectedLog.data}
-                  canEdit={canEdit(selectedLog)}
-                />
-          
+              <div className="text-center mb-4">
+                <p className="text-gray-600 mb-4">
+                  Để xem chi tiết đầy đủ, vui lòng chuyển sang trang chi tiết
+                </p>
+                <button
+                  onClick={() => {
+                    const roleLower = user?.role?.toLowerCase();
+                    window.open(`/${roleLower}/sheet-detail/${selectedSheet.id}`, '_blank');
+                  }}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                >
+                  🔍 Xem chi tiết đầy đủ (Tab mới)
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -507,7 +564,7 @@ const Logs: React.FC = () => {
     );
   }
 
-  // List View
+  // ==================== LIST VIEW ====================
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-8xl mx-auto">
@@ -524,11 +581,12 @@ const Logs: React.FC = () => {
           {/* Phân quyền thông báo */}
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-xs sm:text-sm text-blue-800 text-center mb-0">
-              {user?.role === 'PQC' && '📝 Bạn có thể xem logs mà bạn đã tạo'}
-              {user?.role === 'ENG' && '✏️ Bạn có thể xem, chỉnh sửa và xác nhận ở bước ENG'}
-              {user?.role === 'SUPERVISOR' && '✏️ Bạn có thể xem, chỉnh sửa và xác nhận ở bước SUPERVISOR'}
-              {user?.role === 'MANAGER' && '👁️ Bạn có thể xem và xác nhận ở bước MANAGER'}
-              {user?.role === 'MANAGER_KOREA' && '👁️ Bạn có thể xem và xác nhận ở bước MANAGER KOREA'}
+              {user?.role === ROLES.PQC && '📝 Bạn có thể xem logs mà bạn đã tạo'}
+              {user?.role === ROLES.ENG && '✏️ Bạn có thể xem, chỉnh sửa và xác nhận ở bước ENG'}
+              {user?.role === ROLES.SUPERVISOR && '✏️ Bạn có thể xem, chỉnh sửa và xác nhận ở bước SUPERVISOR'}
+              {user?.role === ROLES.MANAGER && '👁️ Bạn có thể xem và xác nhận ở bước MANAGER (KHÔNG sửa)'}
+              {user?.role === ROLES.KOREA_MANAGER && '👁️ Bạn có thể xem và xác nhận ở bước KOREA MANAGER (KHÔNG sửa)'}
+              {user?.role === 'ADMIN' && '🔧 Bạn có quyền xem tất cả sheets'}
             </p>
           </div>
 
@@ -540,151 +598,214 @@ const Logs: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Work Order */}
               <div>
                 <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <FaCalendarAlt /><span>Ngày gửi</span>
-                </div>
-                <input
-                  type="date"
-                  value={searchDate}
-                  onChange={(e) => setSearchDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Chọn ngày..."
-                />
-              </div>
-
-              <div>
-                <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <FaUserAlt /><span>Người gửi</span>
+                  <FaUserAlt /><span>Work Order</span>
                 </div>
                 <input
                   type="text"
-                  value={searchName}
-                  onChange={(e) => setSearchName(e.target.value)}
+                  value={filter.workOrder}
+                  onChange={(e) => setFilter(s => ({ ...s, workOrder: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Nhập tên hoặc role..."
+                  placeholder="Nhập Work Order..."
                 />
               </div>
 
+              {/* Status */}
               <div>
                 <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
                   <MdSignalWifiStatusbar2Bar /><span>Trạng thái</span>
                 </div>
                 <select
-                  value={searchStatus}
-                  onChange={(e) => setSearchStatus(e.target.value)}
+                  value={filter.status}
+                  onChange={(e) => setFilter(s => ({ ...s, status: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">Tất cả</option>
-                  <option value="confirmed">Hoàn tất</option>
-                  <option value="pending">Đang xử lý</option>
+                  <option value={STATUS.PENDING}>Pending</option>
+                  <option value={STATUS.PQC_DONE}>PQC Done</option>
+                  <option value={STATUS.ENG_DONE}>ENG Done</option>
+                  <option value={STATUS.SUPERVISOR_DONE}>Supervisor Done</option>
+                  <option value={STATUS.MANAGER_DONE}>Manager Done</option>
+                  <option value={STATUS.KOREA_MANAGER_DONE}>Korea Manager Done</option>
                 </select>
               </div>
 
-              <div className="flex items-end">
-                <button
-                  onClick={clearFilters}
-                  className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
-                >
-                  <AiOutlineClose className="w-4 h-4" />
-                  Xóa bộ lọc
-                </button>
+              {/* From Date */}
+              <div>
+                <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+                  <FaCalendarAlt /><span>Từ ngày</span>
+                </div>
+                <input
+                  type="date"
+                  value={filter.fromDate}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setFilter(s => ({ ...s, fromDate: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* To Date */}
+              <div>
+                <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+                  <FaCalendarAlt /><span>Đến ngày</span>
+                </div>
+                <input
+                  type="date"
+                  value={filter.toDate}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setFilter(s => ({ ...s, toDate: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
               </div>
             </div>
 
-            <div className="mt-3 text-sm text-gray-600">
-              Hiển thị <span className="font-semibold text-blue-600">{filteredLogs.length}</span> / {logs.length} bản ghi
+            {/* Action Buttons */}
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={applyFilter}
+                disabled={loadingList}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+              >
+                <AiOutlineSearch className="w-4 h-4" />
+                {loadingList ? 'Đang tìm...' : 'Tìm kiếm'}
+              </button>
+              <button
+                onClick={clearFilters}
+                disabled={loadingList}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+              >
+                <AiOutlineClose className="w-4 h-4" />
+                Xóa bộ lọc
+              </button>
+            </div>
+
+            {/* Result Count */}
+            <div className="mt-3 text-sm text-gray-600" ref={resultsRef}>
+              Hiển thị <span className="font-semibold text-blue-600">{currentSheets.length}</span> / <span className="font-semibold">{sortedSheets.length}</span> sheets
+              {pageCount > 1 && (
+                <span className="ml-2">(Trang {currentPage + 1}/{pageCount})</span>
+              )}
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="mb-4 flex flex-col sm:flex-row gap-2">
-            <button
-              onClick={loadLogs}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
-            >
-              Tải lại
-            </button>
-            <button
-              onClick={clearStorage}
-              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700 transition-colors text-sm font-medium"
-            >
-              Xóa tất cả
-            </button>
-          </div>
+          {/* Error Message */}
+          {sheetError && (
+            <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded">
+              <p className="text-red-700 text-sm">❌ {sheetError}</p>
+            </div>
+          )}
 
-          {loading ? (
+          {/* Results Table */}
+          {loadingList ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
               <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
             </div>
-          ) : filteredLogs.length === 0 ? (
+          ) : currentSheets.length === 0 ? (
             <div className="text-center py-12">
               <AiOutlineClockCircle className="w-16 h-16 mx-auto text-gray-400 mb-4" />
               <p className="text-gray-600 text-lg">
-                {logs.length === 0 ? 'Chưa có bản ghi nào' : 'Không tìm thấy kết quả'}
+                {sortedSheets.length === 0 ? 'Chưa có sheet nào' : 'Không tìm thấy kết quả'}
               </p>
               <p className="text-gray-500 text-sm mt-2">
-                {logs.length === 0 
-                  ? (user?.role === 'PQC' ? 'Hãy tạo và gửi SMD Sheet từ trang chính' : 'Chờ PQC tạo sheet mới')
+                {sortedSheets.length === 0 
+                  ? (user?.role === ROLES.PQC ? 'Hãy tạo và gửi SMD Sheet từ trang chính' : 'Chờ PQC tạo sheet mới')
                   : 'Thử thay đổi bộ lọc tìm kiếm'}
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-center">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">STT</th>
-                    <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">Người gửi</th>
-                    <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">Thời gian</th>
-                    <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">Trạng thái xác nhận</th>
-                    <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLogs.map((log, index) => (
-                    <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="border border-gray-300 px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700 text-center">
-                        {index + 1}
-                      </td>
-                      <td className="border border-gray-300 px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
-                        <div className="flex flex-col">
-                          <span className="font-medium">{log.submittedBy}</span>
-                          <span className="text-[10px] sm:text-xs text-gray-500">({log.submittedByRole})</span>
-                        </div>
-                      </td>
-                      <td className="border border-gray-300 px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
-                        {formatDateTime(log.submittedAt)}
-                      </td>
-                      <td className="border border-gray-300 px-2 sm:px-4 py-3">
-                        <ConfirmationStatus log={log} />
-                      </td>
-                      <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center">
-                        <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 justify-center">
-                          <button
-                            onClick={() => handleViewDetail(log)}
-                            className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs font-medium whitespace-nowrap"
-                          >
-                            <AiOutlineEye className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span>Xem</span>
-                          </button>
-                          {canEdit(log) && (
-                            <button
-                              onClick={() => handleViewDetail(log)}
-                              className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium whitespace-nowrap"
-                            >
-                              <AiOutlineEdit className="w-3 h-3 sm:w-4 sm:h-4" />
-                              <span>Sửa</span>
-                            </button>
-                          )}
-                        </div>
-                      </td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-center">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">STT</th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">Sheet ID</th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">Người tạo</th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">Thời gian</th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">Trạng thái</th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">Xác nhận</th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">Hành động</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {currentSheets.map((sheet, index) => (
+                      <tr key={sheet.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="border border-gray-300 px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700 text-center">
+                          {offset + index + 1}
+                        </td>
+                        <td className="border border-gray-300 px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
+                          <span className="font-semibold text-blue-600">#{sheet.id}</span>
+                        </td>
+                        <td className="border border-gray-300 px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{sheet.account?.fullName || sheet.account?.userName}</span>
+                            <span className="text-[10px] sm:text-xs text-gray-500">({sheet.account?.role})</span>
+                          </div>
+                        </td>
+                        <td className="border border-gray-300 px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
+                          {formatDateTime(sheet.createAt)}
+                        </td>
+                        <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center">
+                          {getStatusBadge(sheet)}
+                        </td>
+                        <td className="border border-gray-300 px-2 sm:px-4 py-3">
+                          <ConfirmationStatus sheet={sheet} />
+                        </td>
+                        <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center">
+                          <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 justify-center">
+                            <button
+                              onClick={() => handleViewDetail(sheet)}
+                              className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs font-medium whitespace-nowrap"
+                            >
+                              <AiOutlineEye className="w-3 h-3 sm:w-4 sm:h-4" />
+                              <span>Xem</span>
+                            </button>
+                            {canEdit(sheet) && (
+                              <button
+                                onClick={() => {
+                                  const roleLower = user?.role?.toLowerCase();
+                                  window.open(`/${roleLower}/sheet-detail/${sheet.id}`, '_blank');
+                                }}
+                                className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium whitespace-nowrap"
+                              >
+                                <AiOutlineEdit className="w-3 h-3 sm:w-4 sm:h-4" />
+                                <span>Sửa</span>
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {pageCount > 1 && (
+                <div className="mt-4 flex justify-center">
+                  <ReactPaginate
+                    previousLabel={'Trước'}
+                    nextLabel={'Sau'}
+                    breakLabel={'...'}
+                    pageCount={pageCount}
+                    marginPagesDisplayed={2}
+                    pageRangeDisplayed={3}
+                    onPageChange={handlePageChange}
+                    forcePage={currentPage}
+                    containerClassName={'flex items-center gap-2'}
+                    pageLinkClassName={'px-3 py-2 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors text-sm font-medium no-underline'}
+                    previousLinkClassName={'px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium no-underline'}
+                    nextLinkClassName={'px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium no-underline'}
+                    breakLinkClassName={'px-3 py-2 text-gray-500 no-underline'}
+                    activeLinkClassName={'!bg-blue-600 !text-white !border-blue-600 no-underline'}
+                    disabledLinkClassName={'!cursor-not-allowed hover:!bg-transparent no-underline'}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

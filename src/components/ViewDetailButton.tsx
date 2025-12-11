@@ -5,6 +5,7 @@ type ViewDetailButtonProps = {
   onClose?: () => void;   
   children?: React.ReactNode; 
   color?: "blue" | "green" | "red" | "yellow"; // thêm color prop
+  disabled?: boolean;
 };
 
 const colorMap: Record<string, string> = {
@@ -19,7 +20,8 @@ const ViewDetailButton = ({
   onClose,
   children,
   color = "blue",
-  ...props
+  disabled = false,
+  ...props 
 }: ViewDetailButtonProps) => {
   const [open, setOpen] = useState(false);
 
@@ -60,7 +62,9 @@ const ViewDetailButton = ({
               focus:outline-none focus:ring-2 focus:ring-offset-1
               transition-all duration-200
               ${colorClasses}
+              
             `}
+            disabled={disabled}
           >
             {children ?? "Xem chi tiết"}
           </button>

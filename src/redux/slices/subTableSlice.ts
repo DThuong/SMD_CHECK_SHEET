@@ -451,6 +451,9 @@ const subTableSlice = createSlice({
     setTimeChangeModel: (state, action) => {
       state.timeChangeModel = action.payload;
     },
+    setStandardVehicle: (state, action) => {
+      state.standardVehicle = action.payload;
+    },
     // sử dụng cho sheet Header
     addCompletedTable: (state, action) => {
       state.completedTables.push(action.payload);
@@ -669,5 +672,17 @@ const subTableSlice = createSlice({
   },
 });
 
-export const { clearSubTableError, clearSubTableSuccess, resetCompletedTables, clearAllSubTableData, addCompletedTable } = subTableSlice.actions;
+export const { 
+  clearSubTableError, 
+  clearSubTableSuccess, 
+  resetCompletedTables, 
+  clearAllSubTableData, 
+  addCompletedTable,
+  setCheckModel,
+  setProgramCheck,
+  setPQCCheck,
+  setStandardProduction,
+  setTimeChangeModel,
+  setStandardVehicle
+} = subTableSlice.actions;
 export default subTableSlice.reducer;

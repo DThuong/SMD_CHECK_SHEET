@@ -14,7 +14,7 @@ const initialHeaderProps: SheetHeaderProps = {
   reflow: undefined,
 };
 
-const SheetHeader = () => {
+const SheetHeader = ({canEdit}: {canEdit: boolean}) => {
   const dispatch = useAppDispatch();
   // lấy dữ liệu từ redux
   const { currentSheet, error, uploadLoading } = useAppSelector((state) => state.changeModel);
@@ -258,7 +258,7 @@ const SheetHeader = () => {
 
         {/* Buttons */}
         <div className="flex flex-row justify-end w-full gap-2 mt-3">
-          <ViewDetailButton onOpen={handleOpenModal}>Chỉnh sửa</ViewDetailButton>
+          <ViewDetailButton onOpen={handleOpenModal} disabled={!canEdit}>Chỉnh sửa</ViewDetailButton>
           {/* <ViewDetailButton color="green" onOpen={submit}>Lưu</ViewDetailButton> */}
         </div>
 

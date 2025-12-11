@@ -116,7 +116,7 @@ const SmdSheetDetail = () => {
       alert('✅ Đã ký thành công!');
       // chuyển trang sau 2s
       setTimeout(() => {
-        navigate(0); // reload lại component
+        navigate("/"); // reload lại component
       }, 2000);
   } catch (error) {
     console.error('updateSheetStatus failed', error);

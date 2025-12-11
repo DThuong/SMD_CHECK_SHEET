@@ -21,6 +21,7 @@ import {
   updateSheetStatus 
 } from '../../redux/slices/changeModelSlice';
 import type { ChangeModelResponse } from '../../redux/slices/changeModelSlice';
+import { useNavigate } from 'react-router-dom';
 
 // ==================== CONSTANTS ====================
 const ROLES = {
@@ -61,6 +62,7 @@ const Logs = () => {
   const [selectedSheet, setSelectedSheet] = useState<ChangeModelResponse | null>(null);
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   // Filter state
   const [filter, setFilter] = useState<SheetFilter>({
@@ -550,11 +552,11 @@ const Logs = () => {
                 <button
                   onClick={() => {
                     const roleLower = user?.role?.toLowerCase();
-                    window.open(`/${roleLower}/sheet-detail/${selectedSheet.id}`, '_blank');
+                    navigate(`/${roleLower}/sheet-detail/${selectedSheet.id}`);
                   }}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                  className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
                 >
-                  🔍 Xem chi tiết đầy đủ (Tab mới)
+                  Xem chi tiết đầy đủ
                 </button>
               </div>
             </div>

@@ -7,13 +7,10 @@ import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { logoutUser } from "../../redux/slices/authSlice";
 
 const RoleBasedLayout = () => {
-  // State quản lý trạng thái mở/đóng sidebar trên mobile
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  // State quản lý trạng thái mở/đóng dropdown user menu
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const {loading} = useAppSelector((state) => state.auth);
+  const { loading } = useAppSelector((state) => state.auth);
 
-  // Trạng thái thông báo
   const [showNoti, setShowNoti] = useState(() => {
     try {
       return sessionStorage.getItem("justLoggedIn") === "1";
@@ -24,51 +21,50 @@ const RoleBasedLayout = () => {
 
   useEffect(() => {
     if (!showNoti) return;
-    // Xóa flag ngay khi dashboard mount lần đầu
     try {
       sessionStorage.removeItem("justLoggedIn");
     } catch {}
-
     const timer = setTimeout(() => setShowNoti(false), 2000);
     return () => clearTimeout(timer);
   }, [showNoti]);
 
-  // Redux
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
-  
-  // Lấy role từ URL params
   const { role } = useParams<{ role: string }>();
 
-  // Kiểm tra xem URL role có khớp với role của user không
   const userRoleLower = user?.role?.toLowerCase();
 
   if (role !== userRoleLower) {
-    // Nếu không khớp, redirect về đúng route của user
     return <Navigate to={`/${userRoleLower}/smd-sheet-logs`} replace />;
   }
 
-  // Map role để hiển thị tên đẹp hơn
   const getRoleDisplayName = (roleName: string) => {
-  const roleMap: Record<string, string> = {
-    'pqc': 'PQC',
-    'eng': 'Engineering',
-    'supervisior': 'Supervisor', 
-    'manager': 'Manager',
-    'koreamanager': 'Korea Manager'
+    const roleMap: Record<string, string> = {
+      pqc: "PQC",
+      eng: "Engineering",
+      supervisior: "Supervisor",
+      manager: "Manager",
+      koreamanager: "Korea Manager",
+    };
+    return (
+      roleMap[roleName.toLowerCase()] ||
+      roleName.charAt(0).toUpperCase() + roleName.slice(1).toLowerCase()
+    );
   };
-  return roleMap[roleName.toLowerCase()] || roleName.charAt(0).toUpperCase() + roleName.slice(1).toLowerCase();
-};
 
-  // Danh sách menu items cho sidebar
   const menuItems = [
     { name: "SMD SHEET", path: `/${role}/smd-sheet-logs` },
     { name: "Settings", path: `/${role}/settings` },
   ];
 
-  // Hàm xử lý logout
   const handleLogout = () => {
     dispatch(logoutUser());
+    setUserMenuOpen(false);
+  };
+
+  // ✅ Đóng cả sidebar và user menu khi click overlay
+  const closeAllMenus = () => {
+    setSidebarOpen(false);
     setUserMenuOpen(false);
   };
 
@@ -77,32 +73,38 @@ const RoleBasedLayout = () => {
       {user && isAuthenticated && showNoti && (
         <div className="slide-noti w-full max-w-[900px] left-1/2 -translate-x-1/2">
           <div className="noti-inner bg-green-50 border-l-4 border-green-600 p-3 rounded shadow">
-            <p className="font-bold text-green-800 text-lg">Đăng nhập thành công!</p>
+            <p className="font-bold text-green-800 text-lg">
+              Đăng nhập thành công!
+            </p>
             <p className="text-green-700 text-sm mt-1">
-              User: <strong>{user?.username}</strong> - Role: <strong>{user?.role}</strong>
+              User: <strong>{user?.username}</strong> - Role:{" "}
+              <strong>{user?.role}</strong>
             </p>
           </div>
         </div>
       )}
 
       {/* Header - Fixed top */}
-      <header className="bg-white shadow-md z-40 relative flex">
+      <header className="bg-white shadow-md z-40 relative flex flex-row md:flex-row">
         {/* Phần header sidebar - chỉ hiện trên desktop */}
-        <div className="hidden md:block w-64 lg:w-full px-4 py-3 border-gray-200">
+        <div className="hidden md:block md:w-64 lg:w-full px-4 py-3 border-gray-200">
           <Link
             to={`/${role}/smd-sheet-logs`}
-            className="text-decoration-none lg:text-4xl md:text-2xl font-bold text-gray-800!"
+            className="text-decoration-none lg:text-4xl md:text-2xl font-bold text-gray-800"
           >
-            {getRoleDisplayName(role || '')} Dashboard
+            {getRoleDisplayName(role || "")} Dashboard
           </Link>
         </div>
 
         {/* Phần header chính */}
-        <div className="flex-1 flex items-center justify-between lg:justify-end md:justify-end lg:px-4 md:px-4 px-3 py-3">
-          {/* Mobile menu button */}
+        <div className="flex-1 flex items-center justify-between lg:justify-end md:justify-end px-4 py-4 min-w-0">
+          {/* Mobile menu button - LUÔN HIỂN THỊ */}
           <button
             className="md:hidden p-2 rounded hover:bg-gray-100"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            onClick={() => {
+              setSidebarOpen(!sidebarOpen);
+              setUserMenuOpen(false);
+            }}
             aria-label="Toggle menu"
           >
             {sidebarOpen ? (
@@ -112,38 +114,39 @@ const RoleBasedLayout = () => {
             )}
           </button>
 
-          {/* Logo/Title - Hiện trên mobile khi sidebar đóng */}
+          {/* Logo/Title - ẨN KHI SIDEBAR MỞ */}
           <h1
-            className={`text-xl font-bold! text-blue-800! ${
+            className={`text-lg font-bold text-blue-800 md:hidden truncate ${
               sidebarOpen ? "hidden" : "block"
-            } md:hidden`}
-          >
-            {getRoleDisplayName(role || '')} Dashboard
-          </h1>
-
-          {/* User Menu - Bên phải header, ẩn khi sidebar mở trên mobile */}
-          <div
-            className={`relative ml-auto ${
-              sidebarOpen ? "hidden md:block" : "block"
             }`}
           >
+            {getRoleDisplayName(role || "")} Dashboard
+          </h1>
+
+          {/* User Menu - ẨN KHI SIDEBAR MỞ TRÊN MOBILE */}
+          <div className={`relative ml-auto ${
+            sidebarOpen ? "hidden md:block" : "block"
+          }`}>
             <button
-              className="w-64 flex items-center justify-center mx-2 px-3 py-2 rounded hover:bg-gray-100"
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="flex items-center justify-center px-3 py-2 rounded hover:bg-gray-100"
+              onClick={() => {
+                setUserMenuOpen(!userMenuOpen);
+                setSidebarOpen(false);
+              }}
             >
               <HiUser className="w-5 h-5 text-gray-700" />
-              <span className="hidden sm:inline text-gray-700">
+              <span className="hidden sm:inline text-gray-700 ml-2 truncate max-w-[150px]">
                 Welcome, {user?.username}
               </span>
             </button>
 
-            {/* Dropdown menu */}
+            {/* ✅ USER MENU DROPDOWN - DESKTOP */}
             {userMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-30">
+              <div className="hidden md:block absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                 <button
                   onClick={handleLogout}
                   disabled={loading}
-                  className="flex items-center w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
+                  className="flex items-center w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 disabled:opacity-50"
                 >
                   <HiLogout className="w-4 h-4 mr-2" />
                   Logout
@@ -154,28 +157,15 @@ const RoleBasedLayout = () => {
         </div>
       </header>
 
-      {/* Main container - Flex row cho sidebar và content */}
+      {/* Main container */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar - Bên trái */}
-        <aside
-          className={`
-            fixed md:relative top-18 lg:top-0 md:top-0 left-0 z-30
-            w-64 lg:w-96 bg-white shadow-lg 
-            transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-            md:translate-x-0
-            transition-transform duration-300 ease-in-out
-            flex flex-col
-            h-[calc(100vh-56px)] md:h-full
-            mt-14 md:mt-0 
-          `}
-        >
-          {/* Navigation menu */}
+        {/* ✅ SIDEBAR - DESKTOP (Relative positioning) */}
+        <aside className="hidden md:flex md:flex-col md:w-64 lg:w-96 bg-white shadow-lg">
           <nav className="flex-1 my-3 overflow-y-auto px-3 py-2">
             {menuItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
-                onClick={() => setSidebarOpen(false)} // Đóng sidebar khi click trên mobile
                 className={({ isActive }) =>
                   `block px-4 py-3 rounded-lg transition-colors mb-3 text-decoration-none ${
                     isActive
@@ -189,24 +179,112 @@ const RoleBasedLayout = () => {
             ))}
           </nav>
 
-          {/* Footer info trong sidebar */}
           <div className="px-4 py-3 border-t border-gray-200">
-            <img src={logo} alt="" className="w-full h-full object-cover" />
+            <img src={logo} alt="Logo" className="w-full h-full object-cover" />
           </div>
         </aside>
 
-        {/* Overlay cho mobile khi sidebar mở */}
+        {/* ✅ SIDEBAR - MOBILE với OVERLAY */}
         {sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden mt-14"
-            onClick={() => setSidebarOpen(false)}
-          />
+          <>
+            {/* Sidebar panel - 70% width - Z-INDEX CAO HƠN */}
+            <div
+              className={`fixed inset-y-0 left-0 bg-white z-50 md:hidden flex flex-col w-[80%] 
+              transform transition-transform duration-300 ease-in-out 
+              ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+              style={{ top: "0px" }}
+            >
+              {/* Close button */}
+              <div className="flex justify-start px-4 pt-4 pb-4">
+                <button
+                  onClick={closeAllMenus}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <HiX className="w-7 h-7 text-gray-700" />
+                </button>
+              </div>
+
+              {/* Navigation menu */}
+              <nav className="flex-1 overflow-y-auto px-4 py-2">
+                {menuItems.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    onClick={closeAllMenus}
+                    className={({ isActive }) =>
+                      `block px-4 py-4 rounded-lg transition-colors mb-4 text-lg font-medium text-decoration-none ${
+                        isActive
+                          ? "bg-gray-500 text-white font-semibold"
+                          : "bg-gray-700 text-white hover:bg-gray-600"
+                      }`
+                    }
+                  >
+                    {item.name}
+                  </NavLink>
+                ))}
+              </nav>
+
+              {/* Logo at bottom */}
+              <div className="px-4 py-6 border-t border-gray-200">
+                <img
+                  src={logo}
+                  alt="Logo"
+                  className="w-full max-w-[200px] mx-auto"
+                />
+              </div>
+            </div>
+
+            {/* ✅ OVERLAY MÀU XÁM - 30% còn lại - Z-INDEX THẤP HƠN */}
+            <div
+              className={`fixed inset-0 bg-black z-40 md:hidden transition-opacity duration-300 ease-in-out ${
+  sidebarOpen
+    ? "bg-opacity-50 pointer-events-auto"
+    : "bg-opacity-0 pointer-events-none"
+}`}
+              style={{ top: "0px" }}
+              onClick={closeAllMenus}
+              aria-label="Close sidebar"
+            />
+          </>
         )}
 
-        {/* Main content area - Bên phải */}
-        <main className="flex-1 overflow-y-auto bg-gray-50">
-          <div className="p-4 md:p-6 lg:p-8">
-            {/* Outlet render các page con */}
+        {/* ✅ USER MENU - MOBILE FULL OVERLAY */}
+        {userMenuOpen && (
+          <>
+            {/* User menu panel - FULL WIDTH */}
+            <div
+              className="fixed inset-0 bg-white z-50 md:hidden flex flex-col"
+              style={{ top: "0px" }}
+            >
+              {/* Close button */}
+              <div className="flex justify-start px-4 pt-4 pb-4">
+                <button
+                  onClick={closeAllMenus}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <HiX className="w-7 h-7 text-gray-700" />
+                </button>
+              </div>
+
+
+              {/* Logout button */}
+              <div className="flex-1 px-4">
+                <button
+                  onClick={handleLogout}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-gray-500 text-white border rounded-xl! hover:bg-red-600 transition-colors text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <HiLogout className="w-6 h-6" />
+                  Logout
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Main content area */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50">
+          <div className="p-4 md:p-6 lg:p-8 max-w-full">
             <Outlet />
           </div>
         </main>

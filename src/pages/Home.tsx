@@ -508,8 +508,8 @@ const Home = () => {
                               
                               {/* Created By */}
                               {sheet.account && (
-                                <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
-                                  👤 {sheet.account.fullName || sheet.account.userName}
+                                <span className="">
+                                  {sheet.account.fullName || sheet.account.userName}
                                 </span>
                               )}
                               

@@ -32,6 +32,7 @@ const SheetDetailViewer = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
+  console.log(sheetData)
 
   // ✅ PHÂN QUYỀN CHÍNH XÁC
   // ENG, Supervisior: Có thể XEM và SỬA (nếu status phù hợp)
@@ -52,7 +53,7 @@ const SheetDetailViewer = () => {
     return false;
   };
 
-  // ✅ KIỂM TRA QUYỀN KÝ
+  // KIỂM TRA QUYỀN KÝ
   const canConfirm = () => {
     if (!user || !sheetData) return false;
     
@@ -167,7 +168,7 @@ const SheetDetailViewer = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="max-w-8xl mx-auto my-4 p-8">
+      <div className="max-w-8xl mx-auto p-8">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-1/3"></div>
           <div className="h-20 bg-gray-200 rounded"></div>
@@ -209,7 +210,7 @@ const SheetDetailViewer = () => {
     const config = statusConfig[status.toLowerCase()] || { 
       bg: 'bg-gray-100', 
       text: 'text-gray-800', 
-      icon: '📋', 
+      icon: '❓', 
       label: status 
     };
 
@@ -224,7 +225,7 @@ const SheetDetailViewer = () => {
   const isConfirmable = canConfirm();
 
   return (
-    <div className="max-w-8xl mx-auto p-4 my-4">
+    <div className="max-w-8xl mx-auto my-4">
       {/* Header */}
       <div className="mb-4 p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
@@ -239,7 +240,7 @@ const SheetDetailViewer = () => {
             )}
             {sheetData.account && (
               <p className="text-xs text-gray-500 mb-0">
-                Người tạo: {sheetData.account.fullName || sheetData.account.userName} ({sheetData.account.role})
+                Người tạo: {sheetData.account?.fullName || sheetData.account.userName} ({sheetData.account.role})
               </p>
             )}
           </div>
@@ -279,10 +280,10 @@ const SheetDetailViewer = () => {
       </div>
 
       {/* Buttons */}
-      <div className="w-full sticky bottom-0 bg-white border-t border-gray-300 p-4 flex items-center justify-center gap-3 shadow-lg mt-4 z-10">
+      <div className="w-full sticky bottom-0 bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-4 flex items-center justify-center gap-3 shadow-lg mt-4 z-10">
         <button
           onClick={() => navigate(-1)}
-          className="px-4 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-colors"
+          className="px-4 py-3 bg-gray-600 text-white rounded-lg! text-sm font-semibold hover:bg-gray-700 transition-colors"
         >
           Quay lại
         </button>
@@ -291,17 +292,17 @@ const SheetDetailViewer = () => {
           <button
             onClick={handleConfirm}
             disabled={confirming}
-            className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg! text-sm font-semibold hover:bg-green-700 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {confirming ? 'Đang xác nhận...' : ` Ký xác nhận (${user?.role})`}
           </button>
         )}
         
         {!isConfirmable && (
-          <div className="flex-1 px-4 py-3 bg-gray-300 text-gray-600 rounded-lg font-semibold text-center cursor-not-allowed">
+          <div className="flex-1 px-4 py-3 bg-gray-300 text-gray-600 rounded-lg font-semibold text-center text-sm cursor-not-allowed">
             {user?.role === 'Manager' || user?.role === 'KoreaManager' 
               ? '👁️ Chỉ xem (Chưa đến lượt xác nhận)'
-              : '🔒 Không thể xác nhận'}
+              : '🔒 Không thể ký'}
           </div>
         )}
       </div>

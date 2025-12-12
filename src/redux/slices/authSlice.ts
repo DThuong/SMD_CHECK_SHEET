@@ -28,6 +28,7 @@ interface AuthState {
   error: string | null;
   isAuthenticated: boolean;
   lastActivity: number | null; // Track thời gian hoạt động cuối
+  tokenExpiresAt: number | null;
 }
 
 const initialState: AuthState = {
@@ -37,6 +38,7 @@ const initialState: AuthState = {
   error: null,
   isAuthenticated: false,
   lastActivity: null,
+  tokenExpiresAt: null,
 };
 
 // API login
@@ -116,9 +118,11 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
       state.lastActivity = null;
+      state.tokenExpiresAt = null;
       // xóa token khỏi localStorage
       try {
         localStorage.removeItem('token');
+        localStorage.removeItem('tokenExpiresAt');
         sessionStorage.removeItem("justLoggedIn");
       } catch (error) {
         console.error('Failed to remove storage:', error);
@@ -147,10 +151,14 @@ const authSlice = createSlice({
         state.user = action.payload;
         state.token = action.payload.token || null;
         state.error = null;
+
+        const expiresAtTimestamp = new Date(action.payload.expiresAt).getTime();
+        state.tokenExpiresAt = expiresAtTimestamp;
         state.lastActivity = Date.now();
         // backup lưu token vào localstorage
         if (action.payload.token) {
           localStorage.setItem('token', action.payload.token);
+          localStorage.setItem('tokenExpiresAt', expiresAtTimestamp.toString()); // LƯU THỜI GIAN HẾT HẠN
         }
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -160,8 +168,10 @@ const authSlice = createSlice({
         state.token = null;
         state.error = action.payload as string || 'Login failed';
         state.lastActivity = null;
+        state.tokenExpiresAt = null;
         try {
           localStorage.removeItem('token');
+          localStorage.removeItem('tokenExpiresAt');
         } catch(error) {
           console.error('Failed to remove storage:', error);
         }
@@ -178,9 +188,11 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
       state.lastActivity = null;
+      state.tokenExpiresAt = null;
       // Xóa token khỏi localStorage
       try {
         localStorage.removeItem('token');
+        localStorage.removeItem('tokenExpiresAt'); 
         sessionStorage.removeItem("justLoggedIn");
       } catch (error) {
         console.error('Failed to remove storage:', error);
@@ -193,9 +205,11 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.lastActivity = null;
+      state.tokenExpiresAt = null;
       state.error = action.payload as string || 'Logout failed';
       try {
         localStorage.removeItem('token');
+        localStorage.removeItem('tokenExpiresAt');
         sessionStorage.removeItem("justLoggedIn");
       } catch (error) {
         console.error('Failed to remove storage:', error);

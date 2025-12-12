@@ -434,7 +434,7 @@ const Logs = () => {
     
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="max-w-8xl mx-auto p-4">
+        <div className="max-w-8xl mx-auto">
           <div className="bg-white rounded-lg shadow-lg p-4">
             <div className="flex flex-col items-center mb-4 gap-2">
               <div className="text-3xl font-bold text-gray-800">Chi tiết SMD Sheet</div>
@@ -446,7 +446,7 @@ const Logs = () => {
               </button>
             </div>
 
-            <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center gap-2">
                   <FaRegUserCircle className="w-5 h-5" />
@@ -503,7 +503,7 @@ const Logs = () => {
             </div>
 
             {/* Nút xác nhận */}
-            <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+            {/* <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
               {user?.role === ROLES.ENG && canConfirmAtStep(selectedSheet, ROLES.ENG) && (
                 <button
                   onClick={() => handleConfirmStep(selectedSheet.id, ROLES.ENG)}
@@ -540,14 +540,11 @@ const Logs = () => {
                   Xác nhận KMGR
                 </button>
               )}
-            </div>
+            </div> */}
 
             {/* ✅ Link đến trang detail theo role */}
-            <div className="border-t border-gray-300 pt-6">
+            <div className="mt-4">
               <div className="text-center mb-4">
-                <p className="text-gray-600 mb-4">
-                  Để xem chi tiết đầy đủ, vui lòng chuyển sang trang chi tiết
-                </p>
                 <button
                   onClick={() => {
                     const roleLower = user?.role?.toLowerCase();
@@ -850,7 +847,7 @@ const Logs = () => {
                         <button
                           onClick={() => {
                             const roleLower = user?.role?.toLowerCase();
-                            window.open(`/${roleLower}/sheet-detail/${sheet.id}`, '_blank');
+                            navigate(`/${roleLower}/sheet-detail/${sheet.id}`);
                           }}
                           className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
                         >

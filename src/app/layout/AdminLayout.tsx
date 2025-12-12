@@ -3,14 +3,14 @@ import { Link,NavLink, Outlet } from "react-router-dom";
 import { HiMenu, HiX, HiLogout, HiUser } from "react-icons/hi";
 import logo from "../../assets/image/brand_image_3.webp";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
-import {logout} from "../../redux/slices/authSlice";
+import {logoutUser} from "../../redux/slices/authSlice";
 
 const AdminLayout = () => {
   // State quản lý trạng thái mở/đóng sidebar trên mobile
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // State quản lý trạng thái mở/đóng dropdown user menu
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-
+  const {loading} = useAppSelector(state => state.auth);
 
     // trạng thái thông báo
     // --- Notification logic ---
@@ -40,13 +40,14 @@ const AdminLayout = () => {
   const menuItems = [
     { name: "Dashboard", path: "dashboard" },
     { name: "Profile", path: "profile" },
+    {name: "User", path: "user"},
     { name: "SMD SHEET", path: "smd-sheet-logs" },
     { name: "Settings", path: "settings" },
   ];
 
   // Hàm xử lý logout
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(logoutUser());
     setUserMenuOpen(false);
   };
 
@@ -104,6 +105,7 @@ const AdminLayout = () => {
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-30">
                 <button
                   onClick={handleLogout}
+                  disabled={loading}
                   className="flex items-center w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
                 >
                   <HiLogout className="w-4 h-4 mr-2" />

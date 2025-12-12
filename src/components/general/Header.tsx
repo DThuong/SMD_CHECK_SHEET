@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import logo from '../../assets/image/brand_image_3.webp';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { logout } from '../../redux/slices/authSlice';
+import { logoutUser } from '../../redux/slices/authSlice';
 // import { FaUser } from "react-icons/fa";
 import { TbLogout } from "react-icons/tb";
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  const { user, isAuthenticated } = useAppSelector(state => state.auth);
+  const { user, isAuthenticated, loading } = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
@@ -39,11 +39,22 @@ const Header = () => {
     };
   }, [isDropdownOpen]);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    setIsMenuOpen(false);
-    setIsDropdownOpen(false);
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      // Gọi API logout
+      await dispatch(logoutUser()).unwrap();
+      
+      // Đóng menu và navigate
+      setIsMenuOpen(false);
+      setIsDropdownOpen(false);
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Vẫn navigate về login dù API failed
+      setIsMenuOpen(false);
+      setIsDropdownOpen(false);
+      navigate('/login');
+    }
   };
 
   return (
@@ -104,6 +115,7 @@ const Header = () => {
 
                       <button
                         onClick={handleLogout}
+                        disabled={loading}
                         className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                       >
                        <TbLogout />
@@ -177,19 +189,9 @@ const Header = () => {
               {user ? (
                 // Menu khi đã login
                 <>
-                  {/* User info */}
-          
-
-                  {/* <Link
-                    to="/profile"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-3 py-3 rounded-lg font-medium hover:bg-gray-100 border border-gray-300 text-gray-700! text-decoration-none mb-3 "
-                  >
-                    <FaUser />
-                    Profile
-                  </Link> */}
 
                   <button
+                  disabled={loading}
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-3 py-3 rounded-lg font-medium bg-red-500 hover:bg-red-600 text-white transition"
                   >

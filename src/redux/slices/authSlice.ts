@@ -83,6 +83,28 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+// API logout
+export const logoutUser = createAsyncThunk('auth/logout', async (_, { getState }) => {
+  try {
+    const state = getState() as { auth: AuthState };
+    const token = state.auth.token || localStorage.getItem('token');
+    const response = await axios.post(
+      'https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account/logout',
+      {},
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    return error.message;
+  }
+})
+
 
 const authSlice = createSlice({
   name: 'auth',
@@ -145,6 +167,40 @@ const authSlice = createSlice({
         }
       })
       
+      //logout
+    .addCase(logoutUser.pending, (state) => {
+      state.loading = true;
+    })
+    .addCase(logoutUser.fulfilled, (state) => {
+      state.loading = false;
+      state.user = null;
+      state.token = null;
+      state.isAuthenticated = false;
+      state.error = null;
+      state.lastActivity = null;
+      // Xóa token khỏi localStorage
+      try {
+        localStorage.removeItem('token');
+        sessionStorage.removeItem("justLoggedIn");
+      } catch (error) {
+        console.error('Failed to remove storage:', error);
+      }
+    })
+    .addCase(logoutUser.rejected, (state, action) => {
+      state.loading = false;
+      // Vẫn logout ở client dù API failed
+      state.user = null;
+      state.token = null;
+      state.isAuthenticated = false;
+      state.lastActivity = null;
+      state.error = action.payload as string || 'Logout failed';
+      try {
+        localStorage.removeItem('token');
+        sessionStorage.removeItem("justLoggedIn");
+      } catch (error) {
+        console.error('Failed to remove storage:', error);
+      }
+    });
   },
 });
 

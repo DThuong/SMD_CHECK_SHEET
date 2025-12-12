@@ -261,7 +261,9 @@ const ProgramChecks = ({canEdit}: {canEdit: boolean}) => {
                 value={form.pointMounter ?? ""}
                 onChange={(e) => set("pointMounter", e.target.value ? Number(e.target.value) : undefined)}
                 className="mt-1 block w-full border rounded px-3 py-2 text-sm"
-                placeholder=""
+                onFocus={(e) => {
+                  e.target.select();
+                }}
               />
             </label>
 
@@ -272,7 +274,6 @@ const ProgramChecks = ({canEdit}: {canEdit: boolean}) => {
                 value={form.pointSAOI ?? ""}
                 onChange={(e) => set("pointSAOI", e.target.value ? Number(e.target.value) : undefined)}
                 className="mt-1 block w-full border rounded px-3 py-2 text-sm"
-                placeholder=""
               />
             </label>
           </div>

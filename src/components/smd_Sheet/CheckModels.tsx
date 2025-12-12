@@ -153,17 +153,91 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
             {isSaved && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">✓ Đã lưu</span>}
           </h3>
           {/* Mobile fields */}
-          <div className="grid grid-cols-2 gap-4 mb-3">
-            <div className="min-w-0">
+          <div className="min-w-0 mb-2">
               <div className="text-xs font-semibold text-gray-600 mb-1">Line đổi</div>
               <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
                 {form.lineChange || "—"}
               </div>
+          </div>
+          <div className="min-w-0 mb-2">
+            <div className="text-xs font-semibold text-gray-600 mb-1">F Code 3in1</div>
+            <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+              {form.fCode || "—"}
+            </div>
+          </div>
+
+          {/* Mobile fields */}
+          <div className="grid grid-cols-2 gap-4 mb-3">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">REV S15</div>
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.revS15 || "—"}
+              </div>
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-gray-600 mb-1">Model/Side</div>
+              <div className="text-xs font-semibold text-gray-600 mb-1">REV MOUNTER</div>
               <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-                {form.model || "—"}
+                {form.revMounter || "—"}
+              </div>
+            </div>
+          </div>
+          {/* Mobile fields */}
+          <div className="grid grid-cols-2 gap-4 mb-3">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">Feeder Check</div>
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.feederCheck || "—"}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">OP Accept</div>
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.opAccept || "—"}
+              </div>
+            </div>
+          </div>
+          {/* Mobile fields */}
+          <div className="grid grid-cols-2 gap-4 mb-3">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">PCB ver</div>
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.pcBver || "—"}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">Work Order</div>
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.workOrder || "—"}
+              </div>
+            </div>
+          </div>
+          {/* Mobile fields */}
+          <div className="grid grid-cols-2 gap-4 mb-3">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">Qty</div>
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.qty || "—"}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">Mã PCB (Code PCB)</div>
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.codePCB || "—"}
+              </div>
+            </div>
+          </div>
+          {/* Mobile fields */}
+          <div className="grid grid-cols-2 gap-4 mb-3">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">Sử dụng CN card</div>
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.usedCNcard || "—"}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">JIG</div>
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.jig || "—"}
               </div>
             </div>
           </div>
@@ -186,7 +260,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
         }}
         onSave={submit}
       >
-        <div className="grid gap-3 max-h-[60vh] overflow-y-auto">
+        <div className="grid gap-3 max-h-[60vh] overflow-y-auto scrollbar-hide">
           {/* Line đổi */}
           <label className="text-xs">
             Line đổi
@@ -220,7 +294,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
               value={form.fCode ?? ""} 
               onChange={(e) => set("fCode", e.target.value)} 
               className="mt-1 block w-full border rounded px-3 py-2 text-base"
-              placeholder="Nhập F code..."
+              placeholder="Nhập F code (3in1) ..."
             />
           </label>
 
@@ -232,6 +306,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
                 value={form.revS15 ?? ""} 
                 onChange={(e) => set("revS15", e.target.value)} 
                 className="mt-1 block w-full border rounded px-3 py-2 text-base"
+                placeholder="Nhập REV S15 ..."
               />
             </label>
 
@@ -242,6 +317,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
                 value={form.revMounter ?? ""} 
                 onChange={(e) => set("revMounter", e.target.value)} 
                 className="mt-1 block w-full border rounded px-3 py-2 text-base"
+                placeholder="Nhập REV MOUNTER ..."
               />
             </label>
           </div>
@@ -278,6 +354,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
                 value={form.pcBver ?? ""} 
                 onChange={(e) => set("pcBver", e.target.value)} 
                 className="mt-1 block w-full border rounded px-3 py-2 text-base"
+                placeholder="Nhập PCB ver ..."
               />
             </label>
 
@@ -301,6 +378,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
             <input 
               type="number"
               value={form.qty ?? ""} 
+              placeholder="Nhập qty..."
               onChange={(e) => {
                 const val = e.target.value ? Number(e.target.value) : undefined;
                 set("qty", val);

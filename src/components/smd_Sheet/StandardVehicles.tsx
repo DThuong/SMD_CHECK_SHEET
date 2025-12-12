@@ -575,7 +575,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
   </div>
 
    {/* Modal */}
-    <Modal open={open} title="Chi tiết PQC Check" onClose={() => setOpen(false)} onSave={submit}>
+    <Modal open={open} title="Chi tiết Vehicle Check" onClose={() => setOpen(false)} onSave={submit}>
   <div className="grid gap-4 max-h-[70vh] overflow-y-auto px-1">
     {/* Printer */}
     <section className="pb-3 border-b border-gray-200">
@@ -587,7 +587,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerSpecGTAL ?? ""}
-            onChange={(e) => set("printerSpecGTAL", Number(e.target.value))}
+            onChange={(e) => set("printerSpecGTAL", e.target.value ? Number(e.target.value) : undefined)}
             type="number"
           />
         </div>
@@ -597,7 +597,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerSpecTDQ ?? ""}
-            onChange={(e) => set("printerSpecTDQ", Number(e.target.value))}
+            onChange={(e) => set("printerSpecTDQ", e.target.value ? Number(e.target.value) : undefined)}
             type="number"
           />
         </div>
@@ -608,7 +608,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
         <input
           className="block w-full border rounded px-3 py-2 text-sm min-w-0"
           value={form.printerSpecTDKC ?? ""}
-          onChange={(e) => set("printerSpecTDKC", Number(e.target.value))}
+          onChange={(e) => set("printerSpecTDKC", e.target.value ? Number(e.target.value) : undefined)}
           type="number"
         />
       </div>
@@ -619,7 +619,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerSpecSLL ?? ""}
-            onChange={(e) => set("printerSpecSLL", Number(e.target.value))}
+            onChange={(e) => set("printerSpecSLL", e.target.value ? Number(e.target.value) : undefined)}
             type="number"
           />
         </div>
@@ -629,7 +629,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerSpecDSL ?? ""}
-            onChange={(e) => set("printerSpecDSL", Number(e.target.value))}
+            onChange={(e) => set("printerSpecDSL", e.target.value ? Number(e.target.value) : undefined)}
             type="number"
           />
         </div>
@@ -641,7 +641,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerRealGTAL ?? ""}
-            onChange={(e) => set("printerRealGTAL", Number(e.target.value))}
+            onChange={(e) => set("printerRealGTAL", e.target.value ? Number(e.target.value) : undefined)}
             type="number"
           />
         </div>
@@ -651,7 +651,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerRealTDQ ?? ""}
-            onChange={(e) => set("printerRealTDQ", Number(e.target.value))}
+            onChange={(e) => set("printerRealTDQ", e.target.value ? Number(e.target.value) : undefined)}
             type="number"
           />
         </div>
@@ -662,7 +662,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
         <input
           className="block w-full border rounded px-3 py-2 text-sm min-w-0"
           value={form.printerRealTDKC ?? ""}
-          onChange={(e) => set("printerRealTDKC", Number(e.target.value))}
+          onChange={(e) => set("printerRealTDKC", e.target.value ? Number(e.target.value) : undefined)}
           type="number"
         />
       </div>
@@ -673,7 +673,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerRealSLL ?? ""}
-            onChange={(e) => set("printerRealSLL", Number(e.target.value))}
+            onChange={(e) => set("printerRealSLL", e.target.value ? Number(e.target.value) : undefined)}
             type="number"
           />
         </div>
@@ -683,7 +683,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerRealDSL ?? ""}
-            onChange={(e) => set("printerRealDSL", Number(e.target.value))}
+            onChange={(e) => set("printerRealDSL", e.target.value ? Number(e.target.value) : undefined)}
             type="number"
           />
         </div>
@@ -726,7 +726,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
     {/* Mount */}
     <section className="pb-3 border-b border-gray-200">
       <h4 className="text-sm font-semibold mb-3 text-gray-700">Mount</h4>
-
+      
       <div className="grid grid-cols-1 gap-3 mb-3">
         <div className="min-w-0 flex items-center gap-2">
           <input
@@ -780,7 +780,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
             <input
               className="block w-full border rounded px-3 py-2 text-sm min-w-0"
               value={form.reFlowSettingRail ?? ""}
-              onChange={(e) => set("reFlowSettingRail", Number(e.target.value))}
+              onChange={(e) => set("reFlowSettingRail", e.target.value ? Number(e.target.value) : undefined)}
               type="number"
             />
           </div>
@@ -789,7 +789,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
             <input
               className="block w-full border rounded px-3 py-2 text-sm min-w-0"
               value={form.reFlowRealRail ?? ""}
-              onChange={(e) => set("reFlowRealRail", Number(e.target.value))}
+              onChange={(e) => set("reFlowRealRail", e.target.value ? Number(e.target.value) : undefined)}
               type="number"
             />
           </div>

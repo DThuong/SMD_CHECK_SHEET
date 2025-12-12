@@ -259,7 +259,7 @@ const SmdSheetDetail = () => {
       </div>
 
       {/* Buttons */}
-      <div className="w-full sticky bottom-0 bg-white border-t border-gray-300 p-4 flex items-center justify-center gap-3 shadow-lg mt-4 z-10">
+      <div className="w-full sticky bottom-0 bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-4 flex items-center justify-center gap-3 shadow-lg mt-4 z-10">
         <button
           onClick={() => navigate('/my-sheets')}
           className="px-4 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-colors"

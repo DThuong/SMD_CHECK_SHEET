@@ -176,6 +176,44 @@ export const createChangeModel = createAsyncThunk(
   }
 );
 
+/** GET CHANGE MODEL OBJECT ID */
+export const getSheetWithFullObject = createAsyncThunk(
+  'changeModel/getFullObject',
+  async (sheetId: number, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        return rejectWithValue('Không tìm thấy token. Vui lòng đăng nhập lại.');
+      }
+
+      const response = await axios.get(
+        `${API_BASE_URL}/ChangeModel/object/${sheetId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      return response.data as ChangeModelResponse;
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        return rejectWithValue('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+      }
+      if (error.response?.status === 404) {
+        return rejectWithValue('Không tìm thấy sheet với ID này.');
+      }
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.message || 
+        'Không thể tải thông tin sheet đầy đủ'
+      );
+    }
+  }
+);
+
+
 /**
  * UPDATE STATUS TO PQCDONE - Dùng cho PQC
  * PUT /api/ChangeModel/status/{id}
@@ -650,6 +688,21 @@ const changeModelSlice = createSlice({
       })
       .addCase(fetchChangeModel.rejected, (state, action) => {
         state.loadingList = false;
+        state.error = action.payload as string;
+      });
+      // lấy toàn bộ object với thông tin account user gửi lên
+       builder
+      .addCase(getSheetWithFullObject.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getSheetWithFullObject.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentSheet = action.payload;
+        state.error = null;
+      })
+      .addCase(getSheetWithFullObject.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload as string;
       });
 

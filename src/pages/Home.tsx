@@ -453,7 +453,7 @@ const Home = () => {
               </div>
 
               {/* Action buttons */}
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 lg:flex lg:flex-row md:flex md:flex-row flex flex-col gap-2">
                 <button
                   onClick={applyFilter}
                   disabled={loadingList}
@@ -539,32 +539,49 @@ const Home = () => {
 
                   {/* PAGINATION COMPONENT */}
                   {pageCount > 1 && (
-                    <div className="mt-4 flex justify-center">
-                      <ReactPaginate
-                        previousLabel={'Trước'}
-                        nextLabel={'Sau'}
-                        breakLabel={'...'}
-                        pageCount={pageCount}
-                        marginPagesDisplayed={2}
-                        pageRangeDisplayed={3}
-                        onPageChange={handlePageChange}
-                        forcePage={currentPage}
-                        containerClassName={'flex items-center gap-2'}
-                        pageClassName={''}
-                        pageLinkClassName={'px-3 py-2 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors text-sm font-medium no-underline'}
-                        previousClassName={''}
-                        previousLinkClassName={'px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium no-underline'}
-                        nextClassName={''}
-                        nextLinkClassName={'px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium no-underline'}
-                        breakClassName={''}
-                        breakLinkClassName={'px-3 py-2 text-gray-500 no-underline'}
-                        activeClassName={''}
-                        activeLinkClassName={'!bg-blue-600 !text-white !border-blue-600 no-underline'}
-                        disabledClassName={'opacity-50 cursor-not-allowed'}
-                        disabledLinkClassName={'!cursor-not-allowed hover:!bg-transparent no-underline'}
-                      />
+                  <div className="mt-4 flex justify-center px-3">
+                    <div className="w-full max-w-full">
+                      <div className="overflow-x-auto scrollbar-hide">
+                        <ReactPaginate
+                          previousLabel={'Trước'}
+                          nextLabel={'Sau'}
+                          breakLabel={'...'}
+                          pageCount={pageCount}
+                          marginPagesDisplayed={1}
+                          pageRangeDisplayed={2}
+                          onPageChange={handlePageChange}
+                          forcePage={currentPage}
+                          containerClassName={'flex items-center lg:justify-center md:justify-center gap-1 sm:gap-2 px-2 min-w-max sm:px-0'}
+                          pageClassName={''}
+                          pageLinkClassName={
+                            'px-3 py-2 sm:px-3 sm:py-2 rounded-lg block ' +
+                            'ring-1 ring-inset ring-gray-300 ' +
+                            'hover:bg-blue-50 hover:ring-blue-500 transition-all ' +
+                            'text-xs sm:text-sm font-medium no-underline'
+                          }
+                          previousClassName={''}
+                          previousLinkClassName={
+                            'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ' +
+                            'ring-1 ring-inset ring-gray-300 ' +
+                            'hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline'
+                          }
+                          nextClassName={''}
+                          nextLinkClassName={
+                            'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ' +
+                            'ring-1 ring-inset ring-gray-300 ' +
+                            'hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline'
+                          }
+                          breakClassName={''}
+                          breakLinkClassName={'px-1 sm:px-3 py-1.5 sm:py-2 text-gray-500 text-xs sm:text-sm no-underline'}
+                          activeClassName={''}
+                          activeLinkClassName={'!bg-blue-600 !text-white !ring-blue-600 no-underline'}
+                          disabledClassName={'opacity-50 cursor-not-allowed'}
+                          disabledLinkClassName={'!cursor-not-allowed hover:!bg-transparent no-underline'}
+                        />
+                      </div>
                     </div>
-                  )}
+                  </div>
+                )}
                 </>
               ) : (
                 <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">

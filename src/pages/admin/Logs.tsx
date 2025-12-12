@@ -16,7 +16,7 @@ import ReactPaginate from 'react-paginate';
 
 // Redux actions
 import { 
-  fetchChangeModel, 
+  fetchChangeModel,
   getSheetByFilter,
   updateSheetStatus 
 } from '../../redux/slices/changeModelSlice';
@@ -84,7 +84,6 @@ const Logs = () => {
       const hasStatus = filter.status !== '' && filter.status !== 'all';
 
       if (hasWorkOrder || hasDateRange || hasStatus) {
-        console.log('🔍 Using Filter API');
         
         await dispatch(getSheetByFilter({
           workOrder: hasWorkOrder ? filter.workOrder.trim() : undefined,
@@ -96,7 +95,6 @@ const Logs = () => {
         return;
       }
 
-      console.log('📋 Using Get All API');
       await dispatch(fetchChangeModel()).unwrap();
       
     } catch (error: any) {
@@ -288,11 +286,11 @@ const Logs = () => {
     
     const statusConfig: Record<string, { bg: string; text: string; label: string; icon: string }> = {
       [STATUS.PENDING.toLowerCase()]: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Pending', icon: '⏳' },
-      [STATUS.PQC_DONE.toLowerCase()]: { bg: 'bg-green-100', text: 'text-green-700', label: 'PQC Done', icon: '' },
-      [STATUS.ENG_DONE.toLowerCase()]: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'ENG Done', icon: '' },
-      [STATUS.SUPERVISOR_DONE.toLowerCase()]: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'SUP Done', icon: '' },
-      [STATUS.MANAGER_DONE.toLowerCase()]: { bg: 'bg-indigo-100', text: 'text-indigo-700', label: 'MGR Done', icon: '' },
-      [STATUS.KOREA_MANAGER_DONE.toLowerCase()]: { bg: 'bg-teal-100', text: 'text-teal-700', label: 'KMGR Done', icon: '' },
+      [STATUS.PQC_DONE.toLowerCase()]: { bg: 'bg-green-100', text: 'text-green-700', label: 'PQC Done', icon: '✓' },
+      [STATUS.ENG_DONE.toLowerCase()]: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'ENG Done', icon: '✓' },
+      [STATUS.SUPERVISOR_DONE.toLowerCase()]: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'SUP Done', icon: '✓' },
+      [STATUS.MANAGER_DONE.toLowerCase()]: { bg: 'bg-indigo-100', text: 'text-indigo-700', label: 'MGR Done', icon: '✓' },
+      [STATUS.KOREA_MANAGER_DONE.toLowerCase()]: { bg: 'bg-teal-100', text: 'text-teal-700', label: 'KMGR Done', icon: '✓' },
     };
 
     const config = statusConfig[status || STATUS.PENDING.toLowerCase()] || { 
@@ -391,6 +389,7 @@ const Logs = () => {
   const pageCount = Math.ceil(sortedSheets.length / itemsPerPage);
   const offset = currentPage * itemsPerPage;
   const currentSheets = sortedSheets.slice(offset, offset + itemsPerPage);
+  console.log(currentSheets);
 
   const handlePageChange = (selectedItem: { selected: number }) => {
     setCurrentPage(selectedItem.selected);
@@ -664,7 +663,7 @@ const Logs = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="mt-3 flex gap-2">
+            <div className="mt-3 flex flex-col lg:flex-row md:flex-row gap-2">
               <button
                 onClick={applyFilter}
                 disabled={loadingList}
@@ -699,7 +698,7 @@ const Logs = () => {
             </div>
           )}
 
-          {/* Results Table */}
+          {/* Results - Table for Desktop/Tablet, Cards for Mobile */}
           {loadingList ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -719,7 +718,8 @@ const Logs = () => {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
+              {/* Desktop & Tablet View - Table */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full border-collapse text-center">
                   <thead>
                     <tr className="bg-gray-100">
@@ -785,26 +785,127 @@ const Logs = () => {
                 </table>
               </div>
 
-              {/* Pagination */}
+              {/* Mobile View - Cards */}
+              <div className="md:hidden my-4">
+                {currentSheets.map((sheet, index) => (
+                  <div key={sheet.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-4">
+                    {/* Header */}
+                    <div className="flex justify-between items-start mb-3 pb-3 border-b border-gray-200">
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-500">#{offset + index + 1}</span>
+                        <span className="text-lg font-bold text-blue-600">Sheet #{sheet.id}</span>
+                      </div>
+                      <div>
+                        {getStatusBadge(sheet)}
+                      </div>
+                    </div>
+
+                    {/* Creator Info */}
+                    <div className="mb-3 pb-3 border-b border-gray-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-semibold text-gray-700">Người tạo</span>
+                      </div>
+                      <div className="pl-6">
+                        <div className="font-medium text-sm text-gray-900">
+                          {sheet.account?.fullName || sheet.account?.userName}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          ({sheet.account?.role})
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Time */}
+                    <div className="mb-3 pb-3 border-b border-gray-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AiOutlineCalendar className="w-4 h-4 text-gray-600" />
+                        <span className="text-xs font-semibold text-gray-700">Thời gian</span>
+                      </div>
+                      <div className="pl-6 text-sm text-gray-900">
+                        {formatDateTime(sheet.createAt)}
+                      </div>
+                    </div>
+
+                    {/* Confirmation Status */}
+                    <div className="mb-4 pb-3 border-b border-gray-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AiOutlineCheckCircle className="w-4 h-4 text-gray-600" />
+                        <span className="text-xs font-semibold text-gray-700">Tiến trình xác nhận</span>
+                      </div>
+                      <div className="pl-6">
+                        <ConfirmationStatus sheet={sheet} />
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex lg:flex-row md:flex-row flex-col gap-2">
+                      <button
+                        onClick={() => handleViewDetail(sheet)}
+                        className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                      >
+                        <AiOutlineEye className="w-4 h-4" />
+                        <span>Xem chi tiết</span>
+                      </button>
+                      {canEdit(sheet) && (
+                        <button
+                          onClick={() => {
+                            const roleLower = user?.role?.toLowerCase();
+                            window.open(`/${roleLower}/sheet-detail/${sheet.id}`, '_blank');
+                          }}
+                          className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                        >
+                          <AiOutlineEdit className="w-4 h-4" />
+                          <span>Chỉnh sửa</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* PAGINATION COMPONENT */}
               {pageCount > 1 && (
-                <div className="mt-4 flex justify-center">
-                  <ReactPaginate
-                    previousLabel={'Trước'}
-                    nextLabel={'Sau'}
-                    breakLabel={'...'}
-                    pageCount={pageCount}
-                    marginPagesDisplayed={2}
-                    pageRangeDisplayed={3}
-                    onPageChange={handlePageChange}
-                    forcePage={currentPage}
-                    containerClassName={'flex items-center gap-2'}
-                    pageLinkClassName={'px-3 py-2 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors text-sm font-medium no-underline'}
-                    previousLinkClassName={'px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium no-underline'}
-                    nextLinkClassName={'px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium no-underline'}
-                    breakLinkClassName={'px-3 py-2 text-gray-500 no-underline'}
-                    activeLinkClassName={'!bg-blue-600 !text-white !border-blue-600 no-underline'}
-                    disabledLinkClassName={'!cursor-not-allowed hover:!bg-transparent no-underline'}
-                  />
+                <div className="mt-4 flex justify-center px-3">
+                  <div className="w-full max-w-full">
+                    <div className="overflow-x-auto scrollbar-hide">
+                      <ReactPaginate
+                        previousLabel={'Trước'}
+                        nextLabel={'Sau'}
+                        breakLabel={'...'}
+                        pageCount={pageCount}
+                        marginPagesDisplayed={1}
+                        pageRangeDisplayed={2}
+                        onPageChange={handlePageChange}
+                        forcePage={currentPage}
+                        containerClassName={'flex items-center lg:justify-center md:justify-center gap-1 sm:gap-2 px-2 min-w-max sm:px-0'}
+                        pageClassName={''}
+                        pageLinkClassName={
+                          'px-3 py-2 sm:px-3 sm:py-2 rounded-lg block ' +
+                          'ring-1 ring-inset ring-gray-300 ' +
+                          'hover:bg-blue-50 hover:ring-blue-500 transition-all ' +
+                          'text-xs sm:text-sm font-medium no-underline'
+                        }
+                        previousClassName={''}
+                        previousLinkClassName={
+                          'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ' +
+                          'ring-1 ring-inset ring-gray-300 ' +
+                          'hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline'
+                        }
+                        nextClassName={''}
+                        nextLinkClassName={
+                          'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ' +
+                          'ring-1 ring-inset ring-gray-300 ' +
+                          'hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline'
+                        }
+                        breakClassName={''}
+                        breakLinkClassName={'px-1 sm:px-3 py-1.5 sm:py-2 text-gray-500 text-xs sm:text-sm no-underline'}
+                        activeClassName={''}
+                        activeLinkClassName={'!bg-blue-600 !text-white !ring-blue-600 no-underline'}
+                        disabledClassName={'opacity-50 cursor-not-allowed'}
+                        disabledLinkClassName={'!cursor-not-allowed hover:!bg-transparent no-underline'}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
             </>

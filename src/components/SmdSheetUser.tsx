@@ -190,7 +190,7 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
 
       {/* NÚT HOÀN THÀNH SHEET - Sticky Bottom */}
       {sheetData && (
-        <div className="sticky bottom-0 left-0 right-0 bg-white border-t-2 border-gray-300 p-4 shadow-lg z-10">
+        <div className="sticky bottom-0 left-0 right-0 bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-2 shadow-lg z-10">
           <div className="max-w-4xl mx-auto">
             {/* Show complete button when ALL tables done */}
             {allTablesCompleted && sheetData.status !== 'PQCDone' ? (
@@ -221,7 +221,7 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
               </div>
             ) : (
               // Not all tables completed yet
-              <div className="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+              <div className="p-2 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
                 <p className="text-sm text-yellow-800 text-center font-semibold">
                   ⚠️ Vui lòng hoàn thành tất cả {requiredTables.length} bảng trước khi hoàn tất sheet
                 </p>

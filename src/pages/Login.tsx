@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { loginUser, clearError } from '../redux/slices/authSlice';
-// import { useNavigate } from 'react-router-dom';
+import { getDeviceInfo } from '../utils/deviceInfo';
 
 const inputClass = "w-full px-4 py-3 border rounded-lg outline-none transition focus:border-blue-500 focus:shadow";
 
@@ -10,9 +10,8 @@ const Login = () => {
   const [password, setPassword] = useState<string>('');
   const [remember, setRemember] = useState<boolean>(false);
   const dispatch = useAppDispatch();
-  const { loading, error} = useAppSelector((state) => state.auth);
+  const { loading, error } = useAppSelector((state) => state.auth);
 
-    // Clear error khi component unmount
   useEffect(() => {
     return () => {
       dispatch(clearError());
@@ -22,10 +21,23 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await dispatch(loginUser({username, password}));
+      const deviceInfo = getDeviceInfo();
+      await dispatch(loginUser({
+        username, 
+        password,
+        deviceInfo
+      })).unwrap();
     } catch (error) {
-      console.error('Login failed: ', error)
+      console.error('Login failed: ', error);
     }
+  };
+
+  // Helper function để format error
+  const formatError = (error: any): string => {
+    if (typeof error === 'string') return error;
+    if (error?.title) return error.title;
+    if (error?.message) return error.message;
+    return 'Đăng nhập thất bại';
   };
 
   return (
@@ -41,7 +53,7 @@ const Login = () => {
             aria-label="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            disabled = {loading}
+            disabled={loading}
             placeholder="Username"
             className={inputClass}
           />
@@ -51,13 +63,13 @@ const Login = () => {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            disabled = {loading}
+            disabled={loading}
             placeholder="Password"
             className={inputClass}
           />
 
           <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-2">
               <input
                 type="checkbox"
                 checked={remember}
@@ -67,27 +79,35 @@ const Login = () => {
               <span className="text-gray-600">Remember me</span>
             </div>
 
-            <a href="/forgot-password" className="text-blue-400 text-decoration-none font-semibold">Forgot password?</a>
+            <div>
+              <a href="/forgot-password" className="text-blue-400 text-decoration-none font-semibold">
+                Forgot password?
+              </a>
+            </div>
           </div>
         </div>
 
         <div className='px-4'>
-        <button
-          type="submit"
-          className="w-full bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-500 focus:ring-4 focus:ring-blue-200 transition py-3 mb-2"
-        >
-          Login
-        </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-500 focus:ring-4 focus:ring-blue-200 transition py-3 mb-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Đang đăng nhập...' : 'Login'}
+          </button>
 
-        <p className="text-center text-sm text-gray-600">
-          Don't have an account?{' '}
-          <a href="#support" className="text-blue-500 font-semibold text-decoration-none">Contact IT</a>
-        </p>
+          <p className="text-center text-sm text-gray-600">
+            Don't have an account?{' '}
+            <a href="#support" className="text-blue-500 font-semibold text-decoration-none">
+              Contact IT
+            </a>
+          </p>
         </div>
-        {/* Hiển thị lỗi nếu có */}
+
+        {/* Fix hiển thị error */}
         {error && (
           <div className="mx-4 mt-3 p-3 bg-red-50 border-l-4 border-red-500 rounded text-red-700 text-sm">
-            {error}
+            {formatError(error)}
           </div>
         )}
       </form>

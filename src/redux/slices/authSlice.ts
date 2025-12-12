@@ -4,12 +4,12 @@
 // payloadAction: type helper cho action có payload
 // axios: thư viện call api
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 interface LoginRequest {
   username: string;
   password: string;
+  deviceInfo: string;
 }
 
 interface User {
@@ -69,7 +69,13 @@ export const loginUser = createAsyncThunk(
     } catch (error: any) {
       if (error.response && error.response.data) {
         // Xử lý error message từ server
-        const errorMessage = error.response.data.message || error.response.data;
+        const errorData = error.response.data;
+        
+        // Nếu error là object, lấy message hoặc title
+        const errorMessage = typeof errorData === 'string' 
+          ? errorData 
+          : errorData.title || errorData.message || 'Đăng nhập thất bại';
+        
         return rejectWithValue(errorMessage);
       }
       return rejectWithValue(error.message || 'Đăng nhập thất bại');

@@ -10,9 +10,9 @@ export const getDeviceInfo = (): string => {
       platform: navigator.platform,
       language: navigator.language,
       screenResolution: `${screen.width}x${screen.height}`,
-      colorDepth: screen.colorDepth,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      timestamp: new Date().getTime()
+      // colorDepth: screen.colorDepth,
+      // timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      // timestamp: new Date().getTime()
     };
 
     // Tạo một chuỗi mô tả thiết bị
@@ -64,5 +64,5 @@ export const getDetailedDeviceInfo = (): string => {
   else if (ua.includes('Tablet')) deviceType = 'Tablet';
   else deviceType = 'Desktop';
 
-  return `${deviceType}_${os}_${browser}_${new Date().getTime()}`;
+  return `${deviceType}_${os}_${browser}`;
 };

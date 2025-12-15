@@ -1,9 +1,16 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import smdApi from '../services/smdApi';
+import type { CheckModelData, ProgramCheckData, StandardProductionData, TimeChangeModelData, StandardVehicleData, PQCCheckData } from './subTableSlice';
 const API_BASE_URL = 'https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api';
 
 // ==================== TYPES ====================
-
+export interface StatusHistoryItem{
+  id: number;
+  changeModel: ChangeModelResponse;
+  status: string;
+  changedAt: string;
+  account: AccountInfo;
+}
 export interface AccountInfo {
   id?: number;
   fullName?: string;
@@ -26,6 +33,14 @@ export interface ChangeModelResponse {
   excelFileUrl?: string;
   pdfFileUrl?: string;
   createAt?: string;
+
+  // object 
+  checkModel?: CheckModelData;
+  programCheck?: ProgramCheckData;
+  standardProduction?: StandardProductionData;
+  timeChangeModel?: TimeChangeModelData;
+  standardVehicle?: StandardVehicleData;
+  pqcCheck?: PQCCheckData;
 }
 
 interface ChangeModelState {
@@ -36,7 +51,10 @@ interface ChangeModelState {
   filteredSheets?: ChangeModelResponse[];
   loadingList?: boolean;
   uploadLoading?: boolean;
+  status?: string;
   success?: boolean
+  statusHistory?: StatusHistoryItem[];
+  loadingHistory?: boolean;
 }
 
 const initialState: ChangeModelState = {
@@ -47,6 +65,8 @@ const initialState: ChangeModelState = {
   sheets: [],
   filteredSheets: [],
   loadingList: false,
+  statusHistory: [],
+  loadingHistory: false,
 };
 
 // ==================== ASYNC THUNKS ====================
@@ -161,7 +181,7 @@ export const getSheetWithFullObject = createAsyncThunk(
   'changeModel/getFullObject',
   async (sheetId: number, { rejectWithValue }) => {
     try {
-      const response = await smdApi.get(`ChangeModel/object/${sheetId}`); // ✅ Dùng smdApi
+      const response = await smdApi.get(`ChangeModel/object/${sheetId}`);
       return response.data as ChangeModelResponse;
     } catch (error: any) {
       if (error.response?.status === 404) {
@@ -176,6 +196,45 @@ export const getSheetWithFullObject = createAsyncThunk(
   }
 );
 
+/** GET CHANGE MODEL STATUS HISTORY */
+export const getAllStatusHistory = createAsyncThunk(
+  'changeModel/getAllStatusHistory',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await smdApi.get('ChangeModelStatusHistory');
+      return response.data as StatusHistoryItem[];
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        return rejectWithValue('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+      }
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.message || 
+        'Không thể tải lịch sử status'
+      );
+    }
+  }
+);
+
+/** GET SHEET STATUS HISTORY BY SHEET ID */
+export const getSheetStatusHistory = createAsyncThunk(
+  'changeModel/getSheetStatusHistory',
+  async (sheetId: number, { rejectWithValue }) => {
+    try {
+      const response = await smdApi.get(`ChangeModelStatusHistory/changemodel/${sheetId}`);
+      return response.data as StatusHistoryItem[];
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return rejectWithValue('Không tìm thấy sheet với ID này.');
+      }
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.message || 
+        'Không thể tải lịch sử status'
+      );
+    }
+  }
+);
 
 /**
  * UPDATE STATUS TO PQCDONE - Dùng cho PQC
@@ -474,6 +533,11 @@ const changeModelSlice = createSlice({
       state.error = null;
       state.currentSheet = null;
     },
+
+    clearStatusHistory: (state) => {
+      state.statusHistory = [];
+      state.loadingHistory = false;
+    },
     
   },
   extraReducers: (builder) => {
@@ -600,6 +664,38 @@ const changeModelSlice = createSlice({
         state.error = action.payload as string;
       });
 
+      // ==================== GET ALL STATUS HISTORY ====================
+    builder
+      .addCase(getAllStatusHistory.pending, (state) => {
+        state.loadingHistory = true;
+        state.error = null;
+      })
+      .addCase(getAllStatusHistory.fulfilled, (state, action) => {
+        state.loadingHistory = false;
+        state.statusHistory = action.payload;
+        state.error = null;
+      })
+      .addCase(getAllStatusHistory.rejected, (state, action) => {
+        state.loadingHistory = false;
+        state.error = action.payload as string;
+      });
+
+    // ==================== GET SHEET STATUS HISTORY ====================
+    builder
+      .addCase(getSheetStatusHistory.pending, (state) => {
+        state.loadingHistory = true;
+        state.error = null;
+      })
+      .addCase(getSheetStatusHistory.fulfilled, (state, action) => {
+        state.loadingHistory = false;
+        state.statusHistory = action.payload;
+        state.error = null;
+      })
+      .addCase(getSheetStatusHistory.rejected, (state, action) => {
+        state.loadingHistory = false;
+        state.error = action.payload as string;
+      });
+
     // ==================== GET BY STATUS ====================
     builder
       .addCase(getSheetsByStatus.pending, (state) => {
@@ -669,5 +765,5 @@ const changeModelSlice = createSlice({
   },
 });
 
-export const { clearError, clearSheet, clearSheetList , reset, setCurrentSheet } = changeModelSlice.actions;
+export const { clearError, clearSheet, clearSheetList , reset, setCurrentSheet, clearStatusHistory } = changeModelSlice.actions;
 export default changeModelSlice.reducer;

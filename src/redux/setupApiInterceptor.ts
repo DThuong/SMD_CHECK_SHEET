@@ -3,39 +3,82 @@ import type { AxiosInstance } from "axios";
 import type { Store } from "@reduxjs/toolkit";
 import { logout } from "./slices/authSlice";
 
-// Biến flag để tránh gọi logout nhiều lần
 let isLoggingOut = false;
 
-/**
- * Setup 401 interceptor cho smdApi
- * Gọi HÀM NÀY SAU KHI store đã được tạo
- */
 export const setupApiInterceptor = (api: AxiosInstance, store: Store) => {
+  
+  // ✅ REQUEST INTERCEPTOR - Check mỗi khi gọi API
+  api.interceptors.request.use(
+    (config) => {
+      const state = store.getState() as { auth: any };
+      const reduxToken = state.auth.token;
+      const localToken = localStorage.getItem('token');
+      
+      // ✅ CRITICAL CHECK: Token mismatch
+      if (reduxToken && localToken && reduxToken !== localToken) {
+        console.warn('⚠️ REQUEST INTERCEPTOR: Token mismatch detected!');
+        console.log('Redux token:', reduxToken.substring(0, 20) + '...');
+        console.log('Local token:', localToken.substring(0, 20) + '...');
+        
+        if (!isLoggingOut) {
+          isLoggingOut = true;
+          
+          const deviceId = localStorage.getItem('smd_device_id');
+          localStorage.clear();
+          sessionStorage.clear();
+          if (deviceId) {
+            localStorage.setItem('smd_device_id', deviceId);
+          }
+          
+          store.dispatch(logout());
+          
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 100);
+        }
+        
+        return Promise.reject(new Error('Token mismatch - Logged out'));
+      }
+      
+      // Thêm token vào header
+      if (localToken) {
+        config.headers.Authorization = `Bearer ${localToken}`;
+      }
+      
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
+
+  // ✅ RESPONSE INTERCEPTOR - Xử lý 401
   api.interceptors.response.use(
     (response) => response,
     async (error) => {
-      // ✅ Chỉ xử lý 401
       if (error.response?.status === 401) {
+        console.warn('🔒 RESPONSE INTERCEPTOR: 401 Unauthorized - Token không hợp lệ');
         
-        // ✅ Tránh gọi logout nhiều lần (khi nhiều API 401 cùng lúc)
         if (isLoggingOut) {
           return Promise.reject(error);
         }
         
         isLoggingOut = true;
-        console.warn('🔒 401 Unauthorized - Token không hợp lệ, đang logout...');
         
         try {
-          // 1. Dispatch logout (đã clear storage + persist bên trong reducer)
+          const deviceId = localStorage.getItem('smd_device_id');
+          localStorage.clear();
+          sessionStorage.clear();
+          if (deviceId) {
+            localStorage.setItem('smd_device_id', deviceId);
+          }
+          
           store.dispatch(logout());
           
-          // 2. Redirect về login
-          window.location.href = '/login';
-          
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 100);
         } catch (logoutError) {
-          console.error('❌ Lỗi khi logout:', logoutError);
+          console.error('❌ Logout error:', logoutError);
         } finally {
-          // Reset flag sau 1s để cho phép logout lại nếu cần
           setTimeout(() => {
             isLoggingOut = false;
           }, 1000);
@@ -44,7 +87,6 @@ export const setupApiInterceptor = (api: AxiosInstance, store: Store) => {
         return Promise.reject(error);
       }
       
-      // Các lỗi khác (500, 404...) không xử lý
       return Promise.reject(error);
     }
   );

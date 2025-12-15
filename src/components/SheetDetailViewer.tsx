@@ -1,4 +1,3 @@
-// src/components/SheetDetailViewer.tsx
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
@@ -11,9 +10,13 @@ import {
   setPQCCheck,
   clearAllSubTableData
 } from '../redux/slices/subTableSlice';
-import { setCurrentSheet, updateSheetStatus } from '../redux/slices/changeModelSlice';
+import { 
+  getSheetWithFullObject, 
+  updateSheetStatus,
+  clearError 
+} from '../redux/slices/changeModelSlice';
 
-// Import các sub-components (READ-ONLY mode)
+// Import các sub-components
 import CheckModels from "./smd_Sheet/CheckModels";
 import PQCChecks from "./smd_Sheet/PQCChecks";
 import ProgramChecks from "./smd_Sheet/ProgramChecks";
@@ -26,39 +29,31 @@ const SheetDetailViewer = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  
+  // Lấy data từ Redux store
+  const { currentSheet, loading, error } = useAppSelector((state) => state.changeModel);
   const { user } = useAppSelector((state) => state.auth);
   
-  const [sheetData, setSheetData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
-  console.log(sheetData)
 
   // PHÂN QUYỀN CHÍNH XÁC
-  // ENG, Supervisior: Có thể XEM và SỬA (nếu status phù hợp)
-  // Manager, KoreaManager: CHỈ XEM (không sửa)
   const canEdit = () => {
-    if (!user || !sheetData) return false;
+    if (!user || !currentSheet) return false;
     
     const userRole = user.role;
-    const status = sheetData.status?.toLowerCase();
+    const status = currentSheet.status?.toLowerCase();
     
-    // ENG có thể sửa khi status = PQCDone
     if (userRole === 'ENG' && status === 'pqcdone') return true;
-    
-    // Supervisior có thể sửa khi status = ENGDone
     if (userRole === 'Supervisior' && status === 'engdone') return true;
     
-    // Manager và KoreaManager KHÔNG được sửa
     return false;
   };
 
-  // KIỂM TRA QUYỀN KÝ
   const canConfirm = () => {
-    if (!user || !sheetData) return false;
+    if (!user || !currentSheet) return false;
     
     const userRole = user.role;
-    const status = sheetData.status?.toLowerCase();
+    const status = currentSheet.status?.toLowerCase();
     
     switch (userRole) {
       case 'ENG':
@@ -74,51 +69,24 @@ const SheetDetailViewer = () => {
     }
   };
 
-  // Load dữ liệu sheet từ API
+  // Load dữ liệu sheet từ Redux action
   useEffect(() => {
     const loadSheetData = async () => {
-      if (!id) {
-        setError('ID sheet không hợp lệ');
-        setLoading(false);
-        return;
-      }
+      if (!id) return;
       
       try {
-        setLoading(true);
-        setError(null);
-        const token = localStorage.getItem('token');
-        
-        const response = await fetch(
-          `https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/ChangeModel/object/${id}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          }
-        );
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log("✅ Sheet data loaded:", data);
-        setSheetData(data);
-        dispatch(setCurrentSheet(data));
+        const result = await dispatch(getSheetWithFullObject(Number(id))).unwrap();
         
         // Dispatch nested objects
-        if (data.checkModel) dispatch(setCheckModel(data.checkModel));
-        if (data.programCheck) dispatch(setProgramCheck(data.programCheck));
-        if (data.standardProduction) dispatch(setStandardProduction(data.standardProduction));
-        if (data.timeChangeModel) dispatch(setTimeChangeModel(data.timeChangeModel));
-        if (data.standardVehicle) dispatch(setStandardVehicle(data.standardVehicle));
-        if (data.pqcCheck) dispatch(setPQCCheck(data.pqcCheck));
+        if (result.checkModel) dispatch(setCheckModel(result.checkModel));
+        if (result.programCheck) dispatch(setProgramCheck(result.programCheck));
+        if (result.standardProduction) dispatch(setStandardProduction(result.standardProduction));
+        if (result.timeChangeModel) dispatch(setTimeChangeModel(result.timeChangeModel));
+        if (result.standardVehicle) dispatch(setStandardVehicle(result.standardVehicle));
+        if (result.pqcCheck) dispatch(setPQCCheck(result.pqcCheck));
         
       } catch (error: any) {
         console.error('❌ Error loading sheet:', error);
-        setError(error.message || 'Không thể tải dữ liệu sheet!');
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -126,17 +94,18 @@ const SheetDetailViewer = () => {
     
     return () => {
       dispatch(clearAllSubTableData());
+      dispatch(clearError());
     };
   }, [id, dispatch]);
 
-  // ✅ XỬ LÝ KÝ XÁC NHẬN
+  // XỬ LÝ KÝ XÁC NHẬN
   const handleConfirm = async () => {
     if (!canConfirm()) {
       alert('❌ Bạn không có quyền xác nhận ở bước này!');
       return;
     }
 
-    if (!user || !sheetData) return;
+    if (!user || !currentSheet) return;
 
     const confirmMessage = `Bạn có chắc chắn muốn xác nhận sheet này với vai trò ${user.role}?`;
     if (!window.confirm(confirmMessage)) return;
@@ -145,16 +114,15 @@ const SheetDetailViewer = () => {
       setConfirming(true);
       
       await dispatch(updateSheetStatus({
-        sheetId: sheetData.id,
-        currentStatus: sheetData.status,
+        sheetId: currentSheet.id!,
+        currentStatus: currentSheet.status!,
         userRole: user.role as string
       })).unwrap();
       
       alert('✅ Xác nhận thành công!');
       
-      // Reload page sau 1s
       setTimeout(() => {
-        window.location.reload();
+        navigate(0);
       }, 1000);
       
     } catch (error: any) {
@@ -180,7 +148,7 @@ const SheetDetailViewer = () => {
   }
 
   // Error state
-  if (error || !sheetData) {
+  if (error || !currentSheet) {
     return (
       <div className="max-w-8xl mx-auto my-4 p-8 text-center">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
@@ -201,9 +169,9 @@ const SheetDetailViewer = () => {
     const statusConfig: Record<string, { bg: string; text: string; icon: string; label: string }> = {
       'pending': { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: '⏳', label: 'Đang xử lý' },
       'pqcdone': { bg: 'bg-green-100', text: 'text-green-800', icon: '✔', label: 'PQC hoàn thành' },
-      'engdone': { bg: 'bg-blue-100', text: 'text-blue-800', icon: '', label: 'ENG đã xác nhận' },
-      'supervisiordone': { bg: 'bg-purple-100', text: 'text-purple-800', icon: '', label: 'Supervisor đã xác nhận' },
-      'managerdone': { bg: 'bg-indigo-100', text: 'text-indigo-800', icon: '', label: 'Manager đã xác nhận' },
+      'engdone': { bg: 'bg-blue-100', text: 'text-blue-800', icon: '✔', label: 'ENG đã xác nhận' },
+      'supervisiordone': { bg: 'bg-purple-100', text: 'text-purple-800', icon: '✔', label: 'Supervisor đã xác nhận' },
+      'managerdone': { bg: 'bg-indigo-100', text: 'text-indigo-800', icon: '✔', label: 'Manager đã xác nhận' },
       'koreamanagerdone': { bg: 'bg-teal-100', text: 'text-teal-900', icon: '🇰🇷', label: 'Korea Manager đã xác nhận' },
     };
 
@@ -231,20 +199,20 @@ const SheetDetailViewer = () => {
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
           <div>
             <h1 className="text-xl font-bold text-gray-800">
-              Chi tiết Sheet #{sheetData.id}
+              Chi tiết Sheet #{currentSheet.id}
             </h1>
-            {sheetData.createAt && (
+            {currentSheet.createAt && (
               <p className="text-xs text-gray-500 mt-1 mb-0">
-                Tạo lúc: {new Date(sheetData.createAt).toLocaleString('vi-VN')}
+                Tạo lúc: {new Date(currentSheet.createAt).toLocaleString('vi-VN')}
               </p>
             )}
-            {sheetData.account && (
+            {currentSheet.account && (
               <p className="text-xs text-gray-500 mb-0">
-                Người tạo: {sheetData.account?.fullName || sheetData.account.userName} ({sheetData.account.role})
+                Người tạo: {currentSheet.account?.fullName || currentSheet.account.userName} ({currentSheet.account.role})
               </p>
             )}
           </div>
-          <div className='text-center py-2'>{getStatusBadge(sheetData.status)}</div>
+          <div className='text-center py-2'>{getStatusBadge(currentSheet.status || '')}</div>
         </div>
       </div>
 
@@ -292,14 +260,14 @@ const SheetDetailViewer = () => {
           <button
             onClick={handleConfirm}
             disabled={confirming}
-            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg! text-sm font-semibold hover:bg-green-700 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {confirming ? 'Đang xác nhận...' : ` Ký xác nhận (${user?.role})`}
+            {confirming ? 'Đang xác nhận...' : `Ký xác nhận (${user?.role})`}
           </button>
         )}
         
         {!isConfirmable && (
-          <div className="flex-1 px-4 py-3 bg-gray-300 text-gray-600 rounded-lg font-semibold text-center text-sm cursor-not-allowed">
+          <div className="flex-1 px-4 py-3 bg-gray-300 text-gray-600  font-semibold text-center text-sm cursor-not-allowed">
             {user?.role === 'Manager' || user?.role === 'KoreaManager' 
               ? '👁️ Chỉ xem (Chưa đến lượt xác nhận)'
               : '🔒 Không thể ký'}

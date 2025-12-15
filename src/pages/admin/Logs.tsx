@@ -7,27 +7,30 @@ import {
   AiOutlineCalendar,
   AiOutlineEdit,
   AiOutlineSearch,
-  AiOutlineClose 
+  AiOutlineClose,
+  AiOutlineHistory
 } from 'react-icons/ai';
 import { FaCalendarAlt, FaRegUserCircle, FaUserAlt } from "react-icons/fa";
 import { MdSignalWifiStatusbar2Bar } from "react-icons/md";
 import { useAppSelector, useAppDispatch } from '../../redux/hooks';
 import ReactPaginate from 'react-paginate';
+import { useNavigate } from 'react-router-dom';
 
 // Redux actions
 import { 
   fetchChangeModel,
   getSheetByFilter,
-  updateSheetStatus 
+  updateSheetStatus,
+  getSheetStatusHistory,
+  clearStatusHistory
 } from '../../redux/slices/changeModelSlice';
 import type { ChangeModelResponse } from '../../redux/slices/changeModelSlice';
-import { useNavigate } from 'react-router-dom';
 
 // ==================== CONSTANTS ====================
 const ROLES = {
   PQC: 'PQC',
   ENG: 'ENG',
-  SUPERVISOR: 'Supervisior', // ✅ Đúng chính tả trong DB
+  SUPERVISOR: 'Supervisior',
   MANAGER: 'Manager',
   KOREA_MANAGER: 'KoreaManager'
 } as const;
@@ -51,10 +54,13 @@ type SheetFilter = {
 
 const Logs = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { user } = useAppSelector(state => state.auth);
   const { 
     filteredSheets, 
-    loadingList, 
+    loadingList,
+    statusHistory,
+    loadingHistory,
     error: sheetError 
   } = useAppSelector(state => state.changeModel);
 
@@ -62,7 +68,6 @@ const Logs = () => {
   const [selectedSheet, setSelectedSheet] = useState<ChangeModelResponse | null>(null);
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const resultsRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
 
   // Filter state
   const [filter, setFilter] = useState<SheetFilter>({
@@ -74,7 +79,7 @@ const Logs = () => {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
 
   // ==================== LOAD SHEETS ====================
   const loadSheets = async () => {
@@ -84,14 +89,12 @@ const Logs = () => {
       const hasStatus = filter.status !== '' && filter.status !== 'all';
 
       if (hasWorkOrder || hasDateRange || hasStatus) {
-        
         await dispatch(getSheetByFilter({
           workOrder: hasWorkOrder ? filter.workOrder.trim() : undefined,
           fromDate: hasDateRange ? filter.fromDate : undefined,
           toDate: hasDateRange ? filter.toDate : undefined,
           status: hasStatus ? filter.status : undefined,
         })).unwrap();
-        
         return;
       }
 
@@ -151,37 +154,45 @@ const Logs = () => {
     }
   };
 
-  const clearFilters = () => {
-    resetFilter();
+  // ==================== VIEW HANDLERS ====================
+  const handleViewDetail = async (sheet: ChangeModelResponse) => {
+    setSelectedSheet(sheet);
+    setShowDetail(true);
+    
+    // ✅ Load status history cho sheet này
+    try {
+      await dispatch(getSheetStatusHistory(sheet.id)).unwrap();
+    } catch (error) {
+      console.error('❌ Lỗi khi tải history:', error);
+    }
+  };
+
+  const handleCloseDetail = () => {
+    setShowDetail(false);
+    setSelectedSheet(null);
+    dispatch(clearStatusHistory());
+    loadSheets();
   };
 
   // ==================== CONFIRMATION LOGIC ====================
-  
-  // ✅ Kiểm tra role có thể xác nhận ở bước nào (CHUẨN)
   const canConfirmAtStep = (sheet: ChangeModelResponse, role: string): boolean => {
     if (!user || user.role !== role) return false;
-
     const status = sheet.status?.toLowerCase();
 
     switch (role) {
       case ROLES.ENG:
         return status === STATUS.PQC_DONE.toLowerCase();
-      
       case ROLES.SUPERVISOR:
         return status === STATUS.ENG_DONE.toLowerCase();
-      
       case ROLES.MANAGER:
         return status === STATUS.SUPERVISOR_DONE.toLowerCase();
-      
       case ROLES.KOREA_MANAGER:
         return status === STATUS.MANAGER_DONE.toLowerCase();
-      
       default:
         return false;
     }
   };
 
-  // ✅ Xác nhận theo bước (CHUẨN - Sử dụng updateSheetStatusByRole)
   const handleConfirmStep = async (
     sheetId: number, 
     role: typeof ROLES.ENG | typeof ROLES.SUPERVISOR | typeof ROLES.MANAGER | typeof ROLES.KOREA_MANAGER
@@ -200,7 +211,6 @@ const Logs = () => {
         return;
       }
 
-      // ✅ GỌI API TỰ ĐỘNG XÁC ĐỊNH STATUS
       await dispatch(updateSheetStatus({
         sheetId,
         currentStatus: sheet.status || STATUS.PENDING,
@@ -214,14 +224,10 @@ const Logs = () => {
         [ROLES.KOREA_MANAGER]: 'Korea Manager'
       };
 
-      // Check if completed
-      const newStatus = sheet.status?.toLowerCase();
-      if (newStatus === STATUS.KOREA_MANAGER_DONE.toLowerCase()) {
-        alert(`🎉 Sheet đã được xác nhận hoàn tất bởi tất cả các cấp!`);
-      } else {
-        alert(`✅ Xác nhận thành công bởi ${roleNames[role]}!`);
-      }
+      alert(`✅ Xác nhận thành công bởi ${roleNames[role]}!`);
 
+      // ✅ Reload history sau khi confirm
+      await dispatch(getSheetStatusHistory(sheetId)).unwrap();
       await loadSheets();
 
       if (selectedSheet && selectedSheet.id === sheetId) {
@@ -237,18 +243,6 @@ const Logs = () => {
     }
   };
 
-  // ==================== VIEW HANDLERS ====================
-  const handleViewDetail = (sheet: ChangeModelResponse): void => {
-    setSelectedSheet(sheet);
-    setShowDetail(true);
-  };
-
-  const handleCloseDetail = (): void => {
-    setShowDetail(false);
-    setSelectedSheet(null);
-    loadSheets();
-  };
-
   // ==================== UTILITIES ====================
   const formatDateTime = (dateString?: string): string => {
     if (!dateString) return 'N/A';
@@ -262,25 +256,17 @@ const Logs = () => {
     });
   };
 
-  // ✅ CẬP NHẬT canEdit (CHUẨN)
   const canEdit = (sheet: ChangeModelResponse): boolean => {
     if (!user) return false;
-    
-    // Chỉ ENG và Supervisior mới được edit
     if (user.role !== ROLES.ENG && user.role !== ROLES.SUPERVISOR) return false;
     
     const status = sheet.status?.toLowerCase();
-    
-    // ENG edit khi PQCDone
     if (user.role === ROLES.ENG && status === STATUS.PQC_DONE.toLowerCase()) return true;
-    
-    // Supervisior edit khi ENGDone
     if (user.role === ROLES.SUPERVISOR && status === STATUS.ENG_DONE.toLowerCase()) return true;
     
     return false;
   };
 
-  // ✅ Get status badge (CHUẨN)
   const getStatusBadge = (sheet: ChangeModelResponse) => {
     const status = sheet.status?.toLowerCase();
     
@@ -308,69 +294,78 @@ const Logs = () => {
     );
   };
 
-  // ✅ COMPONENT HIỂN THỊ TRẠNG THÁI XÁC NHẬN (CHUẨN)
-  const ConfirmationStatus: React.FC<{ sheet: ChangeModelResponse }> = ({ sheet }) => {
-    const status = sheet.status?.toLowerCase();
-    
-    const steps = [
-      { key: ROLES.ENG, label: 'ENG', color: 'blue' },
-      { key: ROLES.SUPERVISOR, label: 'SUP', color: 'purple' },
-      { key: ROLES.MANAGER, label: 'MGR', color: 'orange' },
-      { key: ROLES.KOREA_MANAGER, label: 'KMGR', color: 'red' }
+  // ✅ COMPONENT HIỂN THỊ TIẾN TRÌNH KÝ (dựa trên statusHistory)
+  const SignatureProgress: React.FC<{ sheet: ChangeModelResponse }> = ({ sheet }) => {
+    const roles = [
+      { key: ROLES.ENG, label: 'Engineering', color: 'blue' },
+      { key: ROLES.SUPERVISOR, label: 'Supervisor', color: 'purple' },
+      { key: ROLES.MANAGER, label: 'Manager', color: 'orange' },
+      { key: ROLES.KOREA_MANAGER, label: 'Korea Manager', color: 'red' }
     ];
 
-    const getStepStatus = (stepKey: string) => {
-      const statusOrder = [
-        STATUS.PENDING.toLowerCase(),
-        STATUS.PQC_DONE.toLowerCase(),
-        STATUS.ENG_DONE.toLowerCase(),
-        STATUS.SUPERVISOR_DONE.toLowerCase(),
-        STATUS.MANAGER_DONE.toLowerCase(),
-        STATUS.KOREA_MANAGER_DONE.toLowerCase()
-      ];
-      
-      const currentIndex = statusOrder.indexOf(status || STATUS.PENDING.toLowerCase());
-      
-      switch (stepKey) {
-        case ROLES.ENG:
-          return currentIndex >= 2;
-        case ROLES.SUPERVISOR:
-          return currentIndex >= 3;
-        case ROLES.MANAGER:
-          return currentIndex >= 4;
-        case ROLES.KOREA_MANAGER:
-          return currentIndex >= 5;
-        default:
-          return false;
-      }
+    const getStepInfo = (role: string) => {
+      // Tìm history item có status tương ứng với role
+      const historyItem = statusHistory?.find((item) => {
+        const status = item.status?.toLowerCase();
+        switch (role) {
+          case ROLES.ENG:
+            return status === STATUS.ENG_DONE.toLowerCase();
+          case ROLES.SUPERVISOR:
+            return status === STATUS.SUPERVISOR_DONE.toLowerCase();
+          case ROLES.MANAGER:
+            return status === STATUS.MANAGER_DONE.toLowerCase();
+          case ROLES.KOREA_MANAGER:
+            return status === STATUS.KOREA_MANAGER_DONE.toLowerCase();
+          default:
+            return false;
+        }
+      });
+
+      return historyItem || null;
     };
 
     return (
-      <div className="flex flex-col gap-1">
-        {steps.map((step) => {
-          const isConfirmed = getStepStatus(step.key);
-          const canConfirm = canConfirmAtStep(sheet, step.key);
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        {roles.map((role) => {
+          const stepInfo = getStepInfo(role.key);
+          const isConfirmed = !!stepInfo;
+          const canConfirm = canConfirmAtStep(sheet, role.key);
           
           return (
-            <div key={step.key} className="flex items-center gap-2">
-              <div className={`w-12 text-xs font-semibold ${isConfirmed ? `text-${step.color}-700` : 'text-gray-400'}`}>
-                {step.label}
+            <div 
+              key={role.key} 
+              className={`p-3 rounded-lg border-2 ${
+                isConfirmed ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-300'
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                {isConfirmed ? (
+                  <AiOutlineCheckCircle className="w-5 h-5 text-green-600" />
+                ) : (
+                  <AiOutlineClockCircle className="w-5 h-5 text-gray-400" />
+                )}
+                <span className="font-semibold text-xs">{role.label}</span>
               </div>
               
-              {isConfirmed ? (
-                <div className="flex items-center gap-1">
-                  <AiOutlineCheckCircle className={`w-4 h-4 text-${step.color}-600`} />
-                  <span className="text-xs text-gray-600">Done</span>
+              {isConfirmed && stepInfo ? (
+                <div className="text-xs text-gray-600 space-y-1">
+                  <div className="text-green-700 font-medium">✓ Đã xác nhận</div>
+                  <div className="text-gray-500">
+                    Bởi: {stepInfo.account?.fullName || stepInfo.account?.userName}
+                  </div>
+                  <div className="text-gray-500">
+                    {formatDateTime(stepInfo.changedAt)}
+                  </div>
                 </div>
               ) : canConfirm ? (
-                <input
-                  type="checkbox"
-                  onChange={() => handleConfirmStep(sheet.id, step.key)}
-                  className={`w-4 h-4 cursor-pointer accent-${step.color}-600`}
-                  title={`Xác nhận bởi ${step.label}`}
-                />
+                <button
+                  onClick={() => handleConfirmStep(sheet.id, role.key)}
+                  className={`mt-2 w-full px-3 py-1.5 bg-${role.color}-600 text-white rounded text-xs font-medium hover:bg-${role.color}-700 transition-colors`}
+                >
+                  Ký xác nhận
+                </button>
               ) : (
-                <div className="w-4 h-4 border-2 border-gray-300 rounded bg-gray-100" />
+                <div className="text-xs text-gray-400 mt-2">Chưa xác nhận</div>
               )}
             </div>
           );
@@ -389,7 +384,6 @@ const Logs = () => {
   const pageCount = Math.ceil(sortedSheets.length / itemsPerPage);
   const offset = currentPage * itemsPerPage;
   const currentSheets = sortedSheets.slice(offset, offset + itemsPerPage);
-  console.log(currentSheets);
 
   const handlePageChange = (selectedItem: { selected: number }) => {
     setCurrentPage(selectedItem.selected);
@@ -404,94 +398,119 @@ const Logs = () => {
 
   // ==================== DETAIL VIEW ====================
   if (showDetail && selectedSheet) {
-    const status = selectedSheet.status?.toLowerCase();
-    const roles = [ROLES.ENG, ROLES.SUPERVISOR, ROLES.MANAGER, ROLES.KOREA_MANAGER];
-    
-    const getStepConfirmed = (role: string) => {
-      const statusOrder = [
-        STATUS.PENDING.toLowerCase(),
-        STATUS.PQC_DONE.toLowerCase(),
-        STATUS.ENG_DONE.toLowerCase(),
-        STATUS.SUPERVISOR_DONE.toLowerCase(),
-        STATUS.MANAGER_DONE.toLowerCase(),
-        STATUS.KOREA_MANAGER_DONE.toLowerCase()
-      ];
-      const currentIndex = statusOrder.indexOf(status || STATUS.PENDING.toLowerCase());
-      
+    const getSignerInfo = (role: string) => {
+    const historyItem = statusHistory?.find((item) => {
+      const status = item.status?.toLowerCase();
       switch (role) {
         case ROLES.ENG:
-          return currentIndex >= 2;
+          return status === STATUS.ENG_DONE.toLowerCase();
         case ROLES.SUPERVISOR:
-          return currentIndex >= 3;
+          return status === STATUS.SUPERVISOR_DONE.toLowerCase();
         case ROLES.MANAGER:
-          return currentIndex >= 4;
+          return status === STATUS.MANAGER_DONE.toLowerCase();
         case ROLES.KOREA_MANAGER:
-          return currentIndex >= 5;
+          return status === STATUS.KOREA_MANAGER_DONE.toLowerCase();
         default:
           return false;
       }
-    };
-    
+    });
+    return historyItem || null;
+  };
+
+  const roles = [
+    { key: ROLES.ENG, label: 'Engineering' },
+    { key: ROLES.SUPERVISOR, label: 'Supervisor' },
+    { key: ROLES.MANAGER, label: 'Manager' },
+    { key: ROLES.KOREA_MANAGER, label: 'Korea Manager' }
+  ];
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="max-w-8xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg p-4">
-            <div className="flex flex-col items-center mb-4 gap-2">
-              <div className="text-3xl font-bold text-gray-800">Chi tiết SMD Sheet</div>
-              <button
-                onClick={handleCloseDetail}
-                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
-              >
-                Quay lại
-              </button>
+      <div className="max-w-8xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-4">
+          <div className="flex flex-col items-center mb-4 gap-2">
+            <div className="text-3xl font-bold text-gray-800">Chi tiết SMD Sheet</div>
+            <button
+              onClick={handleCloseDetail}
+              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+            >
+              Quay lại
+            </button>
+          </div>
+
+          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center gap-2">
+                <FaRegUserCircle className="w-5 h-5" />
+                <span className="text-sm text-gray-700">
+                  <strong>Người tạo:</strong> {selectedSheet.account?.fullName || selectedSheet.account?.userName} ({selectedSheet.account?.role})
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <AiOutlineCalendar className="w-5 h-5" />
+                <span className="text-sm text-gray-700">
+                  <strong>Thời gian:</strong> {formatDateTime(selectedSheet.createAt)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {getStatusBadge(selectedSheet)}
+              </div>
             </div>
 
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center gap-2">
-                  <FaRegUserCircle className="w-5 h-5" />
-                  <span className="text-sm text-gray-700">
-                    <strong>Người tạo:</strong> {selectedSheet.account?.fullName || selectedSheet.account?.userName} ({selectedSheet.account?.role})
-                  </span>
+            {/* ✅ Tiến trình ký xác nhận - CẬP NHẬT PHẦN NÀY */}
+            <div className="mt-4 pt-4 border-t border-blue-200">
+              <strong className="text-sm text-gray-700 mb-2 flex items-center gap-2">
+                <AiOutlineHistory className="w-5 h-5" />
+                Tiến trình ký xác nhận:
+              </strong>
+              
+              {loadingHistory ? (
+                <div className="text-center py-6">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <p className="mt-2 text-sm text-gray-600">Đang tải lịch sử...</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <AiOutlineCalendar className="w-5 h-5" />
-                  <span className="text-sm text-gray-700">
-                    <strong>Thời gian:</strong> {formatDateTime(selectedSheet.createAt)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusBadge(selectedSheet)}
-                </div>
-              </div>
-
-              {/* Tiến trình xác nhận */}
-              <div className="mt-4 pt-4 border-t border-blue-200">
-                <strong className="text-sm text-gray-700 mb-2 block">Tiến trình xác nhận:</strong>
+              ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   {roles.map((role) => {
-                    const isConfirmed = getStepConfirmed(role);
-                    const labels: Record<string, string> = { 
-                      [ROLES.ENG]: 'Engineering', 
-                      [ROLES.SUPERVISOR]: 'Supervisor', 
-                      [ROLES.MANAGER]: 'Manager', 
-                      [ROLES.KOREA_MANAGER]: 'Manager Korea' 
-                    };
+                    const signerInfo = getSignerInfo(role.key);
+                    const isConfirmed = !!signerInfo;
+                    const canConfirm = canConfirmAtStep(selectedSheet, role.key);
                     
                     return (
-                      <div key={role} className={`p-3 rounded-lg border-2 ${isConfirmed ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-300'}`}>
-                        <div className="flex items-center gap-2 mb-1">
+                      <div 
+                        key={role.key} 
+                        className={`p-3 rounded-lg border-2 ${
+                          isConfirmed ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
                           {isConfirmed ? (
                             <AiOutlineCheckCircle className="w-5 h-5 text-green-600" />
                           ) : (
                             <AiOutlineClockCircle className="w-5 h-5 text-gray-400" />
                           )}
-                          <span className="font-semibold text-xs">{labels[role]}</span>
+                          <span className="font-semibold text-xs">{role.label}</span>
                         </div>
-                        {isConfirmed ? (
-                          <div className="text-xs text-gray-600">
+                        
+                        {isConfirmed && signerInfo ? (
+                          <div className="text-xs text-gray-600 space-y-1">
                             <div className="text-green-700 font-medium">✓ Đã xác nhận</div>
+                            {/* ✅ HIỂN THỊ TÊN NGƯỜI KÝ */}
+                            <div className="text-gray-700">
+                              <strong>Người ký:</strong><br/>
+                              {signerInfo.account?.fullName || signerInfo.account?.userName || 'N/A'}
+                            </div>
+                            {/* ✅ HIỂN THỊ THỜI GIAN KÝ */}
+                            <div className="text-gray-500">
+                              {formatDateTime(signerInfo.changedAt)}
+                            </div>
                           </div>
+                        ) : canConfirm ? (
+                          <button
+                            onClick={() => handleConfirmStep(selectedSheet.id, role.key)}
+                            className="mt-2 w-full px-3 py-2 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition-colors"
+                          >
+                            Ký xác nhận
+                          </button>
                         ) : (
                           <div className="text-xs text-gray-400">Chưa xác nhận</div>
                         )}
@@ -499,66 +518,27 @@ const Logs = () => {
                     );
                   })}
                 </div>
-              </div>
+              )}
             </div>
+          </div>
 
-            {/* Nút xác nhận */}
-            {/* <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
-              {user?.role === ROLES.ENG && canConfirmAtStep(selectedSheet, ROLES.ENG) && (
-                <button
-                  onClick={() => handleConfirmStep(selectedSheet.id, ROLES.ENG)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 font-semibold"
-                >
-                  <AiOutlineCheckCircle className="w-5 h-5" />
-                  Xác nhận ENG
-                </button>
-              )}
-              {user?.role === ROLES.SUPERVISOR && canConfirmAtStep(selectedSheet, ROLES.SUPERVISOR) && (
-                <button
-                  onClick={() => handleConfirmStep(selectedSheet.id, ROLES.SUPERVISOR)}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 font-semibold"
-                >
-                  <AiOutlineCheckCircle className="w-5 h-5" />
-                  Xác nhận SUP
-                </button>
-              )}
-              {user?.role === ROLES.MANAGER && canConfirmAtStep(selectedSheet, ROLES.MANAGER) && (
-                <button
-                  onClick={() => handleConfirmStep(selectedSheet.id, ROLES.MANAGER)}
-                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 font-semibold"
-                >
-                  <AiOutlineCheckCircle className="w-5 h-5" />
-                  Xác nhận MGR
-                </button>
-              )}
-              {user?.role === ROLES.KOREA_MANAGER && canConfirmAtStep(selectedSheet, ROLES.KOREA_MANAGER) && (
-                <button
-                  onClick={() => handleConfirmStep(selectedSheet.id, ROLES.KOREA_MANAGER)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 font-semibold"
-                >
-                  <AiOutlineCheckCircle className="w-5 h-5" />
-                  Xác nhận KMGR
-                </button>
-              )}
-            </div> */}
-
-            {/* ✅ Link đến trang detail theo role */}
-            <div className="mt-4">
-              <div className="text-center mb-4">
-                <button
-                  onClick={() => {
-                    const roleLower = user?.role?.toLowerCase();
-                    navigate(`/${roleLower}/sheet-detail/${selectedSheet.id}`);
-                  }}
-                  className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-                >
-                  Xem chi tiết đầy đủ
-                </button>
-              </div>
+          {/* Nút xem toàn bộ sheet */}
+          <div className="mt-4">
+            <div className="text-center mb-4">
+              <button
+                onClick={() => {
+                  const roleLower = user?.role?.toLowerCase();
+                  navigate(`/${roleLower}/sheet-detail/${selectedSheet.id}`);
+                }}
+                className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+              >
+                Xem toàn bộ sheet
+              </button>
             </div>
           </div>
         </div>
       </div>
+    </div>
     );
   }
 
@@ -567,7 +547,8 @@ const Logs = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-8xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 text-center!">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
               Quản lý SMD Sheet Logs
             </h1>
@@ -576,7 +557,7 @@ const Logs = () => {
             </div>
           </div>
 
-          {/* Phân quyền thông báo */}
+          {/* Info banner */}
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-xs sm:text-sm text-blue-800 text-center mb-0">
               {user?.role === ROLES.PQC && '📝 Bạn có thể xem logs mà bạn đã tạo'}
@@ -670,7 +651,7 @@ const Logs = () => {
                 {loadingList ? 'Đang tìm...' : 'Tìm kiếm'}
               </button>
               <button
-                onClick={clearFilters}
+                onClick={resetFilter}
                 disabled={loadingList}
                 className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
               >
@@ -695,7 +676,7 @@ const Logs = () => {
             </div>
           )}
 
-          {/* Results - Table for Desktop/Tablet, Cards for Mobile */}
+          {/* Results */}
           {loadingList ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -715,7 +696,7 @@ const Logs = () => {
             </div>
           ) : (
             <>
-              {/* Desktop & Tablet View - Table */}
+              {/* Desktop & Tablet View */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full border-collapse text-center">
                   <thead>
@@ -725,7 +706,6 @@ const Logs = () => {
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">Người tạo</th>
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">Thời gian</th>
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">Trạng thái</th>
-                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">Xác nhận</th>
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">Hành động</th>
                     </tr>
                   </thead>
@@ -749,9 +729,6 @@ const Logs = () => {
                         </td>
                         <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center">
                           {getStatusBadge(sheet)}
-                        </td>
-                        <td className="border border-gray-300 px-2 sm:px-4 py-3">
-                          <ConfirmationStatus sheet={sheet} />
                         </td>
                         <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center">
                           <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 justify-center">
@@ -782,11 +759,10 @@ const Logs = () => {
                 </table>
               </div>
 
-              {/* Mobile View - Cards */}
+              {/* Mobile View */}
               <div className="md:hidden my-4">
                 {currentSheets.map((sheet, index) => (
                   <div key={sheet.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-4">
-                    {/* Header */}
                     <div className="flex justify-between items-start mb-3 pb-3 border-b border-gray-200">
                       <div className="flex flex-col">
                         <span className="text-xs text-gray-500">#{offset + index + 1}</span>
@@ -797,7 +773,6 @@ const Logs = () => {
                       </div>
                     </div>
 
-                    {/* Creator Info */}
                     <div className="mb-3 pb-3 border-b border-gray-200 flex items-center flex-row gap-2">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-gray-700">Người tạo:</span>
@@ -812,7 +787,6 @@ const Logs = () => {
                       </div>
                     </div>
 
-                    {/* Time */}
                     <div className="mb-3 pb-3 border-b border-gray-200">
                       <div className="flex items-center gap-2 mb-2">
                         <AiOutlineCalendar className="w-4 h-4 text-gray-600" />
@@ -823,18 +797,6 @@ const Logs = () => {
                       </div>
                     </div>
 
-                    {/* Confirmation Status */}
-                    <div className="mb-4 pb-3 border-b border-gray-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <AiOutlineCheckCircle className="w-4 h-4 text-gray-600" />
-                        <span className="text-xs font-semibold text-gray-700">Tiến trình xác nhận</span>
-                      </div>
-                      <div className="">
-                        <ConfirmationStatus sheet={sheet} />
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
                     <div className="flex lg:flex-row md:flex-row flex-col gap-2">
                       <button
                         onClick={() => handleViewDetail(sheet)}
@@ -860,7 +822,7 @@ const Logs = () => {
                 ))}
               </div>
 
-              {/* PAGINATION COMPONENT */}
+              {/* PAGINATION */}
               {pageCount > 1 && (
                 <div className="mt-4 flex justify-center px-3">
                   <div className="w-full max-w-full">
@@ -875,28 +837,10 @@ const Logs = () => {
                         onPageChange={handlePageChange}
                         forcePage={currentPage}
                         containerClassName={'flex items-center lg:justify-center md:justify-center gap-1 sm:gap-2 px-2 min-w-max sm:px-0'}
-                        pageClassName={''}
-                        pageLinkClassName={
-                          'px-3 py-2 sm:px-3 sm:py-2 rounded-lg block ' +
-                          'ring-1 ring-inset ring-gray-300 ' +
-                          'hover:bg-blue-50 hover:ring-blue-500 transition-all ' +
-                          'text-xs sm:text-sm font-medium no-underline'
-                        }
-                        previousClassName={''}
-                        previousLinkClassName={
-                          'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ' +
-                          'ring-1 ring-inset ring-gray-300 ' +
-                          'hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline'
-                        }
-                        nextClassName={''}
-                        nextLinkClassName={
-                          'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ' +
-                          'ring-1 ring-inset ring-gray-300 ' +
-                          'hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline'
-                        }
-                        breakClassName={''}
+                        pageLinkClassName={'px-3 py-2 sm:px-3 sm:py-2 rounded-lg block ring-1 ring-inset ring-gray-300 hover:bg-blue-50 hover:ring-blue-500 transition-all text-xs sm:text-sm font-medium no-underline'}
+                        previousLinkClassName={'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline'}
+                        nextLinkClassName={'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline'}
                         breakLinkClassName={'px-1 sm:px-3 py-1.5 sm:py-2 text-gray-500 text-xs sm:text-sm no-underline'}
-                        activeClassName={''}
                         activeLinkClassName={'!bg-blue-600 !text-white !ring-blue-600 no-underline'}
                         disabledClassName={'opacity-50 cursor-not-allowed'}
                         disabledLinkClassName={'!cursor-not-allowed hover:!bg-transparent no-underline'}

@@ -1,10 +1,9 @@
 import ViewDetailButton from "../ViewDetailButton";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Modal from "../Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchStandardProduction, updateStandardProduction } from "../../redux/slices/subTableSlice";
 import type { StandardProductionData } from "../../redux/slices/subTableSlice";
-import SmdSheet from "../SmdSheet";
 
 
 const initialStandardProductState: StandardProductionData = {

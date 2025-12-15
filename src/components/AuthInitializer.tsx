@@ -1,9 +1,9 @@
+// src/components/AuthInitializer.tsx
 import { useEffect, useState, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { logout } from '../redux/slices/authSlice';
 import { useNavigate, useLocation } from 'react-router-dom';
 import smdApi from '../redux/services/smdApi';
-import { PURGE } from 'redux-persist';
 
 const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useAppDispatch();
@@ -15,6 +15,7 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
   const [isChecking, setIsChecking] = useState(true);
   const hasCheckedRef = useRef(false);
   
+  // ✅ INITIAL CHECK - Chạy 1 lần khi mount
   useEffect(() => {
     const checkInitialSession = async () => {
       if (hasCheckedRef.current) {
@@ -22,10 +23,15 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
+      // Nếu đang ở trang login → clear storage (GIỮ device ID)
       if (location.pathname === '/login') {
         try {
+          const deviceId = localStorage.getItem('smd_device_id');
           localStorage.clear();
           sessionStorage.clear();
+          if (deviceId) {
+            localStorage.setItem('smd_device_id', deviceId);
+          }
         } catch (error) {
           console.error('Failed to clear storage:', error);
         }
@@ -34,6 +40,7 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
+      // Chưa login → skip
       if (!token || !isAuthenticated) {
         setIsChecking(false);
         hasCheckedRef.current = true;
@@ -41,29 +48,29 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
       }
 
       try {
-        // Check expiry
+        // 1. Check token hết hạn
         if (tokenExpiresAt && Date.now() >= tokenExpiresAt) {
-          console.log('❌ Token expired');
+          console.log('❌ Token đã hết hạn');
           handleLogout();
           return;
         }
 
-        // Validate role
+        // 2. Validate role
         const validRoles = ['PQC', 'Admin', 'ENG', 'Supervisior', 'Manager', 'KoreaManager'];
         if (user?.role && !validRoles.includes(user.role)) {
-          console.log('❌ Invalid role');
+          console.log('❌ Invalid role:', user.role);
           handleLogout();
           return;
         }
 
-        // Verify với server
+        // 3. ✅ VERIFY TOKEN VỚI SERVER (chỉ 1 lần khi khởi động)
         try {
-          console.log(' Verifying token...');
-          await smdApi.get('Account/verify');
-          console.log('Token valid');
+          console.log('Initial token verification...');
+          await smdApi.get('/Account/verify');
+          console.log('✅ Token valid');
         } catch (error: any) {
           if (error.response?.status === 401) {
-            console.log('❌ Token invalidated');
+            console.log('❌ Token không hợp lệ (401) - Có thể đã login ở thiết bị khác');
             handleLogout();
             return;
           }
@@ -81,11 +88,15 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
     };
 
     const handleLogout = () => {
+      const deviceId = localStorage.getItem('smd_device_id');
+      
       localStorage.clear();
       sessionStorage.clear();
       
-      // ✅ Purge với key 'auth'
-      dispatch({ type: PURGE, key: 'auth', result: () => null });
+      if (deviceId) {
+        localStorage.setItem('smd_device_id', deviceId);
+      }
+      
       dispatch(logout());
       
       hasCheckedRef.current = true;
@@ -97,29 +108,41 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
     checkInitialSession();
   }, []);
 
-  // AUTO LOGOUT
+  // ✅ AUTO LOGOUT KHI TOKEN HẾT HẠN - Dùng setTimeout
   useEffect(() => {
     if (!tokenExpiresAt || !isAuthenticated || !token) return;
 
     const timeUntilExpiry = tokenExpiresAt - Date.now();
 
+    // Token đã hết hạn
     if (timeUntilExpiry <= 0) {
-      console.log('❌ Expired');
+      console.log('❌ Token expired');
+      
+      const deviceId = localStorage.getItem('smd_device_id');
       localStorage.clear();
       sessionStorage.clear();
-      dispatch({ type: PURGE, key: 'auth', result: () => null });
+      if (deviceId) {
+        localStorage.setItem('smd_device_id', deviceId);
+      }
+      
       dispatch(logout());
       navigate('/login', { replace: true });
       return;
     }
 
-    console.log(`⏱ Expires in ${Math.floor(timeUntilExpiry / 1000)}s`);
+    console.log(`⏱️ Token expires in ${Math.floor(timeUntilExpiry / 1000)}s`);
     
+    // ✅ Setup timeout để auto logout khi hết hạn
     const timer = setTimeout(() => {
-      console.log('Auto logout');
+      console.log('⏰ Auto logout - Token expired');
+      
+      const deviceId = localStorage.getItem('smd_device_id');
       localStorage.clear();
       sessionStorage.clear();
-      dispatch({ type: PURGE, key: 'auth', result: () => null });
+      if (deviceId) {
+        localStorage.setItem('smd_device_id', deviceId);
+      }
+      
       dispatch(logout());
       navigate('/login', { replace: true });
     }, timeUntilExpiry);

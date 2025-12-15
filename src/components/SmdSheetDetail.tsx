@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAppDispatch } from '../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import CheckModels from "./smd_Sheet/CheckModels";
 import PQCChecks from "./smd_Sheet/PQCChecks";
 import ProgramChecks from "./smd_Sheet/ProgramChecks";
@@ -17,83 +17,52 @@ import {
   setPQCCheck,
   clearAllSubTableData
 } from '../redux/slices/subTableSlice';
-import { setCurrentSheet, updateSheetStatusToPQCDone } from '../redux/slices/changeModelSlice';
+import { 
+  getSheetWithFullObject, 
+  updateSheetStatusToPQCDone,
+  clearError 
+} from '../redux/slices/changeModelSlice';
 
 const SmdSheetDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   
-  const [sheetData, setSheetData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Lấy data từ Redux store
+  const { currentSheet, loading, error } = useAppSelector((state) => state.changeModel);
   
-  // CHỈ status Pending mới được edit, tất cả status khác đều chỉ xem
-  const canEdit = sheetData?.status === 'pending';
+  // CHỈ status Pending mới được edit
+  const canEdit = currentSheet?.status?.toLowerCase() === 'pending';
 
-  // Load dữ liệu sheet từ API
+  // Load dữ liệu sheet từ Redux action
   useEffect(() => {
     const loadSheetData = async () => {
-      if (!id) {
-        setError('ID sheet không hợp lệ');
-        setLoading(false);
-        return;
-      }
+      if (!id) return;
       
       try {
-        setLoading(true);
-        setError(null);
-        const token = localStorage.getItem('token');
-        
-        // Gọi API lấy thông tin sheet theo id (đã bao gồm tất cả nested data)
-        const response = await fetch(
-          `https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/ChangeModel/object/${id}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          }
-        );
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log("Sheet data:", data);
-        setSheetData(data);
-        dispatch(setCurrentSheet(data));
-        
+        const result = await dispatch(getSheetWithFullObject(Number(id))).unwrap();
+        console.log(result);
         // Dispatch các nested objects vào Redux store
-        if (data.checkModel) {
-          dispatch(setCheckModel(data.checkModel));
+        if (result.checkModel) {
+          dispatch(setCheckModel(result.checkModel));
         }
-        
-        if (data.programCheck) {
-          dispatch(setProgramCheck(data.programCheck));
+        if (result.programCheck) {
+          dispatch(setProgramCheck(result.programCheck));
         }
-        
-        if (data.standardProduction) {
-          dispatch(setStandardProduction(data.standardProduction));
+        if (result.standardProduction) {
+          dispatch(setStandardProduction(result.standardProduction));
         }
-        
-        if (data.timeChangeModel) {
-          dispatch(setTimeChangeModel(data.timeChangeModel));
+        if (result.timeChangeModel) {
+          dispatch(setTimeChangeModel(result.timeChangeModel));
         }
-        
-        if (data.standardVehicle) {
-          dispatch(setStandardVehicle(data.standardVehicle));
+        if (result.standardVehicle) {
+          dispatch(setStandardVehicle(result.standardVehicle));
         }
-        
-        if (data.pqcCheck) {
-          dispatch(setPQCCheck(data.pqcCheck));
+        if (result.pqcCheck) {
+          dispatch(setPQCCheck(result.pqcCheck));
         }
-        
       } catch (error: any) {
         console.error('❌ Error loading sheet:', error);
-        setError(error.message || 'Không thể tải dữ liệu sheet!');
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -102,6 +71,7 @@ const SmdSheetDetail = () => {
     // Cleanup khi unmount
     return () => {
       dispatch(clearAllSubTableData());
+      dispatch(clearError());
     };
   }, [id, dispatch]);
 
@@ -111,17 +81,21 @@ const SmdSheetDetail = () => {
       alert('❌ Bạn không có quyền chỉnh sửa! Chỉ sheet có trạng thái "pending" mới có thể chỉnh sửa.');
       return;
     }
+    
+    if (!currentSheet?.id) return;
+    
     try {
-      await dispatch(updateSheetStatusToPQCDone(sheetData.id)).unwrap();
+      await dispatch(updateSheetStatusToPQCDone(currentSheet.id)).unwrap();
       alert('✅ Đã ký thành công!');
-      // chuyển trang sau 2s
+      
       setTimeout(() => {
-        navigate("/"); // reload lại component
-      }, 2000);
-  } catch (error) {
-    console.error('updateSheetStatus failed', error);
-  }
+        navigate(0);
+      }, 1000);
+    } catch (error) {
+      console.error('updateSheetStatus failed', error);
+      alert('❌ Có lỗi xảy ra khi ký xác nhận!');
     }
+  };
 
   // Loading state
   if (loading) {
@@ -159,7 +133,7 @@ const SmdSheetDetail = () => {
   }
 
   // No data state
-  if (!sheetData) {
+  if (!currentSheet) {
     return (
       <div className="max-w-8xl mx-auto my-4 p-8 text-center">
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
@@ -178,19 +152,17 @@ const SmdSheetDetail = () => {
     );
   }
 
-  // Helper function để hiển thị status badge
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { bg: string; text: string; icon: string; label: string }> = {
       'pending': { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: '⏳', label: 'Đang xử lý' },
-      'PQCDone': { bg: 'bg-green-100', text: 'text-green-800', icon: '✔', label: 'PQC hoàn thành' },
-      'ENGDone': { bg: 'bg-blue-100', text: 'text-blue-800', icon: '🔧', label: 'ENG đã xác nhận' },
-      'SupervisiorDone': { bg: 'bg-purple-100', text: 'text-purple-800', icon: '👔', label: 'Supervisor đã xác nhận' },
-      'ManagerDone': { bg: 'bg-indigo-100', text: 'text-indigo-800', icon: '👨‍💼', label: 'Manager đã xác nhận' },
-      'KoreaManagerDone': { bg: 'bg-indigo-200', text: 'text-indigo-900', icon: '🇰🇷', label: 'Korea Manager đã xác nhận' },
-      'Completed': { bg: 'bg-green-200', text: 'text-green-900', icon: '🎉', label: 'Hoàn thành' },
+      'pqcdone': { bg: 'bg-green-100', text: 'text-green-800', icon: '✔', label: 'PQC hoàn thành' },
+      'engdone': { bg: 'bg-blue-100', text: 'text-blue-800', icon: '✔', label: 'ENG đã xác nhận' },
+      'supervisiordone': { bg: 'bg-purple-100', text: 'text-purple-800', icon: '✔', label: 'Supervisor đã xác nhận' },
+      'managerdone': { bg: 'bg-indigo-100', text: 'text-indigo-800', icon: '✔', label: 'Manager đã xác nhận' },
+      'koreamanagerdone': { bg: 'bg-indigo-200', text: 'text-indigo-900', icon: '🇰🇷', label: 'Korea Manager đã xác nhận' },
     };
 
-    const config = statusConfig[status] || { 
+    const config = statusConfig[status?.toLowerCase()] || { 
       bg: 'bg-gray-100', 
       text: 'text-gray-800', 
       icon: '📋', 
@@ -211,20 +183,20 @@ const SmdSheetDetail = () => {
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
           <div>
             <h1 className="text-xl font-bold text-gray-800">
-              Chi tiết Sheet #{sheetData.id}
+              Chi tiết Sheet #{currentSheet.id}
             </h1>
-            {sheetData.createAt && (
+            {currentSheet.createAt && (
               <p className="text-xs text-gray-500 mt-1 mb-0">
-                Tạo lúc: {new Date(sheetData.createAt).toLocaleString('vi-VN')}
+                Tạo lúc: {new Date(currentSheet.createAt).toLocaleString('vi-VN')}
               </p>
             )}
-            {sheetData.account && (
+            {currentSheet.account && (
               <p className="text-xs text-gray-500 mb-0">
-                Người tạo: {sheetData.account.username} ({sheetData.account.role})
+                Người tạo: {currentSheet.account.fullName || currentSheet.account.userName} ({currentSheet.account.role})
               </p>
             )}
           </div>
-          <div className='text-center py-2'>{getStatusBadge(sheetData.status)}</div>
+          <div className='text-center py-2'>{getStatusBadge(currentSheet.status || '')}</div>
         </div>
       </div>
 
@@ -262,7 +234,7 @@ const SmdSheetDetail = () => {
       <div className="w-full sticky bottom-0 bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-4 flex items-center justify-center gap-3 shadow-lg mt-4 z-10">
         <button
           onClick={() => navigate('/my-sheets')}
-          className="px-4 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-colors"
+          className="px-4 lg:py-3 md:py-3 py-3 bg-gray-600 text-white rounded-lg! font-semibold hover:bg-gray-700 transition-colors"
         >
           Quay lại
         </button>
@@ -277,7 +249,7 @@ const SmdSheetDetail = () => {
         )}
         
         {!canEdit && (
-          <div className="flex-1 px-4 py-3 bg-gray-300 text-gray-600 rounded-lg font-semibold text-center cursor-not-allowed">
+          <div className="flex-1 px-4 py-3 bg-gray-300 text-gray-600 font-semibold text-center cursor-not-allowed">
             🔒 Không thể chỉnh sửa
           </div>
         )}

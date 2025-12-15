@@ -25,7 +25,7 @@ type SheetFilter = {
 const Home = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'list'>('list');
   const [showSheets, setShowSheets] = useState(false);
   const [loadingSheets, setLoadingSheets] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -109,14 +109,14 @@ const Home = () => {
     }
   }, [activeTab]);
 
-  // ✅ SMART LOAD SHEETS - Tự động chọn API phù hợp
+  // SMART LOAD SHEETS - Tự động chọn API phù hợp
   const loadSheets = async () => {
   try {
     const hasWorkOrder = filter.workOrder.trim() !== '';
     const hasDateRange = filter.fromDate !== '' && filter.toDate !== '';
     const hasStatus = filter.status !== '' && filter.status !== 'all';
 
-    // ✅ Có bất kỳ filter nào → Dùng filterAll API
+    // Có bất kỳ filter nào → Dùng filterAll API
     if (hasWorkOrder || hasDateRange || hasStatus) {
       console.log('Using Filter API:', {
         workOrder: hasWorkOrder ? filter.workOrder.trim() : undefined,
@@ -206,30 +206,36 @@ const Home = () => {
 
   // ✅ GET STATUS BADGE COLOR & TEXT
   const getStatusBadge = (sheet: ChangeModelResponse) => {
-    const status = sheet.status?.toLowerCase();
-    
-    // Status color mapping
-    const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
-      'pending': { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Pending' },
-      'PQCDone': { bg: 'bg-green-100', text: 'text-green-700', label: 'PQC Done' },
-      'ENGDone': { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Engineer Done' },
-      'SupervisiorDone': { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Supervisior Done' },
-      'ManagerDone': { bg: 'bg-indigo-100', text: 'text-indigo-700', label: 'Manager Done' },
-      'KoreaManagerDone': { bg: 'bg-teal-100', text: 'text-teal-700', label: 'Korea Manager Done' },
-    };
-
-    const config = statusConfig[status || 'pending'] || { 
-      bg: 'bg-gray-100', 
-      text: 'text-gray-700', 
-      label: status || 'Unknown' 
-    };
-
-    return (
-      <div className={`flex items-center gap-1 ${config.bg} ${config.text} rounded-full px-2 py-1 text-xs font-medium`}>
-        <FaRegClock /> <span>{config.label}</span>
-      </div>
-    );
+  const status = sheet.status?.toLowerCase();
+  
+  // ✅ Kiểm tra xem có phải trạng thái "Done" không
+  const isDone = status && status !== 'pending';
+  
+  // Status label mapping (hiển thị đẹp cho user)
+  const statusLabels: Record<string, string> = {
+    'pending': 'Pending',
+    'pqcdone': 'PQC Done',
+    'engdone': 'Engineer Done',
+    'supervisiordone': 'Supervisor Done',
+    'managerdone': 'Manager Done',
+    'koreamanagerdone': 'Korea Manager Done',
   };
+
+  // ✅ Lấy label đẹp
+  const label = statusLabels[status || 'pending'] || (sheet.status || 'Unknown');
+
+  // ✅ Chọn màu: Pending = Vàng, Done = Xanh lá
+  const bgColor = isDone ? 'bg-green-50' : 'bg-yellow-100';
+  const textColor = isDone ? 'text-green-700' : 'text-yellow-700';
+  const iconColor = isDone ? '#16a34a' : '#FFCC33'; // green-600 : yellow-500
+
+  return (
+    <div className={`flex items-center gap-1 ${bgColor} ${textColor} rounded-full px-2 py-1 text-xs font-medium`}>
+      <FaRegClock color={iconColor} /> 
+      <span>{label}</span>
+    </div>
+  );
+};
 
   // ✅ HANDLE CREATE NEW SHEET
   const handleCreateNewSheet = async () => {
@@ -285,7 +291,7 @@ const Home = () => {
     <div className="max-w-8xl mx-auto p-4">
       {/* Thông báo đăng nhập thành công */}
       {user && isAuthenticated && showLoginNoti && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[900px] animate-slide-down">
+        <div className="fixed top-4 left-1/2 px-3 -translate-x-1/2 z-50 w-full max-w-[900px] animate-slide-down">
           <div className="bg-green-50 border-l-4 border-green-600 p-3 rounded shadow">
             <p className="font-bold text-green-800 text-lg">Đăng nhập thành công!</p>
             <p className="text-green-700 text-sm mt-1">
@@ -508,13 +514,13 @@ const Home = () => {
                               
                               {/* Created By */}
                               {sheet.account && (
-                                <span className="">
-                                  {sheet.account.fullName || sheet.account.userName}
+                                <span className="text-xs bg-amber-100 px-2 py-1 rounded-lg">
+                                  Người tạo: <strong>{sheet.account.fullName || sheet.account.userName}</strong>
                                 </span>
                               )}
                               
                               {/* Date */}
-                              <span className="px-2 py-1 bg-gray-50 text-gray-600 rounded-full text-xs">
+                              <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
                                 {formatDateTime(sheet.createAt)}
                               </span>
                               

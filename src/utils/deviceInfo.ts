@@ -1,45 +1,43 @@
-// Tạo device fingerprint dựa trên thông tin trình duyệt
+// src/utils/deviceInfo.ts
+
+/**
+ * ✅ TẠO DEVICE ID CỐ ĐỊNH CHO TỪNG MÁY
+ * Device ID sẽ được lưu vào localStorage và KHÔNG ĐỔI giữa các lần login
+ */
 export const getDeviceInfo = (): string => {
   try {
-    const navigator = window.navigator;
-    const screen = window.screen;
+    const DEVICE_ID_KEY = 'smd_device_id';
     
-    // Thu thập các thông tin có sẵn
-    const deviceData = {
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      language: navigator.language,
-      screenResolution: `${screen.width}x${screen.height}`,
-      // colorDepth: screen.colorDepth,
-      // timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      // timestamp: new Date().getTime()
-    };
-
-    // Tạo một chuỗi mô tả thiết bị
-    const deviceString = `${deviceData.platform}_${deviceData.screenResolution}_${deviceData.userAgent}`;
+    // ✅ 1. Kiểm tra xem thiết bị này đã có ID chưa
+    let deviceId = localStorage.getItem(DEVICE_ID_KEY);
     
-    // Hoặc tạo một hash đơn giản ngắn gọn
-    const deviceHash = simpleHash(deviceString);
+    if (!deviceId) {
+      // ✅ 2. Chưa có → Tạo ID mới và lưu vĩnh viễn
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 15);
+      deviceId = `device_${timestamp}_${random}`;
+      
+      localStorage.setItem(DEVICE_ID_KEY, deviceId);
+      console.log('Device ID mới được tạo:', deviceId);
+    } else {
+      console.log('Device ID đã tồn tại:', deviceId);
+    }
     
-    return `Device_${deviceHash}_${deviceData.platform}`;
+    // ✅ 3. Thêm thông tin mô tả (không ảnh hưởng đến uniqueness)
+    const deviceDesc = getDetailedDeviceInfo();
+    
+    return `${deviceId}|${deviceDesc}`;
+    
   } catch (error) {
-    console.error('Error getting device info:', error);
-    return `Device_Unknown_${new Date().getTime()}`;
+    console.error('❌ Error getting device info:', error);
+    // Fallback: tạo ID tạm thời
+    return `device_temp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
   }
 };
 
-// Hàm hash
-const simpleHash = (str: string): string => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return Math.abs(hash).toString(36);
-};
-
-// Lấy thông tin thiết bị chi tiết hơn (tùy chọn)
+/**
+ * Lấy thông tin thiết bị chi tiết (chỉ để mô tả, không dùng làm ID)
+ */
 export const getDetailedDeviceInfo = (): string => {
   const ua = navigator.userAgent;
   let deviceType = 'Unknown';
@@ -65,4 +63,16 @@ export const getDetailedDeviceInfo = (): string => {
   else deviceType = 'Desktop';
 
   return `${deviceType}_${os}_${browser}`;
+};
+
+/**
+ * ✅ FORCE CLEAR DEVICE ID (dùng khi cần reset thiết bị)
+ */
+export const clearDeviceId = (): void => {
+  try {
+    localStorage.removeItem('smd_device_id');
+    console.log('Device ID đã được xóa');
+  } catch (error) {
+    console.error('❌ Lỗi khi xóa Device ID:', error);
+  }
 };

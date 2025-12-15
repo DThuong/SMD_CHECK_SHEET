@@ -135,11 +135,19 @@ const authSlice = createSlice({
       state.tokenExpiresAt = null;
       // xóa token khỏi localStorage
       try {
-        localStorage.clear();
-        sessionStorage.clear();
-      } catch (error) {
-        console.error('Failed to remove storage:', error);
-      }
+    // Lưu device ID trước khi clear
+    const deviceId = localStorage.getItem('smd_device_id');
+    
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Khôi phục device ID
+    if (deviceId) {
+      localStorage.setItem('smd_device_id', deviceId);
+    }
+  } catch (error) {
+    console.error('Failed to clear storage:', error);
+  }
     },
     
     clearError(state) {

@@ -13,13 +13,20 @@ const Login = () => {
   const { loading, error } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
-    // Nếu đang ở trang login = chưa authenticated
-    // Clear mọi thứ để đảm bảo clean state
+    // QUAN TRỌNG: Chỉ clear token, KHÔNG XÓA device ID
     try {
       const currentPath = window.location.pathname;
       if (currentPath === '/login') {
+        // Lưu device ID trước khi clear
+        const deviceId = localStorage.getItem('smd_device_id');
+        
         localStorage.clear();
         sessionStorage.clear();
+        
+        // Khôi phục device ID
+        if (deviceId) {
+          localStorage.setItem('smd_device_id', deviceId);
+        }
       }
     } catch (error) {
       console.error('Failed to clear storage:', error);
@@ -34,6 +41,8 @@ const Login = () => {
     e.preventDefault();
     try {
       const deviceInfo = getDeviceInfo();
+      console.log('📱 Đang login với Device Info:', deviceInfo);
+      
       await dispatch(loginUser({
         username, 
         password,

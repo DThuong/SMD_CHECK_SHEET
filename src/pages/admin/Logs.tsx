@@ -798,17 +798,17 @@ const Logs = () => {
                     </div>
 
                     {/* Creator Info */}
-                    <div className="mb-3 pb-3 border-b border-gray-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs font-semibold text-gray-700">Người tạo</span>
+                    <div className="mb-3 pb-3 border-b border-gray-200 flex items-center flex-row gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-gray-700">Người tạo:</span>
                       </div>
-                      <div className="pl-6">
-                        <div className="font-medium text-sm text-gray-900">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm text-gray-900">
                           {sheet.account?.fullName || sheet.account?.userName}
-                        </div>
-                        <div className="text-xs text-gray-500">
+                        </span>
+                        <span className="text-xs text-gray-500">
                           ({sheet.account?.role})
-                        </div>
+                        </span>
                       </div>
                     </div>
 
@@ -829,7 +829,7 @@ const Logs = () => {
                         <AiOutlineCheckCircle className="w-4 h-4 text-gray-600" />
                         <span className="text-xs font-semibold text-gray-700">Tiến trình xác nhận</span>
                       </div>
-                      <div className="pl-6">
+                      <div className="">
                         <ConfirmationStatus sheet={sheet} />
                       </div>
                     </div>

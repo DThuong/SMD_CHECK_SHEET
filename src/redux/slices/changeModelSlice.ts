@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-
+import smdApi from '../services/smdApi';
 const API_BASE_URL = 'https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api';
 
 // ==================== TYPES ====================
@@ -145,28 +144,9 @@ export const createChangeModel = createAsyncThunk(
   'changeModel/create',
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        return rejectWithValue('Không tìm thấy token. Vui lòng đăng nhập lại.');
-      }
-
-      const response = await axios.post(
-        `${API_BASE_URL}/ChangeModel`,
-        {}, // Empty body - backend không yêu cầu data
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
+      const response = await smdApi.post('ChangeModel', {}); 
       return response.data as ChangeModelResponse;
     } catch (error: any) {
-      if (error.response?.status === 401) {
-        return rejectWithValue('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-      }
       return rejectWithValue(
         error.response?.data?.message || 
         error.message || 
@@ -181,26 +161,9 @@ export const getSheetWithFullObject = createAsyncThunk(
   'changeModel/getFullObject',
   async (sheetId: number, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        return rejectWithValue('Không tìm thấy token. Vui lòng đăng nhập lại.');
-      }
-
-      const response = await axios.get(
-        `${API_BASE_URL}/ChangeModel/object/${sheetId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
-
+      const response = await smdApi.get(`ChangeModel/object/${sheetId}`); // ✅ Dùng smdApi
       return response.data as ChangeModelResponse;
     } catch (error: any) {
-      if (error.response?.status === 401) {
-        return rejectWithValue('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-      }
       if (error.response?.status === 404) {
         return rejectWithValue('Không tìm thấy sheet với ID này.');
       }
@@ -223,28 +186,12 @@ export const updateSheetStatusToPQCDone = createAsyncThunk(
   'changeModel/updateStatusToPQCDone',
   async (sheetId: number, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        return rejectWithValue('Không tìm thấy token. Vui lòng đăng nhập lại.');
-      }
-
-      const response = await axios.put(
-        `${API_BASE_URL}/ChangeModel/status/${sheetId}`,
-        { status: 'PQCDone' }, // Auto set to PQCDone
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
+      const response = await smdApi.put(
+        `ChangeModel/status/${sheetId}`,
+        { status: 'PQCDone' }
       );
-
       return response.data as ChangeModelResponse;
     } catch (error: any) {
-      if (error.response?.status === 401) {
-        return rejectWithValue('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-      }
       if (error.response?.status === 404) {
         return rejectWithValue('Không tìm thấy sheet với ID này.');
       }
@@ -326,15 +273,9 @@ export const updateSheetStatus = createAsyncThunk(
       }
 
       // Call API
-      const response = await axios.put(
-        `${API_BASE_URL}/ChangeModel/status/${sheetId}`,
-        { status: newStatus },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
+      const response = await smdApi.put(
+        `ChangeModel/status/${sheetId}`,
+        { status: newStatus }
       );
 
       return response.data as ChangeModelResponse;
@@ -363,16 +304,7 @@ export const fetchChangeModel = createAsyncThunk(
   'changeModel/fetch',
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_BASE_URL}/ChangeModel`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await smdApi.get('ChangeModel');
       return response.data as ChangeModelResponse[];
     } catch (error: any) {
       if (error.response?.status === 401) {
@@ -391,21 +323,7 @@ export const getSheetsByStatus = createAsyncThunk(
   'changeModel/getByStatus',
   async (status: string, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        return rejectWithValue('Không tìm thấy token. Vui lòng đăng nhập lại.');
-      }
-
-      const response = await axios.get(
-        `${API_BASE_URL}/ChangeModel/status/${status}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
-
+      const response = await smdApi.get(`ChangeModel/status/${status}`);
       return response.data as ChangeModelResponse[];
     } catch (error: any) {
       if (error.response?.status === 401) {
@@ -435,14 +353,7 @@ export const getSheetByDate = createAsyncThunk(
         return rejectWithValue('Không tìm thấy token. Vui lòng đăng nhập lại.');
       }
 
-      const response = await axios.get(
-        `${API_BASE_URL}/ChangeModel/filter/${fromDate}/${toDate}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await smdApi.get(`ChangeModel/filter/${fromDate}/${toDate}`);
 
       return response.data as ChangeModelResponse[];
     } catch (error: any) {
@@ -472,14 +383,7 @@ export const getSheetbyWorkorder = createAsyncThunk(
         return rejectWithValue('Không tìm thấy token. Vui lòng đăng nhập lại.');
       }
 
-      const response = await axios.get(
-        `${API_BASE_URL}/ChangeModel/workorder/${workorder}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await smdApi.get(`ChangeModel/workorder/${workorder}`);
 
       return response.data as ChangeModelResponse[];
     } catch (error: any) {
@@ -523,17 +427,7 @@ export const getSheetByFilter = createAsyncThunk(
         if (params.workOrder && params.workOrder.trim() !== '') {
           queryParams.WorkOrder = params.workOrder.trim();
         }
-
-
-      const response = await axios.get(
-        `${API_BASE_URL}/ChangeModel/filterAll`,
-        {
-          params: queryParams,
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await smdApi.get('ChangeModel/filterAll', { params: queryParams });
 
       return response.data as ChangeModelResponse[];
     } catch (error: any) {

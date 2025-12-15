@@ -10,39 +10,36 @@ import {
   PURGE,
   REGISTER,
 } from 'redux-persist';
-import storage from 'redux-persist/lib/storage'; // localStorage
+import storage from 'redux-persist/lib/storage';
 
-// Import các reducers
 import authReducer from "./slices/authSlice";
-import changeModelSlice from "./slices/changeModelSlice";
-import subTableSlice from "./slices/subTableSlice";
+import subTableReducer from "./slices/subTableSlice";
+import changeModelReducer from "./slices/changeModelSlice";
 
-// Cấu hình persist - CHỈ persist auth slice
-const persistConfig = {
-  key: 'root',
+import smdApi from "./services/smdApi";
+import { setupApiInterceptor } from "./setupApiInterceptor";
+
+// Cấu hình persist
+const authPersistConfig = {
+  key: 'auth',
   version: 1,
   storage,
-  whitelist: ['auth'], // CHỈ lưu auth vào localStorage
-  // blacklist: ['changeModel', 'subTable'], // Không lưu 2 slice này
 };
 
-// Combine tất cả reducers
-const rootReducer = combineReducers({
-  auth: authReducer,
-  changeModel: changeModelSlice,
-  subTable: subTableSlice,
-});
+const persistedAuthReducer = persistReducer(authPersistConfig, authReducer);
 
-// Tạo persisted reducer
-const persistedReducer = persistReducer(persistConfig, rootReducer);
+const rootReducer = combineReducers({
+  auth: persistedAuthReducer,
+  subTable: subTableReducer, 
+  changeModel: changeModelReducer,
+});
 
 // Tạo store
 export const store = configureStore({
-  reducer: persistedReducer,
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        // Ignore các action của redux-persist
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
     }),
@@ -51,6 +48,8 @@ export const store = configureStore({
 // Tạo persistor
 export const persistor = persistStore(store);
 
-// Định nghĩa RootState và AppDispatch
+// ✅ Setup 401 interceptor SAU KHI store đã tạo xong
+setupApiInterceptor(smdApi, store);
+
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

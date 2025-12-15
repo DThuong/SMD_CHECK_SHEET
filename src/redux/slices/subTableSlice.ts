@@ -1,7 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-
-const API_BASE_URL = 'https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api';
+import smdApi from '../services/smdApi'; // Chỉ import smdApi
 
 // ==================== TYPES ====================
 
@@ -110,7 +108,6 @@ export interface PQCCheckData {
   resultLCR?: boolean;
 }
 
-
 // ==================== STATE ====================
 interface subTableState {
     loading: boolean;
@@ -143,25 +140,17 @@ const initialState: subTableState = {
   standardVehicle: null,
   pqcCheck: null,
 };
+
 // ==================== ASYNC THUNKS ====================
 
-// -----------------PUT DATA
-// CheckModel
+// ==================== PUT (UPDATE) APIs ====================
+
+// ✅ CheckModel
 export const updateCheckModel = createAsyncThunk(
   'subTable/updateCheckModel',
   async ({ id, data }: { id: number; data: CheckModelData }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `${API_BASE_URL}/CheckModel/${id}`,
-        data,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await smdApi.put(`CheckModel/${id}`, data);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Không thể cập nhật CheckModel');
@@ -169,22 +158,12 @@ export const updateCheckModel = createAsyncThunk(
   }
 );
 
-// ProgramCheck
+// ✅ ProgramCheck
 export const updateProgramCheck = createAsyncThunk(
   'subTable/updateProgramCheck',
   async ({ id, data }: { id: number; data: ProgramCheckData }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `${API_BASE_URL}/ProgramCheck/${id}`,
-        data,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await smdApi.put(`ProgramCheck/${id}`, data);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Không thể cập nhật ProgramCheck');
@@ -192,22 +171,12 @@ export const updateProgramCheck = createAsyncThunk(
   }
 );
 
-// StandardProduction
+// ✅ StandardProduction
 export const updateStandardProduction = createAsyncThunk(
   'subTable/updateStandardProduction',
   async ({ id, data }: { id: number; data: StandardProductionData }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `${API_BASE_URL}/StandardProduction/${id}`,
-        data,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await smdApi.put(`StandardProduction/${id}`, data);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Không thể cập nhật StandardProduction');
@@ -215,22 +184,12 @@ export const updateStandardProduction = createAsyncThunk(
   }
 );
 
-// TimeChangeModel
+// ✅ TimeChangeModel
 export const updateTimeChangeModel = createAsyncThunk(
   'subTable/updateTimeChangeModel',
   async ({ id, data }: { id: number; data: TimeChangeModelData }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `${API_BASE_URL}/TimeChangeModel/${id}`,
-        data,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await smdApi.put(`TimeChangeModel/${id}`, data);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Không thể cập nhật TimeChangeModel');
@@ -238,22 +197,12 @@ export const updateTimeChangeModel = createAsyncThunk(
   }
 );
 
-// StandardVehicle
+// ✅ StandardVehicle
 export const updateStandardVehicle = createAsyncThunk(
   'subTable/updateStandardVehicle',
   async ({ id, data }: { id: number; data: StandardVehicleData }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `${API_BASE_URL}/StandardVehicle/${id}`,
-        data,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await smdApi.put(`StandardVehicle/${id}`, data);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Không thể cập nhật StandardVehicle');
@@ -261,22 +210,12 @@ export const updateStandardVehicle = createAsyncThunk(
   }
 );
 
-// PQCCheck
+// ✅ PQCCheck
 export const updatePQCCheck = createAsyncThunk(
   'subTable/updatePQCCheck',
   async ({ id, data }: { id: number; data: PQCCheckData }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `${API_BASE_URL}/PQCCheck/${id}`,
-        data,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await smdApi.put(`PQCCheck/${id}`, data);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Không thể cập nhật PQCCheck');
@@ -284,127 +223,86 @@ export const updatePQCCheck = createAsyncThunk(
   }
 );
 
-// -------------------GET DATA
-// checkModel
+// ==================== GET (FETCH) APIs ====================
+
+// ✅ CheckModel
 export const fetchCheckModel = createAsyncThunk(
   'subTable/fetchCheckModel',
   async (id: number, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_BASE_URL}/CheckModel/${id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await smdApi.get(`CheckModel/${id}`);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Không thể tải CheckModel');
     }
   }
-)
-// progamCheck
+);
+
+// ✅ ProgramCheck
 export const fetchProgramCheck = createAsyncThunk(
   'subTable/fetchProgramCheck',
   async (id: number, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_BASE_URL}/ProgramCheck/${id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await smdApi.get(`ProgramCheck/${id}`);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Không thể tải ProgramCheck');
     }
   }
 );
-// StandardProduction
+
+// ✅ StandardProduction
 export const fetchStandardProduction = createAsyncThunk(
   'subTable/fetchStandardProduction',
   async (id: number, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_BASE_URL}/StandardProduction/${id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await smdApi.get(`StandardProduction/${id}`);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Không thể tải StandardProduction');
     }
   }
-)
-// StandardVehicle
+);
+
+// ✅ StandardVehicle
 export const fetchStandardVehicle = createAsyncThunk(
   'subTable/fetchStandardVehicle',
   async (id: number, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_BASE_URL}/StandardVehicle/${id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await smdApi.get(`StandardVehicle/${id}`);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Không thể tải StandardVehicle');
     }
   }
-)
-// pqcCheck
+);
+
+// ✅ PQCCheck
 export const fetchPQCCheck = createAsyncThunk(
   'subTable/fetchPQCCheck',
   async (id: number, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_BASE_URL}/PQCCheck/${id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await smdApi.get(`PQCCheck/${id}`);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Không thể tải PQCCheck');
     }
   }
-)
-// timeChangeModel
+);
+
+// ✅ TimeChangeModel
 export const fetchTimeChangeModel = createAsyncThunk(
   'subTable/fetchTimeChangeModel',
   async (id: number, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_BASE_URL}/TimeChangeModel/${id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await smdApi.get(`TimeChangeModel/${id}`);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Không thể tải TimeChangeModel');
     }
   }
-)
+);
+
 // ==================== SLICE ====================
 
 const subTableSlice = createSlice({
@@ -435,7 +333,7 @@ const subTableSlice = createSlice({
       state.lastUpdatedTable = null;
     },
 
-    // thêm action để fetch data trực tiếp
+    // Set actions
     setCheckModel: (state, action) => {
       state.checkModel = action.payload;
     },
@@ -454,13 +352,13 @@ const subTableSlice = createSlice({
     setStandardVehicle: (state, action) => {
       state.standardVehicle = action.payload;
     },
-    // sử dụng cho sheet Header
     addCompletedTable: (state, action) => {
       state.completedTables.push(action.payload);
     }
   },
   extraReducers: (builder) => {
-    // ----------------------fetch data
+    // ==================== FETCH DATA ====================
+    
     // CheckModel
     builder
       .addCase(fetchCheckModel.pending, (state) => {
@@ -469,14 +367,15 @@ const subTableSlice = createSlice({
       })
       .addCase(fetchCheckModel.fulfilled, (state, action) => {
         state.loading = false;
-        state.checkModel = action.payload; //Lưu data vào state
+        state.checkModel = action.payload;
         state.error = null;
       })
       .addCase(fetchCheckModel.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
-    // programCheck
+    
+    // ProgramCheck
     builder
       .addCase(fetchProgramCheck.pending, (state) => {
         state.loading = true;
@@ -484,59 +383,80 @@ const subTableSlice = createSlice({
       })
       .addCase(fetchProgramCheck.fulfilled, (state, action) => {
         state.loading = false;
-        state.programCheck = action.payload; //Lưu data vào state
+        state.programCheck = action.payload;
         state.error = null;
       })
       .addCase(fetchProgramCheck.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
-      // StandardProduction
-      builder
+    
+    // StandardProduction
+    builder
       .addCase(fetchStandardProduction.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchStandardProduction.fulfilled, (state, action) => {
         state.loading = false;
-        state.standardProduction = action.payload; //Lưu data vào state
+        state.standardProduction = action.payload;
         state.error = null;
       })
       .addCase(fetchStandardProduction.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
-      // StandardVehicle
-      builder
+    
+    // StandardVehicle
+    builder
       .addCase(fetchStandardVehicle.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchStandardVehicle.fulfilled, (state, action) => {
         state.loading = false;
-        state.standardVehicle = action.payload; //Lưu data vào state
+        state.standardVehicle = action.payload;
         state.error = null;
       })
       .addCase(fetchStandardVehicle.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
-      // PQCCheck
-      builder
+    
+    // PQCCheck
+    builder
       .addCase(fetchPQCCheck.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchPQCCheck.fulfilled, (state, action) => {
         state.loading = false;
-        state.pqcCheck = action.payload; //Lưu data vào state
+        state.pqcCheck = action.payload;
         state.error = null;
       })
       .addCase(fetchPQCCheck.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
-    // -----------------------put data
+    
+    // TimeChangeModel
+    builder
+      .addCase(fetchTimeChangeModel.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTimeChangeModel.fulfilled, (state, action) => {
+        state.loading = false;
+        state.timeChangeModel = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchTimeChangeModel.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+    // ==================== UPDATE DATA ====================
+    
     // CheckModel
     builder
       .addCase(updateCheckModel.pending, (state) => {
@@ -570,7 +490,7 @@ const subTableSlice = createSlice({
         state.loading = false;
         state.success = true;
         state.lastUpdatedTable = 'ProgramCheck';
-        state.programCheck = action.payload; // Update data sau khi save
+        state.programCheck = action.payload;
         if (!state.completedTables.includes('ProgramCheck')) {
           state.completedTables.push('ProgramCheck');
         }
@@ -685,4 +605,5 @@ export const {
   setTimeChangeModel,
   setStandardVehicle
 } = subTableSlice.actions;
+
 export default subTableSlice.reducer;

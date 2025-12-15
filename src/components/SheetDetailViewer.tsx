@@ -34,7 +34,7 @@ const SheetDetailViewer = () => {
   const [confirming, setConfirming] = useState(false);
   console.log(sheetData)
 
-  // ✅ PHÂN QUYỀN CHÍNH XÁC
+  // PHÂN QUYỀN CHÍNH XÁC
   // ENG, Supervisior: Có thể XEM và SỬA (nếu status phù hợp)
   // Manager, KoreaManager: CHỈ XEM (không sửa)
   const canEdit = () => {

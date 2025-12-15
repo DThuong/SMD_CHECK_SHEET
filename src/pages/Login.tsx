@@ -13,6 +13,18 @@ const Login = () => {
   const { loading, error } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
+    // Nếu đang ở trang login = chưa authenticated
+    // Clear mọi thứ để đảm bảo clean state
+    try {
+      const currentPath = window.location.pathname;
+      if (currentPath === '/login') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+    } catch (error) {
+      console.error('Failed to clear storage:', error);
+    }
+
     return () => {
       dispatch(clearError());
     };

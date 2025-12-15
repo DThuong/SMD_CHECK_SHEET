@@ -27,8 +27,8 @@ interface AuthState {
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
-  lastActivity: number | null; // Track thời gian hoạt động cuối
-  tokenExpiresAt: number | null;
+  // lastActivity: number | null; // Track thời gian token cũ 
+  tokenExpiresAt: number | null; // track thời gian hết hạn của token mới
 }
 
 const initialState: AuthState = {
@@ -37,7 +37,7 @@ const initialState: AuthState = {
   loading: false,
   error: null,
   isAuthenticated: false,
-  lastActivity: null,
+  //lastActivity: null,
   tokenExpiresAt: null,
 };
 
@@ -46,6 +46,14 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async (credentials: LoginRequest, { rejectWithValue }) => {
     try {
+      // Clear toàn bộ storage CỦA THIẾT BỊ HIỆN TẠI trước khi login
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (error) {
+        console.error('Failed to clear storage:', error);
+      }
+
       const response = await axios.post(
         'https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account/login',
         credentials,
@@ -57,10 +65,12 @@ export const loginUser = createAsyncThunk(
         }
       );
       
+      // Lưu token mới (localStorage đã sạch)
       if (response.data?.token) {
         localStorage.setItem('token', response.data.token);
       }
-      // Set flag để hiển thị notification
+      
+      // Set flag notification
       try {
         sessionStorage.setItem("justLoggedIn", "1");
       } catch (error) {
@@ -69,11 +79,16 @@ export const loginUser = createAsyncThunk(
       
       return response.data;
     } catch (error: any) {
+      // Nếu login thất bại, cũng clear storage
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (e) {
+        console.error('Failed to clear storage on error:', e);
+      }
+
       if (error.response && error.response.data) {
-        // Xử lý error message từ server
         const errorData = error.response.data;
-        
-        // Nếu error là object, lấy message hoặc title
         const errorMessage = typeof errorData === 'string' 
           ? errorData 
           : errorData.title || errorData.message || 'Đăng nhập thất bại';
@@ -117,13 +132,11 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.error = null;
-      state.lastActivity = null;
       state.tokenExpiresAt = null;
       // xóa token khỏi localStorage
       try {
-        localStorage.removeItem('token');
-        localStorage.removeItem('tokenExpiresAt');
-        sessionStorage.removeItem("justLoggedIn");
+        localStorage.clear();
+        sessionStorage.clear();
       } catch (error) {
         console.error('Failed to remove storage:', error);
       }
@@ -131,11 +144,6 @@ const authSlice = createSlice({
     
     clearError(state) {
       state.error = null;
-    },
-
-    // Update activity timestamp
-    updateActivity(state) {
-      state.lastActivity = Date.now();
     },
   },
   extraReducers: (builder) => {
@@ -146,28 +154,27 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.loading = false;
-        state.isAuthenticated = true;
-        state.user = action.payload;
-        state.token = action.payload.token || null;
-        state.error = null;
+      state.loading = false;
+      state.isAuthenticated = true;
+      state.user = action.payload;
+      state.token = action.payload.token || null;
+      state.error = null;
 
-        const expiresAtTimestamp = new Date(action.payload.expiresAt).getTime();
-        state.tokenExpiresAt = expiresAtTimestamp;
-        state.lastActivity = Date.now();
-        // backup lưu token vào localstorage
-        if (action.payload.token) {
-          localStorage.setItem('token', action.payload.token);
-          localStorage.setItem('tokenExpiresAt', expiresAtTimestamp.toString()); // LƯU THỜI GIAN HẾT HẠN
-        }
-      })
+      const expiresAtTimestamp = new Date(action.payload.expiresAt).getTime();
+      state.tokenExpiresAt = expiresAtTimestamp;
+      
+      // Lưu token (localStorage đã được clear trong thunk)
+      if (action.payload.token) {
+        localStorage.setItem('token', action.payload.token);
+        localStorage.setItem('tokenExpiresAt', expiresAtTimestamp.toString());
+      }
+    })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.isAuthenticated = false;
         state.user = null;
         state.token = null;
         state.error = action.payload as string || 'Login failed';
-        state.lastActivity = null;
         state.tokenExpiresAt = null;
         try {
           localStorage.removeItem('token');
@@ -187,13 +194,11 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.error = null;
-      state.lastActivity = null;
       state.tokenExpiresAt = null;
       // Xóa token khỏi localStorage
       try {
-        localStorage.removeItem('token');
-        localStorage.removeItem('tokenExpiresAt'); 
-        sessionStorage.removeItem("justLoggedIn");
+        localStorage.clear();
+        sessionStorage.clear();
       } catch (error) {
         console.error('Failed to remove storage:', error);
       }
@@ -204,13 +209,13 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
-      state.lastActivity = null;
       state.tokenExpiresAt = null;
       state.error = action.payload as string || 'Logout failed';
       try {
         localStorage.removeItem('token');
         localStorage.removeItem('tokenExpiresAt');
         sessionStorage.removeItem("justLoggedIn");
+        localStorage.removeItem('persist:auth');
       } catch (error) {
         console.error('Failed to remove storage:', error);
       }
@@ -218,7 +223,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError, updateActivity } = authSlice.actions;
+export const { logout, clearError } = authSlice.actions;
 export default authSlice.reducer;
 
 

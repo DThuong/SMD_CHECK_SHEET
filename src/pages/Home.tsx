@@ -91,7 +91,7 @@ const Home = () => {
       }, 4000);
       return () => clearTimeout(timer);
     }
-  }, [sheetError]);
+  }, [sheetError, dispatch]);
 
   // Filter state
   const [filter, setFilter] = useState<SheetFilter>({
@@ -118,7 +118,7 @@ const Home = () => {
 
     // ✅ Có bất kỳ filter nào → Dùng filterAll API
     if (hasWorkOrder || hasDateRange || hasStatus) {
-      console.log('🔍 Using Filter API:', {
+      console.log('Using Filter API:', {
         workOrder: hasWorkOrder ? filter.workOrder.trim() : undefined,
         fromDate: hasDateRange ? filter.fromDate : undefined,
         toDate: hasDateRange ? filter.toDate : undefined,

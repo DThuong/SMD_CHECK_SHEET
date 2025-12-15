@@ -13,7 +13,8 @@ import {
 import { 
   getSheetWithFullObject, 
   updateSheetStatus,
-  clearError 
+  clearError, 
+  type ChangeModelResponse
 } from '../redux/slices/changeModelSlice';
 
 // Import các sub-components
@@ -24,6 +25,7 @@ import SheetHeader from "./smd_Sheet/SheetHeader";
 import StandardProductionSection from "./smd_Sheet/StandardProductions";
 import StandardVehicles from "./smd_Sheet/StandardVehicles";
 import TimeChangeModels from "./smd_Sheet/TimeChangeModels";
+import { FaRegClock } from 'react-icons/fa6';
 
 const SheetDetailViewer = () => {
   const { id } = useParams<{ id: string }>();
@@ -165,29 +167,38 @@ const SheetDetailViewer = () => {
     );
   }
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { bg: string; text: string; icon: string; label: string }> = {
-      'pending': { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: '⏳', label: 'Đang xử lý' },
-      'pqcdone': { bg: 'bg-green-100', text: 'text-green-800', icon: '✔', label: 'PQC hoàn thành' },
-      'engdone': { bg: 'bg-blue-100', text: 'text-blue-800', icon: '✔', label: 'ENG đã xác nhận' },
-      'supervisiordone': { bg: 'bg-purple-100', text: 'text-purple-800', icon: '✔', label: 'Supervisor đã xác nhận' },
-      'managerdone': { bg: 'bg-indigo-100', text: 'text-indigo-800', icon: '✔', label: 'Manager đã xác nhận' },
-      'koreamanagerdone': { bg: 'bg-teal-100', text: 'text-teal-900', icon: '🇰🇷', label: 'Korea Manager đã xác nhận' },
+    const getStatusBadge = (sheet: ChangeModelResponse) => {
+    const status = sheet.status?.toLowerCase();
+    
+    // ✅ Kiểm tra xem có phải trạng thái "Done" không
+    const isDone = status && status !== 'pending';
+    
+    // Status label mapping (hiển thị đẹp cho user)
+    const statusLabels: Record<string, string> = {
+      'pending': 'Pending',
+      'pqcdone': 'PQC Done',
+      'engdone': 'Engineer Done',
+      'supervisiordone': 'Supervisor Done',
+      'managerdone': 'Manager Done',
+      'koreamanagerdone': 'Korea Manager Done',
     };
-
-    const config = statusConfig[status.toLowerCase()] || { 
-      bg: 'bg-gray-100', 
-      text: 'text-gray-800', 
-      icon: '❓', 
-      label: status 
-    };
-
+  
+    // ✅ Lấy label đẹp
+    const label = statusLabels[status || 'pending'] || (sheet.status || 'Unknown');
+  
+    // ✅ Chọn màu: Pending = Vàng, Done = Xanh lá
+    const bgColor = isDone ? 'bg-green-100' : 'bg-yellow-100';
+    const textColor = isDone ? 'text-green-700' : 'text-yellow-700';
+    const iconColor = isDone ? '#16a34a' : '#f59e0b'; // green-600 : yellow-500
+  
     return (
-      <div className={`px-3 py-1 rounded-full text-sm font-semibold ${config.bg} ${config.text}`}>
-        {config.icon} {config.label}
+      <div className={`flex items-center gap-1 ${bgColor} ${textColor} rounded-full px-2 py-1 text-xs font-medium`}>
+        <FaRegClock color={iconColor} /> 
+        <span>{label}</span>
       </div>
     );
   };
+  
 
   const isEditable = canEdit();
   const isConfirmable = canConfirm();
@@ -212,7 +223,7 @@ const SheetDetailViewer = () => {
               </p>
             )}
           </div>
-          <div className='text-center py-2'>{getStatusBadge(currentSheet.status || '')}</div>
+          <div className='text-center py-2'>{getStatusBadge(currentSheet)}</div>
         </div>
       </div>
 

@@ -17,13 +17,17 @@ import {
   setTimeChangeModel,
   setStandardVehicle,
   setPQCCheck,
-  clearAllSubTableData
+  clearAllSubTableData,
+  addCompletedTable
 } from '../redux/slices/subTableSlice';
 import { 
   getSheetWithFullObject, 
   updateSheetStatusToPQCDone,
   clearError 
 } from '../redux/slices/changeModelSlice';
+import { useNotification } from '../redux/hooks';
+import Notification from './Notification';
+import { REQUIRED_FIELDS_CONFIG, hasAllRequiredData, getMissingFields } from '../utils/requiredFieldsConfig';
 
 const SmdSheetDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -36,6 +40,9 @@ const SmdSheetDetail = () => {
   // CHỈ status Pending mới được edit
   const canEdit = currentSheet?.status?.toLowerCase() === 'pending';
 
+  // thông báo
+  const { notification, showNotification, hideNotification } = useNotification();
+
   // Load dữ liệu sheet từ Redux action
   useEffect(() => {
     const loadSheetData = async () => {
@@ -44,25 +51,93 @@ const SmdSheetDetail = () => {
       try {
         const result = await dispatch(getSheetWithFullObject(Number(id))).unwrap();
         console.log(result);
-        // Dispatch các nested objects vào Redux store
+      // CheckModel
         if (result.checkModel) {
           dispatch(setCheckModel(result.checkModel));
+          
+          if (hasAllRequiredData(result.checkModel, REQUIRED_FIELDS_CONFIG.CheckModel)) {
+            dispatch(addCompletedTable('CheckModel'));
+            // console.log('CheckModel completed');
+          } else {
+            const missing = getMissingFields(result.checkModel, REQUIRED_FIELDS_CONFIG.CheckModel);
+            console.log('⚠️ CheckModel incomplete. Missing:', missing);
+          }
         }
+        
+        // ProgramCheck
         if (result.programCheck) {
           dispatch(setProgramCheck(result.programCheck));
+          
+          if (hasAllRequiredData(result.programCheck, REQUIRED_FIELDS_CONFIG.ProgramCheck)) {
+            dispatch(addCompletedTable('ProgramCheck'));
+            // console.log('✅ ProgramCheck completed');
+          } else {
+            const missing = getMissingFields(result.programCheck, REQUIRED_FIELDS_CONFIG.ProgramCheck);
+            console.log('⚠️ ProgramCheck incomplete. Missing:', missing);
+          }
         }
+        
+        // ✅ StandardProduction
         if (result.standardProduction) {
           dispatch(setStandardProduction(result.standardProduction));
+          
+          if (hasAllRequiredData(result.standardProduction, REQUIRED_FIELDS_CONFIG.StandardProduction)) {
+            dispatch(addCompletedTable('StandardProduction'));
+            // console.log('✅ StandardProduction completed');
+          } else {
+            const missing = getMissingFields(result.standardProduction, REQUIRED_FIELDS_CONFIG.StandardProduction);
+            console.log('⚠️ StandardProduction incomplete. Missing:', missing);
+          }
         }
+        
+        // ✅ TimeChangeModel
         if (result.timeChangeModel) {
           dispatch(setTimeChangeModel(result.timeChangeModel));
+          
+          if (hasAllRequiredData(result.timeChangeModel, REQUIRED_FIELDS_CONFIG.TimeChangeModel)) {
+            dispatch(addCompletedTable('TimeChangeModel'));
+            // console.log('✅ TimeChangeModel completed');
+          } else {
+            const missing = getMissingFields(result.timeChangeModel, REQUIRED_FIELDS_CONFIG.TimeChangeModel);
+            console.log('⚠️ TimeChangeModel incomplete. Missing:', missing);
+          }
         }
+        
+        // ✅ StandardVehicle
         if (result.standardVehicle) {
           dispatch(setStandardVehicle(result.standardVehicle));
+          
+          if (hasAllRequiredData(result.standardVehicle, REQUIRED_FIELDS_CONFIG.StandardVehicle)) {
+            dispatch(addCompletedTable('StandardVehicle'));
+            // console.log('✅ StandardVehicle completed');
+          } else {
+            const missing = getMissingFields(result.standardVehicle, REQUIRED_FIELDS_CONFIG.StandardVehicle);
+            console.log('⚠️ StandardVehicle incomplete. Missing:', missing);
+          }
         }
+        
+        // ✅ PQCCheck
         if (result.pqcCheck) {
           dispatch(setPQCCheck(result.pqcCheck));
+          
+          if (hasAllRequiredData(result.pqcCheck, REQUIRED_FIELDS_CONFIG.PQCCheck)) {
+            dispatch(addCompletedTable('PQCCheck'));
+            // console.log('✅ PQCCheck completed');
+          } else {
+            const missing = getMissingFields(result.pqcCheck, REQUIRED_FIELDS_CONFIG.PQCCheck);
+            console.log('⚠️ PQCCheck incomplete. Missing:', missing);
+          }
         }
+        
+        // ✅ SheetHeader - Check từ result trực tiếp
+        if (hasAllRequiredData(result, REQUIRED_FIELDS_CONFIG.SheetHeader)) {
+          dispatch(addCompletedTable('SheetHeader'));
+          // console.log('✅ SheetHeader completed');
+        } else {
+          const missing = getMissingFields(result, REQUIRED_FIELDS_CONFIG.SheetHeader);
+          console.log('⚠️ SheetHeader incomplete. Missing:', missing);
+        }
+        
       } catch (error: any) {
         console.error('❌ Error loading sheet:', error);
       }
@@ -80,7 +155,7 @@ const SmdSheetDetail = () => {
   // Xử lý lưu thay đổi
   const handleSaveEdit = async () => {
     if (!canEdit) {
-      alert('❌ Bạn không có quyền chỉnh sửa! Chỉ sheet có trạng thái "pending" mới có thể chỉnh sửa.');
+      showNotification('warning', 'Không thể chỉnh sửa', 'Sheet này không ở trạng thái Pending, không thể chỉnh sửa.');
       return;
     }
     
@@ -88,14 +163,14 @@ const SmdSheetDetail = () => {
     
     try {
       await dispatch(updateSheetStatusToPQCDone(currentSheet.id)).unwrap();
-      alert('✅ Đã ký thành công!');
+      showNotification('success', 'Thành công', 'Đã ký thành công!');
       
       setTimeout(() => {
         navigate(0);
       }, 1000);
     } catch (error) {
       console.error('updateSheetStatus failed', error);
-      alert('❌ Có lỗi xảy ra khi ký xác nhận!');
+      showNotification('error', 'Lỗi', 'Có lỗi xảy ra khi ký xác nhận!');
     }
   };
 
@@ -188,6 +263,13 @@ const SmdSheetDetail = () => {
 
   return (
     <div className="max-w-8xl mx-auto p-4 my-4">
+      <Notification
+        show={notification.show}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={hideNotification}
+      />
       {/* Header với thông tin sheet */}
       <div className="mb-4 p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">

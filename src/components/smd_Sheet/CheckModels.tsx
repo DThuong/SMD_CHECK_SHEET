@@ -4,6 +4,8 @@ import ViewDetailButton from "../ViewDetailButton";
 import { useAppDispatch, useAppSelector  } from "../../redux/hooks";
 import { updateCheckModel } from "../../redux/slices/subTableSlice";
 import type { CheckModelData } from "../../redux/slices/subTableSlice";
+import { useNotification } from "../../redux/hooks";
+import Notification from "../Notification";
 
 const initialFormState: CheckModelData = {
   lineChange: "",
@@ -28,7 +30,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
   const checkModel = useAppSelector(state => state.subTable.checkModel);
   const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
   const checkModelId = currentSheet?.checkModelId || checkModel?.id;
-
+  const { notification, showNotification, hideNotification } = useNotification();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<CheckModelData>(initialFormState);
 
@@ -47,7 +49,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
   const submit = async () => {
     console.log("checkmodelid được tìm thấy khi chỉnh sửa: ",checkModelId); // log ra undefined khi cập nhật thông tin sheet nhưng khi tạo sheet và sửa lại bình thường ?
     if (!checkModelId) {
-      alert('❌ Không có CheckModel ID!');
+      showNotification('error', 'Lỗi', 'Không tìm thấy CheckModel ID. Vui lòng thử lại.');
       return;
     }
 
@@ -78,12 +80,19 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
       
     } catch (error: any) {
       console.error('❌ Lỗi:', error);
-      alert('❌ Lỗi: ' + (error || 'Không thể cập nhật'));
+      showNotification('error', 'Lỗi', error || 'Không thể cập nhật');
     }
   };
 
   return (
     <div className="p-0 py-4 w-full">
+      <Notification
+        show={notification.show}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={hideNotification}
+      />
       {/* Status indicator */}
       {checkModelId && (
         <div className={`mb-2 text-xs p-2 rounded flex items-center gap-2 ${

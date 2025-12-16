@@ -1,6 +1,6 @@
 // src/router/layout/RoleBasedLayout.tsx
 import { useState, useEffect } from "react";
-import { Link, NavLink, Outlet, useParams, Navigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useParams, Navigate, } from "react-router-dom";
 import { HiMenu, HiX, HiLogout, HiUser } from "react-icons/hi";
 import logo from "../../assets/image/brand_image_3.webp";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
@@ -10,7 +10,6 @@ const RoleBasedLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { loading } = useAppSelector((state) => state.auth);
-
   const [showNoti, setShowNoti] = useState(() => {
     try {
       return sessionStorage.getItem("justLoggedIn") === "1";
@@ -53,8 +52,8 @@ const RoleBasedLayout = () => {
   };
 
   const menuItems = [
-    { name: "SMD SHEET", path: `/${role}/smd-sheet-logs` },
-    { name: "Settings", path: `/${role}/settings` },
+    { name: "SMD SHEET", path: `/${role}/smd-sheet-logs`, shoudReload: true },
+    { name: "Settings", path: `/${role}/settings`, shouldReload: false },
   ];
 
   const handleLogout = () => {
@@ -166,6 +165,7 @@ const RoleBasedLayout = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                reloadDocument={item.shoudReload}
                 className={({ isActive }) =>
                   `block px-4 py-3 rounded-lg transition-colors mb-3 text-decoration-none ${
                     isActive
@@ -210,6 +210,7 @@ const RoleBasedLayout = () => {
                   <NavLink
                     key={item.path}
                     to={item.path}
+                    reloadDocument={item.shouldReload}
                     onClick={closeAllMenus}
                     className={({ isActive }) =>
                       `block px-4 py-4 rounded-lg transition-colors mb-4 text-lg font-medium text-decoration-none ${

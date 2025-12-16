@@ -360,13 +360,11 @@ const User = () => {
                               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                                 <FaUser className="text-gray-600" />
                               </div>
-                              <div className='flex flex-col gap-1'>
+                              <div className='flex flex-row items-center gap-1'>
                                 <div className="font-semibold text-slate-800 lg:text-sm text-xs text-center">
                                   {user.fullName}
                                 </div>
-                                <div className="text-xs text-slate-500 text-center">
-                                  @{user.username}
-                                </div>
+                                <div className='text-sm border rounded-lg px-2 cursor-pointer bg-amber-200'>id: {user.id}</div>
                               </div>
                             </div>
                           </td>

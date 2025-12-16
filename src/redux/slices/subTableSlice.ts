@@ -33,6 +33,7 @@ export interface ProgramCheckData {
   pointSAOI?: number;
   reflowProgram?: string;
   reflowSpeed?: number;
+  rev?: string;
 }
 
 // StandardProduction
@@ -353,8 +354,11 @@ const subTableSlice = createSlice({
       state.standardVehicle = action.payload;
     },
     addCompletedTable: (state, action) => {
-      state.completedTables.push(action.payload);
-    }
+      // Chỉ thêm nếu chưa tồn tại
+      if (!state.completedTables.includes(action.payload)) {
+        state.completedTables.push(action.payload);
+      }
+    },
   },
   extraReducers: (builder) => {
     // ==================== FETCH DATA ====================

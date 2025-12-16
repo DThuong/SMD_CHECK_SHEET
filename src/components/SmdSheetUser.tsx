@@ -10,6 +10,8 @@ import { useAppSelector, useAppDispatch } from '../redux/hooks';
 import type { ChangeModelResponse } from '../redux/slices/changeModelSlice';
 import { updateSheetStatusToPQCDone } from '../redux/slices/changeModelSlice';
 import { useState, useEffect } from 'react';
+import { useNotification } from '../redux/hooks';
+import Notification from '../components/Notification';
 
 interface SmdSheetUserProps {
   sheetData?: ChangeModelResponse;
@@ -17,31 +19,22 @@ interface SmdSheetUserProps {
 
 // Component con - Nội dung sheet
 function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
-  // const { submitToLogs } = useSmdSheet();
   const { user } = useAppSelector(state => state.auth);
   const { completedTables, success: subTableSuccess, lastUpdatedTable } = useAppSelector(state => state.subTable);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const [showSuccessNoti, setShowSuccessNoti] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
-  const [isSaved, setIsSaved] = useState(false); // check trạng thái submit status
 
-  // Notification khi update sub-table thành công
+  // ✅ Hook notification thống nhất
+  const { notification, showNotification, hideNotification } = useNotification();
+
+  // ✅ Notification khi update sub-table thành công
   useEffect(() => {
     if (subTableSuccess && lastUpdatedTable) {
-      setShowSuccessNoti(true);
-      const timer = setTimeout(() => setShowSuccessNoti(false), 3000);
-      return () => clearTimeout(timer);
+      showNotification('success', 'Cập nhật thành công!', lastUpdatedTable);
     }
   }, [subTableSuccess, lastUpdatedTable]);
-
-  useEffect(() => {
-    if (isSaved) {
-      const timer = setTimeout(() => setIsSaved(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [isSaved]);
 
   // Check quyền
   if (user?.role !== 'PQC') {
@@ -65,38 +58,44 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
   const requiredTables = ['CheckModel', 'ProgramCheck', 'StandardProduction', 'TimeChangeModel', 'StandardVehicle', 'PQCCheck', 'SheetHeader'];
   const allTablesCompleted = requiredTables.every(table => completedTables.includes(table));
 
-  // HANDLE COMPLETE SHEET
+  // ✅ HANDLE COMPLETE SHEET
   const handleCompleteSheet = async () => {
     if (!sheetData?.id) {
-      alert('❌ Không có sheet data!');
+      showNotification('error', 'Không có sheet data!');
       return;
     }
 
     if (!allTablesCompleted) {
       const missingTables = requiredTables.filter(t => !completedTables.includes(t));
-      alert(
-        `⚠️ Chưa hoàn thành tất cả bảng!\n\n` +
-        `Còn thiếu: ${missingTables.join(', ')}\n\n` +
-        `Vui lòng lưu tất cả ${requiredTables.length} bảng trước khi hoàn thành.`
+      showNotification(
+        'warning',
+        'Chưa hoàn thành tất cả bảng!',
+        `Còn thiếu: ${missingTables.join(', ')}`
       );
       return;
     }
+
     try {
       setIsCompleting(true);
 
       // Update status to PQCDone
       await dispatch(updateSheetStatusToPQCDone(sheetData.id)).unwrap();
 
-      setIsSaved(true);
+      // ✅ Hiển thị notification thành công
+      showNotification(
+        'success',
+        'Cập nhật thành công!',
+        'Dữ liệu đã được lưu vào hệ thống'
+      );
+
+      // Scroll to top sau 1.5s
       setTimeout(() => {
-        // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        
       }, 1500);
 
     } catch (error: any) {
       console.error('❌ Lỗi khi hoàn thành:', error);
-      alert('❌ Lỗi: ' + (error || 'Không thể cập nhật status'));
+      showNotification('error', 'Lỗi khi hoàn thành', error || 'Không thể cập nhật status');
     } finally {
       setIsCompleting(false);
     }
@@ -104,23 +103,14 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
 
   return (
     <div className="max-w-8xl mx-auto">
-      {/* Thông báo update status thành pqcdone */}
-      {isSaved && (
-        <div className="slide-noti w-full max-w-[900px] left-1/2 -translate-x-1/2">
-          <div className="noti-inner bg-green-50 border-l-4 border-green-600 p-3 rounded shadow">
-            <p className="font-bold text-green-800">✅ Cập nhật thành công! Dữ liệu đã được lưu vào hệ thống !!!</p>
-          </div>
-        </div>
-      )}
-      {/* Notification khi update sub-table thành công */}
-      {showSuccessNoti && lastUpdatedTable && (
-        <div className="slide-noti w-full max-w-[900px] left-1/2 -translate-x-1/2">
-          <div className="noti-inner bg-green-50 border-l-4 border-green-600 p-3 rounded shadow">
-            <p className="font-bold text-green-800">✅ Cập nhật thành công!</p>
-            <p className="text-green-700 text-sm mt-1">{lastUpdatedTable}</p>
-          </div>
-        </div>
-      )}
+      {/* ✅ Notification Component - Thay thế tất cả notification cũ */}
+      <Notification
+        show={notification.show}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={hideNotification}
+      />
 
       {/* Progress indicator */}
       {sheetData && (
@@ -176,17 +166,13 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
       
       <ProgramChecks canEdit />
       
-      <StandardProductionSection canEdit
-      />
+      <StandardProductionSection canEdit />
       
-      <TimeChangeModels canEdit
-      />
+      <TimeChangeModels canEdit />
       
-      <StandardVehicles canEdit
-      />
+      <StandardVehicles canEdit />
       
-      <PQCChecks canEdit
-      />
+      <PQCChecks canEdit />
 
       {/* NÚT HOÀN THÀNH SHEET - Sticky Bottom */}
       {sheetData && (
@@ -194,14 +180,14 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
           <div className="max-w-4xl mx-auto">
             {/* Show complete button when ALL tables done */}
             {allTablesCompleted && sheetData.status !== 'PQCDone' ? (
-              <div className="p-4 bg-linear-to-r from-green-50 to-blue-50 border-2 border-green-300 rounded-lg">
+              <div className="p-3">
                 <button
                   onClick={handleCompleteSheet}
                   disabled={isCompleting}
-                  className={`w-full px-6 py-4 rounded-lg font-bold text-lg transition-all shadow-lg ${
+                  className={`w-full px-4 py-4 rounded-lg font-bold text-lg transition-all shadow-lg ${
                     isCompleting
                       ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white transform hover:scale-95'
+                      : 'bg-green-600 hover:bg-green-700 text-white transform hover:scale-[0.99]'
                   }`}
                 >
                   {isCompleting 
@@ -212,23 +198,22 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
             ) : sheetData.status === 'PQCDone' ? (
               // Already completed
               <div className="p-4 bg-green-50 border-2 border-green-300 rounded-lg text-center">
-                <p className="text-green-800 font-semibold">
+                <p className="text-green-800 font-semibold mb-0">
                   ✓ Sheet đã hoàn thành và được lưu vào hệ thống
                 </p>
-                <p className="text-sm text-green-700 mt-1">
+                <p className="text-sm text-green-700 mt-1 mb-0">
                   Status: <strong>PQCDone</strong>
                 </p>
               </div>
             ) : (
               // Not all tables completed yet
               <div className="p-2 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
-                <p className="text-sm text-yellow-800 text-center font-semibold">
+                <p className="text-sm text-yellow-800 text-center font-semibold mb-0">
                   ⚠️ Vui lòng hoàn thành tất cả {requiredTables.length} bảng trước khi hoàn tất sheet
                 </p>
                 <p className="text-xs text-yellow-700 text-center mt-2 mb-0">
                   Còn lại: <strong>{requiredTables.length - completedTables.length}</strong> bảng chưa lưu
                 </p>
-                
               </div>
             )}
           </div>
@@ -240,9 +225,7 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
 
 // Component chính - Wrap với Provider
 const SmdSheetUser = ({ sheetData }: SmdSheetUserProps) => {
-  return (
-        <SmdSheetContent sheetData={sheetData} />
-  );
+  return <SmdSheetContent sheetData={sheetData} />;
 };
 
 export default SmdSheetUser;

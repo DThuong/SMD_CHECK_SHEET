@@ -3,7 +3,10 @@ import Modal from "../Modal";
 import ViewDetailButton from "../ViewDetailButton";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { uploadBothFiles } from "../../redux/slices/changeModelSlice";
-import {addCompletedTable} from "../../redux/slices/subTableSlice";
+import { addCompletedTable } from "../../redux/slices/subTableSlice";
+import { useNotification } from "../../redux/hooks"; // Import từ hooks
+import Notification from "../Notification";
+
 type SheetHeaderProps = {
   lcr?: File | undefined;
   reflow?: File | undefined;
@@ -14,23 +17,18 @@ const initialHeaderProps: SheetHeaderProps = {
   reflow: undefined,
 };
 
-const SheetHeader = ({canEdit}: {canEdit: boolean}) => {
+const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
   const dispatch = useAppDispatch();
-  // lấy dữ liệu từ redux
   const { currentSheet, error, uploadLoading } = useAppSelector((state) => state.changeModel);
-  // const { sheetData, updateSheetHeader} = useSmdSheet();
-  const [open, setOpen] = useState(false);
-  
-  // State lưu trữ đối tượng File đã chọn
-  const [form, setForm] = useState<SheetHeaderProps>(initialHeaderProps);
-  
-  // State tạm thời để lưu trữ file khi chỉnh sửa trong modal
-  const [tempForm, setTempForm] = useState<SheetHeaderProps>(initialHeaderProps);
-
   const { completedTables } = useAppSelector(state => state.subTable);
   const isCompleted = completedTables.includes('SheetHeader');
 
-  const [warningMessage, setWarningMessage] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<SheetHeaderProps>(initialHeaderProps);
+  const [tempForm, setTempForm] = useState<SheetHeaderProps>(initialHeaderProps);
+
+  // ✅ Hook notification
+  const { notification, showNotification, hideNotification } = useNotification();
 
   // component mount lần đầu, reset state
   useEffect(() => {
@@ -42,44 +40,31 @@ const SheetHeader = ({canEdit}: {canEdit: boolean}) => {
     }
   }, [currentSheet]);
 
-  // set hiển thị warning message trong 2s
-  useEffect(() => {
-      if (warningMessage) {
-        const timer = setTimeout(() => {
-          setWarningMessage (false);
-        }, 4000);
-        return () => clearTimeout(timer);
-      }
-    }, [warningMessage]);
-
-  const set = <K extends keyof SheetHeaderProps>(k: K, v: SheetHeaderProps[K]) =>
-    setTempForm((s) => ({ ...s, [k]: v }));
-
   useEffect(() => {
     const hasExcelFile = currentSheet?.excelFileUrl || form.lcr;
     const hasPdfFile = currentSheet?.pdfFileUrl || form.reflow;
     
-    // ✅ CHỈ mark completed khi CẢ HAI file đều có
     if (hasExcelFile && hasPdfFile && !isCompleted) {
       console.log('✅ Both files uploaded, marking SheetHeader as completed');
       dispatch(addCompletedTable('SheetHeader'));
     }
   }, [currentSheet, form, dispatch, isCompleted]);
 
+  const set = <K extends keyof SheetHeaderProps>(k: K, v: SheetHeaderProps[K]) =>
+    setTempForm((s) => ({ ...s, [k]: v }));
 
   /**
-   * Hàm xử lý khi nhấn nút Lưu trong Modal.
-   * CẬP NHẬT: Lưu tempForm vào form chính, sau đó update context
+   * ✅ Hàm xử lý khi nhấn nút Lưu trong Modal.
    */
   const submit = async () => {
     if (!currentSheet?.id) {
-      alert('Không tìm thấy Change Model ID!');
+      showNotification('error', 'Lỗi', 'Không tìm thấy Change Model ID!');
       return;
     }
 
-    // VALIDATION 1: Kiểm tra CẢ HAI file phải có
+    // ✅ VALIDATION: Kiểm tra CẢ HAI file phải có
     if (!tempForm.lcr || !tempForm.reflow) {
-      setWarningMessage(true);
+      showNotification('warning', 'Thiếu file', 'Vui lòng upload cả hai file LCR và REFLOW.');
       return;
     }
 
@@ -90,11 +75,14 @@ const SheetHeader = ({canEdit}: {canEdit: boolean}) => {
         pdfFile: tempForm.reflow,
       })).unwrap();
 
+      // ✅ Hiển thị thông báo thành công
+      showNotification('success', 'Upload thành công!', 'Cả hai file đã được tải lên hệ thống.');
+
       // Cập nhật form chính sau khi upload thành công
       setForm(tempForm);
       setOpen(false);
     } catch (err: any) {
-      alert(`Upload thất bại: ${err}`);
+      showNotification('error', 'Upload thất bại', err?.message || 'Có lỗi xảy ra khi upload file.');
     }
   };
   
@@ -102,7 +90,7 @@ const SheetHeader = ({canEdit}: {canEdit: boolean}) => {
    * Mở modal và đồng bộ hóa state chính vào state tạm thời.
    */
   const handleOpenModal = () => {
-    setTempForm(form); // Gán giá trị file hiện tại vào state tạm
+    setTempForm(form);
     setOpen(true);
   };
 
@@ -116,8 +104,8 @@ const SheetHeader = ({canEdit}: {canEdit: boolean}) => {
     e.target.value = ''; 
   };
   
-  // Lấy tên file để hiển thị - SỬ DỤNG FORM CHÍNH
- const lcrName = form.lcr?.name || 
+  // Lấy tên file để hiển thị
+  const lcrName = form.lcr?.name || 
     (currentSheet?.excelFileUrl ? currentSheet.excelFileUrl.split('/').pop() : "Chưa có file");
   
   const reflowName = form.reflow?.name || 
@@ -130,19 +118,20 @@ const SheetHeader = ({canEdit}: {canEdit: boolean}) => {
     (form.lcr || currentSheet?.excelFileUrl) && 
     (form.reflow || currentSheet?.pdfFileUrl);
 
-
   // *** PHẦN RENDER GIAO DIỆN ***
   return (
     <div>
+      {/* ✅ Notification Component - ĐẶT Ở NGOÀI CÙNG */}
+      <Notification
+        show={notification.show}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={hideNotification}
+      />
+
       <div className="p-0 w-full">
-        {/* Status Indicator */}
-        {warningMessage && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 w-full max-w-[900px] animate-slide-down z-99">
-          <div className="bg-orange-50 border-l-4 border-orange-200 p-3 rounded shadow">
-            <p className="font-bold text-black text-sm text-center mb-0">⚠️ Vui lòng chọn cả 2 file (LCR Excel và Reflow PDF) để upload. Cả hai file đều bắt buộc.</p>
-          </div>
-        </div>
-      )}
+        {/* ✅ Badge hiển thị khi đã upload đủ */}
         {bothFilesUploaded && isCompleted && (
           <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-xs text-green-800 font-semibold flex items-center gap-2 mb-0">
@@ -150,6 +139,7 @@ const SheetHeader = ({canEdit}: {canEdit: boolean}) => {
             </p>
           </div>
         )}
+
         {/* Website View - Bảng ngang */}
         <div className="hidden lg:block w-full overflow-x-auto">
           <table className="border border-gray-600 w-full min-w-[1400px] text-center">
@@ -207,7 +197,7 @@ const SheetHeader = ({canEdit}: {canEdit: boolean}) => {
                 </td>
 
                 {/* REFLOW FILE Display */}
-                 <td colSpan={2} className={`border border-gray-600 px-2 py-1 text-xs text-left ${
+                <td colSpan={2} className={`border border-gray-600 px-2 py-1 text-xs text-left ${
                   form.reflow || currentSheet?.pdfFileUrl ? 'bg-green-50' : 'bg-red-50'
                 }`}>
                   <div className="text-sm font-semibold truncate text-gray-800">
@@ -223,10 +213,12 @@ const SheetHeader = ({canEdit}: {canEdit: boolean}) => {
           </table>
         </div>
 
-        {/* Mobile View - Card dọc (Chỉ hiển thị thông tin, click vào để mở modal chỉnh sửa) */}
+        {/* Mobile View - Card dọc */}
         <div className="lg:hidden">
           <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm" onClick={handleOpenModal}>
-            <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">SMD Check Sheet Change Model</h3>
+            <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">
+              SMD Check Sheet Change Model
+            </h3>
 
             <div className="grid grid-cols-2 gap-4 mb-3">
               {/* LCR File Mobile Display */}
@@ -258,12 +250,11 @@ const SheetHeader = ({canEdit}: {canEdit: boolean}) => {
 
         {/* Buttons */}
         <div className="flex flex-row justify-end w-full gap-2 mt-3">
-          <ViewDetailButton onOpen={handleOpenModal} disabled={!canEdit}>Chỉnh sửa</ViewDetailButton>
-          {/* <ViewDetailButton color="green" onOpen={submit}>Lưu</ViewDetailButton> */}
+          <ViewDetailButton onOpen={handleOpenModal} disabled={!canEdit}>
+            Chỉnh sửa
+          </ViewDetailButton>
         </div>
 
-        {/* Modal để chỉnh sửa/tải lên file */}
-         {/* Modal để chỉnh sửa/tải lên file */}
         {/* Modal để chỉnh sửa/tải lên file */}
         <Modal
           open={open}
@@ -272,7 +263,6 @@ const SheetHeader = ({canEdit}: {canEdit: boolean}) => {
           onSave={submit}
         >
           <div className="grid gap-4 max-h-[60vh] overflow-y-auto">
-
             {/* Loading state */}
             {uploadLoading && (
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
@@ -358,7 +348,7 @@ const SheetHeader = ({canEdit}: {canEdit: boolean}) => {
         </Modal>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default SheetHeader;

@@ -4,6 +4,8 @@ import Modal from "../Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchStandardProduction, updateStandardProduction } from "../../redux/slices/subTableSlice";
 import type { StandardProductionData } from "../../redux/slices/subTableSlice";
+import { useNotification } from "../../redux/hooks";
+import Notification from "../Notification";
 
 
 const initialStandardProductState: StandardProductionData = {
@@ -34,6 +36,8 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
   const [form, setForm] = useState<StandardProductionData>(initialStandardProductState);
   
   const isSaved = completedTables.includes('StandardProduction');
+
+  const { notification, showNotification,  hideNotification } = useNotification();
   
 
   // fetch data khi programcheck thay đổi
@@ -56,12 +60,12 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
   const submit = async() => {
     // kiểm tra program Check id
           if (!standardProductionId) {
-            alert('Không tìm thấy StandardProduction ID');
+            showNotification('error', 'Lỗi lưu Standard Production', 'Không tìm thấy StandardProduction ID');
             return;
           }
     
           if (!smdSheetId) {
-            alert('Không tìm thấy SMD Sheet ID');
+            showNotification('error', 'Lỗi lưu Standard Production', 'Không tìm thấy SMD Sheet ID');
             return;
           }
     
@@ -75,11 +79,18 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
             setOpen(false);
           } catch (error) {
             console.error('Failed to update StandardProductions:', error);
-            alert('Có lỗi xảy ra khi cập nhật StandardProductions');
+            showNotification('error', 'Lỗi lưu Standard Production', 'Có lỗi xảy ra khi cập nhật StandardProductions');
           }
   };
   return (
     <div className="p-0 py-4 w-full">
+      <Notification
+        show={notification.show}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={hideNotification}
+      />
       {/* Status indicator */}
       {standardProductionId && (
         <div className={`mb-2 text-xs p-2 rounded flex items-center gap-2 ${

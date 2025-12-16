@@ -15,6 +15,8 @@ import { MdSignalWifiStatusbar2Bar } from "react-icons/md";
 import { useAppSelector, useAppDispatch } from '../../redux/hooks';
 import ReactPaginate from 'react-paginate';
 import { useNavigate } from 'react-router-dom';
+import { useNotification } from '../../redux/hooks';
+import Notification from '../../components/Notification';
 
 // Redux actions
 import { 
@@ -68,6 +70,7 @@ const Logs = () => {
   const [selectedSheet, setSelectedSheet] = useState<ChangeModelResponse | null>(null);
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const { notification, showNotification, hideNotification } = useNotification();
 
   // Filter state
   const [filter, setFilter] = useState<SheetFilter>({
@@ -118,11 +121,11 @@ const Logs = () => {
     setCurrentPage(0);
     
     if (filter.fromDate && !filter.toDate) {
-      alert('Vui lòng chọn "Đến ngày"');
+      showNotification('warning', 'Vui lòng chọn "Đến ngày"');
       return;
     }
     if (!filter.fromDate && filter.toDate) {
-      alert('Vui lòng chọn "Từ ngày"');
+      showNotification('warning', 'Vui lòng chọn "Từ ngày"');
       return;
     }
 
@@ -130,7 +133,7 @@ const Logs = () => {
       const from = new Date(filter.fromDate);
       const to = new Date(filter.toDate);
       if (from > to) {
-        alert('"Từ ngày" không thể lớn hơn "Đến ngày"');
+        showNotification('warning', '"Từ ngày" không được sau "Đến ngày"');
         return;
       }
     }
@@ -199,7 +202,7 @@ const Logs = () => {
   ) => {
     try {
       if (!user) {
-        alert("❌ Bạn chưa đăng nhập!");
+        showNotification('error', 'Người dùng không hợp lệ!');
         return;
       }
 
@@ -207,7 +210,7 @@ const Logs = () => {
       if (!sheet) return;
 
       if (!canConfirmAtStep(sheet, role)) {
-        alert("❌ Bạn không thể xác nhận ở bước này!");
+        showNotification('error', 'Bạn không có quyền xác nhận bước này!');
         return;
       }
 
@@ -224,7 +227,7 @@ const Logs = () => {
         [ROLES.KOREA_MANAGER]: 'Korea Manager'
       };
 
-      alert(`✅ Xác nhận thành công bởi ${roleNames[role]}!`);
+      showNotification('success', `Xác nhận thành công bởi ${roleNames[role]}!`);
 
       // ✅ Reload history sau khi confirm
       await dispatch(getSheetStatusHistory(sheetId)).unwrap();
@@ -239,7 +242,7 @@ const Logs = () => {
 
     } catch (error: any) {
       console.error('Error confirming sheet:', error);
-      alert(error || 'Có lỗi xảy ra khi xác nhận. Vui lòng thử lại.');
+      showNotification('error', 'Xác nhận thất bại', error || 'Đã xảy ra lỗi khi xác nhận bước này');
     }
   };
 
@@ -271,7 +274,7 @@ const Logs = () => {
     const status = sheet.status?.toLowerCase();
     
     const statusConfig: Record<string, { bg: string; text: string; label: string; icon: string }> = {
-      [STATUS.PENDING.toLowerCase()]: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Pending', icon: '⏳' },
+      [STATUS.PENDING.toLowerCase()]: { bg: 'bg-yellow-100', text: 'text-yellow-600', label: 'Pending', icon: '' },
       [STATUS.PQC_DONE.toLowerCase()]: { bg: 'bg-green-100', text: 'text-green-700', label: 'PQC Done', icon: '✓' },
       [STATUS.ENG_DONE.toLowerCase()]: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'ENG Done', icon: '✓' },
       [STATUS.SUPERVISOR_DONE.toLowerCase()]: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'SUP Done', icon: '✓' },
@@ -326,6 +329,13 @@ const Logs = () => {
 
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <Notification
+          show={notification.show}
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
+          onClose={hideNotification}
+        />
         {roles.map((role) => {
           const stepInfo = getStepInfo(role.key);
           const isConfirmed = !!stepInfo;

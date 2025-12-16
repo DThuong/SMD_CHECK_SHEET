@@ -26,6 +26,8 @@ import StandardProductionSection from "./smd_Sheet/StandardProductions";
 import StandardVehicles from "./smd_Sheet/StandardVehicles";
 import TimeChangeModels from "./smd_Sheet/TimeChangeModels";
 import { FaRegClock } from 'react-icons/fa6';
+import { useNotification } from '../redux/hooks';
+import Notification from './Notification';
 
 const SheetDetailViewer = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,7 +37,7 @@ const SheetDetailViewer = () => {
   // Lấy data từ Redux store
   const { currentSheet, loading, error } = useAppSelector((state) => state.changeModel);
   const { user } = useAppSelector((state) => state.auth);
-  
+  const { notification, showNotification, hideNotification } = useNotification();
   const [confirming, setConfirming] = useState(false);
 
   // PHÂN QUYỀN CHÍNH XÁC
@@ -103,15 +105,11 @@ const SheetDetailViewer = () => {
   // XỬ LÝ KÝ XÁC NHẬN
   const handleConfirm = async () => {
     if (!canConfirm()) {
-      alert('❌ Bạn không có quyền xác nhận ở bước này!');
+      showNotification('error', 'Bạn không có quyền xác nhận bước này!');
       return;
     }
 
     if (!user || !currentSheet) return;
-
-    const confirmMessage = `Bạn có chắc chắn muốn xác nhận sheet này với vai trò ${user.role}?`;
-    if (!window.confirm(confirmMessage)) return;
-
     try {
       setConfirming(true);
       
@@ -121,7 +119,7 @@ const SheetDetailViewer = () => {
         userRole: user.role as string
       })).unwrap();
       
-      alert('✅ Xác nhận thành công!');
+      showNotification('success', `Xác nhận thành công bởi ${user.role}!`);
       
       setTimeout(() => {
         navigate(0);
@@ -129,7 +127,7 @@ const SheetDetailViewer = () => {
       
     } catch (error: any) {
       console.error('❌ Lỗi khi xác nhận:', error);
-      alert(`❌ ${error || 'Có lỗi xảy ra khi xác nhận'}`);
+      showNotification('error', 'Xác nhận thất bại', error || 'Đã xảy ra lỗi khi xác nhận bước này');
     } finally {
       setConfirming(false);
     }
@@ -205,6 +203,14 @@ const SheetDetailViewer = () => {
 
   return (
     <div className="max-w-8xl mx-auto my-4">
+      {/** notification */}
+      <Notification
+        show={notification.show}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={hideNotification}
+      />
       {/* Header */}
       <div className="mb-4 p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">

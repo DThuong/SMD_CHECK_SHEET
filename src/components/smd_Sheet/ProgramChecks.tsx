@@ -4,6 +4,8 @@ import Modal from '../Modal';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { fetchProgramCheck, updateProgramCheck } from '../../redux/slices/subTableSlice';
 import type { ProgramCheckData } from '../../redux/slices/subTableSlice';
+import { useNotification } from '../../redux/hooks';
+import Notification from '../Notification';
 
 const initialProgramForm: ProgramCheckData = {
     id: undefined,
@@ -15,7 +17,8 @@ const initialProgramForm: ProgramCheckData = {
     saoiProgram: "",
     pointSAOI: undefined,
     reflowProgram: "",
-    reflowSpeed: undefined
+    reflowSpeed: undefined,
+    rev: ""
 };
 
 const ProgramChecks = ({canEdit}: {canEdit: boolean}) => {
@@ -30,6 +33,7 @@ const ProgramChecks = ({canEdit}: {canEdit: boolean}) => {
     const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
     const programCheckId = currentSheet?.programCheckId || programCheck?.id;
     const isSaved = completedTables.includes('ProgramCheck');
+    const { notification, showNotification,  hideNotification } = useNotification();
 
     // fetch data khi programcheck thay đổi
     useEffect(() => {
@@ -50,12 +54,12 @@ const ProgramChecks = ({canEdit}: {canEdit: boolean}) => {
     const submit = async () => {
       // kiểm tra program Check id
       if (!programCheckId) {
-        alert('Không tìm thấy Program Check ID');
+        showNotification('error', 'Lỗi lưu Program Checks', 'Không tìm thấy Program Check ID');
         return;
       }
 
       if (!smdSheetId) {
-        alert('Không tìm thấy SMD Sheet ID');
+        showNotification('error', 'Lỗi lưu Program Checks', 'Không tìm thấy SMD Sheet ID');
         return;
       }
 
@@ -69,12 +73,19 @@ const ProgramChecks = ({canEdit}: {canEdit: boolean}) => {
         setOpen(false);
       } catch (error) {
         console.error('Failed to update program checks:', error);
-        alert('Có lỗi xảy ra khi cập nhật Program Checks');
+        showNotification('error', 'Lỗi lưu Program Checks', 'Có lỗi xảy ra khi cập nhật Program Checks');
       }
     };
 
   return (
     <div className="p-0 w-full">
+      <Notification
+        show={notification.show}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={hideNotification}
+      />
       {/* Status indicator */}
       {programCheckId && (
         <div className={`mb-2 text-xs p-2 rounded flex items-center gap-2 ${
@@ -95,6 +106,7 @@ const ProgramChecks = ({canEdit}: {canEdit: boolean}) => {
               <th rowSpan={3} className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Program</th>
               <th rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chương trình Printer</th>
               <th rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chương trình SPI</th>
+              <th rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">REV</th>
               <th rowSpan={2} colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chương trình Mounter</th>
               <th className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Point</th>
               <th rowSpan={2} colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chương trình M-AOI</th>
@@ -117,6 +129,7 @@ const ProgramChecks = ({canEdit}: {canEdit: boolean}) => {
             <tr>
               <td className="border border-gray-600 px-2 py-2 text-xs">{form.printerProgram || ""}</td>
               <td className="border border-gray-600 px-2 py-2 text-xs">{form.spiProgram || ""}</td>
+              <td className="border border-gray-600 px-2 py-2 text-xs">{form.rev || ""}</td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.mounterProgram || ""}</td>
               <td colSpan={3} className="border border-gray-600 px-2 py-2 text-xs">{form.maoiProgram || ""}</td>
               <td colSpan={3} className="border border-gray-600 px-2 py-2 text-xs">{form.saoiProgram || ""}</td>
@@ -144,6 +157,16 @@ const ProgramChecks = ({canEdit}: {canEdit: boolean}) => {
               <div className="text-xs font-semibold text-gray-600 mb-1">Chương trình SPI</div>
               <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
                 {form.spiProgram || "—"}
+              </div>
+            </div>
+          </div>
+
+          {/* Row 1.1: rev */}
+          <div className="grid grid-cols-1 gap-4 mb-3">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">REV</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
+                {form.rev || "—"}
               </div>
             </div>
           </div>
@@ -200,7 +223,7 @@ const ProgramChecks = ({canEdit}: {canEdit: boolean}) => {
           </div>
 
           {/* Row 5: Reflow Speed */}
-          <div className="grid grid-cols-2 gap-4 mb-3">
+          <div className="grid grid-cols-1 gap-4 mb-3">
             <div className="min-w-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">Reflow Speed</div>
               <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
@@ -238,6 +261,16 @@ const ProgramChecks = ({canEdit}: {canEdit: boolean}) => {
             <input
               value={form.spiProgram ?? ""}
               onChange={(e) => set("spiProgram", e.target.value)}
+              className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+              placeholder=""
+            />
+          </label>
+
+          <label className="text-xs">
+            REV
+            <input
+              value={form.rev ?? ""}
+              onChange={(e) => set("rev", e.target.value)}
               className="mt-1 block w-full border rounded px-3 py-2 text-sm"
               placeholder=""
             />

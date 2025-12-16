@@ -4,6 +4,8 @@ import ViewDetailButton from "../ViewDetailButton";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { updateTimeChangeModel, fetchTimeChangeModel } from "../../redux/slices/subTableSlice";
 import type { TimeChangeModelData } from "../../redux/slices/subTableSlice";
+import { useNotification } from "../../redux/hooks";
+import Notification from "../Notification";
 
 const initialTimeChangeState: TimeChangeModelData = {
     qc: "",
@@ -26,6 +28,7 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
       const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
       const timeChangeModelId = currentSheet?.timeChangeModelId || timeChangeModel?.id;
       const isSaved = completedTables.includes('TimeChangeModel');
+      const { notification, showNotification,  hideNotification } = useNotification();
   
       // fetch data khi programcheck thay đổi
       useEffect(() => {
@@ -46,12 +49,12 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
       const submit = async () => {
         // kiểm tra program Check id
         if (!timeChangeModelId) {
-          alert('Không tìm thấy timeChangeModel ID');
+          showNotification('error', 'Lỗi lưu Time Change Model', 'Không tìm thấy timeChangeModel ID');
           return;
         }
   
         if (!smdSheetId) {
-          alert('Không tìm thấy SMD Sheet ID');
+          showNotification('error', 'Lỗi lưu Time Change Model', 'Không tìm thấy SMD Sheet ID');
           return;
         }
   
@@ -65,12 +68,19 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
           setOpen(false);
         } catch (error) {
           console.error('Failed to update timeChangeModel:', error);
-          alert('Có lỗi xảy ra khi cập nhật timeChangeModel');
+          showNotification('error', 'Lỗi lưu Time Change Model', 'Có lỗi xảy ra khi cập nhật timeChangeModel');
         }
       };
 
   return (
     <div className="p-0 py-4 w-full">
+      <Notification
+        show={notification.show}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={hideNotification}
+      />
       {/* Status indicator */}
       {timeChangeModelId && (
         <div className={`mb-2 text-xs p-2 rounded flex items-center gap-2 ${

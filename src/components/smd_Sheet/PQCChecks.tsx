@@ -4,6 +4,8 @@ import Modal from "../Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchPQCCheck, updatePQCCheck } from "../../redux/slices/subTableSlice";
 import type { PQCCheckData } from "../../redux/slices/subTableSlice";
+import { useNotification } from "../../redux/hooks";
+import Notification from "../Notification";
 
 const initialPQCChecksState: PQCCheckData = {
   id: undefined,
@@ -30,6 +32,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
        const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
        const pqcCheckId = currentSheet?.pqcCheckId || pqcCheck?.id;
        const isSaved = completedTables.includes('PQCCheck');
+       const { notification, showNotification, hideNotification } = useNotification();
    
        // fetch data khi programcheck thay đổi
        useEffect(() => {
@@ -50,13 +53,13 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
        const submit = async () => {
          // kiểm tra id
          if (!pqcCheckId) {
-           alert('Không tìm thấy pqcCheck ID');
+           showNotification('error', 'Lỗi lưu PQC Checks', 'Không tìm thấy PQC Check ID');
            return;
          }
          
          console.log("smdSheet id của pqc: ",smdSheetId)
          if (!smdSheetId) {
-           alert('Không tìm thấy SMD Sheet ID');
+           showNotification('error', 'Lỗi lưu PQC Checks', 'Không tìm thấy SMD Sheet ID');
            return;
          }
    
@@ -70,12 +73,19 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
            setOpen(false);
          } catch (error) {
            console.error('Failed to update pqc checks:', error);
-           alert('Có lỗi xảy ra khi cập nhật pqc Checks');
+           showNotification('error', 'Lỗi lưu PQC Checks', 'Có lỗi xảy ra khi cập nhật pqc Checks');
          }
        };
 
   return (
     <div className="p-0 py-4 w-full">
+      <Notification
+        show={notification.show}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={hideNotification}
+      />
        {/* Status indicator */}
       {pqcCheckId && (
         <div className={`mb-2 text-xs p-2 rounded flex items-center gap-2 ${

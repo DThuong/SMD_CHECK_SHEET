@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchStandardVehicle, updateStandardVehicle } from "../../redux/slices/subTableSlice";
 import type { StandardVehicleData } from "../../redux/slices/subTableSlice";
+import { useNotification } from "../../redux/hooks";
+import Notification from "../Notification";
 
 const initialStandardVehiclesState: StandardVehicleData = {
   printerSpecGTAL: 0,
@@ -57,7 +59,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
     
     const isSaved = completedTables.includes('StandardVehicle');
     
-  
+    const { notification, showNotification,  hideNotification } = useNotification();
     // fetch data khi programcheck thay đổi
         useEffect(() => {
           if (standardVehicleId) {
@@ -77,12 +79,12 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
       
     const submit = async() => {
             if (!standardVehicleId) {
-              alert('Không tìm thấy StandardVehicle ID');
+              showNotification('error', 'Lỗi lưu Standard Vehicle', 'Không tìm thấy StandardVehicle ID');
               return;
             }
       
             if (!smdSheetId) {
-              alert('Không tìm thấy SMD Sheet ID');
+              showNotification('error', 'Lỗi lưu Standard Vehicle', 'Không tìm thấy SMD Sheet ID');
               return;
             }
       
@@ -96,11 +98,18 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
               setOpen(false);
             } catch (error) {
               console.error('Failed to update StandardVehicles:', error);
-              alert('Có lỗi xảy ra khi cập nhật StandardVehicles');
+              showNotification('error', 'Lỗi lưu Standard Vehicle', 'Có lỗi xảy ra khi cập nhật StandardVehicles');
             }
     };
   return (
     <div className="p-0 py-4 w-full">
+      <Notification
+        show={notification.show}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={hideNotification}
+      />
         {/* Status indicator */}
       {standardVehicleId && (
         <div className={`mb-2 text-xs p-2 rounded flex items-center gap-2 ${

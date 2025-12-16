@@ -39,7 +39,6 @@ const AdminLayout = () => {
   // Danh sách menu items cho sidebar
   const menuItems = [
     { name: "Dashboard", path: "dashboard" },
-    { name: "Profile", path: "profile" },
     {name: "User", path: "user"},
     { name: "SMD SHEET", path: "smd-sheet-logs" },
     { name: "Settings", path: "settings" },

@@ -10,7 +10,6 @@ import Login from '../pages/Login';
 import ErrorPage from '../pages/ErrorPage';
 // admin pages (chỉ cho ADMIN)
 import Dashboard from '../pages/admin/Dashboard';
-import Profile from '../pages/admin/Profile';
 import User from '../pages/admin/User';
 // shared pages (dùng chung)
 import Settings from '../pages/admin/Settings';
@@ -130,8 +129,8 @@ const App = () => {
         {/* ========== ADMIN ROUTES ========== */}
         <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
           <Route path="/admin/dashboard" element={<Dashboard />} />
-          <Route path="/admin/profile" element={<Profile />} />
-          <Route path="/admin/users" element={<User />} />
+          {/* <Route path="/admin/profile" element={<Profile />} /> */}
+          <Route path="/admin/user" element={<User />} />
           <Route path="/admin/smd-sheet-logs" element={<Logs />} />
           <Route path="/admin/settings" element={<Settings />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

@@ -12,23 +12,50 @@ interface LoginRequest {
   deviceInfo: string;
 }
 
-interface User {
-  id?: string;
+export interface AuthUser {
+  id?: number;
   username?: string;
   fullName?: string;
   phoneNumber?: string;
   role?: string;
   token?: string;
+  isActive?: boolean;
+  expiresAt?: string;
+}
+
+export interface AccountUser {
+  id: number;
+  username: string;
+  fullName: string;
+  phoneNumber: string;
+  role: string;
+  isActive: boolean;
+}
+
+export interface UpdateUserRequest {
+  id: number;
+  role: string;
+  isActive: boolean;
+  fullName: string;
+  phoneNumber: string;
+}
+
+export interface ChangePasswordRequest {
+  accountId: number;
+  newPassword: string;
 }
 
 interface AuthState {
-  user: User | null;
+  user: AuthUser | null;
   token: string | null;
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
-  // lastActivity: number | null; // Track thời gian token cũ 
-  tokenExpiresAt: number | null; // track thời gian hết hạn của token mới
+  tokenExpiresAt: number | null;
+  users: AccountUser[];
+  selectedUser: AccountUser | null;
+  usersLoading: boolean;
+  usersError: string | null;
 }
 
 const initialState: AuthState = {
@@ -37,8 +64,11 @@ const initialState: AuthState = {
   loading: false,
   error: null,
   isAuthenticated: false,
-  //lastActivity: null,
   tokenExpiresAt: null,
+  users: [],
+  selectedUser: null,
+  usersLoading: false,
+  usersError: null,
 };
 
 // API login
@@ -122,6 +152,132 @@ export const logoutUser = createAsyncThunk('auth/logout', async (_, { getState }
   }
 })
 
+// API danh sách người dùng (dùng cho admin)
+export const fetchUsers = createAsyncThunk(
+  'auth/fetchUsers',
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const state = getState() as { auth: AuthState };
+      const token = state.auth.token || localStorage.getItem('token');
+      const response = await axios.get(
+        'https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account',
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          }
+        });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || 'Failed to fetch users');
+    }
+  }
+);
+
+// API lấy người dùng theo id (dùng cho admin)
+export const fetchUserById = createAsyncThunk(
+  'auth/fetchUserById',
+  async (userId: number, { getState, rejectWithValue }) => {
+    try {
+      const state = getState() as { auth: AuthState };
+      const token = state.auth.token || localStorage.getItem('token');
+      const response = await axios.get(
+        `https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account/${userId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          }
+        });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || 'Failed to fetch user');
+    }
+  }
+);
+
+// API cập nhật người dùng (dùng cho admin)
+export const updateUser = createAsyncThunk(
+  'auth/updateUser',
+  async (userData: UpdateUserRequest, { getState, rejectWithValue }) => {
+    try {
+      const state = getState() as { auth: AuthState };
+      const token = state.auth.token || localStorage.getItem('token');
+      
+      // Chuẩn bị data theo format API yêu cầu
+      const updateData = {
+        role: userData.role,
+        isActive: userData.isActive,
+        fullName: userData.fullName,
+        phoneNumber: userData.phoneNumber
+      };
+      
+      const response = await axios.put(
+        `https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account/${userData.id}`,
+        updateData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          }
+        });
+      return { ...response.data, id: userData.id };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || 'Failed to update user');
+    }
+  }
+);
+
+// API xóa người dùng theo id (dùng cho admin)
+export const deleteUser = createAsyncThunk(
+  'auth/deleteUser',  
+  async (userId: number, { getState, rejectWithValue }) => {
+    try {
+      const state = getState() as { auth: AuthState };
+      const token = state.auth.token || localStorage.getItem('token');
+      const response = await axios.delete(
+        `https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account/${userId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          }
+        });
+      return { userId, ...response.data };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || 'Failed to delete user');
+    }
+  }
+);
+
+// API thay đổi mật khẩu người dùng (dùng cho admin)
+export const changePasswordByAdmin = createAsyncThunk(
+  'auth/changePasswordByAdmin',
+  async (passwordData: ChangePasswordRequest, { getState, rejectWithValue }) => {
+    try {
+      const state = getState() as { auth: AuthState };
+      const token = state.auth.token || localStorage.getItem('token');
+      
+      const response = await axios.put(
+        'https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account/change-password-by-admin',
+        passwordData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          }
+        });
+      return { accountId: passwordData.accountId, ...response.data };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || 'Failed to change password');
+    }
+  }
+);
 
 const authSlice = createSlice({
   name: 'auth',
@@ -133,25 +289,32 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
       state.tokenExpiresAt = null;
+      state.users = [];
+      state.selectedUser = null;
       // xóa token khỏi localStorage
       try {
-    // Lưu device ID trước khi clear
-    const deviceId = localStorage.getItem('smd_device_id');
-    
-    localStorage.clear();
-    sessionStorage.clear();
-    
-    // Khôi phục device ID
-    if (deviceId) {
-      localStorage.setItem('smd_device_id', deviceId);
-    }
-  } catch (error) {
-    console.error('Failed to clear storage:', error);
-  }
+        // Lưu device ID trước khi clear
+        const deviceId = localStorage.getItem('smd_device_id');
+        
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Khôi phục device ID
+        if (deviceId) {
+          localStorage.setItem('smd_device_id', deviceId);
+        }
+      } catch (error) {
+        console.error('Failed to clear storage:', error);
+      }
     },
     
     clearError(state) {
       state.error = null;
+      state.usersError = null;
+    },
+
+    clearSelectedUser(state) {
+      state.selectedUser = null;
     },
   },
   extraReducers: (builder) => {
@@ -162,21 +325,21 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-      state.loading = false;
-      state.isAuthenticated = true;
-      state.user = action.payload;
-      state.token = action.payload.token || null;
-      state.error = null;
+        state.loading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload;
+        state.token = action.payload.token || null;
+        state.error = null;
 
-      const expiresAtTimestamp = new Date(action.payload.expiresAt).getTime();
-      state.tokenExpiresAt = expiresAtTimestamp;
-      
-      // Lưu token (localStorage đã được clear trong thunk)
-      if (action.payload.token) {
-        localStorage.setItem('token', action.payload.token);
-        localStorage.setItem('tokenExpiresAt', expiresAtTimestamp.toString());
-      }
-    })
+        const expiresAtTimestamp = new Date(action.payload.expiresAt).getTime();
+        state.tokenExpiresAt = expiresAtTimestamp;
+        
+        // Lưu token (localStorage đã được clear trong thunk)
+        if (action.payload.token) {
+          localStorage.setItem('token', action.payload.token);
+          localStorage.setItem('tokenExpiresAt', expiresAtTimestamp.toString());
+        }
+      })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.isAuthenticated = false;
@@ -192,49 +355,136 @@ const authSlice = createSlice({
         }
       })
       
-      //logout
-    .addCase(logoutUser.pending, (state) => {
-      state.loading = true;
-    })
-    .addCase(logoutUser.fulfilled, (state) => {
-      state.loading = false;
-      state.user = null;
-      state.token = null;
-      state.isAuthenticated = false;
-      state.error = null;
-      state.tokenExpiresAt = null;
-      // Xóa token khỏi localStorage
-      try {
-        localStorage.clear();
-        sessionStorage.clear();
-      } catch (error) {
-        console.error('Failed to remove storage:', error);
-      }
-    })
-    .addCase(logoutUser.rejected, (state, action) => {
-      state.loading = false;
-      // Vẫn logout ở client dù API failed
-      state.user = null;
-      state.token = null;
-      state.isAuthenticated = false;
-      state.tokenExpiresAt = null;
-      state.error = action.payload as string || 'Logout failed';
-      try {
-        localStorage.removeItem('token');
-        localStorage.removeItem('tokenExpiresAt');
-        sessionStorage.removeItem("justLoggedIn");
-        localStorage.removeItem('persist:auth');
-      } catch (error) {
-        console.error('Failed to remove storage:', error);
-      }
-    });
+      // Logout
+      .addCase(logoutUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.loading = false;
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+        state.error = null;
+        state.tokenExpiresAt = null;
+        state.users = [];
+        state.selectedUser = null;
+        // Xóa token khỏi localStorage
+        try {
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch (error) {
+          console.error('Failed to remove storage:', error);
+        }
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.loading = false;
+        // Vẫn logout ở client dù API failed
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+        state.tokenExpiresAt = null;
+        state.users = [];
+        state.selectedUser = null;
+        state.error = action.payload as string || 'Logout failed';
+        try {
+          localStorage.removeItem('token');
+          localStorage.removeItem('tokenExpiresAt');
+          sessionStorage.removeItem("justLoggedIn");
+          localStorage.removeItem('persist:auth');
+        } catch (error) {
+          console.error('Failed to remove storage:', error);
+        }
+      })
+
+      // Fetch Users
+      .addCase(fetchUsers.pending, (state) => {
+        state.usersLoading = true;
+        state.usersError = null;
+      })
+      .addCase(fetchUsers.fulfilled, (state, action) => {
+        state.usersLoading = false;
+        state.users = action.payload;
+        state.usersError = null;
+      })
+      .addCase(fetchUsers.rejected, (state, action) => {
+        state.usersLoading = false;
+        state.usersError = action.payload as string || 'Failed to fetch users';
+      })
+
+      // Fetch User By ID
+      .addCase(fetchUserById.pending, (state) => {
+        state.usersLoading = true;
+        state.usersError = null;
+      })
+      .addCase(fetchUserById.fulfilled, (state, action) => {
+        state.usersLoading = false;
+        state.selectedUser = action.payload;
+        state.usersError = null;
+      })
+      .addCase(fetchUserById.rejected, (state, action) => {
+        state.usersLoading = false;
+        state.selectedUser = null;
+        state.usersError = action.payload as string || 'Failed to fetch user';
+      })
+
+      // Update User
+      .addCase(updateUser.pending, (state) => {
+        state.usersLoading = true;
+        state.usersError = null;
+      })
+      .addCase(updateUser.fulfilled, (state, action) => {
+        state.usersLoading = false;
+        // Cập nhật user trong danh sách
+        const index = state.users.findIndex(u => u.id === action.payload.id);
+        if (index !== -1) {
+          state.users[index] = { ...state.users[index], ...action.payload };
+        }
+        // Cập nhật selectedUser nếu đang xem user này
+        if (state.selectedUser?.id === action.payload.id) {
+          state.selectedUser = { ...state.selectedUser, ...action.payload };
+        }
+        state.usersError = null;
+      })
+      .addCase(updateUser.rejected, (state, action) => {
+        state.usersLoading = false;
+        state.usersError = action.payload as string || 'Failed to update user';
+      })
+
+      // Delete User
+      .addCase(deleteUser.pending, (state) => {
+        state.usersLoading = true;
+        state.usersError = null;
+      })
+      .addCase(deleteUser.fulfilled, (state, action) => {
+        state.usersLoading = false;
+        // Xóa user khỏi danh sách
+        state.users = state.users.filter(u => u.id !== action.payload.userId);
+        // Clear selectedUser nếu đang xem user bị xóa
+        if (state.selectedUser?.id === action.payload.userId) {
+          state.selectedUser = null;
+        }
+        state.usersError = null;
+      })
+      .addCase(deleteUser.rejected, (state, action) => {
+        state.usersLoading = false;
+        state.usersError = action.payload as string || 'Failed to delete user';
+      })
+
+      // Change Password By Admin
+      .addCase(changePasswordByAdmin.pending, (state) => {
+        state.usersLoading = true;
+        state.usersError = null;
+      })
+      .addCase(changePasswordByAdmin.fulfilled, (state) => {
+        state.usersLoading = false;
+        state.usersError = null;
+      })
+      .addCase(changePasswordByAdmin.rejected, (state, action) => {
+        state.usersLoading = false;
+        state.usersError = action.payload as string || 'Failed to change password';
+      });
   },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logout, clearError, clearSelectedUser } = authSlice.actions;
 export default authSlice.reducer;
-
-
-
-
-

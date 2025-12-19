@@ -14,6 +14,8 @@ import { createChangeModel, clearSheet, clearError, setCurrentSheet } from '../r
 import { clearAllSubTableData } from '../redux/slices/subTableSlice';
 import { getSheetByFilter, fetchChangeModel } from '../redux/slices/changeModelSlice';
 import type { ChangeModelResponse } from '../redux/slices/changeModelSlice';
+import { useNotification } from '../redux/hooks';
+import Notification from '../components/Notification';
 
 type SheetFilter = {
   workOrder: string;
@@ -42,6 +44,7 @@ const Home = () => {
 
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 5;
+  const { showNotification, hideNotification, notification } = useNotification();
 
   useEffect(() => {
     if(!loading && !isAuthenticated){
@@ -143,7 +146,7 @@ const Home = () => {
     console.error('❌ Lỗi khi tải sheets:', error);
     // Optionally show error to user
     if (error?.message) {
-      alert(`Lỗi: ${error.message}`);
+      showNotification('error', `Lỗi khi tải sheets: ${error.message}`);
     }
   }
 };
@@ -153,11 +156,11 @@ const Home = () => {
     setCurrentPage(0);
     // Validate date range nếu chỉ có 1 ngày
     if (filter.fromDate && !filter.toDate) {
-      alert('Vui lòng chọn "Đến ngày"');
+      showNotification('error', 'Vui lòng chọn "Đến ngày"');
       return;
     }
     if (!filter.fromDate && filter.toDate) {
-      alert('Vui lòng chọn "Từ ngày"');
+      showNotification('error', 'Vui lòng chọn "Từ ngày"');
       return;
     }
 
@@ -166,7 +169,8 @@ const Home = () => {
       const from = new Date(filter.fromDate);
       const to = new Date(filter.toDate);
       if (from > to) {
-        alert('"Từ ngày" không thể lớn hơn "Đến ngày"');
+        showNotification('error', '"Từ ngày" không được sau "Đến ngày"');
+        resetFilter();
         return;
       }
     }
@@ -240,7 +244,7 @@ const Home = () => {
   // ✅ HANDLE CREATE NEW SHEET
   const handleCreateNewSheet = async () => {
     if (user?.role?.toUpperCase() !== 'PQC') {
-      alert('Chỉ PQC mới có thể tạo sheet mới!');
+      showNotification('error', 'Chỉ PQC mới có thể tạo sheet mới');
       return;
     }
 
@@ -289,6 +293,13 @@ const Home = () => {
 
   return (
     <div className="max-w-8xl mx-auto p-4">
+      <Notification
+        show={notification.show}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={hideNotification}
+      />
       {/* Thông báo đăng nhập thành công */}
       {user && isAuthenticated && showLoginNoti && (
         <div className="fixed top-4 left-1/2 px-3 -translate-x-1/2 z-50 w-full max-w-[900px] animate-slide-down">

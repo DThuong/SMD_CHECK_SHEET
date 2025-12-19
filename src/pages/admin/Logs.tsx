@@ -134,6 +134,7 @@ const Logs = () => {
       const to = new Date(filter.toDate);
       if (from > to) {
         showNotification('warning', '"Từ ngày" không được sau "Đến ngày"');
+        resetFilter();
         return;
       }
     }
@@ -329,13 +330,13 @@ const Logs = () => {
 
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-        <Notification
+        {/* <Notification
           show={notification.show}
           type={notification.type}
           title={notification.title}
           message={notification.message}
           onClose={hideNotification}
-        />
+        /> */}
         {roles.map((role) => {
           const stepInfo = getStepInfo(role.key);
           const isConfirmed = !!stepInfo;
@@ -555,6 +556,13 @@ const Logs = () => {
   // ==================== LIST VIEW ====================
   return (
     <div className="min-h-screen bg-gray-50">
+      <Notification
+        show={notification.show}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={hideNotification}
+      />
       <div className="max-w-8xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-4">
           {/* Header */}

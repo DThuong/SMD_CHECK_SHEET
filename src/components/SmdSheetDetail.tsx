@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import CheckModels from "./smd_Sheet/CheckModels";
 import PQCChecks from "./smd_Sheet/PQCChecks";
-import ProgramChecks from "./smd_Sheet/ProgramChecks";
+// import ProgramChecks from "./smd_Sheet/ProgramChecks";
 import SheetHeader from "./smd_Sheet/SheetHeader";
 import StandardProductionSection from "./smd_Sheet/StandardProductions";
 import StandardVehicles from "./smd_Sheet/StandardVehicles";
@@ -12,7 +12,6 @@ import type { ChangeModelResponse } from '../redux/slices/changeModelSlice';
 import { FaRegClock } from "react-icons/fa";
 import { 
   setCheckModel,
-  setProgramCheck,
   setStandardProduction,
   setTimeChangeModel,
   setStandardVehicle,
@@ -50,30 +49,15 @@ const SmdSheetDetail = () => {
       
       try {
         const result = await dispatch(getSheetWithFullObject(Number(id))).unwrap();
-        console.log(result);
       // CheckModel
         if (result.checkModel) {
           dispatch(setCheckModel(result.checkModel));
           
           if (hasAllRequiredData(result.checkModel, REQUIRED_FIELDS_CONFIG.CheckModel)) {
             dispatch(addCompletedTable('CheckModel'));
-            // console.log('CheckModel completed');
           } else {
             const missing = getMissingFields(result.checkModel, REQUIRED_FIELDS_CONFIG.CheckModel);
-            console.log('⚠️ CheckModel incomplete. Missing:', missing);
-          }
-        }
-        
-        // ProgramCheck
-        if (result.programCheck) {
-          dispatch(setProgramCheck(result.programCheck));
-          
-          if (hasAllRequiredData(result.programCheck, REQUIRED_FIELDS_CONFIG.ProgramCheck)) {
-            dispatch(addCompletedTable('ProgramCheck'));
-            // console.log('✅ ProgramCheck completed');
-          } else {
-            const missing = getMissingFields(result.programCheck, REQUIRED_FIELDS_CONFIG.ProgramCheck);
-            console.log('⚠️ ProgramCheck incomplete. Missing:', missing);
+            console.log(missing);
           }
         }
         
@@ -83,10 +67,10 @@ const SmdSheetDetail = () => {
           
           if (hasAllRequiredData(result.standardProduction, REQUIRED_FIELDS_CONFIG.StandardProduction)) {
             dispatch(addCompletedTable('StandardProduction'));
-            // console.log('✅ StandardProduction completed');
           } else {
             const missing = getMissingFields(result.standardProduction, REQUIRED_FIELDS_CONFIG.StandardProduction);
-            console.log('⚠️ StandardProduction incomplete. Missing:', missing);
+            console.log(missing);
+
           }
         }
         
@@ -96,10 +80,9 @@ const SmdSheetDetail = () => {
           
           if (hasAllRequiredData(result.timeChangeModel, REQUIRED_FIELDS_CONFIG.TimeChangeModel)) {
             dispatch(addCompletedTable('TimeChangeModel'));
-            // console.log('✅ TimeChangeModel completed');
           } else {
             const missing = getMissingFields(result.timeChangeModel, REQUIRED_FIELDS_CONFIG.TimeChangeModel);
-            console.log('⚠️ TimeChangeModel incomplete. Missing:', missing);
+            console.log(missing);
           }
         }
         
@@ -109,10 +92,9 @@ const SmdSheetDetail = () => {
           
           if (hasAllRequiredData(result.standardVehicle, REQUIRED_FIELDS_CONFIG.StandardVehicle)) {
             dispatch(addCompletedTable('StandardVehicle'));
-            // console.log('✅ StandardVehicle completed');
           } else {
             const missing = getMissingFields(result.standardVehicle, REQUIRED_FIELDS_CONFIG.StandardVehicle);
-            console.log('⚠️ StandardVehicle incomplete. Missing:', missing);
+            console.log(missing);
           }
         }
         
@@ -122,20 +104,10 @@ const SmdSheetDetail = () => {
           
           if (hasAllRequiredData(result.pqcCheck, REQUIRED_FIELDS_CONFIG.PQCCheck)) {
             dispatch(addCompletedTable('PQCCheck'));
-            // console.log('✅ PQCCheck completed');
           } else {
             const missing = getMissingFields(result.pqcCheck, REQUIRED_FIELDS_CONFIG.PQCCheck);
-            console.log('⚠️ PQCCheck incomplete. Missing:', missing);
+            console.log(missing);
           }
-        }
-        
-        // ✅ SheetHeader - Check từ result trực tiếp
-        if (hasAllRequiredData(result, REQUIRED_FIELDS_CONFIG.SheetHeader)) {
-          dispatch(addCompletedTable('SheetHeader'));
-          // console.log('✅ SheetHeader completed');
-        } else {
-          const missing = getMissingFields(result, REQUIRED_FIELDS_CONFIG.SheetHeader);
-          console.log('⚠️ SheetHeader incomplete. Missing:', missing);
         }
         
       } catch (error: any) {
@@ -315,7 +287,7 @@ const SmdSheetDetail = () => {
       <div className={!canEdit ? 'pointer-events-none opacity-80' : ''}>
         <SheetHeader canEdit={canEdit} />
         <CheckModels canEdit={canEdit} />
-        <ProgramChecks canEdit={canEdit} />
+        {/* <ProgramChecks canEdit={canEdit} /> */}
         <StandardProductionSection canEdit={canEdit} />
         <TimeChangeModels canEdit={canEdit} />
         <StandardVehicles canEdit={canEdit} />

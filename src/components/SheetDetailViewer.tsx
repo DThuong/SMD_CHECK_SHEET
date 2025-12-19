@@ -3,12 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { 
   setCheckModel,
-  setProgramCheck,
   setStandardProduction,
   setTimeChangeModel,
   setStandardVehicle,
   setPQCCheck,
-  clearAllSubTableData
+  clearAllSubTableData,
+  addCompletedTable
 } from '../redux/slices/subTableSlice';
 import { 
   getSheetWithFullObject, 
@@ -20,7 +20,7 @@ import {
 // Import các sub-components
 import CheckModels from "./smd_Sheet/CheckModels";
 import PQCChecks from "./smd_Sheet/PQCChecks";
-import ProgramChecks from "./smd_Sheet/ProgramChecks";
+// import ProgramChecks from "./smd_Sheet/ProgramChecks";
 import SheetHeader from "./smd_Sheet/SheetHeader";
 import StandardProductionSection from "./smd_Sheet/StandardProductions";
 import StandardVehicles from "./smd_Sheet/StandardVehicles";
@@ -28,6 +28,7 @@ import TimeChangeModels from "./smd_Sheet/TimeChangeModels";
 import { FaRegClock } from 'react-icons/fa6';
 import { useNotification } from '../redux/hooks';
 import Notification from './Notification';
+import { REQUIRED_FIELDS_CONFIG, hasAllRequiredData, getMissingFields } from '../utils/requiredFieldsConfig';
 
 const SheetDetailViewer = () => {
   const { id } = useParams<{ id: string }>();
@@ -82,12 +83,67 @@ const SheetDetailViewer = () => {
         const result = await dispatch(getSheetWithFullObject(Number(id))).unwrap();
         
         // Dispatch nested objects
-        if (result.checkModel) dispatch(setCheckModel(result.checkModel));
-        if (result.programCheck) dispatch(setProgramCheck(result.programCheck));
-        if (result.standardProduction) dispatch(setStandardProduction(result.standardProduction));
-        if (result.timeChangeModel) dispatch(setTimeChangeModel(result.timeChangeModel));
-        if (result.standardVehicle) dispatch(setStandardVehicle(result.standardVehicle));
-        if (result.pqcCheck) dispatch(setPQCCheck(result.pqcCheck));
+        // CheckModel
+                if (result.checkModel) {
+                  dispatch(setCheckModel(result.checkModel));
+                  
+                  if (hasAllRequiredData(result.checkModel, REQUIRED_FIELDS_CONFIG.CheckModel)) {
+                    dispatch(addCompletedTable('CheckModel'));
+                  } else {
+                    const missing = getMissingFields(result.checkModel, REQUIRED_FIELDS_CONFIG.CheckModel);
+                    console.log(missing);
+                  }
+                }
+                
+                // ✅ StandardProduction
+                if (result.standardProduction) {
+                  dispatch(setStandardProduction(result.standardProduction));
+                  
+                  if (hasAllRequiredData(result.standardProduction, REQUIRED_FIELDS_CONFIG.StandardProduction)) {
+                    dispatch(addCompletedTable('StandardProduction'));
+                  } else {
+                    const missing = getMissingFields(result.standardProduction, REQUIRED_FIELDS_CONFIG.StandardProduction);
+                    console.log(missing);
+        
+                  }
+                }
+                
+                // ✅ TimeChangeModel
+                if (result.timeChangeModel) {
+                  dispatch(setTimeChangeModel(result.timeChangeModel));
+                  
+                  if (hasAllRequiredData(result.timeChangeModel, REQUIRED_FIELDS_CONFIG.TimeChangeModel)) {
+                    dispatch(addCompletedTable('TimeChangeModel'));
+                  } else {
+                    const missing = getMissingFields(result.timeChangeModel, REQUIRED_FIELDS_CONFIG.TimeChangeModel);
+                    console.log(missing);
+                  }
+                }
+                
+                // ✅ StandardVehicle
+                if (result.standardVehicle) {
+                  dispatch(setStandardVehicle(result.standardVehicle));
+                  
+                  if (hasAllRequiredData(result.standardVehicle, REQUIRED_FIELDS_CONFIG.StandardVehicle)) {
+                    dispatch(addCompletedTable('StandardVehicle'));
+                  } else {
+                    const missing = getMissingFields(result.standardVehicle, REQUIRED_FIELDS_CONFIG.StandardVehicle);
+                    console.log(missing);
+                  }
+                }
+                
+                // ✅ PQCCheck
+                if (result.pqcCheck) {
+                  dispatch(setPQCCheck(result.pqcCheck));
+                  
+                  if (hasAllRequiredData(result.pqcCheck, REQUIRED_FIELDS_CONFIG.PQCCheck)) {
+                    dispatch(addCompletedTable('PQCCheck'));
+                  } else {
+                    const missing = getMissingFields(result.pqcCheck, REQUIRED_FIELDS_CONFIG.PQCCheck);
+                    console.log(missing);
+                  }
+                }
+                
         
       } catch (error: any) {
         console.error('❌ Error loading sheet:', error);
@@ -112,7 +168,6 @@ const SheetDetailViewer = () => {
     if (!user || !currentSheet) return;
     try {
       setConfirming(true);
-      
       await dispatch(updateSheetStatus({
         sheetId: currentSheet.id!,
         currentStatus: currentSheet.status!,
@@ -257,7 +312,7 @@ const SheetDetailViewer = () => {
       <div className={!isEditable ? 'pointer-events-none opacity-80' : ''}>
         <SheetHeader canEdit={isEditable} />
         <CheckModels canEdit={isEditable} />
-        <ProgramChecks canEdit={isEditable} />
+        {/* <ProgramChecks canEdit={isEditable} /> */}
         <StandardProductionSection canEdit={isEditable} />
         <TimeChangeModels canEdit={isEditable} />
         <StandardVehicles canEdit={isEditable} />

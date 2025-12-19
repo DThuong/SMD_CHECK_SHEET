@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import smdApi from '../services/smdApi';
-import type { CheckModelData, ProgramCheckData, StandardProductionData, TimeChangeModelData, StandardVehicleData, PQCCheckData } from './subTableSlice';
-const API_BASE_URL = 'https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api';
+import type { CheckModelData, StandardProductionData, TimeChangeModelData, StandardVehicleData, PQCCheckData } from './subTableSlice';
 
 // ==================== TYPES ====================
 export interface StatusHistoryItem{
@@ -36,7 +35,7 @@ export interface ChangeModelResponse {
 
   // object 
   checkModel?: CheckModelData;
-  programCheck?: ProgramCheckData;
+  // programCheck?: ProgramCheckData;
   standardProduction?: StandardProductionData;
   timeChangeModel?: TimeChangeModelData;
   standardVehicle?: StandardVehicleData;
@@ -82,34 +81,18 @@ export const uploadFile = createAsyncThunk(
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const token = localStorage.getItem('token');
       
-      if (!token) {
-        return rejectWithValue('Không tìm thấy token. Vui lòng đăng nhập lại.');
-      }
-      const response = await fetch(
-        `${API_BASE_URL}/ChangeModel/upload-files?changeModelId=${changeModelId}`,
-        {
-          method: 'PUT',
-          body: formData,
-          // Thêm headers
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
+      const response = await smdApi.put(
+        `/ChangeModel/upload-files?changeModelId=${changeModelId}`,
+        formData
       );
 
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return { data, fileType };
+      return { data: response.data, fileType };
     } catch (error: any) {
       if (error.response?.status === 401) {
         return rejectWithValue('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
       }
-      return rejectWithValue(error.message || 'Upload failed');
+      return rejectWithValue(error.response?.data?.message || error.message || 'Upload failed');
     }
   }
 );

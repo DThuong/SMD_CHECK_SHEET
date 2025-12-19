@@ -4,6 +4,7 @@
 // payloadAction: type helper cho action có payload
 // axios: thư viện call api
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import smdApi from '../services/smdApi';
 import axios from 'axios';
 
 interface LoginRequest {
@@ -115,6 +116,8 @@ export const loginUser = createAsyncThunk(
         sessionStorage.clear();
       } catch (e) {
         console.error('Failed to clear storage on error:', e);
+
+        
       }
 
       if (error.response && error.response.data) {
@@ -131,43 +134,21 @@ export const loginUser = createAsyncThunk(
 );
 
 // API logout
-export const logoutUser = createAsyncThunk('auth/logout', async (_, { getState }) => {
+export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
   try {
-    const state = getState() as { auth: AuthState };
-    const token = state.auth.token || localStorage.getItem('token');
-    const response = await axios.post(
-      'https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account/logout',
-      {},
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await smdApi.post('/Account/logout');
     return response.data;
   } catch (error: any) {
-    return error.message;
+    return rejectWithValue(error.response?.data?.message || error.message || 'Logout failed');
   }
-})
+});
 
 // API danh sách người dùng (dùng cho admin)
 export const fetchUsers = createAsyncThunk(
   'auth/fetchUsers',
-  async (_, { getState, rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const state = getState() as { auth: AuthState };
-      const token = state.auth.token || localStorage.getItem('token');
-      const response = await axios.get(
-        'https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account',
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          }
-        });
+      const response = await smdApi.get('/Account');
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Failed to fetch users');
@@ -178,19 +159,9 @@ export const fetchUsers = createAsyncThunk(
 // API lấy người dùng theo id (dùng cho admin)
 export const fetchUserById = createAsyncThunk(
   'auth/fetchUserById',
-  async (userId: number, { getState, rejectWithValue }) => {
+  async (userId: number, { rejectWithValue }) => {
     try {
-      const state = getState() as { auth: AuthState };
-      const token = state.auth.token || localStorage.getItem('token');
-      const response = await axios.get(
-        `https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account/${userId}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          }
-        });
+      const response = await smdApi.get(`/Account/${userId}`);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Failed to fetch user');
@@ -201,11 +172,8 @@ export const fetchUserById = createAsyncThunk(
 // API cập nhật người dùng (dùng cho admin)
 export const updateUser = createAsyncThunk(
   'auth/updateUser',
-  async (userData: UpdateUserRequest, { getState, rejectWithValue }) => {
+  async (userData: UpdateUserRequest, { rejectWithValue }) => {
     try {
-      const state = getState() as { auth: AuthState };
-      const token = state.auth.token || localStorage.getItem('token');
-      
       // Chuẩn bị data theo format API yêu cầu
       const updateData = {
         role: userData.role,
@@ -214,16 +182,7 @@ export const updateUser = createAsyncThunk(
         phoneNumber: userData.phoneNumber
       };
       
-      const response = await axios.put(
-        `https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account/${userData.id}`,
-        updateData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          }
-        });
+      const response = await smdApi.put(`/Account/${userData.id}`, updateData);
       return { ...response.data, id: userData.id };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Failed to update user');
@@ -234,19 +193,9 @@ export const updateUser = createAsyncThunk(
 // API xóa người dùng theo id (dùng cho admin)
 export const deleteUser = createAsyncThunk(
   'auth/deleteUser',  
-  async (userId: number, { getState, rejectWithValue }) => {
+  async (userId: number, { rejectWithValue }) => {
     try {
-      const state = getState() as { auth: AuthState };
-      const token = state.auth.token || localStorage.getItem('token');
-      const response = await axios.delete(
-        `https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account/${userId}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          }
-        });
+      const response = await smdApi.delete(`/Account/${userId}`);
       return { userId, ...response.data };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Failed to delete user');
@@ -257,21 +206,9 @@ export const deleteUser = createAsyncThunk(
 // API thay đổi mật khẩu người dùng (dùng cho admin)
 export const changePasswordByAdmin = createAsyncThunk(
   'auth/changePasswordByAdmin',
-  async (passwordData: ChangePasswordRequest, { getState, rejectWithValue }) => {
+  async (passwordData: ChangePasswordRequest, { rejectWithValue }) => {
     try {
-      const state = getState() as { auth: AuthState };
-      const token = state.auth.token || localStorage.getItem('token');
-      
-      const response = await axios.put(
-        'https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account/change-password-by-admin',
-        passwordData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          }
-        });
+      const response = await smdApi.put('/Account/change-password-by-admin', passwordData);
       return { accountId: passwordData.accountId, ...response.data };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Failed to change password');

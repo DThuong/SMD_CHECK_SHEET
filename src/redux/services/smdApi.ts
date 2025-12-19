@@ -2,7 +2,7 @@
 import axios from "axios";
 import type { AxiosInstance } from "axios";
 
-const BASE_URL = "https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/";
+const BASE_URL = "https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api";
 
 // ✅ Tạo axios instance cơ bản
 const createSmdApi = (): AxiosInstance => {
@@ -20,6 +20,12 @@ const createSmdApi = (): AxiosInstance => {
       const token = localStorage.getItem("token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      }
+
+      // Tự động xử lý FormData
+      if (config.data instanceof FormData) {
+        // Xóa Content-Type để axios tự set multipart/form-data với boundary
+        delete config.headers['Content-Type'];
       }
       return config;
     },

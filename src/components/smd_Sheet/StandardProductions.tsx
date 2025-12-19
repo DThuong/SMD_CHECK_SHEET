@@ -16,7 +16,8 @@ const initialStandardProductState: StandardProductionData = {
     numScanSignMES: undefined,
     mlS3Closed: "",
     useOnly: "",
-    labelProgram: ""
+    labelProgram: "",
+    imgStandard: "",
 };
 
 // Standard Production Section

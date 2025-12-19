@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import CheckModels from "./smd_Sheet/CheckModels";
 import PQCChecks from "./smd_Sheet/PQCChecks";
-import ProgramChecks from "./smd_Sheet/ProgramChecks";
+// import ProgramChecks from "./smd_Sheet/ProgramChecks";
 import SheetHeader from "./smd_Sheet/SheetHeader";
 import StandardProductionSection from "./smd_Sheet/StandardProductions";
 import StandardVehicles from "./smd_Sheet/StandardVehicles";
@@ -164,7 +164,7 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
       
       <CheckModels canEdit />
       
-      <ProgramChecks canEdit />
+      {/* <ProgramChecks canEdit /> */}
       
       <StandardProductionSection canEdit />
       
@@ -176,8 +176,8 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
 
       {/* NÚT HOÀN THÀNH SHEET - Sticky Bottom */}
       {sheetData && (
-        <div className="sticky bottom-0 left-0 right-0 bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-2 shadow-lg z-10">
-          <div className="max-w-4xl mx-auto">
+        <div className="sticky bottom-0 left-[30%] bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-2 shadow-lg z-10 max-w-3xl ">
+          <div className="mx-auto">
             {/* Show complete button when ALL tables done */}
             {allTablesCompleted && sheetData.status !== 'PQCDone' ? (
               <div className="p-3">

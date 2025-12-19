@@ -21,21 +21,6 @@ export interface CheckModelData {
     codePCB?: string
 }
 
-// ProgramCheck
-export interface ProgramCheckData {
-  id?: number;
-  printerProgram?: string;
-  spiProgram?: string;
-  mounterProgram?: string;
-  pointMounter?: number;
-  maoiProgram?: string;
-  saoiProgram?: string;
-  pointSAOI?: number;
-  reflowProgram?: string;
-  reflowSpeed?: number;
-  rev?: string;
-}
-
 // StandardProduction
 export interface StandardProductionData {
   id?: number;
@@ -46,6 +31,7 @@ export interface StandardProductionData {
   mlS3Closed?: string;
   useOnly?: string;
   labelProgram?: string;
+  imgStandard?: string;
 }
 
 // TimeChangeModel
@@ -93,6 +79,20 @@ export interface StandardVehicleData {
   nameOP?: string;
   nameAOI?: string;
 
+  printerProgram?: string;
+  spiProgram?: string;
+  mounterProgram?: string;
+  pointMounter?: number;
+  maoiProgram?: string;
+  saoiProgram?: string;
+  pointSAOI?: number;
+  reflowProgram?: string;
+  reflowSpeed?: number;
+  rev?: string;
+
+  imgSPI?: string;
+  imgAOI?: string;
+
   id?: number;
 }
 
@@ -119,7 +119,6 @@ interface subTableState {
 
     // data của từng bảng con
     checkModel: CheckModelData | null;
-    programCheck: ProgramCheckData | null;
     standardProduction: StandardProductionData | null;
     timeChangeModel: TimeChangeModelData | null;
     standardVehicle: StandardVehicleData | null;
@@ -135,7 +134,6 @@ const initialState: subTableState = {
   
   // Initialize data
   checkModel: null,
-  programCheck: null,
   standardProduction: null,
   timeChangeModel: null,
   standardVehicle: null,
@@ -159,18 +157,6 @@ export const updateCheckModel = createAsyncThunk(
   }
 );
 
-// ✅ ProgramCheck
-export const updateProgramCheck = createAsyncThunk(
-  'subTable/updateProgramCheck',
-  async ({ id, data }: { id: number; data: ProgramCheckData }, { rejectWithValue }) => {
-    try {
-      const response = await smdApi.put(`ProgramCheck/${id}`, data);
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể cập nhật ProgramCheck');
-    }
-  }
-);
 
 // ✅ StandardProduction
 export const updateStandardProduction = createAsyncThunk(
@@ -239,19 +225,6 @@ export const fetchCheckModel = createAsyncThunk(
   }
 );
 
-// ✅ ProgramCheck
-export const fetchProgramCheck = createAsyncThunk(
-  'subTable/fetchProgramCheck',
-  async (id: number, { rejectWithValue }) => {
-    try {
-      const response = await smdApi.get(`ProgramCheck/${id}`);
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể tải ProgramCheck');
-    }
-  }
-);
-
 // ✅ StandardProduction
 export const fetchStandardProduction = createAsyncThunk(
   'subTable/fetchStandardProduction',
@@ -304,6 +277,62 @@ export const fetchTimeChangeModel = createAsyncThunk(
   }
 );
 
+// upload standard product
+export const uploadStandardProductionFile = createAsyncThunk(
+  'subTable/uploadStandardProductionFile',
+  async ({ standardProductionId, file }: { standardProductionId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await smdApi.post(`StandardProduction/upload-image/${standardProductionId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải StandardProduction');
+    }
+  }
+);
+
+// upload spi image
+export const uploadSPIImage = createAsyncThunk(
+  'subTable/uploadSPIImage',
+  async ({ changeModelId, file }: { changeModelId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await smdApi.post(`StandardVehicle/upload-spi/${changeModelId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải StandardVehicle');
+    }
+  }
+);
+
+// upload aoi image
+export const uploadAOIImage = createAsyncThunk(
+  'subTable/uploadAOIImage',
+  async ({ changeModelId, file }: { changeModelId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await smdApi.post(`StandardVehicle/upload-aoi/${changeModelId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải StandardVehicle');
+    }
+  }
+);
 // ==================== SLICE ====================
 
 const subTableSlice = createSlice({
@@ -324,7 +353,6 @@ const subTableSlice = createSlice({
     clearAllSubTableData: (state) => {
       state.completedTables = [];
       state.checkModel = null;
-      state.programCheck = null;
       state.standardProduction = null;
       state.timeChangeModel = null;
       state.standardVehicle = null;
@@ -337,9 +365,6 @@ const subTableSlice = createSlice({
     // Set actions
     setCheckModel: (state, action) => {
       state.checkModel = action.payload;
-    },
-    setProgramCheck: (state, action) => {
-      state.programCheck = action.payload;
     },
     setPQCCheck: (state, action) => {
       state.pqcCheck = action.payload;
@@ -375,22 +400,6 @@ const subTableSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchCheckModel.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
-    
-    // ProgramCheck
-    builder
-      .addCase(fetchProgramCheck.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchProgramCheck.fulfilled, (state, action) => {
-        state.loading = false;
-        state.programCheck = action.payload;
-        state.error = null;
-      })
-      .addCase(fetchProgramCheck.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
@@ -483,29 +492,6 @@ const subTableSlice = createSlice({
         state.success = false;
       });
 
-    // ProgramCheck
-    builder
-      .addCase(updateProgramCheck.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-        state.success = false;
-      })
-      .addCase(updateProgramCheck.fulfilled, (state, action) => {
-        state.loading = false;
-        state.success = true;
-        state.lastUpdatedTable = 'ProgramCheck';
-        state.programCheck = action.payload;
-        if (!state.completedTables.includes('ProgramCheck')) {
-          state.completedTables.push('ProgramCheck');
-        }
-        state.error = null;
-      })
-      .addCase(updateProgramCheck.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-        state.success = false;
-      });
-
     // StandardProduction
     builder
       .addCase(updateStandardProduction.pending, (state) => {
@@ -593,6 +579,60 @@ const subTableSlice = createSlice({
         state.error = action.payload as string;
         state.success = false;
       });
+
+    // Upload SPI Image
+builder
+  .addCase(uploadSPIImage.pending, (state) => {
+    state.loading = true;
+    state.error = null;
+  })
+  .addCase(uploadSPIImage.fulfilled, (state, action) => {
+    state.loading = false;
+    // Cập nhật URL hình ảnh nếu backend trả về
+    if (state.standardVehicle && action.payload?.imageUrl) {
+      state.standardVehicle.imgSPI = action.payload.imageUrl;
+    }
+  })
+  .addCase(uploadSPIImage.rejected, (state, action) => {
+    state.loading = false;
+    state.error = action.payload as string;
+  });
+
+// Upload AOI Image
+builder
+  .addCase(uploadAOIImage.pending, (state) => {
+    state.loading = true;
+    state.error = null;
+  })
+  .addCase(uploadAOIImage.fulfilled, (state, action) => {
+    state.loading = false;
+    // Cập nhật URL hình ảnh nếu backend trả về
+    if (state.standardVehicle && action.payload?.imageUrl) {
+      state.standardVehicle.imgAOI = action.payload.imageUrl;
+    }
+  })
+  .addCase(uploadAOIImage.rejected, (state, action) => {
+    state.loading = false;
+    state.error = action.payload as string;
+  });
+
+  // upload Standard Production Image
+  builder
+    .addCase(uploadStandardProductionFile.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    })
+    .addCase(uploadStandardProductionFile.fulfilled, (state, action) => {
+      state.loading = false;
+      // Cập nhật URL hình ảnh nếu backend trả về
+      if (state.standardProduction && action.payload?.imageUrl) {
+        state.standardProduction.imgStandard = action.payload.imageUrl;
+      }
+    })
+    .addCase(uploadStandardProductionFile.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
   },
 });
 
@@ -603,7 +643,6 @@ export const {
   clearAllSubTableData, 
   addCompletedTable,
   setCheckModel,
-  setProgramCheck,
   setPQCCheck,
   setStandardProduction,
   setTimeChangeModel,

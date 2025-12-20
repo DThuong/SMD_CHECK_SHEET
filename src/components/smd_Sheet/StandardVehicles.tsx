@@ -145,13 +145,13 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
     // Upload file lên server
     if (field === 'imgSPI') {
       await dispatch(uploadSPIImage({ 
-        changeModelId: smdSheetId, 
+        id: Number(standardVehicleId), 
         file 
       })).unwrap();
       showNotification('success', 'Thành công', 'Upload hình ảnh SPI thành công');
     } else if (field === 'imgAOI') {
       await dispatch(uploadAOIImage({ 
-        changeModelId: smdSheetId, 
+        id: Number(standardVehicleId), 
         file 
       })).unwrap();
       showNotification('success', 'Thành công', 'Upload hình ảnh AOI thành công');
@@ -218,13 +218,13 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
             // Upload lên server
             if (field === 'imgSPI') {
               await dispatch(uploadSPIImage({ 
-                changeModelId: smdSheetId, 
+                id: Number(standardVehicleId), 
                 file 
               })).unwrap();
               showNotification('success', 'Thành công', 'Upload hình ảnh SPI thành công');
             } else if (field === 'imgAOI') {
               await dispatch(uploadAOIImage({ 
-                changeModelId: smdSheetId, 
+                id: Number(standardVehicleId), 
                 file 
               })).unwrap();
               showNotification('success', 'Thành công', 'Upload hình ảnh AOI thành công');

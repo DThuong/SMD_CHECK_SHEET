@@ -284,7 +284,7 @@ export const uploadStandardProductionFile = createAsyncThunk(
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const response = await smdApi.post(`StandardProduction/upload-image/${standardProductionId}`, formData, {
+      const response = await smdApi.put(`StandardProduction/image/${standardProductionId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -299,11 +299,11 @@ export const uploadStandardProductionFile = createAsyncThunk(
 // upload spi image
 export const uploadSPIImage = createAsyncThunk(
   'subTable/uploadSPIImage',
-  async ({ changeModelId, file }: { changeModelId: number; file: File }, { rejectWithValue }) => {
+  async ({ id, file }: { id: number; file: File }, { rejectWithValue }) => {
     try {
       const formData = new FormData();
-      formData.append('file', file);
-      const response = await smdApi.post(`StandardVehicle/upload-spi/${changeModelId}`, formData, {
+      formData.append('image', file);
+      const response = await smdApi.put(`StandardVehicle/image-spi/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -318,11 +318,11 @@ export const uploadSPIImage = createAsyncThunk(
 // upload aoi image
 export const uploadAOIImage = createAsyncThunk(
   'subTable/uploadAOIImage',
-  async ({ changeModelId, file }: { changeModelId: number; file: File }, { rejectWithValue }) => {
+  async ({ id, file }: { id: number; file: File }, { rejectWithValue }) => {
     try {
       const formData = new FormData();
-      formData.append('file', file);
-      const response = await smdApi.post(`StandardVehicle/upload-aoi/${changeModelId}`, formData, {
+      formData.append('image', file);
+      const response = await smdApi.put(`StandardVehicle/image-aoi/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

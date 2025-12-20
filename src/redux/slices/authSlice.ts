@@ -86,7 +86,7 @@ export const loginUser = createAsyncThunk(
       }
 
       const response = await axios.post(
-        'https://smd-server-agepb7h5fgdzc7fw.eastasia-01.azurewebsites.net/api/Account/login',
+        'http://172.16.162.103:5000/api/Account/login',
         credentials,
         {
           headers: {

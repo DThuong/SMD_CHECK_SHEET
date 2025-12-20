@@ -22,14 +22,14 @@ const ImagePreviewModal = ({ isOpen, imageUrl, onClose, title }: ImagePreviewMod
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors"
+          className="absolute -top-5 right-5 text-white hover:text-gray-300 transition-colors"
         >
           <IoClose size={32} />
         </button>
 
         {/* Title */}
         {title && (
-          <div className="absolute -top-10 left-0 text-white font-semibold text-lg">
+          <div className="absolute -top-5 left-6 text-white font-semibold text-lg">
             {title}
           </div>
         )}

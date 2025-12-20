@@ -29,9 +29,9 @@ const Footer = () => {
         const map = L.map(mapRef.current).setView([37.0, 127.0], 13);
         
         // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        // L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        //   attribution: '© OpenStreetMap contributors'
+        // }).addTo(map);
         
         // Add marker
         const marker = L.marker([37.0, 127.0]).addTo(map);

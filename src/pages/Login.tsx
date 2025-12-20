@@ -53,6 +53,14 @@ const Login = () => {
     }
   };
 
+  useEffect(() => {
+    if(error){
+      setTimeout(() => {
+        dispatch(clearError());
+      }, 2000)
+    }
+  }, [error, dispatch]);
+
   // Helper function để format error
   const formatError = (error: any): string => {
     if (typeof error === 'string') return error;

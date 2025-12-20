@@ -1114,47 +1114,47 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
     </section>
 
     {/* SPI */}
-<div className="md:col-span-2">
-  <label className="block text-sm font-medium mb-1">Hình ảnh SPI</label>
-  <div className="my-2">
-    <input
-      type="file"
-      accept="image/*"
-      onChange={(e) => handleImageUpload('imgSPI', e)}
-      className="border border-gray-300 rounded px-3 py-2"
-    />
-    <button
-      type="button"
-      onClick={() => handleCameraCapture('imgSPI')}
-      className=" bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center gap-2 mt-2"
-    >
-      <FaCamera size={10} />
-      Chụp ảnh SPI
-    </button>
-  </div>
-  
-  {/* Preview Section */}
-  <div className="flex items-center gap-3 mt-2">
-    {form.imgSPI ? (
-      <>
-        <img src={form.imgSPI} alt="SPI Preview" className="w-20 h-20 object-cover rounded border" />
+    <div className="md:col-span-2">
+      <label className="block text-sm font-medium mb-1">Hình ảnh SPI</label>
+      <div className="my-2">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleImageUpload('imgSPI', e)}
+          className="border border-gray-300 rounded px-3 py-2"
+        />
         <button
           type="button"
-          onClick={() => openImagePreview(form.imgSPI!, "Hình ảnh SPI")}
-          className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+          onClick={() => handleCameraCapture('imgSPI')}
+          className=" bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center gap-2 mt-2"
         >
-          <IoEyeSharp size={20} />
-          <span className="text-sm">Xem hình ảnh</span>
+          <FaCamera size={10} />
+          Chụp ảnh SPI
         </button>
-      </>
-    ) : (
-      <div className="flex items-center gap-2 text-gray-400">
-        <FaEyeSlash size={20} />
-        <span className="text-sm">Chưa có hình ảnh</span>
       </div>
-    )}
-  </div>
-</div>
+      
+      {/* Preview Section */}
+      <div className="flex items-center gap-3 mt-2">
+        {form.imgSPI ? (
+          <>
+            <img src={form.imgSPI} alt="SPI Preview" className="w-20 h-20 object-cover rounded border" />
+            <button
+              type="button"
+              onClick={() => openImagePreview(form.imgSPI!, "Hình ảnh SPI")}
+              className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+            >
+              <IoEyeSharp size={20} />
+              <span className="text-sm">Xem hình ảnh</span>
+            </button>
+          </>
+        ) : (
+          <div className="flex items-center gap-2 text-gray-400">
+            <FaEyeSlash size={20} />
+            <span className="text-sm">Chưa có hình ảnh</span>
+          </div>
+        )}
+      </div>
+    </div>
 
     {/* Mount */}
     <section className="pb-3 border-b border-gray-200">

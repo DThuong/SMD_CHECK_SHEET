@@ -1114,7 +1114,33 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
     </section>
 
     {/* SPI */}
-    <div className="md:col-span-2">
+    <div className="md:col-span-2 border-b border-gray-200 pb-3">
+      <h4 className="text-sm font-semibold mb-3 text-gray-700">SPI</h4>
+      {/** spi program */}
+      <div className="min-w-0 mb-3">
+          <label className="text-xs block mb-1">SPI Program</label>
+          <input
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            value={form.spiProgram ?? ""}
+            onChange={(e) => set("spiProgram", e.target.value)}
+            type="text"
+          />
+      </div>
+      {/** inspection setting ok */}
+      <div className="min-w-0 mb-3">
+        <div className="flex items-center gap-2">
+          <input
+            id="inspectionSettingOk"
+            type="checkbox"
+            checked={!!form.spiQ1}
+            onChange={(e) => set("spiQ1", e.target.checked)}
+            className=""
+          />
+          <label htmlFor="inspectionSettingOk" className="text-xs">
+            Inspection Setting OK
+          </label>
+        </div>
+      </div>
       <label className="block text-sm font-medium mb-1">Hình ảnh SPI</label>
       <div className="my-2">
         <input
@@ -1126,7 +1152,7 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
         <button
           type="button"
           onClick={() => handleCameraCapture('imgSPI')}
-          className=" bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center gap-2 mt-2"
+          className=" bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center gap-2 mt-2 w-full"
         >
           <FaCamera size={10} />
           Chụp ảnh SPI
@@ -1137,7 +1163,7 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
       <div className="flex items-center gap-3 mt-2">
         {form.imgSPI ? (
           <>
-            <img src={form.imgSPI} alt="SPI Preview" className="w-20 h-20 object-cover rounded border" />
+            <img src={form.imgSPI} alt="SPI Preview" className="w-20 h-20 object-cover rounded border" onClick={() => openImagePreview(form.imgSPI!, "Hình ảnh SPI")} />
             <button
               type="button"
               onClick={() => openImagePreview(form.imgSPI!, "Hình ảnh SPI")}
@@ -1271,7 +1297,61 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
     </section>
 
      {/* AOI */}
-<div className="md:col-span-2">
+<div className="md:col-span-2 border-b border-gray-200 pb-3">
+  <h4 className="text-sm font-semibold mb-3 text-gray-700">AOI</h4>
+  {/** xray 3 board đầu tiên có Ok hay không ? */}
+  <div className="min-w-0 flex items-center gap-2 mb-3">
+    <input
+      id="xrayThreeBoardsOk"
+      type="checkbox"
+      checked={!!form.aoiQ1}
+      onChange={(e) => set("aoiQ1", e.target.checked)}
+      className="mr-2"
+    />
+    <label htmlFor="xrayThreeBoardsOk" className="text-xs">
+      Xray 3 board đầu tiên có OK hay không ?
+    </label>
+  </div>
+  {/** maoi program */}
+  <div className="min-w-0 mb-3">
+    <label className="text-xs block mb-1">Chương trình mAoi</label>
+    <input
+      className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+      value={form.maoiProgram ?? ""}
+      onChange={(e) => set("maoiProgram", e.target.value)}
+      type="text"
+    />
+  </div>
+  {/** saoi program */}
+  <div className="min-w-0 mb-3">
+    <label className="text-xs block mb-1">Chương trình sAoi</label>
+    <input
+      className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+      value={form.saoiProgram ?? ""}
+      onChange={(e) => set("saoiProgram", e.target.value)}
+      type="text"
+    />
+  </div>
+  {/** point saoi */}
+  <div className="min-w-0 mb-3">
+    <label className="text-xs block mb-1">Point sAoi</label>
+    <input
+      className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+      value={form.pointSAOI ?? ""}
+      onChange={(e) => set("pointSAOI", e.target.value ? Number(e.target.value) : undefined)}
+      type="number"
+    />
+  </div>
+  {/** Người kiểm tra */}
+  <div className="min-w-0 mb-3">
+    <label className="text-xs block mb-1">Người kiểm tra</label>
+    <input
+      className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+      value={form.aoiCheck ?? ""}
+      onChange={(e) => set("aoiCheck", e.target.value)}
+      type="text"
+    />
+  </div>
   <label className="block text-xs font-medium mb-1">Hình ảnh AOI</label>
   <div className="flex flex-col gap-2">
     <div>
@@ -1286,7 +1366,7 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
       <button
         type="button"
         onClick={() => handleCameraCapture('imgAOI')}
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2 justify-center"
+        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2 justify-center w-full"
       >
         <FaCamera size={10} />
         Chụp ảnh AOI
@@ -1298,7 +1378,7 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
   <div className="flex items-center gap-3 mt-2">
     {form.imgAOI ? (
       <>
-        <img src={form.imgAOI} alt="AOI Preview" className="w-20 h-20 object-cover rounded border" />
+        <img src={form.imgAOI} alt="AOI Preview" className="w-20 h-20 object-cover rounded border" onClick={() => openImagePreview(form.imgAOI!, "Hình ảnh AOI")} />
         <button
           type="button"
           onClick={() => openImagePreview(form.imgAOI!, "Hình ảnh AOI")}

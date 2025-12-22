@@ -81,20 +81,12 @@ export const loginUser = createAsyncThunk(
       try {
         localStorage.clear();
         sessionStorage.clear();
+        // cookieStore.delete("token");
       } catch (error) {
         console.error('Failed to clear storage:', error);
       }
 
-      const response = await axios.post(
-        `${import.meta.env.BASE_URL}/Account/login`,
-        credentials,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        }
-      );
+      const response = await smdApi.post('/Account/login', credentials);
       
       // Lưu token mới (localStorage đã sạch)
       if (response.data?.token) {

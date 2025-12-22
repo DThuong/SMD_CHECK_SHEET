@@ -4,6 +4,10 @@ import type { AxiosInstance } from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://172.16.162.103:5000/api";
 
+console.log('🌐 Environment Mode:', import.meta.env.MODE);
+console.log('🌐 VITE_API_URL from env:', import.meta.env.VITE_API_URL);
+console.log('🌐 Final API_BASE_URL:', BASE_URL);
+
 //Tạo axios instance cơ bản
 const createSmdApi = (): AxiosInstance => {
   const api = axios.create({
@@ -21,6 +25,16 @@ const createSmdApi = (): AxiosInstance => {
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
+
+       // Debug
+      console.log('API Request:', {
+        method: config.method?.toUpperCase(),
+        url: config.url,
+        baseURL: config.baseURL,
+        fullURL: `${config.baseURL}${config.url}`,
+        headers: config.headers
+      });
+    
 
       // Tự động xử lý FormData
       if (config.data instanceof FormData) {

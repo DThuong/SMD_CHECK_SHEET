@@ -5,7 +5,6 @@
 // axios: thư viện call api
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import smdApi from '../services/smdApi';
-import axios from 'axios';
 
 interface LoginRequest {
   username: string;
@@ -81,7 +80,6 @@ export const loginUser = createAsyncThunk(
       try {
         localStorage.clear();
         sessionStorage.clear();
-        // cookieStore.delete("token");
       } catch (error) {
         console.error('Failed to clear storage:', error);
       }

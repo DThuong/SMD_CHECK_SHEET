@@ -15,7 +15,7 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
   const [isChecking, setIsChecking] = useState(true);
   const hasCheckedRef = useRef(false);
   
-  // ✅ INITIAL CHECK - Chạy 1 lần khi mount
+  // INITIAL CHECK - Chạy 1 lần khi mount
   useEffect(() => {
     const checkInitialSession = async () => {
       if (hasCheckedRef.current) {
@@ -63,11 +63,11 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        // 3. ✅ VERIFY TOKEN VỚI SERVER (chỉ 1 lần khi khởi động)
+        // 3.VERIFY TOKEN VỚI SERVER (chỉ 1 lần khi khởi động)
         try {
           console.log('Initial token verification...');
           await smdApi.get('/Account/verify');
-          console.log('✅ Token valid');
+          console.log('Token valid');
         } catch (error: any) {
           if (error.response?.status === 401) {
             console.log('❌ Token không hợp lệ (401) - Có thể đã login ở thiết bị khác');

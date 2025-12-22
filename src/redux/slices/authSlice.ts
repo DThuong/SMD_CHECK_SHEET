@@ -86,7 +86,7 @@ export const loginUser = createAsyncThunk(
       }
 
       const response = await axios.post(
-        'https://172.16.162.103:5000/api/Account/login',
+        'http://172.16.162.103:5000/api/Account/login',
         credentials,
         {
           headers: {

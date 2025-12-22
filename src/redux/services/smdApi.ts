@@ -2,7 +2,7 @@
 import axios from "axios";
 import type { AxiosInstance } from "axios";
 
-const BASE_URL = "https://172.16.162.103:5000/api";
+const BASE_URL = "http://172.16.162.103:5000/api";
 
 //Tạo axios instance cơ bản
 const createSmdApi = (): AxiosInstance => {

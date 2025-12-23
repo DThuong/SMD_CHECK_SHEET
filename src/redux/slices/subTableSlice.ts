@@ -144,7 +144,7 @@ const initialState: subTableState = {
 
 // ==================== PUT (UPDATE) APIs ====================
 
-// ✅ CheckModel
+// CheckModel
 export const updateCheckModel = createAsyncThunk(
   'subTable/updateCheckModel',
   async ({ id, data }: { id: number; data: CheckModelData }, { rejectWithValue }) => {
@@ -158,7 +158,7 @@ export const updateCheckModel = createAsyncThunk(
 );
 
 
-// ✅ StandardProduction
+// StandardProduction
 export const updateStandardProduction = createAsyncThunk(
   'subTable/updateStandardProduction',
   async ({ id, data }: { id: number; data: StandardProductionData }, { rejectWithValue }) => {
@@ -171,7 +171,7 @@ export const updateStandardProduction = createAsyncThunk(
   }
 );
 
-// ✅ TimeChangeModel
+// TimeChangeModel
 export const updateTimeChangeModel = createAsyncThunk(
   'subTable/updateTimeChangeModel',
   async ({ id, data }: { id: number; data: TimeChangeModelData }, { rejectWithValue }) => {
@@ -184,7 +184,7 @@ export const updateTimeChangeModel = createAsyncThunk(
   }
 );
 
-// ✅ StandardVehicle
+// StandardVehicle
 export const updateStandardVehicle = createAsyncThunk(
   'subTable/updateStandardVehicle',
   async ({ id, data }: { id: number; data: StandardVehicleData }, { rejectWithValue }) => {
@@ -197,7 +197,7 @@ export const updateStandardVehicle = createAsyncThunk(
   }
 );
 
-// ✅ PQCCheck
+// PQCCheck
 export const updatePQCCheck = createAsyncThunk(
   'subTable/updatePQCCheck',
   async ({ id, data }: { id: number; data: PQCCheckData }, { rejectWithValue }) => {
@@ -225,7 +225,7 @@ export const fetchCheckModel = createAsyncThunk(
   }
 );
 
-// ✅ StandardProduction
+// StandardProduction
 export const fetchStandardProduction = createAsyncThunk(
   'subTable/fetchStandardProduction',
   async (id: number, { rejectWithValue }) => {
@@ -238,7 +238,7 @@ export const fetchStandardProduction = createAsyncThunk(
   }
 );
 
-// ✅ StandardVehicle
+// StandardVehicle
 export const fetchStandardVehicle = createAsyncThunk(
   'subTable/fetchStandardVehicle',
   async (id: number, { rejectWithValue }) => {
@@ -251,7 +251,7 @@ export const fetchStandardVehicle = createAsyncThunk(
   }
 );
 
-// ✅ PQCCheck
+// PQCCheck
 export const fetchPQCCheck = createAsyncThunk(
   'subTable/fetchPQCCheck',
   async (id: number, { rejectWithValue }) => {
@@ -264,7 +264,7 @@ export const fetchPQCCheck = createAsyncThunk(
   }
 );
 
-// ✅ TimeChangeModel
+// TimeChangeModel
 export const fetchTimeChangeModel = createAsyncThunk(
   'subTable/fetchTimeChangeModel',
   async (id: number, { rejectWithValue }) => {
@@ -277,13 +277,13 @@ export const fetchTimeChangeModel = createAsyncThunk(
   }
 );
 
-// upload standard product
+// upload standard product image
 export const uploadStandardProductionFile = createAsyncThunk(
-  'subTable/uploadStandardProductionFile',
+  'subTable/uploadStandardProductionImage',
   async ({ standardProductionId, file }: { standardProductionId: number; file: File }, { rejectWithValue }) => {
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('image', file);
       const response = await smdApi.put(`StandardProduction/image/${standardProductionId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',

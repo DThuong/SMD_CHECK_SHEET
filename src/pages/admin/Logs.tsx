@@ -330,13 +330,6 @@ const Logs = () => {
 
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-        {/* <Notification
-          show={notification.show}
-          type={notification.type}
-          title={notification.title}
-          message={notification.message}
-          onClose={hideNotification}
-        /> */}
         {roles.map((role) => {
           const stepInfo = getStepInfo(role.key);
           const isConfirmed = !!stepInfo;
@@ -568,7 +561,7 @@ const Logs = () => {
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 text-center!">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-              Quản lý SMD Sheet Logs
+              Quản lý SMD Logs
             </h1>
             <div className="text-sm text-gray-600">
               Role: <span className="font-semibold">{user?.role}</span>
@@ -591,7 +584,7 @@ const Logs = () => {
           <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center gap-2 mb-3">
               <AiOutlineSearch className="w-5 h-5 text-gray-600" />
-              <h3 className="font-semibold text-gray-700">Tìm kiếm & Lọc</h3>
+              <h3 className="font-semibold text-gray-700">Tìm kiếm</h3>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -605,27 +598,27 @@ const Logs = () => {
                   value={filter.workOrder}
                   onChange={(e) => setFilter(s => ({ ...s, workOrder: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Nhập Work Order..."
+                  placeholder={`Tìm kiếm theo work order...`}
                 />
               </div>
 
               {/* Status */}
               <div>
                 <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <MdSignalWifiStatusbar2Bar /><span>Trạng thái</span>
+                  <MdSignalWifiStatusbar2Bar /><span>Trạng Thái</span>
                 </div>
                 <select
                   value={filter.status}
                   onChange={(e) => setFilter(s => ({ ...s, status: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="all">Tất cả</option>
-                  <option value={STATUS.PENDING}>Pending</option>
-                  <option value={STATUS.PQC_DONE}>PQC Done</option>
-                  <option value={STATUS.ENG_DONE}>ENG Done</option>
-                  <option value={STATUS.SUPERVISOR_DONE}>Supervisor Done</option>
-                  <option value={STATUS.MANAGER_DONE}>Manager Done</option>
-                  <option value={STATUS.KOREA_MANAGER_DONE}>Korea Manager Done</option>
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value={STATUS.PENDING}>Đang chờ</option>
+                  <option value={STATUS.PQC_DONE}>PQC đã hoàn thành</option>
+                  <option value={STATUS.ENG_DONE}>Engineering đã hoàn thành</option>
+                  <option value={STATUS.SUPERVISOR_DONE}>Supervisor đã hoàn thành</option>
+                  <option value={STATUS.MANAGER_DONE}>Manager đã hoàn thành</option>
+                  <option value={STATUS.KOREA_MANAGER_DONE}>Korea Manager đã hoàn thành</option>
                 </select>
               </div>
 
@@ -666,7 +659,7 @@ const Logs = () => {
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
               >
                 <AiOutlineSearch className="w-4 h-4" />
-                {loadingList ? 'Đang tìm...' : 'Tìm kiếm'}
+                {loadingList ? 'Đang tìm kiếm...' : 'Tìm kiếm'}
               </button>
               <button
                 onClick={resetFilter}
@@ -674,15 +667,15 @@ const Logs = () => {
                 className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
               >
                 <AiOutlineClose className="w-4 h-4" />
-                Xóa bộ lọc
+                Thay đổi bộ lọc
               </button>
             </div>
 
             {/* Result Count */}
             <div className="mt-3 text-sm text-gray-600" ref={resultsRef}>
-              Hiển thị <span className="font-semibold text-blue-600">{currentSheets.length}</span> / <span className="font-semibold">{sortedSheets.length}</span> sheets
+              Số trang: <span className="font-semibold text-blue-600">{currentSheets.length}</span> / <span className="font-semibold">{sortedSheets.length}</span> sheet
               {pageCount > 1 && (
-                <span className="ml-2">(Trang {currentPage + 1}/{pageCount})</span>
+                <span className="ml-2"> (page {currentPage + 1}/{pageCount})</span>
               )}
             </div>
           </div>
@@ -698,18 +691,18 @@ const Logs = () => {
           {loadingList ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-              <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+              <p className="mt-4 text-gray-600">Đang tìm kiếm...</p>
             </div>
           ) : currentSheets.length === 0 ? (
             <div className="text-center py-12">
               <AiOutlineClockCircle className="w-16 h-16 mx-auto text-gray-400 mb-4" />
               <p className="text-gray-600 text-lg">
-                {sortedSheets.length === 0 ? 'Chưa có sheet nào' : 'Không tìm thấy kết quả'}
+                {sortedSheets.length === 0 ? '' : 'Tạm thời không có sheet nào phù hợp'}
               </p>
               <p className="text-gray-500 text-sm mt-2">
                 {sortedSheets.length === 0 
-                  ? (user?.role === ROLES.PQC ? 'Hãy tạo và gửi SMD Sheet từ trang chính' : 'Chờ PQC tạo sheet mới')
-                  : 'Thử thay đổi bộ lọc tìm kiếm'}
+                  ? (user?.role === ROLES.PQC ? 'Tạo sheet mới' : 'Chờ PQC tạo sheet')
+                  : 'Thay đổi bộ lọc'}
               </p>
             </div>
           ) : (
@@ -719,12 +712,24 @@ const Logs = () => {
                 <table className="w-full border-collapse text-center">
                   <thead>
                     <tr className="bg-gray-100">
-                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">STT</th>
-                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">Sheet ID</th>
-                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">Người tạo</th>
-                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">Thời gian</th>
-                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">Trạng thái</th>
-                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">Hành động</th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                        Id
+                      </th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                        Sheet id
+                      </th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                        Người tạo
+                      </th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                        Thời gian tạo
+                      </th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">
+                        Trạng thái
+                      </th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">
+                        Hành động
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -766,7 +771,7 @@ const Logs = () => {
                                 className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium whitespace-nowrap"
                               >
                                 <AiOutlineEdit className="w-3 h-3 sm:w-4 sm:h-4" />
-                                <span>Sửa</span>
+                                <span>Chỉnh sửa</span>
                               </button>
                             )}
                           </div>
@@ -793,7 +798,7 @@ const Logs = () => {
 
                     <div className="mb-3 pb-3 border-b border-gray-200 flex items-center flex-row gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-gray-700">Người tạo:</span>
+                        <span className="text-xs font-semibold text-gray-700">Được tạo bởi:</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm text-gray-900">
@@ -808,7 +813,7 @@ const Logs = () => {
                     <div className="mb-3 pb-3 border-b border-gray-200">
                       <div className="flex items-center gap-2 mb-2">
                         <AiOutlineCalendar className="w-4 h-4 text-gray-600" />
-                        <span className="text-xs font-semibold text-gray-700">Thời gian</span>
+                        <span className="text-xs font-semibold text-gray-700">Ngày tạo</span>
                       </div>
                       <div className="pl-6 text-sm text-gray-900">
                         {formatDateTime(sheet.createAt)}
@@ -821,7 +826,7 @@ const Logs = () => {
                         className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                       >
                         <AiOutlineEye className="w-4 h-4" />
-                        <span>Xem chi tiết</span>
+                        <span>Xem</span>
                       </button>
                       {canEdit(sheet) && (
                         <button
@@ -846,8 +851,8 @@ const Logs = () => {
                   <div className="w-full max-w-full">
                     <div className="overflow-x-auto scrollbar-hide">
                       <ReactPaginate
-                        previousLabel={'Trước'}
-                        nextLabel={'Sau'}
+                        previousLabel='Trước'
+                        nextLabel='Sau'
                         breakLabel={'...'}
                         pageCount={pageCount}
                         marginPagesDisplayed={1}

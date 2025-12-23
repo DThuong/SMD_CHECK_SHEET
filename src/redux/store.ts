@@ -15,6 +15,7 @@ import storage from 'redux-persist/lib/storage';
 import authReducer from "./slices/authSlice";
 import subTableReducer from "./slices/subTableSlice";
 import changeModelReducer from "./slices/changeModelSlice";
+import FileSliceReducer from "./slices/FileSlice";
 
 import smdApi from "./services/smdApi";
 import { setupApiInterceptor } from "./setupApiInterceptor";
@@ -32,6 +33,7 @@ const rootReducer = combineReducers({
   auth: persistedAuthReducer,
   subTable: subTableReducer, 
   changeModel: changeModelReducer,
+  fileSlice: FileSliceReducer,
 });
 
 // Tạo store

@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  smd-frontend:
+    build: .
+    container_name: smd-app
+    ports:
+      - "80:80"
+    restart: unless-stopped

@@ -8,5 +8,6 @@ export default defineConfig({
   server: {
     host: '0.0.0.0', // Listen all IPs
     port: 5173,
+    strictPort: true,
   },
 })

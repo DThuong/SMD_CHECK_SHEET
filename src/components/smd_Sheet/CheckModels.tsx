@@ -6,6 +6,7 @@ import { updateCheckModel } from "../../redux/slices/subTableSlice";
 import type { CheckModelData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../Notification";
+import { useTranslation } from "react-i18next";
 
 const initialFormState: CheckModelData = {
   lineChange: "",
@@ -33,6 +34,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
   const { notification, showNotification, hideNotification } = useNotification();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<CheckModelData>(initialFormState);
+  const { t } = useTranslation(['smdSheet', 'common']);
 
   const isSaved = completedTables.includes('CheckModel');
 

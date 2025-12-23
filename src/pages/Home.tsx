@@ -35,6 +35,7 @@ const Home = () => {
   const { user, isAuthenticated, loading } = useAppSelector(state => state.auth);
   const { 
     currentSheet, 
+    status,
     loading: creatingSheet, 
     error: sheetError, 
     success,

@@ -382,7 +382,7 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
 
             {/** Row 21 */}
             <tr>
-              <th colSpan={1} rowSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">SPI</th>
+              <th colSpan={1} rowSpan={5} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">SPI</th>
               <th colSpan={8} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Hạng mục check (kiểm tra tiêu chuẩn setting SPI)</th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
@@ -426,6 +426,12 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
                   />
                 </div>
               </td>
+            </tr>
+
+            {/** REV */}
+            <tr>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100 text-left!">REV</th>
+              <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">{form.rev || ""}</td>
             </tr>
 
 
@@ -569,12 +575,6 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
                   />
                 </div>
               </td>
-            </tr>
-
-            {/** row REV */}
-            <tr>
-              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">REV</th>
-              <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs">{form.rev || ""}</td>
             </tr>
 
             {/** Row 27.1 - HÀNG THỨ HAI (độc lập) */}
@@ -756,6 +756,14 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
         <div className="text-xs font-semibold text-gray-600 mb-1">SPI Program</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
           {form.spiProgram || "—"}
+        </div>
+      </div>
+
+      {/** REV */}
+      <div className="mb-3">
+        <div className="text-xs font-semibold text-gray-600 mb-1">REV</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+          {form.rev || "—"}
         </div>
       </div>
 
@@ -1123,6 +1131,16 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.spiProgram ?? ""}
             onChange={(e) => set("spiProgram", e.target.value)}
+            type="text"
+          />
+      </div>
+      {/** REV */}
+      <div className="min-w-0 mb-3">
+          <label className="text-xs block mb-1">REV</label>
+          <input
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            value={form.rev ?? ""}
+            onChange={(e) => set("rev", e.target.value)}
             type="text"
           />
       </div>

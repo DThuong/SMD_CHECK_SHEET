@@ -132,7 +132,7 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
 
     console.log(`⏱️ Token expires in ${Math.floor(timeUntilExpiry / 1000)}s`);
     
-    // ✅ Setup timeout để auto logout khi hết hạn
+    // Setup timeout để auto logout khi hết hạn
     const timer = setTimeout(() => {
       console.log('⏰ Auto logout - Token expired');
       

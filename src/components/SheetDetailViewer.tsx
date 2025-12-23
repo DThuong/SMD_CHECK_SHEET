@@ -81,7 +81,6 @@ const SheetDetailViewer = () => {
       
       try {
         const result = await dispatch(getSheetWithFullObject(Number(id))).unwrap();
-        
         // Dispatch nested objects
         // CheckModel
                 if (result.checkModel) {

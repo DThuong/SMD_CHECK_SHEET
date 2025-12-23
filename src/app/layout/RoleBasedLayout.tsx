@@ -52,7 +52,7 @@ const RoleBasedLayout = () => {
   };
 
   const menuItems = [
-    { name: "SMD SHEET", path: `/${role}/smd-sheet-logs`, shoudReload: true },
+    { name: "Smd Sheet", path: `/${role}/smd-sheet-logs`, shoudReload: true },
     { name: "Settings", path: `/${role}/settings`, shouldReload: false },
   ];
 

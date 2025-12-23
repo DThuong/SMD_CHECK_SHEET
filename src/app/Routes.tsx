@@ -22,6 +22,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import SmdSheetDetail from '../components/SmdSheetDetail';
 import AuthInitializer from '../components/AuthInitializer';
 import SheetDetailViewer from '../components/SheetDetailViewer';
+import FileDetailViewer from '../pages/FileDetailViewer';
 
 // ========================================
 // Component bảo vệ route cho PQC
@@ -123,6 +124,7 @@ const App = () => {
           <Route path="/" element={<PQCRoute><Home /></PQCRoute>} />
           <Route path="/login" element={<LoginRoute><Login /></LoginRoute>} />
           <Route path="/pqc-sheet-detail/:id" element={<PQCRoute><SmdSheetDetail /></PQCRoute>} />
+          <Route path="/pqc-files/:id/:fileType" element={<PQCRoute><FileDetailViewer /></PQCRoute>} />
           <Route path="*" element={<ErrorPage />} />
         </Route>
 
@@ -133,6 +135,7 @@ const App = () => {
           <Route path="/admin/user" element={<User />} />
           <Route path="/admin/smd-sheet-logs" element={<Logs />} />
           <Route path="/admin/settings" element={<Settings />} />
+          <Route path="/admin/files/:id/:fileType" element={<FileDetailViewer />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>
 
@@ -141,6 +144,7 @@ const App = () => {
           <Route path="/:role/smd-sheet-logs" element={<Logs />} />
           <Route path="/:role/settings" element={<Settings />} />
           <Route path="/:role/sheet-detail/:id" element={<SheetDetailViewer />} />
+          <Route path="/:role/files/:id/:fileType" element={<FileDetailViewer />} />
           <Route path="/:role" element={<RoleDynamicRedirect />} />
         </Route>
       </Routes>

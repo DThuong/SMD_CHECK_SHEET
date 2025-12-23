@@ -2,10 +2,14 @@ import ViewDetailButton from "../ViewDetailButton";
 import { useEffect, useState } from "react";
 import Modal from "../Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { fetchStandardProduction, updateStandardProduction } from "../../redux/slices/subTableSlice";
+import { fetchStandardProduction, updateStandardProduction, uploadStandardProductionFile } from "../../redux/slices/subTableSlice";
 import type { StandardProductionData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../Notification";
+import ImageViewIcon from "../ImageViewIcon";
+import { IoEyeSharp } from "react-icons/io5";
+import { FaCamera, FaEyeSlash } from "react-icons/fa6";
+import ImagePreviewModal from "../ImagePreviewModal";
 
 
 const initialStandardProductState: StandardProductionData = {
@@ -39,9 +43,37 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
   const isSaved = completedTables.includes('StandardProduction');
 
   const { notification, showNotification,  hideNotification } = useNotification();
-  
 
-  // fetch data khi programcheck thay đổi
+  // xử lý upload hình ảnh + preview modal
+  const [imagePreview, setImagePreview] = useState<{
+    isOpen: boolean;
+    imageUrl: string;
+    title: string;
+  }>({
+    isOpen: false,
+    imageUrl: "",
+    title: ""
+  });
+
+  // hàm mở preview
+  const openImagePreview = (imageUrl: string, title: string) => {
+    setImagePreview({
+      isOpen: true,
+      imageUrl,
+      title
+    });
+  };
+
+  // hàm đóng preview
+  const closeImagePreview = () => {
+    setImagePreview({
+      isOpen: false,
+      imageUrl: "",
+      title: ""
+    });
+  };
+
+  // fetch data khi StandardProduction thay đổi
       useEffect(() => {
         if (standardProductionId) {
           dispatch(fetchStandardProduction(standardProductionId));
@@ -53,6 +85,127 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
           setForm(standardProduction);
         }
       }, [standardProduction]);
+
+  // xử lý upload hình ảnh
+  const handleImageUpload = async (field: 'imgStandard', event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+  
+    if (!standardProductionId) {
+      showNotification('error', 'Lỗi upload', 'Không tìm thấy StandardProduction ID');
+      return;
+    }
+  
+    try {
+      // Upload file lên server (KHÔNG hiển thị preview base64 nữa)
+      if (field === 'imgStandard') {
+        const result = await dispatch(uploadStandardProductionFile({ 
+          standardProductionId: Number(standardProductionId), 
+          file 
+        })).unwrap();
+        
+        // Cập nhật URL từ server vào form
+        if (result?.imageUrl) {
+          set(field, result.imageUrl);
+        }
+        
+        showNotification('success', 'Thành công', 'Upload hình ảnh Standard Production thành công');
+      }
+  
+      // Fetch lại data để đảm bảo sync với server
+      if (standardProductionId) {
+        await dispatch(fetchStandardProduction(standardProductionId)).unwrap();
+      }
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
+    }
+  };
+
+  // xử lý chụp ảnh từ camera
+  const handleCameraCapture = async (field: 'imgStandard') => {
+    if (!standardProductionId) {
+      showNotification('error', 'Lỗi', 'Không tìm thấy StandardProduction ID');
+      return;
+    }
+  
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.play();
+  
+      // Tạo modal để hiển thị camera
+      const cameraModal = document.createElement('div');
+      cameraModal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;';
+      
+      video.style.cssText = 'max-width:90%;max-height:70%;';
+      cameraModal.appendChild(video);
+  
+      const captureBtn = document.createElement('button');
+      captureBtn.textContent = 'Chụp ảnh';
+      captureBtn.style.cssText = 'margin-top:20px;padding:10px 20px;background:#3b82f6;color:white;border:none;border-radius:5px;cursor:pointer;';
+      cameraModal.appendChild(captureBtn);
+  
+      const closeBtn = document.createElement('button');
+      closeBtn.textContent = 'Đóng';
+      closeBtn.style.cssText = 'margin-top:10px;padding:10px 20px;background:#ef4444;color:white;border:none;border-radius:5px;cursor:pointer;';
+      cameraModal.appendChild(closeBtn);
+  
+      document.body.appendChild(cameraModal);
+  
+      captureBtn.onclick = async () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d')?.drawImage(video, 0, 0);
+        
+        // Convert canvas to blob
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            // Tạo File object từ blob
+            const file = new File([blob], `${field}_${Date.now()}.jpg`, { type: 'image/jpeg' });
+  
+            try {
+              // Upload lên server
+              if (field === 'imgStandard') {
+                const result = await dispatch(uploadStandardProductionFile({ 
+                  standardProductionId: Number(standardProductionId), 
+                  file 
+                })).unwrap();
+                
+                // Cập nhật URL từ server
+                if (result?.imageUrl) {
+                  set(field, result.imageUrl);
+                }
+                
+                showNotification('success', 'Thành công', 'Upload hình ảnh Standard Production thành công');
+              } 
+  
+              // Fetch lại data
+              if (standardProductionId) {
+                await dispatch(fetchStandardProduction(standardProductionId));
+              }
+            } catch (error) {
+              console.error('Failed to upload image:', error);
+              showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
+            }
+          }
+        }, 'image/jpeg', 0.9);
+  
+        stream.getTracks().forEach(track => track.stop());
+        document.body.removeChild(cameraModal);
+      };
+  
+      closeBtn.onclick = () => {
+        stream.getTracks().forEach(track => track.stop());
+        document.body.removeChild(cameraModal);
+      };
+    } catch (error) {
+      console.error('Camera error:', error);
+      showNotification('error', 'Lỗi Camera', 'Không thể truy cập camera');
+    }
+  };
   
 
   const set = <K extends keyof StandardProductionData>(k: K, v: StandardProductionData[K]) =>
@@ -224,6 +377,18 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
           : "—"}
       </div>
     </div>
+
+    {/** Hình ảnh Standard production */}
+      <div className="mb-3">
+        <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh Standard Production</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
+          <ImageViewIcon 
+            imageUrl={form.imgStandard} 
+            title="Hình ảnh Standard Production"
+            onView={openImagePreview}
+          />
+        </div>
+      </div>
   </div>
 </div>
       {/** buttons */}
@@ -329,8 +494,55 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
         </div>
       </div>
     </div>
+
+    <label className="block text-sm font-medium mb-1">Hình ảnh Standard Production</label>
+      <div className="my-2">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleImageUpload('imgStandard', e)}
+          className="border border-gray-300 rounded px-3 py-2 w-full"
+        />
+        <button
+          type="button"
+          onClick={() => handleCameraCapture('imgStandard')}
+          className=" bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center gap-2 mt-2 w-full"
+        >
+          <FaCamera size={10} />
+          Chụp ảnh Standard Production
+        </button>
+      </div>
+      
+      {/* Preview Section */}
+      <div className="flex items-center gap-3 mt-2">
+        {form.imgStandard ? (
+          <>
+            <img src={form.imgStandard} alt="Standard Production Preview" className="w-20 h-20 object-cover rounded border" onClick={() => openImagePreview(form.imgStandard!, "Hình ảnh Standard Production")} />
+            <button
+              type="button"
+              onClick={() => openImagePreview(form.imgStandard!, "Hình ảnh Standard Production")}
+              className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+            >
+              <IoEyeSharp size={20} />
+              <span className="text-sm">Xem hình ảnh</span>
+            </button>
+          </>
+        ) : (
+          <div className="flex items-center gap-2 text-gray-400">
+            <FaEyeSlash size={20} />
+            <span className="text-sm">Chưa có hình ảnh</span>
+          </div>
+        )}
+      </div>
+
   </div>
 </Modal>
+<ImagePreviewModal
+    isOpen={imagePreview.isOpen}
+    imageUrl={imagePreview.imageUrl}
+    title={imagePreview.title}
+    onClose={closeImagePreview}
+  />
     </div>
   );
 };

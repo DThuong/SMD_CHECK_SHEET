@@ -649,14 +649,6 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                               <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
                                 ID: {sheet.id}
                               </span>
-
-                              {/* 🔒 ICON KHÓA nếu không có quyền */}
-                              {!canViewDetail(sheet) && (
-                                <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold flex items-center gap-1">
-                                  <AiOutlineLock className="w-3 h-3" />
-                                  Bị khóa
-                                </span>
-                              )}
                               
                               {/* Created By */}
                               {sheet.account && (
@@ -672,6 +664,14 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                               
                               {/* Status Badge */}
                               {getStatusBadge(sheet)}
+
+                                                            {/* 🔒 ICON KHÓA nếu không có quyền */}
+                              {!canViewDetail(sheet) && (
+                                <span className="px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-semibold flex items-center gap-1">
+                                  <AiOutlineLock size={13} />
+                                  Bị khóa
+                                </span>
+                              )}
                             </div>
                           </div>
 
@@ -680,11 +680,21 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                             <button
                               onClick={() => handleViewDetail(sheet)}
                               disabled={!canViewDetail(sheet)}
-                              className={`w-full lg:w-auto px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
-                                canViewDetail(sheet)
-                                  ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
-                                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                              }`}
+                              className={`
+                                w-full 
+                                lg:min-w-[150px] 
+                                whitespace-nowrap 
+                                px-4 py-2 
+                                rounded-lg 
+                                transition-colors 
+                                text-sm 
+                                font-medium 
+                                ${
+                                  canViewDetail(sheet)
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }
+                              `}
                             >
                               {canViewDetail(sheet) ? 'Xem chi tiết' : 'Không có quyền'}
                             </button>

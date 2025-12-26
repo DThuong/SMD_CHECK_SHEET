@@ -1,6 +1,8 @@
+// src/pages/Settings/Settings.tsx
 import { useTheme } from '../../contexts/ThemeContext';
-import { useTranslation } from 'react-i18next';
-import { HiSun, HiMoon, HiGlobeAlt } from 'react-icons/hi';
+import { HiSun, HiMoon, HiGlobeAlt, HiCheckCircle } from 'react-icons/hi';
+import { useState, useEffect } from 'react';
+import { autoTranslateService } from '../../utils/autoTranslateService';
 
 interface Language {
   code: string;
@@ -17,21 +19,48 @@ const languages: Language[] = [
 
 const Settings = () => {
   const { theme, toggleTheme } = useTheme();
-  const { t, i18n } = useTranslation('settings');
+  const [currentLang, setCurrentLang] = useState(() => {
+    return localStorage.getItem('appLanguage') || 'vi';
+  });
+  const [isTranslating, setIsTranslating] = useState(false);
 
-  const changeLanguage = (langCode: string) => {
-    i18n.changeLanguage(langCode);
+  const changeLanguage = async (langCode: string) => {
+    if (langCode === currentLang || isTranslating) return;
+    
+    setIsTranslating(true);
+    
+    try {
+      await autoTranslateService.translatePage(langCode);
+      setCurrentLang(langCode);
+    } catch (error) {
+      console.error('Translation failed:', error);
+      alert('Không thể đổi ngôn ngữ. Vui lòng thử lại.');
+    } finally {
+      setIsTranslating(false);
+    }
   };
 
-  const currentLanguage = languages.find(lang => lang.code === i18n.language);
+  const currentLanguage = languages.find(lang => lang.code === currentLang);
 
   return (
     <div className="max-w-7xl">
+      {/* Loading Overlay */}
+      {isTranslating && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            <p className="mt-4 text-gray-800 dark:text-white font-medium">
+              Đang dịch nội dung...
+            </p>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
         Cài đặt
       </h1>
 
-      {/* Theme Settings Card */}
+      {/* Theme Settings */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-4">
         <div className="flex items-center justify-between">
           <div>
@@ -39,13 +68,13 @@ const Settings = () => {
               Chế độ sáng/tối
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Mô tả Theme
+              Chuyển đổi giữa chế độ sáng và tối
             </p>
           </div>
 
           <button
             onClick={toggleTheme}
-            className="relative inline-flex items-center h-12 w-24 rounded-full! bg-gray-300 dark:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+            className="relative inline-flex items-center h-12 w-24 rounded-full bg-gray-300 dark:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
           >
             <span
               className={`h-10 w-10 transform rounded-full bg-white shadow-lg transition-transform flex items-center justify-center ${
@@ -60,66 +89,79 @@ const Settings = () => {
             </span>
           </button>
         </div>
-
-        <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Chế độ hiện tại: <span className="font-semibold capitalize">{theme}</span>
-          </p>
-        </div>
       </div>
 
-      {/* Language Settings Card */}
+      {/* Language Settings */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-medium text-gray-800 dark:text-white flex items-center gap-1">
-              <HiGlobeAlt size={30} />
-              Ngôn ngữ
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Mô tả ngôn ngữ
-            </p>
-          </div>
+        <div className="flex items-center gap-2 mb-4">
+          <HiGlobeAlt size={24} className="text-gray-800 dark:text-white" />
+          <h3 className="text-lg font-medium text-gray-800 dark:text-white">
+            Ngôn ngữ
+          </h3>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {languages.map((lang) => (
-            <button
-              key={lang.code}
-              onClick={() => changeLanguage(lang.code)}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                i18n.language === lang.code
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{lang.flag}</span>
-                  <div className="text-left">
-                    <p className="font-medium text-gray-800 dark:text-white">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {languages.map((lang) => {
+            const isActive = currentLang === lang.code;
+            
+            return (
+              <button
+                key={lang.code}
+                onClick={() => changeLanguage(lang.code)}
+                disabled={isTranslating}
+                className={`
+                  relative p-5 rounded-xl border-2 transition-all duration-300
+                  ${isActive
+                    ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 shadow-lg'
+                    : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md'
+                  }
+                  ${isTranslating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                `}
+              >
+                {isActive && (
+                  <div className="absolute -top-2 -right-2">
+                    <HiCheckCircle className="w-8 h-8 text-blue-500 bg-white dark:bg-gray-800 rounded-full" />
+                  </div>
+                )}
+
+                <div className="flex flex-col items-center gap-3">
+                  <span className="text-5xl">{lang.flag}</span>
+                  <div className="text-center">
+                    <p className={`font-bold text-lg ${
+                      isActive 
+                        ? 'text-blue-600 dark:text-blue-400' 
+                        : 'text-gray-800 dark:text-white'
+                    }`}>
                       {lang.nativeName}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {lang.name}
                     </p>
                   </div>
                 </div>
-                {i18n.language === lang.code && (
-                  <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Ngôn ngữ hiện tại: <span className="font-semibold">{currentLanguage?.nativeName}</span>
+        <div className="mt-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg">
+          <div className="flex items-center gap-3">
+            <HiGlobeAlt className="w-6 h-6 text-blue-500" />
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Ngôn ngữ hiện tại
+              </p>
+              <p className="text-base font-bold text-gray-800 dark:text-white">
+                {currentLanguage?.nativeName} {currentLanguage?.flag}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded">
+          <p className="text-sm text-blue-800 dark:text-blue-300">
+            💡 <strong>Lưu ý:</strong> Toàn bộ nội dung trang sẽ được dịch tự động. 
+            Bạn không cần sửa bất kỳ component nào.
           </p>
         </div>
       </div>

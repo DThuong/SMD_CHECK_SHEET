@@ -107,6 +107,7 @@ export interface PQCCheckData {
   endLCR?: string;
   nameCheck?: string;
   resultLCR?: boolean;
+  imgIC?: string;
 }
 
 // ==================== STATE ====================
@@ -333,6 +334,25 @@ export const uploadAOIImage = createAsyncThunk(
     }
   }
 );
+
+// upload pqc image
+export const uploadPQCCheckImage = createAsyncThunk(
+  'subTable/uploadPQCCheckImage',
+  async ({ pqcCheckId, file }: { pqcCheckId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await smdApi.put(`PQCCheck/image/${pqcCheckId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải PQCCheck');
+    }
+  }
+)
 // ==================== SLICE ====================
 
 const subTableSlice = createSlice({
@@ -644,6 +664,24 @@ builder
       }
     })
     .addCase(uploadStandardProductionFile.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    // upload pqc check Image
+    builder
+    .addCase(uploadPQCCheckImage.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    })
+    .addCase(uploadPQCCheckImage.fulfilled, (state, action) => {
+      state.loading = false;
+      // Cập nhật URL hình ảnh nếu backend trả về
+      if (state.pqcCheck && action.payload?.imageUrl) {
+        state.pqcCheck.imgIC = action.payload.imageUrl;
+      }
+    })
+    .addCase(uploadPQCCheckImage.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload as string;
     });

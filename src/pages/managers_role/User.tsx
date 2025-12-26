@@ -384,13 +384,6 @@ const User = () => {
                 <FaUserPlus />
                 Thêm người dùng
               </button>
-              <button
-                onClick={() => setShowFilterModal(true)}
-                className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md"
-              >
-                <FaFilter />
-                Lọc theo ID
-              </button>
             </div>
           </div>
 

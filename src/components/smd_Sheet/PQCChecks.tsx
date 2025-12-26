@@ -3,10 +3,14 @@ import { useState, useEffect } from "react"
 import Modal from "../general/Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchPQCCheck, updatePQCCheck } from "../../redux/slices/subTableSlice";
-import type { PQCCheckData } from "../../redux/slices/subTableSlice";
+import { uploadPQCCheckImage, type PQCCheckData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import { formatDateTime } from "../../utils/formatTime";
+import ImageViewIcon from "../files/ImageViewIcon";
+import { FaCamera } from "react-icons/fa6";
+import { IoEyeSharp } from "react-icons/io5";
+import ImagePreviewModal from "../files/ImagePreviewModal";
 
 const initialPQCChecksState: PQCCheckData = {
   id: undefined,
@@ -17,7 +21,8 @@ const initialPQCChecksState: PQCCheckData = {
   startLCR: "",
   endLCR: "",
   nameCheck: "",
-  resultLCR: false
+  resultLCR: false,
+  imgIC: ""
 };
 
 const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
@@ -34,6 +39,72 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
        const pqcCheckId = currentSheet?.pqcCheckId || pqcCheck?.id;
        const isSaved = completedTables.includes('PQCCheck');
        const { notification, showNotification, hideNotification } = useNotification();
+
+         // xử lý upload hình ảnh + preview modal
+  const [imagePreview, setImagePreview] = useState<{
+    isOpen: boolean;
+    imageUrl: string;
+    title: string;
+  }>({
+    isOpen: false,
+    imageUrl: "",
+    title: ""
+  });
+
+  // hàm mở preview
+  const openImagePreview = (imageUrl: string, title: string) => {
+    setImagePreview({
+      isOpen: true,
+      imageUrl,
+      title
+    });
+  };
+
+  // hàm đóng preview
+  const closeImagePreview = () => {
+    setImagePreview({
+      isOpen: false,
+      imageUrl: "",
+      title: ""
+    });
+  };
+
+    // xử lý upload hình ảnh
+    const handleImageUpload = async (field: 'imgIC', event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+    
+      if (!pqcCheckId) {
+        showNotification('error', 'Lỗi upload', 'Không tìm thấy StandardProduction ID');
+        return;
+      }
+    
+      try {
+        // Upload file lên server (KHÔNG hiển thị preview base64 nữa)
+        if (field === 'imgIC') {
+          const result = await dispatch(uploadPQCCheckImage({ 
+            pqcCheckId: Number(pqcCheckId), 
+            file 
+          })).unwrap();
+          
+          // Cập nhật URL từ server vào form
+          if (result?.imageUrl) {
+            set(field, result.imageUrl);
+          }
+          
+          showNotification('success', 'Thành công', 'Upload hình ảnh Standard Production thành công');
+        }
+    
+        // Fetch lại data để đảm bảo sync với server
+        if (pqcCheckId) {
+          await dispatch(fetchPQCCheck(pqcCheckId)).unwrap();
+        }
+      } catch (error) {
+        console.error('Failed to upload image:', error);
+        showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
+      }
+    };
+    
    
        // fetch data khi programcheck thay đổi
        useEffect(() => {
@@ -161,6 +232,21 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
           </div>
         </td>
       </tr>
+      {/** Row 36: pqc image */}
+      <tr>
+        <td colSpan={1} className="border border-gray-300 px-2 py-2 text-xs bg-gray-100 font-bold">Hình ảnh IC</td>
+        <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs">
+            <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center gap-2">
+                <ImageViewIcon 
+                  imageUrl={form.imgIC || "" } 
+                  title="Hình ảnh Standard Production"
+                  onView={openImagePreview}
+                />
+              </div>
+            </div>
+        </td>
+      </tr>
     </tbody>
   </table>
 </div>
@@ -219,10 +305,22 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
             </div>
           </div>
 
-          <div className="mb-0 min-w-0">
+          <div className="mb-3 min-w-0">
             <div className="text-xs font-semibold text-gray-600 mb-1">Kết quả đo LCR</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
               {form.resultLCR ? "OK" : "NG"}
+            </div>
+          </div>
+
+          {/** Hình ảnh image ic */}
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh image IC</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
+              <ImageViewIcon 
+                imageUrl={form.imgIC} 
+                title="Hình ảnh image IC"
+                onView={openImagePreview}
+              />
             </div>
           </div>
         </div>
@@ -264,7 +362,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
             />
           </label>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <label className="text-xs">
               Tuner
               <input
@@ -312,8 +410,71 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
             <input type="checkbox" checked={form.resultLCR} onChange={(e) => set("resultLCR", e.target.checked)} />
           </div>
 
+             <label className="block text-sm font-medium mb-1">Hình ảnh Standard Production</label>
+                <div className="">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload('imgIC', e)}
+                    className="border border-gray-300 rounded px-3 py-2 w-full"
+                  />
+                </div>
+          
+                
+                      <div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(e) => handleImageUpload('imgIC', e)}
+                        className="hidden"
+                        id="camera-capture-standard-production"
+                      />
+                      <label
+                      htmlFor="camera-capture-standard-production"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
+                    >
+                      {/* Thêm display: inline-block hoặc inline-flex */}
+                        <div className="inline-flex items-center">
+                          <FaCamera size={15} />
+                        </div>
+                        <div className="inline-flex items-center mx-2">
+                          Chụp ảnh Standard Production
+                        </div>
+                    </label>
+                    </div>
+                
+                {/* Preview Section */}
+                {form.imgIC && (
+                <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src={form.imgIC} 
+                      alt="Standard Production Preview" 
+                      className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
+                      onClick={() => openImagePreview(form.imgIC!, "Hình ảnh Standard Production")} 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => openImagePreview(form.imgIC!, "Hình ảnh Standard Production")}
+                      className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+                    >
+                      <IoEyeSharp size={20} />
+                      <span className="text-sm font-medium">Xem ảnh</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
         </div>
       </Modal>
+      <ImagePreviewModal
+        isOpen={imagePreview.isOpen}
+        imageUrl={imagePreview.imageUrl}
+        title={imagePreview.title}
+        onClose={closeImagePreview}
+      />
     </div>
   )
 }

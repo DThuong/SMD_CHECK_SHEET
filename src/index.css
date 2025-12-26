@@ -146,3 +146,55 @@ input{
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* Ẩn banner Google Translate */
+.goog-te-banner-frame.skiptranslate {
+  display: none !important;
+}
+
+/* Fix body bị đẩy xuống */
+body {
+  top: 0px !important;
+  position: static !important;
+}
+
+/* Ẩn widget mặc định */
+.goog-te-gadget {
+  display: none !important;
+}
+
+/* Ẩn logo Google */
+.goog-logo-link {
+  display: none !important;
+}
+
+.goog-te-gadget img {
+  display: none !important;
+}
+
+/* Ẩn powered by Google */
+.goog-te-gadget span {
+  display: none !important;
+}
+
+/* Style cho iframe */
+.goog-te-banner-frame {
+  display: none !important;
+}
+
+/* Ẩn nút close của Google */
+.goog-close-link {
+  display: none !important;
+}
+
+/* Fix cho select element bị ẩn */
+#google_translate_element {
+  position: fixed;
+  bottom: -9999px;
+  left: -9999px;
+  visibility: hidden;
+}
+
+#google_translate_element select {
+  visibility: hidden !important;
+}

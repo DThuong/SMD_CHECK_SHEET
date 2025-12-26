@@ -1,14 +1,14 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import CheckModels from "./smd_Sheet/CheckModels";
-import PQCChecks from "./smd_Sheet/PQCChecks";
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import CheckModels from "../smd_Sheet/CheckModels";
+import PQCChecks from "../smd_Sheet/PQCChecks";
 // import ProgramChecks from "./smd_Sheet/ProgramChecks";
-import SheetHeader from "./smd_Sheet/SheetHeader";
-import StandardProductionSection from "./smd_Sheet/StandardProductions";
-import StandardVehicles from "./smd_Sheet/StandardVehicles";
-import TimeChangeModels from "./smd_Sheet/TimeChangeModels";
-import type { ChangeModelResponse } from '../redux/slices/changeModelSlice';
+import SheetHeader from "../smd_Sheet/SheetHeader";
+import StandardProductionSection from "../smd_Sheet/StandardProductions";
+import StandardVehicles from "../smd_Sheet/StandardVehicles";
+import TimeChangeModels from "../smd_Sheet/TimeChangeModels";
+import type { ChangeModelResponse } from '../../redux/slices/changeModelSlice';
 import { FaRegClock } from "react-icons/fa";
 import { 
   setCheckModel,
@@ -17,16 +17,17 @@ import {
   setStandardVehicle,
   setPQCCheck,
   clearAllSubTableData,
-  addCompletedTable
-} from '../redux/slices/subTableSlice';
+  addCompletedTable,
+  resetCompletedTables
+} from '../../redux/slices/subTableSlice';
 import { 
   getSheetWithFullObject, 
   updateSheetStatusToPQCDone,
   clearError 
-} from '../redux/slices/changeModelSlice';
-import { useNotification } from '../redux/hooks';
-import Notification from './Notification';
-import { REQUIRED_FIELDS_CONFIG, hasAllRequiredData, getMissingFields } from '../utils/requiredFieldsConfig';
+} from '../../redux/slices/changeModelSlice';
+import { useNotification } from '../../redux/hooks';
+import Notification from '../general/Notification';
+import { REQUIRED_FIELDS_CONFIG, hasAllRequiredData, getMissingFields } from '../../utils/requiredFieldsConfig';
 
 const SmdSheetDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -41,6 +42,10 @@ const SmdSheetDetail = () => {
 
   // thông báo
   const { notification, showNotification, hideNotification } = useNotification();
+
+  useEffect(() => {
+    dispatch(resetCompletedTables());
+  }, [id, dispatch]);
 
   // Load dữ liệu sheet từ Redux action
   useEffect(() => {
@@ -120,6 +125,7 @@ const SmdSheetDetail = () => {
     // Cleanup khi unmount
     return () => {
       dispatch(clearAllSubTableData());
+      dispatch(resetCompletedTables());
       dispatch(clearError());
     };
   }, [id, dispatch]);
@@ -328,7 +334,7 @@ const SmdSheetDetail = () => {
           .pointer-events-none select {
             cursor: not-allowed !important;
             background-color: #f9fafb !important;
-            opacity: 0.7;
+            opacity: 1;
           }
           .pointer-events-none input:focus,
           .pointer-events-none textarea:focus,

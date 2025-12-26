@@ -1,71 +1,50 @@
-import { useEffect, useState } from "react";
-import Modal from "../Modal";
-import ViewDetailButton from "../ViewDetailButton";
+import { useState } from "react";
+import Modal from "../general/Modal";
+import ViewDetailButton from "../general/ViewDetailButton";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { uploadBothFiles } from "../../redux/slices/changeModelSlice";
-import { addCompletedTable } from "../../redux/slices/subTableSlice";
-import { useNotification } from "../../redux/hooks"; // Import từ hooks
-import Notification from "../Notification";
+import { useNotification } from "../../redux/hooks";
+import Notification from "../general/Notification";
 import { useNavigate } from "react-router-dom";
-type SheetHeaderProps = {
-  lcr?: File | undefined;
-  reflow?: File | undefined;
-};
+import { IoEyeSharp } from "react-icons/io5";
 
-const initialHeaderProps: SheetHeaderProps = {
-  lcr: undefined,
-  reflow: undefined,
-};
+interface FileUploadState {
+  lcr?: File;
+  reflow?: File;
+}
 
 const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
   const dispatch = useAppDispatch();
   const { currentSheet, error, uploadLoading } = useAppSelector((state) => state.changeModel);
-  const { completedTables } = useAppSelector(state => state.subTable);
-  const isCompleted = completedTables.includes('SheetHeader');
-
+  
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<SheetHeaderProps>(initialHeaderProps);
-  const [tempForm, setTempForm] = useState<SheetHeaderProps>(initialHeaderProps);
+  const [tempFileState, setTempFileState] = useState<FileUploadState>({});
+  
   const { user } = useAppSelector(state => state.auth);
   const navigate = useNavigate();
-
-  // Hook notification
   const { notification, showNotification, hideNotification } = useNotification();
 
-  // component mount lần đầu, reset state
-  useEffect(() => {
-    if (currentSheet) {
-      setForm({
-        lcr: undefined,
-        reflow: undefined
-      });
-    }
-  }, [currentSheet]);
+    console.log('🔍 SheetHeader Debug:', {
+    sheetId: currentSheet?.id,
+    excelFileUrl: currentSheet?.excelFileUrl,
+    excelFileUrlType: typeof currentSheet?.excelFileUrl,
+    excelFileUrlLength: currentSheet?.excelFileUrl?.length,
+    pdfFileUrl: currentSheet?.pdfFileUrl,
+    pdfFileUrlType: typeof currentSheet?.pdfFileUrl,
+    pdfFileUrlLength: currentSheet?.pdfFileUrl?.length,
+  });
 
-  useEffect(() => {
-    const hasExcelFile = currentSheet?.excelFileUrl || form.lcr;
-    const hasPdfFile = currentSheet?.pdfFileUrl || form.reflow;
-    
-    if (hasExcelFile && hasPdfFile && !isCompleted) {
-      console.log('✅ Both files uploaded, marking SheetHeader as completed');
-      dispatch(addCompletedTable('SheetHeader'));
-    }
-  }, [currentSheet, form, dispatch, isCompleted]);
+  const setFile = (key: keyof FileUploadState, file?: File) => {
+    setTempFileState(prev => ({ ...prev, [key]: file }));
+  };
 
-  const set = <K extends keyof SheetHeaderProps>(k: K, v: SheetHeaderProps[K]) =>
-    setTempForm((s) => ({ ...s, [k]: v }));
-
-  /**
-   * ✅ Hàm xử lý khi nhấn nút Lưu trong Modal.
-   */
   const submit = async () => {
     if (!currentSheet?.id) {
       showNotification('error', 'Lỗi', 'Không tìm thấy Change Model ID!');
       return;
     }
 
-    // ✅ VALIDATION: Kiểm tra CẢ HAI file phải có
-    if (!tempForm.lcr || !tempForm.reflow) {
+    if (!tempFileState.lcr || !tempFileState.reflow) {
       showNotification('warning', 'Thiếu file', 'Làm ơn upload cả 2 file: pdf và excel.');
       return;
     }
@@ -73,33 +52,31 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
     try {
       await dispatch(uploadBothFiles({
         changeModelId: currentSheet.id,
-        excelFile: tempForm.lcr,
-        pdfFile: tempForm.reflow,
+        excelFile: tempFileState.lcr,
+        pdfFile: tempFileState.reflow,
       })).unwrap();
 
-      // ✅ Hiển thị thông báo thành công
       showNotification('success', 'Upload thành công!', 'Cả hai file đã được upload thành công.');
-
-      // Cập nhật form chính sau khi upload thành công
-      setForm(tempForm);
+      setTempFileState({});
       setOpen(false);
     } catch (err: any) {
       showNotification('error', 'Upload thất bại', err?.message || 'Có lỗi xảy ra khi upload file.');
     }
   };
-  
-  /**
-   * Mở modal và đồng bộ hóa state chính vào state tạm thời.
-   */
+
   const handleOpenModal = () => {
-    setTempForm(form);
+    setTempFileState({});
     setOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setTempFileState({});
+    setOpen(false);
   };
 
   const handleViewFiles = () => {
     if (!currentSheet?.id) return;
     
-    // Xác định route dựa trên role
     let basePath = '/pqc-files';
     if (user?.role === 'Admin') {
       basePath = '/admin/files';
@@ -107,38 +84,35 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
       basePath = `/${user.role.toLowerCase()}/files`;
     }
     
-    // Navigate tới file viewer, mặc định hiển thị LCR trước
-    navigate(`${basePath}/${currentSheet.id}/lcr`);
+    navigate(`${basePath}/${currentSheet.id}/reflow`);
   };
 
-  const handleFileChange = (type: keyof SheetHeaderProps, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (type: keyof FileUploadState, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      set(type, file);
-    } else {
-      set(type, undefined);
-    }
+    setFile(type, file);
     e.target.value = ''; 
   };
   
-  // Lấy tên file để hiển thị
-  const lcrName = form.lcr?.name || 
-    (currentSheet?.excelFileUrl ? currentSheet.excelFileUrl.split('/').pop() : 'Chưa có file');
+  const lcrName = currentSheet?.excelFileUrl && currentSheet.excelFileUrl !== ""
+    ? currentSheet.excelFileUrl.split('/').pop() 
+    : 'Chưa có file';
   
-  const reflowName = form.reflow?.name || 
-    (currentSheet?.pdfFileUrl ? currentSheet.pdfFileUrl.split('/').pop() : 'Chưa có file');
-  
-  const tempLcrName = tempForm.lcr?.name || lcrName;
-  const tempReflowName = tempForm.reflow?.name || reflowName;
+  const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl !== ""
+    ? currentSheet.pdfFileUrl.split('/').pop() 
+    : 'Chưa có file';
 
-  const bothFilesUploaded = 
-    (form.lcr || currentSheet?.excelFileUrl) && 
-    (form.reflow || currentSheet?.pdfFileUrl);
+  const modalLcrName = tempFileState.lcr?.name || lcrName;
+  const modalReflowName = tempFileState.reflow?.name || reflowName;
 
-  // *** PHẦN RENDER GIAO DIỆN ***
+  // ✅ CHECK CẢ 2 FILE - DỰA VÀO currentSheet, KHÔNG DỰA VÀO completedTables
+    const bothFilesUploaded = 
+    !!currentSheet?.excelFileUrl && 
+    currentSheet.excelFileUrl.trim() !== "" &&
+    !!currentSheet?.pdfFileUrl && 
+    currentSheet.pdfFileUrl.trim() !== "";
+
   return (
     <div>
-      {/* ✅ Notification Component - ĐẶT Ở NGOÀI CÙNG */}
       <Notification
         show={notification.show}
         type={notification.type}
@@ -148,64 +122,44 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
       />
 
       <div className="p-0 w-full">
-        {/* ✅ Badge hiển thị khi đã upload đủ */}
-        {bothFilesUploaded && isCompleted && (
+        {/* CHỈ HIỂN THỊ KHI CẢ 2 ĐIỀU KIỆN ĐỀU ĐÚNG */}
+          {bothFilesUploaded && (
           <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-xs text-green-800 font-semibold flex items-center gap-2 mb-0">
               ✓ Cả hai file đã được upload thành công.
             </p>
           </div>
         )}
-
-        {/* Website View - Bảng ngang */}
+        {/* Website View */}
         <div className="hidden lg:block w-full overflow-x-auto">
           <table className="border border-gray-600 w-full min-w-[1400px] text-center">
             <thead>
-              {/* Row 1 - Main Header */}
               <tr>
-                <th
-                  rowSpan={2}
-                  colSpan={7}
-                  className="border border-gray-600 px-4 py-6 text-2xl font-bold text-left"
-                >
+                <th rowSpan={2} colSpan={7} className="border border-gray-600 px-4 py-6 text-2xl font-bold text-left">
                   SMD Check Sheet Change Model
                 </th>
-                <th
-                  rowSpan={2}
-                  className="border border-gray-600 px-2 py-2 text-sm font-bold bg-gray-100"
-                  style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
-                >
+                <th rowSpan={2} className="border border-gray-600 px-2 py-2 text-sm font-bold bg-gray-100"
+                  style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
                   PQC SMD
                 </th>
-                <th
-                  rowSpan={2}
-                  className="border border-gray-600 px-2 py-2 text-sm font-bold bg-gray-100"
-                  style={{ textOrientation: 'mixed' }}
-                >
+                <th rowSpan={2} className="border border-gray-600 px-2 py-2 text-sm font-bold bg-gray-100"
+                  style={{ textOrientation: 'mixed' }}>
                   FILE ATTACH
                 </th>
-                <th
-                  colSpan={2}
-                  className="border border-gray-600 px-2 py-1 text-xs font-semibold bg-gray-100"
-                >
-                    LCR FILE (xlsx)
+                <th colSpan={2} className="border border-gray-600 px-2 py-1 text-xs font-semibold bg-gray-100">
+                  LCR FILE (xlsx)
                 </th>
-                <th
-                  colSpan={2}
-                  className="border border-gray-600 px-2 py-1 text-xs font-semibold bg-gray-100"
-                >
-                    REFLOW FILE (pdf)
+                <th colSpan={2} className="border border-gray-600 px-2 py-1 text-xs font-semibold bg-gray-100">
+                  REFLOW FILE (pdf)
                 </th>
               </tr>
 
-              {/* Row 2 - File Display */}
               <tr>
-                {/* LCR FILE Display */}
                 <td colSpan={2} className={`border border-gray-600 px-2 py-1 text-xs text-left ${
-                  form.lcr || currentSheet?.excelFileUrl ? 'bg-green-50' : 'bg-orange-50'
+                  currentSheet?.excelFileUrl ? 'bg-green-50' : 'bg-orange-50'
                 }`}>
                   <div className="text-sm font-semibold truncate text-gray-800">
-                    {form.lcr || currentSheet?.excelFileUrl ? (
+                    {currentSheet?.excelFileUrl || currentSheet?.excelFileUrl === "" ? (
                       <>✓ {lcrName}</>
                     ) : (
                       <>⚠️ Chưa upload</>
@@ -213,12 +167,11 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
                   </div>
                 </td>
 
-                {/* REFLOW FILE Display */}
                 <td colSpan={2} className={`border border-gray-600 px-2 py-1 text-xs text-left ${
-                  form.reflow || currentSheet?.pdfFileUrl ? 'bg-green-50' : 'bg-orange-50'
+                  currentSheet?.pdfFileUrl ? 'bg-green-50' : 'bg-orange-50'
                 }`}>
                   <div className="text-sm font-semibold truncate text-gray-800">
-                    {form.reflow || currentSheet?.pdfFileUrl ? (
+                    {currentSheet?.pdfFileUrl || currentSheet?.pdfFileUrl === ""  ? (
                       <>✓ {reflowName}</>
                     ) : (
                       <>⚠️ Chưa upload</>
@@ -230,7 +183,7 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
           </table>
         </div>
 
-        {/* Mobile View - Card dọc */}
+        {/* Mobile View */}
         <div className="lg:hidden">
           <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm" onClick={handleOpenModal}>
             <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">
@@ -238,27 +191,29 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
             </h3>
 
             <div className="grid grid-cols-2 gap-4 mb-3">
-              {/* LCR File Mobile Display */}
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-gray-600 mb-1">lcr file (xlsx)</div>
                 <div className={`w-full text-sm px-2 py-1 border rounded truncate overflow-hidden ${
-                  form.lcr || currentSheet?.excelFileUrl 
+                  currentSheet?.excelFileUrl 
                     ? 'bg-green-50 border-green-300 text-green-800' 
                     : 'bg-red-50 border-red-300 text-red-800'
                 }`}>
-                  {form.lcr || currentSheet?.excelFileUrl ? `✓ ${lcrName}` : `⚠️ Chưa upload`}
+                  {currentSheet?.excelFileUrl 
+                    ? `✓ ${lcrName}` 
+                    : `⚠️ Chưa upload`}
                 </div>
               </div>
 
-              {/* Reflow File Mobile Display */}
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-gray-600 mb-1">reflow file (pdf)</div>
                 <div className={`w-full text-sm px-2 py-1 border rounded truncate overflow-hidden ${
-                  form.reflow || currentSheet?.pdfFileUrl 
+                  currentSheet?.pdfFileUrl 
                     ? 'bg-green-50 border-green-300 text-green-800' 
                     : 'bg-red-50 border-red-300 text-red-800'
                 }`}>
-                  {form.reflow || currentSheet?.pdfFileUrl ? `✓ ${reflowName}` : `⚠️ Chưa upload`}
+                  {currentSheet?.pdfFileUrl 
+                    ? `✓ ${reflowName}` 
+                    : `⚠️ Chưa upload`}
                 </div>
               </div>
             </div>
@@ -267,36 +222,36 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
 
         {/* Buttons */}
         <div className="flex flex-row justify-end w-full gap-2 mt-3">
-          {/* Thêm button xem file */}
           {bothFilesUploaded && (
             <ViewDetailButton 
               onOpen={handleViewFiles}
               disabled={false}
             >
-              👁️ Xem chi tiết
+              <div className="flex gap-2 items-center justify-center">
+                <div><IoEyeSharp size={20} /></div> <div>Xem chi tiết</div>
+              </div>
             </ViewDetailButton>
           )}
+          
           <ViewDetailButton onOpen={handleOpenModal} disabled={!canEdit}>
             Chỉnh sửa
           </ViewDetailButton>
         </div>
 
-        {/* Modal để chỉnh sửa/tải lên file */}
+        {/* Modal */}
         <Modal
           open={open}
           title="Upload LCR & REFLOW Files"
-          onClose={() => setOpen(false)}
+          onClose={handleCloseModal}
           onSave={submit}
         >
           <div className="grid gap-4 max-h-[60vh] overflow-y-auto">
-            {/* Loading state */}
             {uploadLoading && (
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
                 <p className="text-sm text-blue-600 font-semibold">⏳ Đang tải...</p>
               </div>
             )}
 
-            {/* Error display */}
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-sm text-red-600 font-semibold">❌ {error}</p>
@@ -307,11 +262,11 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
             <div className="p-3 border rounded-lg bg-gray-50">
               <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
                 lcr file (xlsx) <span className="text-red-500">*</span>
-                {tempForm.lcr && <span className="text-green-600 text-xs">✓</span>}
+                {tempFileState.lcr && <span className="text-green-600 text-xs">✓</span>}
               </h4>
               
               <p className="text-xs text-gray-600 mb-2 truncate">
-                File hiện tại: <strong>{tempLcrName}</strong>
+                File hiện tại: <strong>{modalLcrName}</strong>
               </p>
 
               <label className="text-xs block mb-2 w-full">
@@ -325,10 +280,10 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
                 />
               </label>
               
-              {tempForm.lcr && (
+              {tempFileState.lcr && (
                 <button
                   type="button"
-                  onClick={() => set("lcr", undefined)}
+                  onClick={() => setFile("lcr", undefined)}
                   disabled={uploadLoading}
                   className="w-full text-xs px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
@@ -341,11 +296,11 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
             <div className="p-3 border rounded-lg bg-gray-50">
               <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
                 reflow file (pdf) <span className="text-red-500">*</span>
-                {tempForm.reflow && <span className="text-green-600 text-xs">✓</span>}
+                {tempFileState.reflow && <span className="text-green-600 text-xs">✓</span>}
               </h4>
               
               <p className="text-xs text-gray-600 mb-2 truncate">
-                File hiện tại: <strong>{tempReflowName}</strong>
+                File hiện tại: <strong>{modalReflowName}</strong>
               </p>
 
               <label className="text-xs block mb-2 w-full">
@@ -359,10 +314,10 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
                 />
               </label>
               
-              {tempForm.reflow && (
+              {tempFileState.reflow && (
                 <button
                   type="button"
-                  onClick={() => set("reflow", undefined)}
+                  onClick={() => setFile("reflow", undefined)}
                   disabled={uploadLoading}
                   className="w-full text-xs px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >

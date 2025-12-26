@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import CheckModels from "./smd_Sheet/CheckModels";
 import PQCChecks from "./smd_Sheet/PQCChecks";
 // import ProgramChecks from "./smd_Sheet/ProgramChecks";
@@ -11,7 +10,7 @@ import type { ChangeModelResponse } from '../redux/slices/changeModelSlice';
 import { updateSheetStatusToPQCDone } from '../redux/slices/changeModelSlice';
 import { useState, useEffect } from 'react';
 import { useNotification } from '../redux/hooks';
-import Notification from '../components/Notification';
+import Notification from './general/Notification';
 
 interface SmdSheetUserProps {
   sheetData?: ChangeModelResponse;
@@ -22,43 +21,24 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
   const { user } = useAppSelector(state => state.auth);
   const { completedTables, success: subTableSuccess, lastUpdatedTable } = useAppSelector(state => state.subTable);
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
 
   const [isCompleting, setIsCompleting] = useState(false);
 
-  // ✅ Hook notification thống nhất
+  // Hook notification thống nhất
   const { notification, showNotification, hideNotification } = useNotification();
 
-  // ✅ Notification khi update sub-table thành công
+  // Notification khi update sub-table thành công
   useEffect(() => {
     if (subTableSuccess && lastUpdatedTable) {
       showNotification('success', 'Cập nhật thành công!', lastUpdatedTable);
     }
   }, [subTableSuccess, lastUpdatedTable]);
 
-  // Check quyền
-  if (user?.role !== 'PQC') {
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <h2 className="text-xl font-bold text-red-800 mb-2">❌ Không có quyền truy cập</h2>
-          <p className="text-red-700">Chỉ PQC mới có thể tạo sheet mới.</p>
-          <button
-            onClick={() => navigate('/logs')}
-            className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Đi đến Logs
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   // Check toàn bộ các bảng đã complete hay chưa ?
   const requiredTables = ['CheckModel', 'ProgramCheck', 'StandardProduction', 'TimeChangeModel', 'StandardVehicle', 'PQCCheck', 'SheetHeader'];
   const allTablesCompleted = requiredTables.every(table => completedTables.includes(table));
 
-  // ✅ HANDLE COMPLETE SHEET
+  // HANDLE COMPLETE SHEET
   const handleCompleteSheet = async () => {
     if (!sheetData?.id) {
       showNotification('error', 'Không có sheet data!');

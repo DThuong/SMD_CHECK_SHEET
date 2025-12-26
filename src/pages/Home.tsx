@@ -1,33 +1,40 @@
 import { useState, useEffect, useRef } from 'react';
 import SmdSheetUser from "../components/SmdSheetUser";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AiOutlineSearch, AiOutlineClose } from 'react-icons/ai';
 import { MdFavoriteBorder } from "react-icons/md";
 import { BsCalendarDate } from "react-icons/bs";
 import { FaRegClock } from "react-icons/fa";
 import { Link } from 'react-router-dom';
 import ReactPaginate from 'react-paginate';
-
+import { getSheetWithFullObject } from '../redux/slices/changeModelSlice';
 // redux
 import { useAppSelector, useAppDispatch } from '../redux/hooks';
 import { createChangeModel, clearSheet, clearError, setCurrentSheet } from '../redux/slices/changeModelSlice';
-import { clearAllSubTableData } from '../redux/slices/subTableSlice';
+import { addCompletedTable, clearAllSubTableData, resetCompletedTables, setCheckModel, setPQCCheck, setStandardProduction, setStandardVehicle, setTimeChangeModel } from '../redux/slices/subTableSlice';
 import { getSheetByFilter, fetchChangeModel } from '../redux/slices/changeModelSlice';
 import type { ChangeModelResponse } from '../redux/slices/changeModelSlice';
 import { useNotification } from '../redux/hooks';
-import Notification from '../components/Notification';
+import Notification from '../components/general/Notification';
+import { hasAllRequiredData, REQUIRED_FIELDS_CONFIG } from '../utils/requiredFieldsConfig';
+import { AiOutlineLock } from 'react-icons/ai'; 
 
 type SheetFilter = {
   workOrder: string;
   fromDate: string;
   toDate: string;
+  fcode: string;
   status: string;
+  id:number;
 };
 
 const Home = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [activeTab, setActiveTab] = useState<'create' | 'list'>('list');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as 'create' | 'list') || 'list';
+  const sheetIdFromUrl = searchParams.get("sheetId");
+  const [activeTab, setActiveTab] = useState<'create' | 'list'>(initialTab);
   const [showSheets, setShowSheets] = useState(false);
   const [loadingSheets, setLoadingSheets] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -35,10 +42,8 @@ const Home = () => {
   const { user, isAuthenticated, loading } = useAppSelector(state => state.auth);
   const { 
     currentSheet, 
-    status,
     loading: creatingSheet, 
     error: sheetError, 
-    success,
     filteredSheets,
     loadingList
   } = useAppSelector(state => state.changeModel);
@@ -53,6 +58,95 @@ const Home = () => {
     }
   }, [loading, isAuthenticated]);
 
+    useEffect(() => {
+    const params: Record<string, string> = { tab: activeTab };
+    
+    // Nếu đang ở tab create VÀ có currentSheet → thêm sheetId vào URL
+    if (activeTab === 'create' && currentSheet?.id) {
+      params.sheetId = currentSheet.id.toString();
+    }
+    
+    setSearchParams(params, { replace: true });
+  }, [activeTab, currentSheet?.id, setSearchParams]);
+
+   // RESTORE SHEET KHI RELOAD (nếu có sheetId trong URL)
+  // RESTORE SHEET + SUB-TABLES KHI RELOAD
+  useEffect(() => {
+    const restoreSheet = async () => {
+      if (activeTab === 'create' && sheetIdFromUrl && !currentSheet) {
+        console.log(`🔄 Restoring sheet from URL: ${sheetIdFromUrl}`);
+        setLoadingSheets(true);
+        
+        //  Reset completed tables trước khi load
+        dispatch(resetCompletedTables());
+        
+        try {
+          //  Load sheet WITH full objects (bao gồm sub-tables)
+          const result = await dispatch(getSheetWithFullObject(Number(sheetIdFromUrl))).unwrap();
+          
+          console.log(' Sheet restored:', result);
+          
+          //  Set main sheet vào Redux
+          dispatch(setCurrentSheet(result));
+          
+          //  LOAD CÁC BẢNG CON VÀO REDUX (giống SmdSheetDetail)
+          
+          // CheckModel
+          if (result.checkModel) {
+            dispatch(setCheckModel(result.checkModel));
+            if (hasAllRequiredData(result.checkModel, REQUIRED_FIELDS_CONFIG.CheckModel)) {
+              dispatch(addCompletedTable('CheckModel'));
+            }
+          }
+          
+          // StandardProduction
+          if (result.standardProduction) {
+            dispatch(setStandardProduction(result.standardProduction));
+            if (hasAllRequiredData(result.standardProduction, REQUIRED_FIELDS_CONFIG.StandardProduction)) {
+              dispatch(addCompletedTable('StandardProduction'));
+            }
+          }
+          
+          // TimeChangeModel
+          if (result.timeChangeModel) {
+            dispatch(setTimeChangeModel(result.timeChangeModel));
+            if (hasAllRequiredData(result.timeChangeModel, REQUIRED_FIELDS_CONFIG.TimeChangeModel)) {
+              dispatch(addCompletedTable('TimeChangeModel'));
+            }
+          }
+          
+          // StandardVehicle
+          if (result.standardVehicle) {
+            dispatch(setStandardVehicle(result.standardVehicle));
+            if (hasAllRequiredData(result.standardVehicle, REQUIRED_FIELDS_CONFIG.StandardVehicle)) {
+              dispatch(addCompletedTable('StandardVehicle'));
+            }
+          }
+          
+          // PQCCheck
+          if (result.pqcCheck) {
+            dispatch(setPQCCheck(result.pqcCheck));
+            if (hasAllRequiredData(result.pqcCheck, REQUIRED_FIELDS_CONFIG.PQCCheck)) {
+              dispatch(addCompletedTable('PQCCheck'));
+            }
+          }
+          
+          setShowSheets(true);
+          
+        } catch (error: any) {
+          console.error('❌ Failed to restore sheet:', error);
+          showNotification('error', 'Lỗi', 'Không thể tải lại sheet. Vui lòng tạo mới.');
+          setActiveTab('list');
+        } finally {
+          setLoadingSheets(false);
+        }
+      }
+    };
+
+    restoreSheet();
+  }, [activeTab, sheetIdFromUrl, currentSheet, dispatch]);
+
+
   // Notification logic
   const [showLoginNoti, setShowLoginNoti] = useState(() => {
   try {
@@ -65,23 +159,10 @@ const Home = () => {
     useEffect(() => {
     if (!showLoginNoti) return;
     try { sessionStorage.removeItem("justLoggedIn"); } catch {}
-    const timer = setTimeout(() => setShowLoginNoti(false), 4000);
+    const timer = setTimeout(() => setShowLoginNoti(false), 2000);
     return () => clearTimeout(timer);
   }, [showLoginNoti]);
 
-  // Notification khi tạo sheet thành công
-  const [showCreateSheetNoti, setShowCreateSheetNoti] = useState(false);
-
-  useEffect(() => {
-    if (success && currentSheet) {
-      setShowCreateSheetNoti(true);
-      const timer = setTimeout(() => {
-        setShowCreateSheetNoti(false);
-        dispatch(clearSheet());
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [success, currentSheet]);
 
   // Notification khi có lỗi
   const [showErrorNoti, setShowErrorNoti] = useState(false);
@@ -101,7 +182,9 @@ const Home = () => {
   const [filter, setFilter] = useState<SheetFilter>({
     workOrder: '',
     fromDate: '',
+    fcode: '',
     toDate: '',
+    id: 0,
     status: 'all'
   });
 
@@ -119,27 +202,29 @@ const Home = () => {
     const hasWorkOrder = filter.workOrder.trim() !== '';
     const hasDateRange = filter.fromDate !== '' && filter.toDate !== '';
     const hasStatus = filter.status !== '' && filter.status !== 'all';
+    const hasFcode = filter.fcode.trim() !== '';
+    const hasId = filter.id && filter.id > 0;
 
     // Có bất kỳ filter nào → Dùng filterAll API
-    if (hasWorkOrder || hasDateRange || hasStatus) {
-      console.log('Using Filter API:', {
+    if (hasWorkOrder || hasDateRange || hasStatus || hasFcode || hasId) {
+      const filterParams: any = {
         workOrder: hasWorkOrder ? filter.workOrder.trim() : undefined,
         fromDate: hasDateRange ? filter.fromDate : undefined,
         toDate: hasDateRange ? filter.toDate : undefined,
         status: hasStatus ? filter.status : undefined,
-      });
-      
-      await dispatch(getSheetByFilter({
-        workOrder: hasWorkOrder ? filter.workOrder.trim() : undefined,
-        fromDate: hasDateRange ? filter.fromDate : undefined,
-        toDate: hasDateRange ? filter.toDate : undefined,
-        status: hasStatus ? filter.status : undefined,
-      })).unwrap();
-      
+        fcode: hasFcode ? filter.fcode.trim() : undefined,
+      };
+
+      //  CHỈ thêm id khi có giá trị > 0
+      if (hasId) {
+        filterParams.id = filter.id;
+      }
+
+      await dispatch(getSheetByFilter(filterParams)).unwrap();
       return;
     }
 
-    // ✅ Không có filter → Load tất cả
+    //  Không có filter → Load tất cả
     console.log('Using Get All API');
     await dispatch(fetchChangeModel()).unwrap();
     
@@ -152,7 +237,7 @@ const Home = () => {
   }
 };
 
-  // ✅ APPLY FILTER - Gọi lại API khi user click "Tìm kiếm"
+  //  APPLY FILTER - Gọi lại API khi user click "Tìm kiếm"
   const applyFilter = () => {
     setCurrentPage(0);
     // Validate date range nếu chỉ có 1 ngày
@@ -179,11 +264,13 @@ const Home = () => {
     loadSheets();
   };
 
-  // ✅ RESET FILTER
+  //  RESET FILTER
   const resetFilter = async () => {
     setFilter({ 
       workOrder: '', 
       fromDate: '', 
+      fcode: '',
+      id: 0,
       toDate: '',
       status: 'all'
     });
@@ -196,7 +283,7 @@ const Home = () => {
     }
   };
 
-  // ✅ FORMAT DATETIME
+  //  FORMAT DATETIME
   const formatDateTime = (dateString?: string): string => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -209,11 +296,11 @@ const Home = () => {
     });
   };
 
-  // ✅ GET STATUS BADGE COLOR & TEXT
+  //  GET STATUS BADGE COLOR & TEXT
   const getStatusBadge = (sheet: ChangeModelResponse) => {
   const status = sheet.status?.toLowerCase();
   
-  // ✅ Kiểm tra xem có phải trạng thái "Done" không
+  //  Kiểm tra xem có phải trạng thái "Done" không
   const isDone = status && status !== 'pending';
   
   // Status label mapping (hiển thị đẹp cho user)
@@ -226,10 +313,10 @@ const Home = () => {
     'koreamanagerdone': 'Korea Manager Done',
   };
 
-  // ✅ Lấy label đẹp
+  //  Lấy label đẹp
   const label = statusLabels[status || 'pending'] || (sheet.status || 'Unknown');
 
-  // ✅ Chọn màu: Pending = Vàng, Done = Xanh lá
+  //  Chọn màu: Pending = Vàng, Done = Xanh lá
   const bgColor = isDone ? 'bg-green-50' : 'bg-yellow-100';
   const textColor = isDone ? 'text-green-700' : 'text-yellow-700';
   const iconColor = isDone ? '#16a34a' : '#FFCC33'; // green-600 : yellow-500
@@ -242,7 +329,35 @@ const Home = () => {
   );
 };
 
-  // ✅ HANDLE CREATE NEW SHEET
+//  KIỂM TRA QUYỀN XEM CHI TIẾT
+const canViewDetail = (sheet: ChangeModelResponse): boolean => {
+  if (!user) return false;
+  // PQC chỉ được xem sheet do chính mình tạo
+  if (user.role?.toUpperCase() === 'PQC') {
+    if (!sheet.account) return false;
+    return sheet.account.id === user.id || sheet.account.userName === user.username;
+  }
+  // Các role khác (ENG, SUPERVISOR, MANAGER, KOREA_MANAGER) có thể xem tất cả
+  return true;
+};
+
+//  HANDLE VIEW DETAIL WITH PERMISSION CHECK
+const handleViewDetail = (sheet: ChangeModelResponse) => {
+  // Kiểm tra quyền
+  if (!canViewDetail(sheet)) {
+    showNotification(
+      'error', 
+      'Không có quyền truy cập', 
+      'Bạn không có quyền xem chi tiết sheet do người khác tạo ra'
+    );
+    return;
+  }
+  
+  // Cho phép xem chi tiết
+  navigate(`/pqc-sheet-detail/${sheet.id}`);
+};
+
+  //  HANDLE CREATE NEW SHEET
   const handleCreateNewSheet = async () => {
     if (user?.role?.toUpperCase() !== 'PQC') {
       showNotification('error', 'Chỉ PQC mới có thể tạo sheet mới');
@@ -258,7 +373,7 @@ const Home = () => {
       
       const result = await dispatch(createChangeModel()).unwrap();
       
-      console.log('✅ Sheet mới đã được tạo:', result);
+      console.log(' Sheet mới đã được tạo:', result);
       setCurrentSheet(result);
       
       await new Promise(res => setTimeout(res, 500));
@@ -271,12 +386,14 @@ const Home = () => {
     }
   };
 
-  // ✅ Sort sheets by date (newest first)
+  // Sort sheets by date (newest first)
   const sortedSheets = [...(filteredSheets || [])].sort((a, b) => {
     const dateA = new Date(a.createAt || 0).getTime();
     const dateB = new Date(b.createAt || 0).getTime();
     return dateB - dateA;
   });
+
+  // pagination cho userSheets
   const pageCount = Math.ceil(sortedSheets.length / itemsPerPage);
   const offset = currentPage * itemsPerPage;
   const currentSheets = sortedSheets.slice(offset, offset + itemsPerPage);
@@ -309,21 +426,6 @@ const Home = () => {
             <p className="text-green-700 text-sm mt-1">
               User: <strong>{user?.username}</strong> - Role: <strong>{user?.role}</strong>
             </p>
-          </div>
-        </div>
-      )}
-
-      {currentSheet && showCreateSheetNoti && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[900px] animate-slide-down">
-          <div className="bg-green-50 border-l-4 border-green-600 p-3 rounded shadow">
-            <p className="font-bold text-green-800 text-lg">✅ Tạo sheet thành công!</p>
-            <div className="text-green-700 text-sm mt-2 space-y-1">
-              <p>Sheet ID: <strong>{currentSheet.id}</strong></p>
-              <p>Status: <strong className="text-green-600">{currentSheet.status}</strong></p>
-              {currentSheet.account && (
-                <p>Người tạo: <strong>{currentSheet.account.fullName}</strong> ({currentSheet.account.role})</p>
-              )}
-            </div>
           </div>
         </div>
       )}
@@ -366,7 +468,7 @@ const Home = () => {
                 : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
-            Tất Cả Sheet
+            Sheet của tôi
           </button>
         </div>
 
@@ -396,7 +498,7 @@ const Home = () => {
             {/* Info banner */}
             <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800 mb-0 text-center">
-                Hiển thị: <strong>Tất cả sheets trong hệ thống</strong> | User: <strong>{user?.username}</strong> ({user?.role})
+                Hiển thị: <strong>Tất cả Sheets</strong> | User: <strong>{user?.username}</strong> ({user?.role})
               </p>
             </div>
 
@@ -408,6 +510,30 @@ const Home = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {/* id */}
+                <div>
+                  <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+                    <MdFavoriteBorder /> <span>Id</span>
+                  </div>
+                  <input
+                    value={filter.id}
+                    onChange={(e) => setFilter((s) => ({ ...s, id: Number(e.target.value)}))}
+                    placeholder="Nhập id..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                {/* fcode */}
+                <div>
+                  <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+                    <MdFavoriteBorder /> <span>FCode</span>
+                  </div>
+                  <input
+                    value={filter.fcode}
+                    onChange={(e) => setFilter((s) => ({ ...s, fcode: e.target.value }))}
+                    placeholder="Nhập fcode..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
                 {/* Work Order */}
                 <div>
                   <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
@@ -509,7 +635,7 @@ const Home = () => {
                 </div>
               ) : currentSheets.length > 0 ? (
                 <>
-                  {/* ✅ HIỂN THỊ SHEETS THEO TRANG */}
+                  {/*  HIỂN THỊ SHEETS THEO TRANG */}
                   <div className="grid gap-3">
                     {currentSheets.map((sheet) => (
                       <div 
@@ -523,6 +649,14 @@ const Home = () => {
                               <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
                                 ID: {sheet.id}
                               </span>
+
+                              {/* 🔒 ICON KHÓA nếu không có quyền */}
+                              {!canViewDetail(sheet) && (
+                                <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold flex items-center gap-1">
+                                  <AiOutlineLock className="w-3 h-3" />
+                                  Bị khóa
+                                </span>
+                              )}
                               
                               {/* Created By */}
                               {sheet.account && (
@@ -544,10 +678,15 @@ const Home = () => {
                           {/* Actions */}
                           <div className="w-full lg:w-auto">
                             <button
-                              onClick={() => navigate(`/pqc-sheet-detail/${sheet.id}`)}
-                              className="w-full lg:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                              onClick={() => handleViewDetail(sheet)}
+                              disabled={!canViewDetail(sheet)}
+                              className={`w-full lg:w-auto px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
+                                canViewDetail(sheet)
+                                  ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
+                                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              }`}
                             >
-                              Xem chi tiết
+                              {canViewDetail(sheet) ? 'Xem chi tiết' : 'Không có quyền'}
                             </button>
                           </div>
                         </div>

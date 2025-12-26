@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { IoEyeSharp } from "react-icons/io5";
+import { MdModeEdit } from "react-icons/md";
 import { 
   setCheckModel,
   setStandardProduction,
@@ -9,26 +11,26 @@ import {
   setPQCCheck,
   clearAllSubTableData,
   addCompletedTable
-} from '../redux/slices/subTableSlice';
+} from '../../redux/slices/subTableSlice';
 import { 
   getSheetWithFullObject, 
   updateSheetStatus,
   clearError, 
   type ChangeModelResponse
-} from '../redux/slices/changeModelSlice';
+} from '../../redux/slices/changeModelSlice';
 
 // Import các sub-components
-import CheckModels from "./smd_Sheet/CheckModels";
-import PQCChecks from "./smd_Sheet/PQCChecks";
+import CheckModels from "../smd_Sheet/CheckModels";
+import PQCChecks from "../smd_Sheet/PQCChecks";
 // import ProgramChecks from "./smd_Sheet/ProgramChecks";
-import SheetHeader from "./smd_Sheet/SheetHeader";
-import StandardProductionSection from "./smd_Sheet/StandardProductions";
-import StandardVehicles from "./smd_Sheet/StandardVehicles";
-import TimeChangeModels from "./smd_Sheet/TimeChangeModels";
+import SheetHeader from "../smd_Sheet/SheetHeader";
+import StandardProductionSection from "../smd_Sheet/StandardProductions";
+import StandardVehicles from "../smd_Sheet/StandardVehicles";
+import TimeChangeModels from "../smd_Sheet/TimeChangeModels";
 import { FaRegClock } from 'react-icons/fa6';
-import { useNotification } from '../redux/hooks';
-import Notification from './Notification';
-import { REQUIRED_FIELDS_CONFIG, hasAllRequiredData, getMissingFields } from '../utils/requiredFieldsConfig';
+import { useNotification } from '../../redux/hooks';
+import Notification from '../general/Notification';
+import { REQUIRED_FIELDS_CONFIG, hasAllRequiredData, getMissingFields } from '../../utils/requiredFieldsConfig';
 
 const SheetDetailViewer = () => {
   const { id } = useParams<{ id: string }>();
@@ -235,10 +237,10 @@ const SheetDetailViewer = () => {
       'koreamanagerdone': 'Korea Manager Done',
     };
   
-    // ✅ Lấy label đẹp
+    // Lấy label đẹp
     const label = statusLabels[status || 'pending'] || (sheet.status || 'Unknown');
   
-    // ✅ Chọn màu: Pending = Vàng, Done = Xanh lá
+    // Chọn màu: Pending = Vàng, Done = Xanh lá
     const bgColor = isDone ? 'bg-green-100' : 'bg-yellow-100';
     const textColor = isDone ? 'text-green-700' : 'text-yellow-700';
     const iconColor = isDone ? '#16a34a' : '#f59e0b'; // green-600 : yellow-500
@@ -295,23 +297,33 @@ const SheetDetailViewer = () => {
       }`}>
         <p className="text-sm font-semibold mb-0 text-center">
           {isEditable ? (
-            <>
-              ✏️ <span className="text-green-800">Chế độ chỉnh sửa</span> - Bạn có thể thay đổi và lưu nội dung
-            </>
+            <div className="flex items-center justify-center">
+              <span className="flex items-center gap-2 text-green-800">
+                <MdModeEdit size={20} />
+                Chế độ chỉnh sửa
+              </span>
+              <span className="ml-1">- Bạn có thể thay đổi và lưu nội dung</span>
+            </div>
           ) : (
-            <>
-              👁️ <span className="text-blue-800">Chế độ xem</span> - Sheet này chỉ có thể xem
-              {user?.role === 'Manager' || user?.role === 'KoreaManager' ? ' (Manager không có quyền chỉnh sửa)' : ''}
-            </>
+            <div className='flex items-center justify-center'>
+              <div className="text-blue-800 flex gap-2">
+                <div className="">
+                  <IoEyeSharp size={20} />
+                </div>
+                <p className='mb-0'>Chế độ xem - Sheet này chỉ có thể xem</p>
+              </div>
+              {user?.role === 'Manager' || user?.role === 'KoreaManager'
+                ? ' (Manager không có quyền chỉnh sửa)'
+                : ''}
+            </div>
           )}
         </p>
       </div>
 
       {/* Hiển thị các component */}
-      <div className={!isEditable ? 'pointer-events-none opacity-80' : ''}>
+      <div className={!isEditable ? 'pointer-events-none' : ''}>
         <SheetHeader canEdit={isEditable} />
         <CheckModels canEdit={isEditable} />
-        {/* <ProgramChecks canEdit={isEditable} /> */}
         <StandardProductionSection canEdit={isEditable} />
         <TimeChangeModels canEdit={isEditable} />
         <StandardVehicles canEdit={isEditable} />
@@ -321,8 +333,8 @@ const SheetDetailViewer = () => {
       {/* Buttons */}
       <div className="w-full sticky bottom-0 bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-4 flex items-center justify-center gap-3 shadow-lg mt-4 z-10">
         <button
-          onClick={() => navigate(-1)}
-          className="px-4 py-3 bg-gray-600 text-white rounded-lg! text-sm font-semibold hover:bg-gray-700 transition-colors"
+          onClick={() => navigate(`/${user?.role}/smd-sheet-logs`)}
+          className="px-4 py-3 bg-gray-600 text-white text-sm font-semibold hover:bg-gray-700 transition-colors"
         >
           Quay lại
         </button>
@@ -346,25 +358,77 @@ const SheetDetailViewer = () => {
         )}
       </div>
 
-      {/* CSS để disable tương tác khi read-only */}
+      {/* CSS để tương tác khi read-only */}
       {!isEditable && (
-        <style>{`
-          .pointer-events-none button,
-          .pointer-events-none input,
-          .pointer-events-none textarea,
-          .pointer-events-none select {
-            cursor: not-allowed !important;
-            background-color: #f9fafb !important;
-            opacity: 0.7;
-          }
-          .pointer-events-none input:focus,
-          .pointer-events-none textarea:focus,
-          .pointer-events-none select:focus {
-            outline: none !important;
-            box-shadow: none !important;
-          }
-        `}</style>
-      )}
+  <style>{`
+    /* Force tất cả sáng rõ */
+    .pointer-events-none,
+    .pointer-events-none *,
+    .pointer-events-none > *,
+    .pointer-events-none input,
+    .pointer-events-none button,
+    .pointer-events-none div,
+    .pointer-events-none section {
+      opacity: 1 !important;
+    }
+    
+    /* TẤT CẢ BUTTON - Màu xám, không hoạt động */
+    .pointer-events-none button {
+      cursor: not-allowed !important;
+      background-color: #9ca3af !important;
+      color: #ffffff !important;
+      border-color: #6b7280 !important;
+      opacity: 1 !important;
+      pointer-events: none !important;
+    }
+
+    /* BUTTON "XEM CHI TIẾT" FILES - Màu xanh và hoạt động */
+    .pointer-events-none button:not([data-close-modal]) {
+      cursor: pointer !important;
+      background-color: #3b82f6 !important;
+      color: #ffffff !important;
+      border-color: #2563eb !important;
+      pointer-events: auto !important;
+      opacity: 1 !important;
+    }
+    
+    .pointer-events-none button[data-view-detail="true"]:hover {
+      background-color: #2563eb !important;
+    }
+
+    /* BUTTON XEM HÌNH ẢNH (icon button) - Cho phép hoạt động */
+    .pointer-events-none button[data-view-image="true"] {
+      cursor: pointer !important;
+      background-color: transparent !important;
+      color: #3b82f6 !important;
+      border: none !important;
+      pointer-events: auto !important;
+      opacity: 1 !important;
+    }
+    
+    .pointer-events-none button[data-view-image="true"]:hover {
+      color: #2563eb !important;
+    }
+
+    /* Cho phép modal hoạt động bình thường */
+    [data-close-modal="true"],
+    [data-close-modal="true"] * {
+      pointer-events: auto !important;
+      cursor: pointer !important;
+    }
+
+    /* Input/Textarea - trắng sáng */
+    .pointer-events-none input:not([type="checkbox"]):not([type="radio"]),
+    .pointer-events-none textarea,
+    .pointer-events-none select {
+      cursor: not-allowed !important;
+      background-color: #ffffff !important;
+      border: 1.5px solid #d1d5db !important;
+      color: #000000 !important;
+    }
+  `}</style>
+)}
+
     </div>
   );
 };

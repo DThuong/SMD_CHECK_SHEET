@@ -7,7 +7,7 @@ import { ThemeProvider } from './contexts/ThemeContext.tsx';
 import { Provider } from 'react-redux';
 import { store, persistor } from './redux/store.ts';
 import { PersistGate } from 'redux-persist/integration/react';
-import LoadingSpinner from './components/LoadingSpinner.tsx';
+import LoadingSpinner from './components/general/LoadingSpinner.tsx';
 
 createRoot(document.getElementById('root')!).render(
     <Provider store={store}>

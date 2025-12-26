@@ -9,19 +9,19 @@ import Home from '../pages/Home';
 import Login from '../pages/Login';
 import ErrorPage from '../pages/ErrorPage';
 // admin pages (chỉ cho ADMIN)
-import Dashboard from '../pages/admin/Dashboard';
-import User from '../pages/admin/User';
+import Dashboard from '../pages/managers_role/Dashboard';
+import User from '../pages/managers_role/User';
 // shared pages (dùng chung)
-import Settings from '../pages/admin/Settings';
-import Logs from '../pages/admin/Logs';
+import Settings from '../pages/managers_role/Settings';
+import Logs from '../pages/managers_role/Logs';
 
 // Import Redux hooks
 import { useAppSelector } from '../redux/hooks';
 // import spinner
-import LoadingSpinner from '../components/LoadingSpinner';
-import SmdSheetDetail from '../components/SmdSheetDetail';
-import AuthInitializer from '../components/AuthInitializer';
-import SheetDetailViewer from '../components/SheetDetailViewer';
+import LoadingSpinner from '../components/general/LoadingSpinner';
+import SmdSheetDetail from '../components/detail_Sheet/SmdSheetDetail';
+import AuthInitializer from '../components/auth/AuthInitializer';
+import SheetDetailViewer from '../components/detail_Sheet/SheetDetailViewer';
 import FileDetailViewer from '../pages/FileDetailViewer';
 
 // ========================================
@@ -134,6 +134,7 @@ const App = () => {
           {/* <Route path="/admin/profile" element={<Profile />} /> */}
           <Route path="/admin/user" element={<User />} />
           <Route path="/admin/smd-sheet-logs" element={<Logs />} />
+          <Route path="/admin/sheet-detail/:id" element={<SheetDetailViewer />} />
           <Route path="/admin/settings" element={<Settings />} />
           <Route path="/admin/files/:id/:fileType" element={<FileDetailViewer />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

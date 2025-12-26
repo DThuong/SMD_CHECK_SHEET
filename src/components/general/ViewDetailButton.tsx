@@ -62,7 +62,6 @@ const ViewDetailButton = ({
               focus:outline-none focus:ring-2 focus:ring-offset-1
               transition-all duration-200
               ${colorClasses}
-              
             `}
             disabled={disabled}
           >

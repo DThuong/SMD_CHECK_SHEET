@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { ChangeEvent } from 'react';
-import { FaUser, FaPhone, FaSearch, FaEdit, FaTrash, FaSave, FaTimes, FaFilter, FaKey } from 'react-icons/fa';
+import { FaUser, FaPhone, FaSearch, FaEdit, FaTrash, FaSave, FaTimes, FaFilter, FaKey, FaUserPlus } from 'react-icons/fa';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { 
   fetchUsers, 
@@ -8,9 +8,11 @@ import {
   updateUser, 
   deleteUser, 
   changePasswordByAdmin, 
+  registerUser,
   clearError, 
   clearSelectedUser,
-  type AccountUser 
+  type AccountUser,
+  type RegisterUserRequest
 } from '../../redux/slices/authSlice';
 import ReactPaginate from 'react-paginate';
 
@@ -30,6 +32,18 @@ const User = () => {
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [passwordError, setPasswordError] = useState<string>('');
+
+  // THÊM STATE CHO ADD USER MODAL
+  const [showAddUserModal, setShowAddUserModal] = useState<boolean>(false);
+  const [addUserData, setAddUserData] = useState<RegisterUserRequest>({
+    username: '',
+    password: '',
+    role: 'PQC',
+    fullName: '',
+    phoneNumber: ''
+  });
+  const [addUserError, setAddUserError] = useState<string>('');
+  const [confirmAddPassword, setConfirmAddPassword] = useState<string>('');
 
   // Pagination
   const [currentPage, setCurrentPage] = useState<number>(0);
@@ -57,7 +71,7 @@ const User = () => {
   // Hiển thị selectedUser khi filter theo ID
   useEffect(() => {
     if (selectedUser && filterUserId) {
-      setCurrentPage(0); // Reset về trang đầu khi filter
+      setCurrentPage(0);
     }
   }, [selectedUser, filterUserId]);
 
@@ -69,6 +83,19 @@ const User = () => {
       isActive: true
     });
     setEditingUser(null);
+  };
+
+  // ✅ RESET ADD USER FORM
+  const resetAddUserForm = (): void => {
+    setAddUserData({
+      username: '',
+      password: '',
+      role: 'PQC',
+      fullName: '',
+      phoneNumber: ''
+    });
+    setConfirmAddPassword('');
+    setAddUserError('');
   };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
@@ -87,6 +114,15 @@ const User = () => {
     }
   };
 
+  // ✅ HANDLE ADD USER INPUT CHANGE
+  const handleAddUserInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
+    const { name, value } = e.target;
+    setAddUserData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleOpenModal = (user: AccountUser): void => {
     setEditingUser(user);
     setFormData({
@@ -103,9 +139,55 @@ const User = () => {
     resetForm();
   };
 
+  // ✅ OPEN ADD USER MODAL
+  const handleOpenAddUserModal = (): void => {
+    resetAddUserForm();
+    setShowAddUserModal(true);
+  };
+
+  // ✅ CLOSE ADD USER MODAL
+  const handleCloseAddUserModal = (): void => {
+    setShowAddUserModal(false);
+    resetAddUserForm();
+  };
+
+  // ✅ SUBMIT ADD USER
+  const handleAddUser = async (): Promise<void> => {
+    // Validate
+    if (!addUserData.username.trim()) {
+      setAddUserError('Vui lòng nhập username');
+      return;
+    }
+    if (!addUserData.password) {
+      setAddUserError('Vui lòng nhập mật khẩu');
+      return;
+    }
+    if (addUserData.password !== confirmAddPassword) {
+      setAddUserError('Mật khẩu xác nhận không khớp');
+      return;
+    }
+    if (!addUserData.fullName.trim()) {
+      setAddUserError('Vui lòng nhập họ và tên');
+      return;
+    }
+    if (!addUserData.phoneNumber.trim()) {
+      setAddUserError('Vui lòng nhập số điện thoại');
+      return;
+    }
+
+    const result = await dispatch(registerUser(addUserData));
+    
+    if (registerUser.fulfilled.match(result)) {
+      showSuccessMessage('Thêm người dùng thành công!');
+      handleCloseAddUserModal();
+      await dispatch(fetchUsers()); // Refresh danh sách
+    } else {
+      setAddUserError(result.payload as string || 'Thêm người dùng thất bại');
+    }
+  };
+
   const handleSubmit = async (): Promise<void> => {
     if (editingUser) {
-      // Update existing user
       const updateData = {
         id: editingUser.id,
         role: formData.role,
@@ -119,11 +201,9 @@ const User = () => {
         showSuccessMessage('Cập nhật người dùng thành công!');
         handleCloseModal();
         
-        // Nếu đang filter theo ID, fetch lại user đó để cập nhật
         if (filterUserId && selectedUser) {
           await dispatch(fetchUserById(parseInt(filterUserId)));
         } else {
-          // Nếu không filter, fetch lại toàn bộ danh sách
           await dispatch(fetchUsers());
         }
       } else {
@@ -138,16 +218,13 @@ const User = () => {
       if (deleteUser.fulfilled.match(result)) {
         showSuccessMessage('Xóa người dùng thành công!');
         
-        // Nếu đang filter và xóa user đang được filter, clear filter
         if (filterUserId && selectedUser?.id === userId) {
           setFilterUserId('');
           dispatch(clearSelectedUser());
         }
         
-        // Fetch lại danh sách users để cập nhật UI
         await dispatch(fetchUsers());
         
-        // Reset về trang đầu nếu trang hiện tại không còn data
         const remainingUsers = users.length - 1;
         const maxPage = Math.ceil(remainingUsers / usersPerPage) - 1;
         if (currentPage > maxPage && maxPage >= 0) {
@@ -199,13 +276,8 @@ const User = () => {
   };
 
   const handleChangePassword = async (): Promise<void> => {
-    // Validate
     if (!newPassword) {
       setPasswordError('Vui lòng nhập mật khẩu mới');
-      return;
-    }
-    if (newPassword.length < 6) {
-      setPasswordError('Mật khẩu phải có ít nhất 6 ký tự');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -228,7 +300,7 @@ const User = () => {
     }
   };
 
-  // Filter users - nếu có selectedUser từ filter thì chỉ hiển thị user đó
+  // Filter users
   const displayUsers = selectedUser && filterUserId ? [selectedUser] : users;
 
   // Apply search filter
@@ -304,6 +376,14 @@ const User = () => {
               </p>
             </div>
             <div className="flex gap-2">
+              {/* THÊM BUTTON ADD USER */}
+              <button
+                onClick={handleOpenAddUserModal}
+                className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md"
+              >
+                <FaUserPlus />
+                Thêm người dùng
+              </button>
               <button
                 onClick={() => setShowFilterModal(true)}
                 className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md"
@@ -528,6 +608,155 @@ const User = () => {
         </div>
       </div>
 
+      {/* ✅ ADD USER MODAL */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-4 py-4 flex items-center justify-between rounded-t-xl">
+              <h2 className="text-xl font-bold text-slate-800">Thêm người dùng mới</h2>
+              <button
+                onClick={handleCloseAddUserModal}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <FaTimes className="text-xl" />
+              </button>
+            </div>
+
+            <div className="p-4">
+              {addUserError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                  {addUserError}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Username */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Username *
+                  </label>
+                  <input
+                    type="text"
+                    name="username"
+                    value={addUserData.username}
+                    onChange={handleAddUserInputChange}
+                    placeholder="Nhập username (dùng để đăng nhập)"
+                    required
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Mật khẩu *
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={addUserData.password}
+                    onChange={handleAddUserInputChange}
+                    placeholder="Tối thiểu 6 ký tự"
+                    required
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+
+                {/* Confirm Password */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Xác nhận mật khẩu *
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmAddPassword}
+                    onChange={(e) => setConfirmAddPassword(e.target.value)}
+                    placeholder="Nhập lại mật khẩu"
+                    required
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+
+                {/* Full Name */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Họ và tên *
+                  </label>
+                  <input
+                    type="text"
+                    name="fullName"
+                    value={addUserData.fullName}
+                    onChange={handleAddUserInputChange}
+                    placeholder="Nhập họ và tên đầy đủ"
+                    required
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+
+                {/* Phone */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Số điện thoại *
+                  </label>
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    value={addUserData.phoneNumber}
+                    onChange={handleAddUserInputChange}
+                    placeholder="Nhập số điện thoại"
+                    required
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+
+                {/* Role */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Quyền *
+                  </label>
+                  <select
+                    name="role"
+                    value={addUserData.role}
+                    onChange={handleAddUserInputChange}
+                    required
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="PQC">PQC</option>
+                    <option value="ENG">ENG</option>
+                    <option value="Supervisior">Supervisior</option>
+                    <option value="Manager">Manager</option>
+                    <option value="KoreaManager">KoreaManager</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 mt-4 pt-4 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={handleAddUser}
+                  disabled={usersLoading}
+                  className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FaUserPlus />
+                  {usersLoading ? 'Đang thêm...' : 'Thêm người dùng'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCloseAddUserModal}
+                  className="flex-1 flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  <FaTimes />
+                  Hủy
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Các modal khác giữ nguyên: Filter Modal, Password Modal, Edit Modal */}
       {/* Filter Modal */}
       {showFilterModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

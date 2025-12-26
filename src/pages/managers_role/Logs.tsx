@@ -10,13 +10,14 @@ import {
   AiOutlineClose,
   AiOutlineHistory
 } from 'react-icons/ai';
-import { FaCalendarAlt, FaRegUserCircle, FaUserAlt } from "react-icons/fa";
+import { FaCalendarAlt, FaRegUserCircle } from "react-icons/fa";
 import { MdSignalWifiStatusbar2Bar } from "react-icons/md";
 import { useAppSelector, useAppDispatch } from '../../redux/hooks';
 import ReactPaginate from 'react-paginate';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../redux/hooks';
-import Notification from '../../components/Notification';
+import Notification from '../../components/general/Notification';
+import { MdFavoriteBorder } from "react-icons/md";
 
 // Redux actions
 import { 
@@ -52,6 +53,8 @@ type SheetFilter = {
   fromDate: string;
   toDate: string;
   status: string;
+  fcode: string;
+  id: number;
 };
 
 const Logs = () => {
@@ -77,6 +80,8 @@ const Logs = () => {
     workOrder: '',
     fromDate: '',
     toDate: '',
+    fcode: '',
+    id: 0,
     status: 'all'
   });
 
@@ -90,16 +95,27 @@ const Logs = () => {
       const hasWorkOrder = filter.workOrder.trim() !== '';
       const hasDateRange = filter.fromDate !== '' && filter.toDate !== '';
       const hasStatus = filter.status !== '' && filter.status !== 'all';
+      const hasFcode = filter.fcode.trim() !== '';
+      const hasId = filter.id && filter.id > 0;
 
-      if (hasWorkOrder || hasDateRange || hasStatus) {
-        await dispatch(getSheetByFilter({
-          workOrder: hasWorkOrder ? filter.workOrder.trim() : undefined,
-          fromDate: hasDateRange ? filter.fromDate : undefined,
-          toDate: hasDateRange ? filter.toDate : undefined,
-          status: hasStatus ? filter.status : undefined,
-        })).unwrap();
-        return;
+       if (hasWorkOrder || hasDateRange || hasStatus || hasFcode || hasId) {
+      const filterParams: any = {
+        workOrder: hasWorkOrder ? filter.workOrder.trim() : undefined,
+        fromDate: hasDateRange ? filter.fromDate : undefined,
+        toDate: hasDateRange ? filter.toDate : undefined,
+        status: hasStatus ? filter.status : undefined,
+        fcode: hasFcode ? filter.fcode.trim() : undefined,
+      };
+
+      // ✅ CHỈ thêm id khi có giá trị
+      if (hasId) {
+        filterParams.id = filter.id;
       }
+
+      await dispatch(getSheetByFilter(filterParams)).unwrap();
+      return;
+    }
+
 
       await dispatch(fetchChangeModel()).unwrap();
       
@@ -147,6 +163,8 @@ const Logs = () => {
       workOrder: '', 
       fromDate: '', 
       toDate: '',
+      id: 0,
+      fcode: '',
       status: 'all'
     });
     
@@ -432,13 +450,8 @@ const Logs = () => {
       <div className="max-w-8xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-4">
           <div className="flex flex-col items-center mb-4 gap-2">
-            <div className="text-3xl font-bold text-gray-800">Chi tiết SMD Sheet</div>
-            <button
-              onClick={handleCloseDetail}
-              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
-            >
-              Quay lại
-            </button>
+            <div className="text-3xl font-bold text-gray-800">Chi tiết SMD Sheet #{selectedSheet.id}</div>
+            
           </div>
 
           <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -528,7 +541,13 @@ const Logs = () => {
 
           {/* Nút xem toàn bộ sheet */}
           <div className="mt-4">
-            <div className="text-center mb-4">
+            <div className="text-center mb-4 flex items-start gap-3 justify-start">
+              <button
+              onClick={handleCloseDetail}
+              className="px-4 py-3 bg-gray-500 text-white hover:bg-gray-600 transition-colors"
+            >
+              Quay lại
+            </button>
               <button
                 onClick={() => {
                   const roleLower = user?.role?.toLowerCase();
@@ -571,12 +590,11 @@ const Logs = () => {
           {/* Info banner */}
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-xs sm:text-sm text-blue-800 text-center mb-0">
-              {user?.role === ROLES.PQC && '📝 Bạn có thể xem logs mà bạn đã tạo'}
-              {user?.role === ROLES.ENG && '✏️ Bạn có thể xem, chỉnh sửa và xác nhận ở bước ENG'}
-              {user?.role === ROLES.SUPERVISOR && '✏️ Bạn có thể xem, chỉnh sửa và xác nhận ở bước SUPERVISOR'}
-              {user?.role === ROLES.MANAGER && '👁️ Bạn có thể xem và xác nhận ở bước MANAGER (KHÔNG sửa)'}
-              {user?.role === ROLES.KOREA_MANAGER && '👁️ Bạn có thể xem và xác nhận ở bước KOREA MANAGER (KHÔNG sửa)'}
-              {user?.role === 'ADMIN' && '🔧 Bạn có quyền xem tất cả sheets'}
+              {user?.role === ROLES.ENG && 'Bạn có thể xem, chỉnh sửa và xác nhận ở bước ENG'}
+              {user?.role === ROLES.SUPERVISOR && 'Bạn có thể xem, chỉnh sửa và xác nhận ở bước SUPERVISOR'}
+              {user?.role === ROLES.MANAGER && 'Bạn có thể xem và xác nhận ở bước MANAGER (KHÔNG sửa)'}
+              {user?.role === ROLES.KOREA_MANAGER && 'Bạn có thể xem và xác nhận ở bước KOREA MANAGER (KHÔNG sửa)'}
+              {user?.role === 'ADMIN' && 'Bạn có quyền xem tất cả sheets'}
             </p>
           </div>
 
@@ -588,10 +606,36 @@ const Logs = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Id */}
+              <div>
+                <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+                  <MdFavoriteBorder /><span>Id</span>
+                </div>
+                <input
+                  type="number"
+                  value={filter.id}
+                  onChange={(e) => setFilter(s => ({ ...s, id: Number(e.target.value) }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder={`Tìm kiếm theo Id...`}
+                />
+              </div>
+              {/* FCode */}
+              <div>
+                <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+                  <MdFavoriteBorder /><span>FCode</span>
+                </div>
+                <input
+                  type="text"
+                  value={filter.fcode}
+                  onChange={(e) => setFilter(s => ({ ...s, fcode: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder={`Tìm kiếm theo fcode...`}
+                />
+              </div>
               {/* Work Order */}
               <div>
                 <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <FaUserAlt /><span>Work Order</span>
+                  <MdFavoriteBorder /><span>Work Order</span>
                 </div>
                 <input
                   type="text"
@@ -766,7 +810,7 @@ const Logs = () => {
                               <button
                                 onClick={() => {
                                   const roleLower = user?.role?.toLowerCase();
-                                  window.open(`/${roleLower}/sheet-detail/${sheet.id}`, '_blank');
+                                  navigate(`/${roleLower}/sheet-detail/${sheet.id}`);
                                 }}
                                 className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium whitespace-nowrap"
                               >

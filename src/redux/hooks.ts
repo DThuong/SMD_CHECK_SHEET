@@ -2,7 +2,7 @@ import type { TypedUseSelectorHook } from "react-redux";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "./store";
 import { useState } from 'react';
-import type { NotificationType } from '../components/Notification';
+import type { NotificationType } from '../components/general/Notification';
 
 //type cho notification
 interface NotificationState {

@@ -1,11 +1,12 @@
-import ViewDetailButton from "../ViewDetailButton"
+import ViewDetailButton from "../general/ViewDetailButton"
 import { useState, useEffect } from "react"
-import Modal from "../Modal";
+import Modal from "../general/Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchPQCCheck, updatePQCCheck } from "../../redux/slices/subTableSlice";
 import type { PQCCheckData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
-import Notification from "../Notification";
+import Notification from "../general/Notification";
+import { formatDateTime } from "../../utils/formatTime";
 
 const initialPQCChecksState: PQCCheckData = {
   id: undefined,
@@ -99,7 +100,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
       )}
       {/* Website View - Bảng ngang */}
       <div className="hidden lg:block w-full overflow-x-auto">
-  <table className="border border-gray-600 w-full text-center opacity-60">
+  <table className="border border-gray-600 w-full text-center opacity-80">
     <tbody>
       {/** Row 31 */}
       <tr>
@@ -146,8 +147,8 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
       {/** Row 35 */}
       <tr>
         <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">PQC</th>
-        <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">{form.startLCR || ""}</td>
-        <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">{form.endLCR || ""}</td>
+        <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">{formatDateTime(form.startLCR) || ""}</td>
+        <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">{formatDateTime(form.endLCR) || ""}</td>
         <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.nameCheck || ""}</td>
         <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">
           <div className="flex items-center justify-center flex-row gap-2">

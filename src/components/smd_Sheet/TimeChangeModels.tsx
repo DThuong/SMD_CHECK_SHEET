@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
-import Modal from "../Modal";
-import ViewDetailButton from "../ViewDetailButton";
+import Modal from "../general/Modal";
+import ViewDetailButton from "../general/ViewDetailButton";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { updateTimeChangeModel, fetchTimeChangeModel } from "../../redux/slices/subTableSlice";
 import type { TimeChangeModelData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
-import Notification from "../Notification";
+import Notification from "../general/Notification";
+import { formatDateTime } from "../../utils/formatTime";
 
 const initialTimeChangeState: TimeChangeModelData = {
     qc: "",
     result: "",
-    startTime: "", // time
-    endTime: "", // time
+    startTime: undefined, // time
+    endTime: undefined, // time
     countTime: undefined,
     history: "",
 };
@@ -94,7 +95,7 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
       )}
       {/* Desktop View */}
       <div className="hidden lg:block w-full overflow-x-auto">
-        <table className="border border-gray-600 w-full min-w-[1400px] text-center opacity-60">
+        <table className="border border-gray-600 w-full min-w-[1400px] text-center opacity-80">
           <tbody>
             {/* Row 12 - Title */}
             <tr>
@@ -118,8 +119,8 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
             <tr>
               <th className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Result</th>
               <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.result || ""}</td>
-              <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.startTime}</td>
-              <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.endTime || ""}</td>
+              <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{formatDateTime(form.startTime || "")}</td>
+              <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{formatDateTime(form.endTime || "")}</td>
               <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.countTime ?? ""}</td>
               <td colSpan={2} rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.history || ""}</td>
             </tr>
@@ -231,8 +232,8 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
           <label className="text-xs block mb-1">Thời gian bắt đầu</label>
           <input
             type="datetime-local"
-            value={form.startTime ?? ""}
-            onChange={(e) => set("startTime", e.target.value)}
+            value={form.startTime || ""}
+            onChange={(e) => set("startTime", e.target.value || undefined)}
             className="block w-full border rounded px-3 py-2 text-sm"
           />
         </div>
@@ -241,8 +242,8 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
           <label className="text-xs block mb-1">Thời gian kết thúc</label>
           <input
             type="datetime-local"
-            value={form.endTime ?? ""}
-            onChange={(e) => set("endTime", e.target.value)}
+            value={form.endTime || ""}
+            onChange={(e) => set("endTime", e.target.value || undefined)}
             className="block w-full border rounded px-3 py-2 text-sm"
           />
         </div>

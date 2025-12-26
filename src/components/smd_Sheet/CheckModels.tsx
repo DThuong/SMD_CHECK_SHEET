@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import Modal from "../Modal";
-import ViewDetailButton from "../ViewDetailButton";
+import Modal from "../general/Modal";
+import ViewDetailButton from "../general/ViewDetailButton";
 import { useAppDispatch, useAppSelector  } from "../../redux/hooks";
 import { updateCheckModel } from "../../redux/slices/subTableSlice";
 import type { CheckModelData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
-import Notification from "../Notification";
-import { useTranslation } from "react-i18next";
+import Notification from "../general/Notification";
+import { formatDateTime } from "../../utils/formatTime";
 
 const initialFormState: CheckModelData = {
   lineChange: "",
@@ -34,7 +34,6 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
   const { notification, showNotification, hideNotification } = useNotification();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<CheckModelData>(initialFormState);
-  const { t } = useTranslation(['smdSheet', 'common']);
 
   const isSaved = completedTables.includes('CheckModel');
 
@@ -109,7 +108,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
 
       {/* Website View - Table */}
       <div className="hidden lg:block w-full overflow-x-auto">
-        <table className="border border-gray-600 w-full text-center opacity-60">
+        <table className="border border-gray-600 w-full text-center opacity-80">
           <thead>
             <tr>
               <th rowSpan={2} className="border px-2 py-2 text-xs bg-gray-100">Line đổi</th>
@@ -121,7 +120,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
               <td className="border px-2 py-2">{form.revS15 || ""}</td>
               <th rowSpan={2} className="border px-2 py-2 text-xs bg-gray-100">DATE</th>
               <th colSpan={2} className="border px-2 py-2 text-xs bg-gray-100">Feeder Check</th>
-              <td className="border px-2 py-2 text-xs">{form.feederCheck || ""}</td>
+              <td className="border px-2 py-2 text-xs">{formatDateTime(form.feederCheck) || ""}</td>
               <td rowSpan={2} className="border px-2 py-2 bg-gray-300"></td>
             </tr>
 
@@ -131,7 +130,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">REV MOUNTER</th>
               <td className="border px-2 py-2 text-xs">{form.revMounter || ""}</td>
               <th colSpan={2} className="border px-2 py-2 text-xs bg-gray-100">OP Accept</th>
-              <td className="border px-2 py-2 text-xs">{form.opAccept || ""}</td>
+              <td className="border px-2 py-2 text-xs">{formatDateTime(form.opAccept) || ""}</td>
             </tr>
 
             <tr>
@@ -141,13 +140,13 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
               <td className="border px-2 py-2">{form.pcBver || ""}</td>
               <th colSpan={2} className="border px-2 py-2 text-xs bg-gray-100">Used CN card</th>
               <td className="border px-2 py-2">
-                {form.usedCNcard !== undefined ? (form.usedCNcard ? "Yes" : "No") : "—"}
+                {form.usedCNcard !== undefined ? (form.usedCNcard ? "Yes" : "No") : ""}
               </td>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">Qty</th>
               <td className="border px-2 py-2 text-xs">{form.qty}</td>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">JIG</th>
               <td className="border px-2 py-2">
-                {form.jig !== undefined ? (form.jig ? "Yes" : "No") : "—"}
+                {form.jig !== undefined ? (form.jig ? "Yes" : "No") : ""}
               </td>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">Mã PCB</th>
               <td className="border px-2 py-2 text-xs">{form.codePCB || ""}</td>

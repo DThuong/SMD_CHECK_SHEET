@@ -23,6 +23,14 @@ export interface AuthUser {
   expiresAt?: string;
 }
 
+export interface RegisterUserRequest{
+  username: string,
+  password: string,
+  role: string,
+  fullName: string,
+  phoneNumber: string
+}
+
 export interface AccountUser {
   id: number;
   username: string;
@@ -205,6 +213,19 @@ export const changePasswordByAdmin = createAsyncThunk(
     }
   }
 );
+
+// API đăng ký tài khoản (dùng cho admin)
+export const registerUser = createAsyncThunk(
+  'auth/registerUser',
+  async (userData: RegisterUserRequest, { rejectWithValue }) => {
+    try {
+      const response = await smdApi.post('/Account/register', userData);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || 'Failed to register user');
+    }
+  }
+)
 
 const authSlice = createSlice({
   name: 'auth',

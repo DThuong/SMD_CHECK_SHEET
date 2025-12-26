@@ -1,16 +1,16 @@
-import ViewDetailButton from "../ViewDetailButton"
-import Modal from "../Modal";
+import ViewDetailButton from "../general/ViewDetailButton"
+import Modal from "../general/Modal";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchStandardVehicle, updateStandardVehicle,uploadAOIImage, uploadSPIImage } from "../../redux/slices/subTableSlice";
-import ImagePreviewModal from "../ImagePreviewModal";
-import ImageViewIcon from "../ImageViewIcon";
+import ImagePreviewModal from "../files/ImagePreviewModal";
+import ImageViewIcon from "../files/ImageViewIcon";
 import type { StandardVehicleData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
-import Notification from "../Notification";
+import Notification from "../general/Notification";
 import { FaCamera } from "react-icons/fa";
 import { IoEyeSharp } from "react-icons/io5";
-import { FaEyeSlash } from "react-icons/fa6";
+import { normalizeImageUrl } from "../../utils/imageUrl";
 
 const initialStandardVehiclesState: StandardVehicleData = {
   printerSpecGTAL: 0,
@@ -171,101 +171,7 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
   }
 };
    // Xử lý chụp ảnh từ camera
-const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
-  if (!standardVehicleId) {
-    showNotification('error', 'Lỗi', 'Không tìm thấy StandardVehicle ID');
-    return;
-  }
 
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    const video = document.createElement('video');
-    video.srcObject = stream;
-    video.play();
-
-    // Tạo modal để hiển thị camera
-    const cameraModal = document.createElement('div');
-    cameraModal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;';
-    
-    video.style.cssText = 'max-width:90%;max-height:70%;';
-    cameraModal.appendChild(video);
-
-    const captureBtn = document.createElement('button');
-    captureBtn.textContent = 'Chụp ảnh';
-    captureBtn.style.cssText = 'margin-top:20px;padding:10px 20px;background:#3b82f6;color:white;border:none;border-radius:5px;cursor:pointer;';
-    cameraModal.appendChild(captureBtn);
-
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Đóng';
-    closeBtn.style.cssText = 'margin-top:10px;padding:10px 20px;background:#ef4444;color:white;border:none;border-radius:5px;cursor:pointer;';
-    cameraModal.appendChild(closeBtn);
-
-    document.body.appendChild(cameraModal);
-
-    captureBtn.onclick = async () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext('2d')?.drawImage(video, 0, 0);
-      
-      // Convert canvas to blob
-      canvas.toBlob(async (blob) => {
-        if (blob) {
-          // Tạo File object từ blob
-          const file = new File([blob], `${field}_${Date.now()}.jpg`, { type: 'image/jpeg' });
-
-          try {
-            // Upload lên server
-            if (field === 'imgSPI') {
-              const result = await dispatch(uploadSPIImage({ 
-                id: Number(standardVehicleId), 
-                file 
-              })).unwrap();
-              
-              // Cập nhật URL từ server
-              if (result?.imageUrl) {
-                set(field, result.imageUrl);
-              }
-              
-              showNotification('success', 'Thành công', 'Upload hình ảnh SPI thành công');
-            } else if (field === 'imgAOI') {
-              const result = await dispatch(uploadAOIImage({ 
-                id: Number(standardVehicleId), 
-                file 
-              })).unwrap();
-              
-              // Cập nhật URL từ server
-              if (result?.imageUrl) {
-                set(field, result.imageUrl);
-              }
-              
-              showNotification('success', 'Thành công', 'Upload hình ảnh AOI thành công');
-            }
-
-            // Fetch lại data
-            if (standardVehicleId) {
-              await dispatch(fetchStandardVehicle(standardVehicleId));
-            }
-          } catch (error) {
-            console.error('Failed to upload image:', error);
-            showNotification('error', 'Lỗi upload', `Không thể upload hình ảnh ${field === 'imgSPI' ? 'SPI' : 'AOI'}`);
-          }
-        }
-      }, 'image/jpeg', 0.9);
-
-      stream.getTracks().forEach(track => track.stop());
-      document.body.removeChild(cameraModal);
-    };
-
-    closeBtn.onclick = () => {
-      stream.getTracks().forEach(track => track.stop());
-      document.body.removeChild(cameraModal);
-    };
-  } catch (error) {
-    console.error('Camera error:', error);
-    showNotification('error', 'Lỗi Camera', 'Không thể truy cập camera');
-  }
-};
     const set = <K extends keyof StandardVehicleData>(k: K, v: StandardVehicleData[K]) =>
     setForm((s) => ({ ...s, [k]: v }));
       
@@ -315,7 +221,7 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
       )}
       {/* Desktop View */}
       <div className="hidden lg:block w-full overflow-x-auto">
-        <table className="border border-gray-600 w-full text-center opacity-60">
+        <table className="border border-gray-600 w-full text-center opacity-80">
           <tbody>
             {/* Row 16 */}
             <tr>
@@ -985,12 +891,12 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
 
    {/* Modal */}
     <Modal open={open} title="Chi tiết Vehicle Check" onClose={() => setOpen(false)} onSave={submit}>
-  <div className="grid gap-4 max-h-[70vh] overflow-y-auto px-1">
+  <div className="grid gap-4 max-h-[70vh] overflow-y-auto px-1 scrollbar-hide">
     {/* Printer */}
     <section className="pb-3 border-b border-gray-200">
       <h4 className="text-sm font-semibold mb-3 text-gray-700">Printer</h4>
 
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="grid grid-cols-1 gap-3 mb-3">
         <div className="min-w-0">
           <label className="text-xs block mb-1">Giá trị áp lực Spec (kg)</label>
           <input
@@ -1022,7 +928,7 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="grid grid-cols-1 gap-3 mb-3">
         <div className="min-w-0">
           <label className="text-xs block mb-1">Số lần lau Spec</label>
           <input
@@ -1044,7 +950,7 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="grid grid-cols-1 gap-3 mb-3">
         <div className="min-w-0">
           <label className="text-xs block mb-1">Giá trị áp lực thực tế trên máy (kg)</label>
           <input
@@ -1122,7 +1028,7 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
     </section>
 
     {/* SPI */}
-    <div className="md:col-span-2 border-b border-gray-200 pb-3">
+    <div className="grid grid-cols-1 border-b border-gray-200 pb-3">
       <h4 className="text-sm font-semibold mb-3 text-gray-700">SPI</h4>
       {/** spi program */}
       <div className="min-w-0 mb-3">
@@ -1165,39 +1071,56 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
           type="file"
           accept="image/*"
           onChange={(e) => handleImageUpload('imgSPI', e)}
-          className="border border-gray-300 rounded px-3 py-2"
+          className="border border-gray-300 rounded px-3 py-2 w-full text-sm!"
         />
-        <button
-          type="button"
-          onClick={() => handleCameraCapture('imgSPI')}
-          className=" bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center gap-2 mt-2 w-full"
-        >
-          <FaCamera size={10} />
-          Chụp ảnh SPI
-        </button>
       </div>
+
+      <div>
+      <label className="block text-xs text-gray-600 mb-1">📸 Hoặc chụp ảnh</label>
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={(e) => handleImageUpload('imgSPI', e)}
+        className="hidden"
+        id="camera-capture-spi"
+      />
+      <label
+        htmlFor="camera-capture-spi"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
+      >
+        {/* Thêm display: inline-block hoặc inline-flex */}
+        <div className="inline-flex items-center">
+          <FaCamera size={15} />
+        </div>
+        <div className="inline-flex items-center mx-2">
+          Chụp ảnh SPI
+        </div>
+      </label>
+    </div>
       
       {/* Preview Section */}
-      <div className="flex items-center gap-3 mt-2">
-        {form.imgSPI ? (
-          <>
-            <img src={form.imgSPI} alt="SPI Preview" className="w-20 h-20 object-cover rounded border" onClick={() => openImagePreview(form.imgSPI!, "Hình ảnh SPI")} />
-            <button
-              type="button"
-              onClick={() => openImagePreview(form.imgSPI!, "Hình ảnh SPI")}
-              className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
-            >
-              <IoEyeSharp size={20} />
-              <span className="text-sm">Xem hình ảnh</span>
-            </button>
-          </>
-        ) : (
-          <div className="flex items-center gap-2 text-gray-400">
-            <FaEyeSlash size={20} />
-            <span className="text-sm">Chưa có hình ảnh</span>
-          </div>
-        )}
+      {form.imgSPI && (
+      <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
+        <div className="flex items-center gap-3">
+          <img 
+            src={normalizeImageUrl(form.imgSPI)} 
+            alt="SPI Preview" 
+            className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
+            onClick={() => openImagePreview(normalizeImageUrl(form.imgSPI!), "Hình ảnh SPI")} 
+          />
+          <button
+            type="button"
+            onClick={() => openImagePreview(normalizeImageUrl(form.imgSPI!), "Hình ảnh SPI")}
+            className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            <IoEyeSharp size={20} />
+            <span className="text-sm font-medium">Xem ảnh</span>
+          </button>
+        </div>
       </div>
+    )}
     </div>
 
     {/* Mount */}
@@ -1271,7 +1194,7 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
           </label>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <div className="min-w-0">
             <label className="text-xs block mb-1">Giá trị cài đặt Rail (mm)</label>
             <input
@@ -1315,7 +1238,7 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
     </section>
 
      {/* AOI */}
-<div className="md:col-span-2 border-b border-gray-200 pb-3">
+<div className="grid grid-cols-1 border-b border-gray-200 pb-3">
   <h4 className="text-sm font-semibold mb-3 text-gray-700">AOI</h4>
   {/** xray 3 board đầu tiên có Ok hay không ? */}
   <div className="min-w-0 flex items-center gap-2 mb-3">
@@ -1377,59 +1300,58 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
         type="file"
         accept="image/*"
         onChange={(e) => handleImageUpload('imgAOI', e)}
-        className="flex-1 border border-gray-300 rounded px-3 py-2"
+        className="flex-1 border border-gray-300 rounded px-3 py-2 w-full text-sm!"
       />
     </div>
+
     <div>
-      <button
-        type="button"
-        onClick={() => handleCameraCapture('imgAOI')}
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2 justify-center w-full"
+      <label className="block text-xs text-gray-600 mb-1">📸 Hoặc chụp ảnh</label>
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={(e) => handleImageUpload('imgAOI', e)}
+        className="hidden"
+        id="camera-capture-aoi"
+      />
+      <label
+        htmlFor="camera-capture-aoi"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
       >
-        <FaCamera size={10} />
-        Chụp ảnh AOI
-      </button>
+        {/* Thêm display: inline-block hoặc inline-flex */}
+                      <div className="inline-flex items-center">
+                        <FaCamera size={15} />
+                      </div>
+                      <div className="inline-flex items-center mx-2">
+                        Chụp ảnh AOI
+                      </div>
+      </label>
     </div>
   </div>
   
   {/* Preview Section */}
-  <div className="flex items-center gap-3 mt-2">
-    {form.imgAOI ? (
-      <>
-        <img src={form.imgAOI} alt="AOI Preview" className="w-20 h-20 object-cover rounded border" onClick={() => openImagePreview(form.imgAOI!, "Hình ảnh AOI")} />
-        <button
-          type="button"
-          onClick={() => openImagePreview(form.imgAOI!, "Hình ảnh AOI")}
-          className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
-        >
-          <IoEyeSharp size={20} />
-          <span className="text-sm">Xem hình ảnh</span>
-        </button>
-      </>
-    ) : (
-      <div className="flex items-center gap-2 text-gray-400">
-        <FaEyeSlash size={20} />
-        <span className="text-sm">Chưa có hình ảnh</span>
+  {form.imgAOI && (
+      <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
+        <div className="flex items-center gap-3">
+          <img 
+            src={normalizeImageUrl(form.imgAOI)} 
+            alt="AOI Preview" 
+            className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
+            onClick={() => openImagePreview(normalizeImageUrl(form.imgAOI!), "Hình ảnh AOI")} 
+          />
+          <button
+            type="button"
+            onClick={() => openImagePreview(normalizeImageUrl(form.imgAOI!), "Hình ảnh AOI")}
+            className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            <IoEyeSharp size={20} />
+            <span className="text-sm font-medium">Xem ảnh</span>
+          </button>
+        </div>
       </div>
     )}
-  </div>
 </div>
-    {/* REV */}
-    <section className="pb-3 border-b border-gray-200">
-      <h4 className="text-lg font-semibold mb-3 text-gray-700">REV</h4>
-
-      <div className="min-w-0 mb-3">
-          <label className="text-xs block mb-1">REV</label>
-          <input
-            className="block w-full border rounded px-3 py-2 text-xs min-w-0"
-            value={form.rev ?? ""}
-            onChange={(e) => set("rev", e.target.value)}
-            type="number"
-          />
-      </div>
-
-    </section>
-
     {/* Output */}
     <section className="pb-3 border-b border-gray-200">
       <h4 className="text-sm font-semibold mb-3 text-gray-700">Output</h4>
@@ -1457,7 +1379,7 @@ const handleCameraCapture = async (field: 'imgSPI' | 'imgAOI') => {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <div className="min-w-0">
             <label className="text-xs block mb-1">Giá trị cài đặt theo yêu cầu Model</label>
             <input

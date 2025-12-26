@@ -379,9 +379,23 @@ const subTableSlice = createSlice({
       state.standardVehicle = action.payload;
     },
     addCompletedTable: (state, action) => {
-      // Chỉ thêm nếu chưa tồn tại
-      if (!state.completedTables.includes(action.payload)) {
-        state.completedTables.push(action.payload);
+      const tableName = action.payload;
+      if (!state.completedTables.includes(tableName)) {
+        console.log(`✅ Adding '${tableName}' to completedTables`);
+        state.completedTables.push(tableName);
+      } else {
+        console.log(`ℹ️ '${tableName}' already in completedTables`);
+      }
+    },
+    // THÊM ACTION MỚI: removeCompletedTable
+    removeCompletedTable: (state, action) => {
+      const tableName = action.payload;
+      const index = state.completedTables.indexOf(tableName);
+      if (index > -1) {
+        console.log(`❌ Removing '${tableName}' from completedTables`);
+        state.completedTables = state.completedTables.filter(t => t !== tableName);
+      } else {
+        console.log(`ℹ️ '${tableName}' not found in completedTables`);
       }
     },
   },
@@ -646,6 +660,7 @@ export const {
   setPQCCheck,
   setStandardProduction,
   setTimeChangeModel,
+  removeCompletedTable,
   setStandardVehicle
 } = subTableSlice.actions;
 

@@ -1,15 +1,15 @@
-import ViewDetailButton from "../ViewDetailButton";
+import ViewDetailButton from "../general/ViewDetailButton";
 import { useEffect, useState } from "react";
-import Modal from "../Modal";
+import Modal from "../general/Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchStandardProduction, updateStandardProduction, uploadStandardProductionFile } from "../../redux/slices/subTableSlice";
 import type { StandardProductionData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
-import Notification from "../Notification";
-import ImageViewIcon from "../ImageViewIcon";
+import Notification from "../general/Notification";
+import ImageViewIcon from "../files/ImageViewIcon";
 import { IoEyeSharp } from "react-icons/io5";
-import { FaCamera, FaEyeSlash } from "react-icons/fa6";
-import ImagePreviewModal from "../ImagePreviewModal";
+import { FaCamera } from "react-icons/fa6";
+import ImagePreviewModal from "../files/ImagePreviewModal";
 
 
 const initialStandardProductState: StandardProductionData = {
@@ -121,91 +121,6 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
       showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
     }
   };
-
-  // xử lý chụp ảnh từ camera
-  const handleCameraCapture = async (field: 'imgStandard') => {
-    if (!standardProductionId) {
-      showNotification('error', 'Lỗi', 'Không tìm thấy StandardProduction ID');
-      return;
-    }
-  
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      const video = document.createElement('video');
-      video.srcObject = stream;
-      video.play();
-  
-      // Tạo modal để hiển thị camera
-      const cameraModal = document.createElement('div');
-      cameraModal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;';
-      
-      video.style.cssText = 'max-width:90%;max-height:70%;';
-      cameraModal.appendChild(video);
-  
-      const captureBtn = document.createElement('button');
-      captureBtn.textContent = 'Chụp ảnh';
-      captureBtn.style.cssText = 'margin-top:20px;padding:10px 20px;background:#3b82f6;color:white;border:none;border-radius:5px;cursor:pointer;';
-      cameraModal.appendChild(captureBtn);
-  
-      const closeBtn = document.createElement('button');
-      closeBtn.textContent = 'Đóng';
-      closeBtn.style.cssText = 'margin-top:10px;padding:10px 20px;background:#ef4444;color:white;border:none;border-radius:5px;cursor:pointer;';
-      cameraModal.appendChild(closeBtn);
-  
-      document.body.appendChild(cameraModal);
-  
-      captureBtn.onclick = async () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d')?.drawImage(video, 0, 0);
-        
-        // Convert canvas to blob
-        canvas.toBlob(async (blob) => {
-          if (blob) {
-            // Tạo File object từ blob
-            const file = new File([blob], `${field}_${Date.now()}.jpg`, { type: 'image/jpeg' });
-  
-            try {
-              // Upload lên server
-              if (field === 'imgStandard') {
-                const result = await dispatch(uploadStandardProductionFile({ 
-                  standardProductionId: Number(standardProductionId), 
-                  file 
-                })).unwrap();
-                
-                // Cập nhật URL từ server
-                if (result?.imageUrl) {
-                  set(field, result.imageUrl);
-                }
-                
-                showNotification('success', 'Thành công', 'Upload hình ảnh Standard Production thành công');
-              } 
-  
-              // Fetch lại data
-              if (standardProductionId) {
-                await dispatch(fetchStandardProduction(standardProductionId));
-              }
-            } catch (error) {
-              console.error('Failed to upload image:', error);
-              showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
-            }
-          }
-        }, 'image/jpeg', 0.9);
-  
-        stream.getTracks().forEach(track => track.stop());
-        document.body.removeChild(cameraModal);
-      };
-  
-      closeBtn.onclick = () => {
-        stream.getTracks().forEach(track => track.stop());
-        document.body.removeChild(cameraModal);
-      };
-    } catch (error) {
-      console.error('Camera error:', error);
-      showNotification('error', 'Lỗi Camera', 'Không thể truy cập camera');
-    }
-  };
   
 
   const set = <K extends keyof StandardProductionData>(k: K, v: StandardProductionData[K]) =>
@@ -258,11 +173,11 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
       )}
         {/** repsponsive for website */}
         <div className='hidden lg:block w-full overflow-x-auto'>
-        <table className="border border-gray-600 w-full text-center opacity-60">
+        <table className="border border-gray-600 w-full text-center opacity-80">
           <tbody>
             {/* Row 10 */}
             <tr>
-              <th rowSpan={2} className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Tiêu chuẩn sản xuất</th>
+              <th rowSpan={3} className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Tiêu chuẩn sản xuất</th>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số quản lý trên Mask</th>
               <td className="border border-gray-600 px-2 py-2 text-xs">{form.numMASK || ""}</td>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số dao quét Printer</th>
@@ -306,6 +221,22 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
                 </div>
               </td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.labelProgram || ""}</td>
+            </tr>
+
+            {/** row 12: hình ảnh standard production */}
+            <tr>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Hình ảnh Standard Production</th>
+              <td colSpan={10} className="border border-gray-600 px-2 py-2 text-xs">
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <ImageViewIcon 
+                      imageUrl={form.imgStandard} 
+                      title="Hình ảnh Standard Production"
+                      onView={openImagePreview}
+                    />
+                  </div>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -403,7 +334,7 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
   onClose={() => setOpen(false)}
   onSave={submit}
 >
-  <div className="grid gap-3 max-h-[60vh] overflow-y-auto">
+  <div className="grid gap-3 max-h-[60vh] overflow-y-auto scrollbar-hide">
     <div className="grid grid-cols-2 gap-3">
       <label className="text-xs">
         Số quản lý trên Mask
@@ -496,44 +427,61 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
     </div>
 
     <label className="block text-sm font-medium mb-1">Hình ảnh Standard Production</label>
-      <div className="my-2">
+      <div className="">
         <input
           type="file"
           accept="image/*"
           onChange={(e) => handleImageUpload('imgStandard', e)}
           className="border border-gray-300 rounded px-3 py-2 w-full"
         />
-        <button
-          type="button"
-          onClick={() => handleCameraCapture('imgStandard')}
-          className=" bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center gap-2 mt-2 w-full"
-        >
-          <FaCamera size={10} />
-          Chụp ảnh Standard Production
-        </button>
       </div>
+
+      
+            <div>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => handleImageUpload('imgStandard', e)}
+              className="hidden"
+              id="camera-capture-standard-production"
+            />
+            <label
+            htmlFor="camera-capture-standard-production"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
+          >
+            {/* Thêm display: inline-block hoặc inline-flex */}
+              <div className="inline-flex items-center">
+                <FaCamera size={15} />
+              </div>
+              <div className="inline-flex items-center mx-2">
+                Chụp ảnh Standard Production
+              </div>
+          </label>
+          </div>
       
       {/* Preview Section */}
-      <div className="flex items-center gap-3 mt-2">
-        {form.imgStandard ? (
-          <>
-            <img src={form.imgStandard} alt="Standard Production Preview" className="w-20 h-20 object-cover rounded border" onClick={() => openImagePreview(form.imgStandard!, "Hình ảnh Standard Production")} />
-            <button
-              type="button"
-              onClick={() => openImagePreview(form.imgStandard!, "Hình ảnh Standard Production")}
-              className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
-            >
-              <IoEyeSharp size={20} />
-              <span className="text-sm">Xem hình ảnh</span>
-            </button>
-          </>
-        ) : (
-          <div className="flex items-center gap-2 text-gray-400">
-            <FaEyeSlash size={20} />
-            <span className="text-sm">Chưa có hình ảnh</span>
-          </div>
-        )}
+      {form.imgStandard && (
+      <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
+        <div className="flex items-center gap-3">
+          <img 
+            src={form.imgStandard} 
+            alt="Standard Production Preview" 
+            className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
+            onClick={() => openImagePreview(form.imgStandard!, "Hình ảnh Standard Production")} 
+          />
+          <button
+            type="button"
+            onClick={() => openImagePreview(form.imgStandard!, "Hình ảnh Standard Production")}
+            className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            <IoEyeSharp size={20} />
+            <span className="text-sm font-medium">Xem ảnh</span>
+          </button>
+        </div>
       </div>
+    )}
 
   </div>
 </Modal>

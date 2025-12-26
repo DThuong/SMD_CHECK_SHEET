@@ -1,9 +1,9 @@
 // src/components/AuthInitializer.tsx
 import { useEffect, useState, useRef } from 'react';
-import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { logout } from '../redux/slices/authSlice';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { logout } from '../../redux/slices/authSlice';
 import { useNavigate, useLocation } from 'react-router-dom';
-import smdApi from '../redux/services/smdApi';
+import smdApi from '../../redux/services/smdApi';
 
 const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useAppDispatch();

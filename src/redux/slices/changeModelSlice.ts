@@ -447,7 +447,7 @@ export const getSheetbyWorkorder = createAsyncThunk(
  */
 export const getSheetByFilter = createAsyncThunk(
   'changeModel/getByFilter',
-  async (params: { status?: string; workOrder?: string; fromDate?: string; toDate?: string }, { rejectWithValue }) => {
+  async (params: { status?: string; workOrder?: string; fromDate?: string; toDate?: string; fcode?: string; id?: number }, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('token');
       
@@ -468,6 +468,12 @@ export const getSheetByFilter = createAsyncThunk(
         }
         if (params.workOrder && params.workOrder.trim() !== '') {
           queryParams.WorkOrder = params.workOrder.trim();
+        }
+        if(params.fcode && params.fcode.trim() !== '') {
+          queryParams.FCode = params.fcode.trim();
+        }
+        if(params.id) {
+          queryParams.Id = params.id.toString();
         }
       const response = await smdApi.get('ChangeModel/filterAll', { params: queryParams });
 
@@ -640,6 +646,15 @@ const changeModelSlice = createSlice({
       .addCase(getSheetWithFullObject.fulfilled, (state, action) => {
         state.loading = false;
         state.currentSheet = action.payload;
+
+        // Log response từ backend
+        console.log('Backend Response:', {
+          id: action.payload.id,
+          excelFileUrl: action.payload.excelFileUrl,
+          pdfFileUrl: action.payload.pdfFileUrl,
+          excelType: typeof action.payload.excelFileUrl,
+          pdfType: typeof action.payload.pdfFileUrl,
+        });
         state.error = null;
       })
       .addCase(getSheetWithFullObject.rejected, (state, action) => {

@@ -114,9 +114,9 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
               <td rowSpan={2} className="border px-2 py-2 text-xs">{form.lineChange || ""}</td>
               <td rowSpan={2} className="border px-2 py-2 text-xs bg-gray-300"></td>
               <th className="border px-2 py-2 text-xs bg-gray-100">Model/Side</th>
-              <th colSpan={2} className="border px-2 py-2 text-xs bg-gray-100">T/B</th>
+              <th colSpan={2} className="border px-2 py-2 text-xs bg-gray-100">{form.model}</th>
               <th className="border px-2 py-2 text-xs bg-gray-100">REV S15</th>
-              <td className="border px-2 py-2">{form.revS15 || ""}</td>
+              <td className="border px-2 py-2 text-xs">{form.revS15 || ""}</td>
               <th rowSpan={2} className="border px-2 py-2 text-xs bg-gray-100">DATE</th>
               <th colSpan={2} className="border px-2 py-2 text-xs bg-gray-100">Feeder Check</th>
               <td className="border px-2 py-2 text-xs">{formatDateTime(form.feederCheck) || ""}</td>
@@ -125,7 +125,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
 
             <tr>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">F Code(3in1)</th>
-              <td colSpan={2} className="border px-2 py-2 text-xs">{form.model || ""}</td>
+              <td colSpan={2} className="border px-2 py-2 text-xs">{form.fCode || ""}</td>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">REV MOUNTER</th>
               <td className="border px-2 py-2 text-xs">{form.revMounter || ""}</td>
               <th colSpan={2} className="border px-2 py-2 text-xs bg-gray-100">OP Accept</th>
@@ -134,9 +134,9 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
 
             <tr>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">PCB ver</th>
-              <td colSpan={2} className="border px-2 py-2 text-xs">{form.fCode || ""}</td>
+              <td colSpan={2} className="border px-2 py-2 text-xs">{form.pcBver || ""}</td>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">Work Order</th>
-              <td className="border px-2 py-2">{form.pcBver || ""}</td>
+              <td className="border px-2 py-2">{form.workOrder || ""}</td>
               <th colSpan={2} className="border px-2 py-2 text-xs bg-gray-100">Used CN card</th>
               <td className="border px-2 py-2">
                 {form.usedCNcard !== undefined ? (form.usedCNcard ? "Yes" : "No") : ""}

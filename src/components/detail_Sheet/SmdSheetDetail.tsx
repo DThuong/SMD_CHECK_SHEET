@@ -140,12 +140,16 @@ const SmdSheetDetail = () => {
     if (!currentSheet?.id) return;
     
     try {
-      await dispatch(updateSheetStatusToPQCDone(currentSheet.id)).unwrap();
-      showNotification('success', 'Thành công', 'Đã ký thành công!');
-      
-      setTimeout(() => {
+      if(currentSheet?.pdfFileUrl !== "" && currentSheet?.excelFileUrl !== "") {
+        await dispatch(updateSheetStatusToPQCDone(currentSheet.id)).unwrap();
+        setTimeout(() => {
         navigate(0);
       }, 1000);
+      }else{
+        showNotification('warning', 'Thiếu file', 'Làm ơn upload cả 2 file: pdf và excel.');
+      }
+      
+      
     } catch (error) {
       console.error('updateSheetStatus failed', error);
       showNotification('error', 'Lỗi', 'Có lỗi xảy ra khi ký xác nhận!');

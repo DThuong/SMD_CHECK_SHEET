@@ -104,7 +104,7 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
   const modalLcrName = tempFileState.lcr?.name || lcrName;
   const modalReflowName = tempFileState.reflow?.name || reflowName;
 
-  // ✅ CHECK CẢ 2 FILE - DỰA VÀO currentSheet, KHÔNG DỰA VÀO completedTables
+  // CHECK CẢ 2 FILE - DỰA VÀO currentSheet, KHÔNG DỰA VÀO completedTables
     const bothFilesUploaded = 
     !!currentSheet?.excelFileUrl && 
     currentSheet.excelFileUrl.trim() !== "" &&

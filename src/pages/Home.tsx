@@ -74,7 +74,6 @@ const Home = () => {
   useEffect(() => {
     const restoreSheet = async () => {
       if (activeTab === 'create' && sheetIdFromUrl && !currentSheet) {
-        console.log(`🔄 Restoring sheet from URL: ${sheetIdFromUrl}`);
         setLoadingSheets(true);
         
         //  Reset completed tables trước khi load

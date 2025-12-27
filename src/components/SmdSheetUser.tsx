@@ -20,6 +20,7 @@ interface SmdSheetUserProps {
 function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
   const { user } = useAppSelector(state => state.auth);
   const { completedTables, success: subTableSuccess, lastUpdatedTable } = useAppSelector(state => state.subTable);
+  const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
   const dispatch = useAppDispatch();
 
   const [isCompleting, setIsCompleting] = useState(false);
@@ -59,14 +60,18 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
       setIsCompleting(true);
 
       // Update status to PQCDone
-      await dispatch(updateSheetStatusToPQCDone(sheetData.id)).unwrap();
+      if(currentSheet?.pdfFileUrl !== "" && currentSheet?.excelFileUrl !== "") {
+        await dispatch(updateSheetStatusToPQCDone(sheetData.id)).unwrap();
+      }else{
+        showNotification('warning', 'Thiếu file', 'Làm ơn upload cả 2 file: pdf và excel.');
+      }
 
       // Hiển thị notification thành công
-      showNotification(
-        'success',
-        'Cập nhật thành công!',
-        'Dữ liệu đã được lưu vào hệ thống'
-      );
+      // showNotification(
+      //   'success',
+      //   'Cập nhật thành công!',
+      //   'Dữ liệu đã được lưu vào hệ thống'
+      // );
 
       // Scroll to top sau 1.5s
       setTimeout(() => {
@@ -143,8 +148,6 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
       <SheetHeader canEdit />
       
       <CheckModels canEdit />
-      
-      {/* <ProgramChecks canEdit /> */}
       
       <StandardProductionSection canEdit />
       

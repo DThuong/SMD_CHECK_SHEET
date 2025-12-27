@@ -2,8 +2,8 @@
   "smdSheet": {
     "title": "SMD 시트",
     "mode": {
-      "editMode": "시트 편집 모드입니다",
-      "role": "역할"
+      "editMode": "시트 편집 모드",
+      "role": ""
     },
     "progress": {
       "title": "완료 진행률",

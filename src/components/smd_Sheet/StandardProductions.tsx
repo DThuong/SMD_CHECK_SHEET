@@ -75,27 +75,41 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
     });
   };
 
-   // fetch data khi StandardProduction thay đổi
-  useEffect(() => {
-    if (standardProductionId) {
-      dispatch(fetchStandardProduction(standardProductionId));
-    }
-  }, [standardProductionId, dispatch]);
+    // fetch data khi StandardProduction thay đổi
+    useEffect(() => {
+      if (standardProductionId) {
+        dispatch(fetchStandardProduction(standardProductionId));
+      }
+    }, [standardProductionId, dispatch]);
 
-  // Chỉ sync khi mở modal LẦN ĐẦU, KHÔNG sync khi user đã edit hoặc đang upload
-  useEffect(() => {
-    if (open && standardProduction && !hasUserEditedRef.current && !isUploadingRef.current) {
-      setForm(standardProduction);
-    }
-  }, [open]); // CHỈ chạy khi open thay đổi, KHÔNG listen standardProduction
+    // THÊM: Sync form khi data từ Redux về (lần đầu load)
+    useEffect(() => {
+      if (standardProduction && !hasUserEditedRef.current && !isUploadingRef.current) {
+        setForm(standardProduction);
+      }
+    }, [standardProduction]); // ← Listen standardProduction
 
-  // Reset flags khi đóng modal
-  useEffect(() => {
-    if (!open) {
-      hasUserEditedRef.current = false;
-      isUploadingRef.current = false;
-    }
-  }, [open]);
+    // GIỮ NGUYÊN: Sync khi mở modal
+    useEffect(() => {
+      if (open && standardProduction && !hasUserEditedRef.current && !isUploadingRef.current) {
+        setForm(standardProduction);
+      }
+    }, [open]);
+
+    // Reset flags khi đóng modal
+    useEffect(() => {
+      if (!open) {
+        hasUserEditedRef.current = false;
+        isUploadingRef.current = false;
+      }
+    }, [open]);
+    if (!standardProductionId) {
+    return (
+      <div className="p-4 bg-gray-50 rounded border border-gray-200">
+        <p className="text-sm text-gray-500">Đang tải dữ liệu Standard Production...</p>
+      </div>
+    );
+  }
 
   // xử lý upload hình ảnh với flag
   const handleImageUpload = async (field: 'imgStandard', event: React.ChangeEvent<HTMLInputElement>) => {

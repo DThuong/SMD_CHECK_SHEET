@@ -23,22 +23,6 @@ const Settings = () => {
   });
   const [isTranslating, setIsTranslating] = useState(false);
 
-  // const changeLanguage = async (langCode: string) => {
-  //   if (langCode === currentLang || isTranslating) return;
-    
-  //   setIsTranslating(true);
-    
-  //   try {
-  //     await autoTranslateService.translatePage(langCode);
-  //     setCurrentLang(langCode);
-  //   } catch (error) {
-  //     console.error('Translation failed:', error);
-  //     alert('Không thể đổi ngôn ngữ. Vui lòng thử lại.');
-  //   } finally {
-  //     setIsTranslating(false);
-  //   }
-  // };
-
   const currentLanguage = languages.find(lang => lang.code === currentLang);
 
   return (

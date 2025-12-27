@@ -119,20 +119,33 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
     }
   }, [standardVehicleId, dispatch]);
 
-  // FIXED: Chỉ sync khi mở modal LẦN ĐẦU, KHÔNG sync khi user đã edit hoặc đang upload
+  useEffect(() => {
+    if (standardVehicle && !hasUserEditedRef.current && !isUploadingRef.current) {
+      setForm(standardVehicle);
+    }
+  }, [standardVehicle]);
+
   useEffect(() => {
     if (open && standardVehicle && !hasUserEditedRef.current && !isUploadingRef.current) {
       setForm(standardVehicle);
     }
-  }, [open]); // ⚠️ CHỈ chạy khi open thay đổi, KHÔNG listen standardVehicle
+  }, [open]);
 
-  // Reset flags khi đóng modal
   useEffect(() => {
     if (!open) {
       hasUserEditedRef.current = false;
       isUploadingRef.current = false;
     }
   }, [open]);
+  
+  if (!standardVehicleId) {
+    return (
+      <div className="p-4 bg-gray-50 rounded border border-gray-200">
+        <p className="text-sm text-gray-500">Đang tải dữ liệu Standard Production...</p>
+      </div>
+    );
+  }
+
 
   // FIXED: Upload handler với flag protection cho CÁ 2 trường imgSPI và imgAOI
   const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.ChangeEvent<HTMLInputElement>) => {

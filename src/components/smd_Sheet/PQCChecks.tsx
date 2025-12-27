@@ -72,6 +72,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
     });
   };
 
+
   //  FIXED: Upload handler với flag protection
   const handleImageUpload = async (field: 'imgIC', event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -119,20 +120,32 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
     }
   }, [pqcCheckId, dispatch]);
 
-  //  FIXED: Chỉ sync khi mở modal LẦN ĐẦU, KHÔNG sync khi user đã edit hoặc đang upload
+    useEffect(() => {
+    if (pqcCheck && !hasUserEditedRef.current && !isUploadingRef.current) {
+      setForm(pqcCheck);
+    }
+  }, [pqcCheck]);
+
   useEffect(() => {
     if (open && pqcCheck && !hasUserEditedRef.current && !isUploadingRef.current) {
       setForm(pqcCheck);
     }
-  }, [open]); // ⚠️ CHỈ chạy khi open thay đổi, KHÔNG listen pqcCheck
+  }, [open]);
 
-  //  Reset flags khi đóng modal
   useEffect(() => {
     if (!open) {
       hasUserEditedRef.current = false;
       isUploadingRef.current = false;
     }
   }, [open]);
+  
+  if (!pqcCheckId) {
+    return (
+      <div className="p-4 bg-gray-50 rounded border border-gray-200">
+        <p className="text-sm text-gray-500">Đang tải dữ liệu Standard Production...</p>
+      </div>
+    );
+  }
 
   //  Wrapper cho set() để đánh dấu user đã edit
   const set = <K extends keyof PQCCheckData>(k: K, v: PQCCheckData[K]) => {

@@ -1,0 +1,95 @@
+{
+  "logs": {
+    "title": "SMD 로그 관리",
+    "role": "역할",
+    "info": {
+      "eng": "ENG 단계에서 보기, 편집 및 확인할 수 있습니다",
+      "supervisor": "SUPERVISOR 단계에서 보기, 편집 및 확인할 수 있습니다",
+      "manager": "MANAGER 단계에서 보기 및 확인할 수 있습니다 (편집 불가)",
+      "koreaManager": "KOREA MANAGER 단계에서 보기 및 확인할 수 있습니다 (편집 불가)",
+      "admin": "모든 시트를 볼 수 있는 권한이 있습니다"
+    },
+    "search": {
+      "title": "검색",
+      "id": "ID",
+      "fcode": "F코드",
+      "workOrder": "작업 지시",
+      "status": "상태",
+      "fromDate": "시작 날짜",
+      "toDate": "종료 날짜",
+      "button": {
+        "search": "검색",
+        "searching": "검색 중...",
+        "reset": "필터 변경"
+      },
+      "placeholder": {
+        "id": "ID로 검색...",
+        "fcode": "F코드로 검색...",
+        "workOrder": "작업 지시로 검색..."
+      },
+      "result": {
+        "count": "페이지 수",
+        "page": "페이지"
+      }
+    },
+    "status": {
+      "all": "모든 상태",
+      "pending": "대기 중",
+      "pqcDone": "PQC 완료",
+      "engDone": "Engineering 완료",
+      "supervisorDone": "Supervisor 완료",
+      "managerDone": "Manager 완료",
+      "koreaManagerDone": "Korea Manager 완료"
+    },
+    "table": {
+      "id": "ID",
+      "sheetId": "시트 ID",
+      "createdBy": "생성자",
+      "createTime": "생성 시간",
+      "status": "상태",
+      "action": "작업"
+    },
+    "button": {
+      "view": "보기",
+      "edit": "편집",
+      "back": "뒤로",
+      "viewFullSheet": "전체 시트 보기"
+    },
+    "detail": {
+      "title": "SMD 시트 상세",
+      "createdBy": "생성자",
+      "time": "시간",
+      "signatureProgress": "서명 확인 진행 상태",
+      "loading": "이력 로딩 중...",
+      "confirmed": "확인됨",
+      "notConfirmed": "확인되지 않음",
+      "signer": "서명자",
+      "signButton": "서명 확인"
+    },
+    "roles": {
+      "engineering": "Engineering",
+      "supervisor": "Supervisor",
+      "manager": "Manager",
+      "koreaManager": "Korea Manager"
+    },
+    "empty": {
+      "noSheets": "일치하는 시트가 없습니다",
+      "changeFilter": "필터 변경",
+      "createNew": "새 시트 생성",
+      "waitPQC": "PQC가 시트를 생성할 때까지 기다립니다"
+    },
+    "error": {
+      "invalidUser": "유효하지 않은 사용자입니다!",
+      "noPermission": "이 단계를 확인할 권한이 없습니다!",
+      "confirmFailed": "이 단계를 확인하는 중 오류가 발생했습니다"
+    },
+    "success": {
+      "confirmed": "다음에 의해 성공적으로 확인됨"
+    },
+    "warning": {
+      "selectToDate": "\"종료 날짜\"를 선택해주세요",
+      "selectFromDate": "\"시작 날짜\"를 선택해주세요",
+      "invalidDateRange": "\"시작 날짜\"는 \"종료 날짜\"보다 늦을 수 없습니다"
+    }
+  }
+}

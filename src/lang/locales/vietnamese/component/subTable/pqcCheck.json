@@ -1,0 +1,53 @@
+{
+  "pqcCheck": {
+    "title": "PQC kiểm tra board đầu",
+    "status": {
+      "saved": "Đã lưu",
+      "pqcCheckId": "PQCCheck ID",
+      "changeModelId": "ChangeModel ID"
+    },
+    "fields": {
+      "icPlan": "IC nạp kế hoạch",
+      "checksumReal": "Checksum thực tế",
+      "checksumConfirm": "Xác nhận khi có thay đổi Checksum mới",
+      "tuner": "Tuner",
+      "stage": "Công đoạn",
+      "startLCR": "Thời gian bắt đầu đo LCR",
+      "endLCR": "Thời gian kết thúc đo LCR",
+      "nameCheck": "Tên",
+      "pqcName": "PQC Name",
+      "resultLCR": "Kết quả đo LCR",
+      "imageIC": "Hình ảnh IC",
+      "imageICLabel": "Hình ảnh image IC"
+    },
+    "placeholder": {
+      "icPlan": "Nhập IC nạp kế hoạch...",
+      "checksumReal": "Nhập checksum thực tế...",
+      "checksumConfirm": "Nhập xác nhận checksum...",
+      "tuner": "Nhập tuner...",
+      "nameCheck": "Nhập tên PQC..."
+    },
+    "modal": {
+      "title": "Chi tiết PQC Check"
+    },
+    "button": {
+      "uploadImage": "Hình ảnh Standard Production",
+      "captureImage": "Chụp ảnh Standard Production",
+      "viewImage": "Xem ảnh"
+    },
+    "imagePreview": {
+      "title": "Hình ảnh Standard Production",
+      "selected": "Ảnh đã chọn:"
+    },
+    "error": {
+      "noId": "Không tìm thấy PQC Check ID. Vui lòng thử lại.",
+      "noSheetId": "Không tìm thấy SMD Sheet ID",
+      "updateFailed": "Không thể cập nhật",
+      "uploadFailed": "Có lỗi xảy ra khi upload hình ảnh",
+      "noUploadId": "Không tìm thấy StandardProduction ID"
+    },
+    "success": {
+      "uploadImage": "Upload hình ảnh Standard Production thành công"
+    }
+  }
+}

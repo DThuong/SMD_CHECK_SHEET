@@ -1,8 +1,7 @@
 // src/pages/Settings/Settings.tsx
 import { useTheme } from '../../contexts/ThemeContext';
 import { HiSun, HiMoon, HiGlobeAlt, HiCheckCircle } from 'react-icons/hi';
-import { useState, useEffect } from 'react';
-import { autoTranslateService } from '../../utils/autoTranslateService';
+import { useState} from 'react';
 
 interface Language {
   code: string;
@@ -24,21 +23,21 @@ const Settings = () => {
   });
   const [isTranslating, setIsTranslating] = useState(false);
 
-  const changeLanguage = async (langCode: string) => {
-    if (langCode === currentLang || isTranslating) return;
+  // const changeLanguage = async (langCode: string) => {
+  //   if (langCode === currentLang || isTranslating) return;
     
-    setIsTranslating(true);
+  //   setIsTranslating(true);
     
-    try {
-      await autoTranslateService.translatePage(langCode);
-      setCurrentLang(langCode);
-    } catch (error) {
-      console.error('Translation failed:', error);
-      alert('Không thể đổi ngôn ngữ. Vui lòng thử lại.');
-    } finally {
-      setIsTranslating(false);
-    }
-  };
+  //   try {
+  //     await autoTranslateService.translatePage(langCode);
+  //     setCurrentLang(langCode);
+  //   } catch (error) {
+  //     console.error('Translation failed:', error);
+  //     alert('Không thể đổi ngôn ngữ. Vui lòng thử lại.');
+  //   } finally {
+  //     setIsTranslating(false);
+  //   }
+  // };
 
   const currentLanguage = languages.find(lang => lang.code === currentLang);
 
@@ -107,7 +106,7 @@ const Settings = () => {
             return (
               <button
                 key={lang.code}
-                onClick={() => changeLanguage(lang.code)}
+                onClick={() => {}}
                 disabled={isTranslating}
                 className={`
                   relative p-5 rounded-xl border-2 transition-all duration-300

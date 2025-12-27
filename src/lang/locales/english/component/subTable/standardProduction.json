@@ -1,0 +1,46 @@
+{
+  "standardProduction": {
+    "title": "Production Standards",
+    "status": {
+      "saved": "Saved",
+      "standardProductionId": "StandardProduction ID",
+      "changeModelId": "ChangeModel ID"
+    },
+    "fields": {
+      "numMASK": "Mask Management Number",
+      "numMES": "MES Registration Number",
+      "numScanPrinter": "Printer Scan Number",
+      "numScanSignMES": "MES Scan Registration Number",
+      "mlS3Closed": "MSL3 Open Packaging",
+      "useOnly": "Exclusive Use",
+      "labelProgram": "Label Program",
+      "imageStandard": "Standard Production Image"
+    },
+    "options": {
+      "duksan": "Duksan",
+      "heesung": "Heesung",
+      "clear": "Clear"
+    },
+    "modal": {
+      "title": "Production Standards Details"
+    },
+    "button": {
+      "uploadImage": "Standard Production Image",
+      "captureImage": "Capture Standard Production Photo",
+      "viewImage": "View Image"
+    },
+    "imagePreview": {
+      "title": "Standard Production Image",
+      "selected": "Selected photo:"
+    },
+    "error": {
+      "noId": "StandardProduction ID not found",
+      "noSheetId": "SMD Sheet ID not found",
+      "updateFailed": "Error occurred while updating StandardProductions",
+      "uploadFailed": "Error occurred while uploading image"
+    },
+    "success": {
+      "uploadImage": "Standard Production image uploaded successfully"
+    }
+  }
+}

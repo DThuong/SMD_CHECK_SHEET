@@ -1,0 +1,46 @@
+{
+  "checkModel": {
+    "title": "모델 점검",
+    "status": {
+      "saved": "저장됨",
+      "checkModelId": "체크모델 ID",
+      "changeModelId": "변경모델 ID"
+    },
+    "fields": {
+      "lineChange": "라인 변경",
+      "modelSide": "모델/사이드",
+      "fCode": "F 코드 (3in1)",
+      "revS15": "REV S15",
+      "revMounter": "REV MOUNTER",
+      "feederCheck": "피더 점검",
+      "opAccept": "작업자 승인",
+      "pcbVer": "PCB 버전",
+      "workOrder": "작업 지시",
+      "qty": "수량",
+      "codePCB": "PCB 코드",
+      "usedCNCard": "CN 카드 사용",
+      "jig": "JIG",
+      "date": "날짜",
+      "model": "모델/사이드",
+      "topBottom": "T/B"
+    },
+    "placeholder": {
+      "lineChange": "라인 변경 입력...",
+      "modelSide": "모델/사이드 입력...",
+      "fCode": "F 코드 입력 (3in1)...",
+      "revS15": "REV S15 입력...",
+      "revMounter": "REV MOUNTER 입력...",
+      "pcbVer": "PCB 버전 입력...",
+      "workOrder": "작업 지시 입력...",
+      "qty": "수량 입력...",
+      "codePCB": "PCB 코드 입력..."
+    },
+    "modal": {
+      "title": "모델 점검 상세"
+    },
+    "error": {
+      "noId": "CheckModel ID를 찾을 수 없습니다. 다시 시도해주세요.",
+      "updateFailed": "업데이트할 수 없습니다"
+    }
+  }
+}

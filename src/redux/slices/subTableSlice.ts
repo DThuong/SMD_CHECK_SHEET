@@ -14,7 +14,7 @@ export interface CheckModelData {
     usedCNcard?: boolean,
     revS15?: string,
     revMounter?: string,
-    qty?: number,
+    qty?: string,
     feederCheck?: string,
     opAccept?: string,
     jig?: boolean,
@@ -26,8 +26,8 @@ export interface StandardProductionData {
   id?: number;
   numMASK?: string;
   numMES?: string;
-  numScanPrinter?: number;
-  numScanSignMES?: number;
+  numScanPrinter?: string;
+  numScanSignMES?: string;
   mlS3Closed?: string;
   useOnly?: string;
   labelProgram?: string;
@@ -47,17 +47,17 @@ export interface TimeChangeModelData {
 
 // StandardVehicle
 export interface StandardVehicleData {
-  printerSpecGTAL?: number;
-  printerSpecTDQ?: number;
-  printerSpecTDKC?: number;
-  printerSpecSLL?: number;
-  printerSpecDSL?: number;
+  printerSpecGTAL?: string;
+  printerSpecTDQ?: string;
+  printerSpecTDKC?: string;
+  printerSpecSLL?: string;
+  printerSpecDSL?: string;
 
-  printerRealGTAL?: number;
-  printerRealTDQ?: number;
-  printerRealTDKC?: number;
-  printerRealSLL?: number;
-  printerRealDSL?: number;
+  printerRealGTAL?: string;
+  printerRealTDQ?: string;
+  printerRealTDKC?: string;
+  printerRealSLL?: string;
+  printerRealDSL?: string;
 
   printerQ1?: boolean;
   spiQ1?: boolean;
@@ -65,8 +65,8 @@ export interface StandardVehicleData {
   mountQ2?: boolean;
 
   reflowQ1?: boolean;
-  reFlowSettingRail?: number;
-  reFlowRealRail?: number;
+  reFlowSettingRail?: string;
+  reFlowRealRail?: string;
 
   aoiQ1?: boolean;
   aoiCheck?: string;
@@ -82,12 +82,12 @@ export interface StandardVehicleData {
   printerProgram?: string;
   spiProgram?: string;
   mounterProgram?: string;
-  pointMounter?: number;
+  pointMounter?: string;
   maoiProgram?: string;
   saoiProgram?: string;
-  pointSAOI?: number;
+  pointSAOI?: string;
   reflowProgram?: string;
-  reflowSpeed?: number;
+  reflowSpeed?: string;
   rev?: string;
 
   imgSPI?: string;

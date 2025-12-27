@@ -665,7 +665,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                               {/* Status Badge */}
                               {getStatusBadge(sheet)}
 
-                                                            {/* 🔒 ICON KHÓA nếu không có quyền */}
+                              {/* 🔒 ICON KHÓA nếu không có quyền */}
                               {!canViewDetail(sheet) && (
                                 <span className="px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-semibold flex items-center gap-1">
                                   <AiOutlineLock size={13} />

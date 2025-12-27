@@ -293,7 +293,6 @@ const SmdSheetDetail = () => {
       <div className={!canEdit ? 'pointer-events-none opacity-80' : ''}>
         <SheetHeader canEdit={canEdit} />
         <CheckModels canEdit={canEdit} />
-        {/* <ProgramChecks canEdit={canEdit} /> */}
         <StandardProductionSection canEdit={canEdit} />
         <TimeChangeModels canEdit={canEdit} />
         <StandardVehicles canEdit={canEdit} />

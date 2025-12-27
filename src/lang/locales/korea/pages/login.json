@@ -1,0 +1,25 @@
+{
+  "login": {
+    "title": "환영합니다",
+    "subtitle": "계정에 로그인해주세요",
+    "fields": {
+      "username": "사용자명",
+      "password": "비밀번호"
+    },
+    "placeholder": {
+      "username": "사용자명",
+      "password": "비밀번호"
+    },
+    "button": {
+      "login": "로그인",
+      "loggingIn": "로그인 중..."
+    },
+    "rememberMe": "로그인 상태 유지",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
+    "noAccount": "계정이 없으신가요?",
+    "contactIT": "IT 문의",
+    "error": {
+      "loginFailed": "로그인 실패"
+    }
+  }
+}

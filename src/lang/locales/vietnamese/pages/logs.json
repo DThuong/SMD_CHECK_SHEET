@@ -1,0 +1,95 @@
+{
+  "logs": {
+    "title": "Quản lý SMD Logs",
+    "role": "Role",
+    "info": {
+      "eng": "Bạn có thể xem, chỉnh sửa và xác nhận ở bước ENG",
+      "supervisor": "Bạn có thể xem, chỉnh sửa và xác nhận ở bước SUPERVISOR",
+      "manager": "Bạn có thể xem và xác nhận ở bước MANAGER (KHÔNG sửa)",
+      "koreaManager": "Bạn có thể xem và xác nhận ở bước KOREA MANAGER (KHÔNG sửa)",
+      "admin": "Bạn có quyền xem tất cả sheets"
+    },
+    "search": {
+      "title": "Tìm kiếm",
+      "id": "Id",
+      "fcode": "FCode",
+      "workOrder": "Work Order",
+      "status": "Trạng thái",
+      "fromDate": "Từ ngày",
+      "toDate": "Đến ngày",
+      "button": {
+        "search": "Tìm kiếm",
+        "searching": "Đang tìm kiếm...",
+        "reset": "Thay đổi bộ lọc"
+      },
+      "placeholder": {
+        "id": "Tìm kiếm theo Id...",
+        "fcode": "Tìm kiếm theo fcode...",
+        "workOrder": "Tìm kiếm theo work order..."
+      },
+      "result": {
+        "count": "Số trang",
+        "page": "page"
+      }
+    },
+    "status": {
+      "all": "Tất cả trạng thái",
+      "pending": "Đang chờ",
+      "pqcDone": "PQC đã hoàn thành",
+      "engDone": "Engineering đã hoàn thành",
+      "supervisorDone": "Supervisor đã hoàn thành",
+      "managerDone": "Manager đã hoàn thành",
+      "koreaManagerDone": "Korea Manager đã hoàn thành"
+    },
+    "table": {
+      "id": "Id",
+      "sheetId": "Sheet id",
+      "createdBy": "Người tạo",
+      "createTime": "Thời gian tạo",
+      "status": "Trạng thái",
+      "action": "Hành động"
+    },
+    "button": {
+      "view": "Xem",
+      "edit": "Chỉnh sửa",
+      "back": "Quay lại",
+      "viewFullSheet": "Xem toàn bộ sheet"
+    },
+    "detail": {
+      "title": "Chi tiết SMD Sheet",
+      "createdBy": "Người tạo",
+      "time": "Thời gian",
+      "signatureProgress": "Tiến trình ký xác nhận",
+      "loading": "Đang tải lịch sử...",
+      "confirmed": "Đã xác nhận",
+      "notConfirmed": "Chưa xác nhận",
+      "signer": "Người ký",
+      "signButton": "Ký xác nhận"
+    },
+    "roles": {
+      "engineering": "Engineering",
+      "supervisor": "Supervisor",
+      "manager": "Manager",
+      "koreaManager": "Korea Manager"
+    },
+    "empty": {
+      "noSheets": "Tạm thời không có sheet nào phù hợp",
+      "changeFilter": "Thay đổi bộ lọc",
+      "createNew": "Tạo sheet mới",
+      "waitPQC": "Chờ PQC tạo sheet"
+    },
+    "error": {
+      "invalidUser": "Người dùng không hợp lệ!",
+      "noPermission": "Bạn không có quyền xác nhận bước này!",
+      "confirmFailed": "Đã xảy ra lỗi khi xác nhận bước này"
+    },
+    "success": {
+      "confirmed": "Xác nhận thành công bởi"
+    },
+    "warning": {
+      "selectToDate": "Vui lòng chọn \"Đến ngày\"",
+      "selectFromDate": "Vui lòng chọn \"Từ ngày\"",
+      "invalidDateRange": "\"Từ ngày\" không được sau \"Đến ngày\""
+    }
+  }
+}

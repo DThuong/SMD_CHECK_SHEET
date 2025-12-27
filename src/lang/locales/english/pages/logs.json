@@ -1,0 +1,95 @@
+{
+  "logs": {
+    "title": "SMD Logs Management",
+    "role": "Role",
+    "info": {
+      "eng": "You can view, edit and confirm at ENG step",
+      "supervisor": "You can view, edit and confirm at SUPERVISOR step",
+      "manager": "You can view and confirm at MANAGER step (NO editing)",
+      "koreaManager": "You can view and confirm at KOREA MANAGER step (NO editing)",
+      "admin": "You have permission to view all sheets"
+    },
+    "search": {
+      "title": "Search",
+      "id": "Id",
+      "fcode": "FCode",
+      "workOrder": "Work Order",
+      "status": "Status",
+      "fromDate": "From Date",
+      "toDate": "To Date",
+      "button": {
+        "search": "Search",
+        "searching": "Searching...",
+        "reset": "Change Filter"
+      },
+      "placeholder": {
+        "id": "Search by Id...",
+        "fcode": "Search by fcode...",
+        "workOrder": "Search by work order..."
+      },
+      "result": {
+        "count": "Pages",
+        "page": "page"
+      }
+    },
+    "status": {
+      "all": "All Status",
+      "pending": "Pending",
+      "pqcDone": "PQC Completed",
+      "engDone": "Engineering Completed",
+      "supervisorDone": "Supervisor Completed",
+      "managerDone": "Manager Completed",
+      "koreaManagerDone": "Korea Manager Completed"
+    },
+    "table": {
+      "id": "Id",
+      "sheetId": "Sheet id",
+      "createdBy": "Created By",
+      "createTime": "Create Time",
+      "status": "Status",
+      "action": "Action"
+    },
+    "button": {
+      "view": "View",
+      "edit": "Edit",
+      "back": "Back",
+      "viewFullSheet": "View Full Sheet"
+    },
+    "detail": {
+      "title": "SMD Sheet Details",
+      "createdBy": "Created By",
+      "time": "Time",
+      "signatureProgress": "Signature Confirmation Progress",
+      "loading": "Loading history...",
+      "confirmed": "Confirmed",
+      "notConfirmed": "Not Confirmed",
+      "signer": "Signer",
+      "signButton": "Sign Confirmation"
+    },
+    "roles": {
+      "engineering": "Engineering",
+      "supervisor": "Supervisor",
+      "manager": "Manager",
+      "koreaManager": "Korea Manager"
+    },
+    "empty": {
+      "noSheets": "No matching sheets found",
+      "changeFilter": "Change filter",
+      "createNew": "Create new sheet",
+      "waitPQC": "Wait for PQC to create sheet"
+    },
+    "error": {
+      "invalidUser": "Invalid user!",
+      "noPermission": "You don't have permission to confirm this step!",
+      "confirmFailed": "Error occurred while confirming this step"
+    },
+    "success": {
+      "confirmed": "Successfully confirmed by"
+    },
+    "warning": {
+      "selectToDate": "Please select \"To Date\"",
+      "selectFromDate": "Please select \"From Date\"",
+      "invalidDateRange": "\"From Date\" cannot be after \"To Date\""
+    }
+  }
+}

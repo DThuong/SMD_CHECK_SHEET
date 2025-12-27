@@ -35,7 +35,7 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
   }, [subTableSuccess, lastUpdatedTable]);
 
   // Check toàn bộ các bảng đã complete hay chưa ?
-  const requiredTables = ['CheckModel', 'ProgramCheck', 'StandardProduction', 'TimeChangeModel', 'StandardVehicle', 'PQCCheck', 'SheetHeader'];
+  const requiredTables = ['CheckModel', 'StandardProduction', 'TimeChangeModel', 'StandardVehicle', 'PQCCheck'];
   const allTablesCompleted = requiredTables.every(table => completedTables.includes(table));
 
   // HANDLE COMPLETE SHEET
@@ -61,7 +61,7 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
       // Update status to PQCDone
       await dispatch(updateSheetStatusToPQCDone(sheetData.id)).unwrap();
 
-      // ✅ Hiển thị notification thành công
+      // Hiển thị notification thành công
       showNotification(
         'success',
         'Cập nhật thành công!',
@@ -83,7 +83,7 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
 
   return (
     <div className="max-w-8xl mx-auto">
-      {/* ✅ Notification Component - Thay thế tất cả notification cũ */}
+      {/* Notification Component - Thay thế tất cả notification cũ */}
       <Notification
         show={notification.show}
         type={notification.type}

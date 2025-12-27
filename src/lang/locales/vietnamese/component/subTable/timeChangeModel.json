@@ -1,0 +1,36 @@
+{
+  "timeChangeModel": {
+    "title": "Thời gian đổi model",
+    "status": {
+      "saved": "Đã lưu",
+      "timeChangeModelId": "TimeChangeModel ID",
+      "changeModelId": "ChangeModel ID"
+    },
+    "fields": {
+      "category": "Hạng mục",
+      "name": "Tên",
+      "qc": "QC",
+      "nameQC": "Tên QC",
+      "result": "Result",
+      "nameResult": "Tên Result",
+      "startTime": "Thời gian bắt đầu",
+      "endTime": "Thời gian kết thúc",
+      "countTime": "Số phút",
+      "history": "Lịch sử"
+    },
+    "placeholder": {
+      "qc": "Nhập tên QC...",
+      "result": "Nhập tên Result...",
+      "countTime": "Nhập số phút...",
+      "history": "Nhập lịch sử..."
+    },
+    "modal": {
+      "title": "Chi tiết Thời gian đổi model"
+    },
+    "error": {
+      "noId": "Không tìm thấy timeChangeModel ID",
+      "noSheetId": "Không tìm thấy SMD Sheet ID",
+      "updateFailed": "Có lỗi xảy ra khi cập nhật timeChangeModel"
+    }
+  }
+}

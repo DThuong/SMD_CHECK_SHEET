@@ -1,6 +1,6 @@
 import ViewDetailButton from "../general/ViewDetailButton"
 import Modal from "../general/Modal";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchStandardVehicle, updateStandardVehicle,uploadAOIImage, uploadSPIImage } from "../../redux/slices/subTableSlice";
 import ImagePreviewModal from "../files/ImagePreviewModal";
@@ -13,17 +13,17 @@ import { IoEyeSharp } from "react-icons/io5";
 import { normalizeImageUrl } from "../../utils/imageUrl";
 
 const initialStandardVehiclesState: StandardVehicleData = {
-  printerSpecGTAL: 0,
-  printerSpecTDQ: 0,
-  printerSpecTDKC: 0,
-  printerSpecSLL: 0,
-  printerSpecDSL: 0,
+  printerSpecGTAL: "",
+  printerSpecTDQ: "",
+  printerSpecTDKC: "",
+  printerSpecSLL: "",
+  printerSpecDSL: "",
 
-  printerRealGTAL: 0,
-  printerRealTDQ: 0,
-  printerRealTDKC: 0,
-  printerRealSLL: 0,
-  printerRealDSL: 0,
+  printerRealGTAL: "",
+  printerRealTDQ: "",
+  printerRealTDKC: "",
+  printerRealSLL: "",
+  printerRealDSL: "",
 
   printerQ1: false,
   spiQ1: false,
@@ -31,8 +31,8 @@ const initialStandardVehiclesState: StandardVehicleData = {
   mountQ2: false,
 
   reflowQ1: false,
-  reFlowSettingRail: 0,
-  reFlowRealRail: 0,
+  reFlowSettingRail: "",
+  reFlowRealRail: "",
 
   aoiQ1: false,
   aoiCheck: "",
@@ -48,12 +48,12 @@ const initialStandardVehiclesState: StandardVehicleData = {
   printerProgram: "",
   spiProgram: "",
   mounterProgram: "",
-  pointMounter: 0,
+  pointMounter: "",
   maoiProgram: "",
   saoiProgram: "",
-  pointSAOI: 0,
+  pointSAOI: "",
   reflowProgram: "",
-  reflowSpeed: 0,
+  reflowSpeed: "",
   rev: "",
 
   imgSPI: "",
@@ -79,6 +79,8 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
     const isSaved = completedTables.includes('StandardVehicle');
     
     const { notification, showNotification,  hideNotification } = useNotification();
+    const isUploadingRef = useRef(false);
+    const hasUserEditedRef = useRef(false);
 
     // Xử lý upload hình ảnh preview modal
     const [imagePreview, setImagePreview] = useState<{
@@ -110,95 +112,123 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
   };
 
 
-    // fetch data khi standardVehicle thay đổi
-        useEffect(() => {
-          if (standardVehicleId) {
-            dispatch(fetchStandardVehicle(standardVehicleId));
-          }
-        }, [standardVehicleId, dispatch]);
-        // sync form với redux store thay vì sử dụng context
-        useEffect(() => {
-          if (standardVehicle) {
-            setForm(standardVehicle);
-          }
-        }, [standardVehicle]);
-
-// Xử lý upload hình ảnh
-const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.ChangeEvent<HTMLInputElement>) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-
-  if (!standardVehicleId) {
-    showNotification('error', 'Lỗi upload', 'Không tìm thấy StandardVehicle ID');
-    return;
-  }
-
-  try {
-    // Upload file lên server (KHÔNG hiển thị preview base64 nữa)
-    if (field === 'imgSPI') {
-      const result = await dispatch(uploadSPIImage({ 
-        id: Number(standardVehicleId), 
-        file 
-      })).unwrap();
-      
-      // Cập nhật URL từ server vào form
-      if (result?.imageUrl) {
-        set(field, result.imageUrl);
-      }
-      
-      showNotification('success', 'Thành công', 'Upload hình ảnh SPI thành công');
-    } else if (field === 'imgAOI') {
-      const result = await dispatch(uploadAOIImage({ 
-        id: Number(standardVehicleId), 
-        file 
-      })).unwrap();
-      
-      // Cập nhật URL từ server vào form
-      if (result?.imageUrl) {
-        set(field, result.imageUrl);
-      }
-      
-      showNotification('success', 'Thành công', 'Upload hình ảnh AOI thành công');
-    }
-
-    // Fetch lại data để đảm bảo sync với server
+  // fetch data khi standardVehicle thay đổi
+  useEffect(() => {
     if (standardVehicleId) {
-      await dispatch(fetchStandardVehicle(standardVehicleId));
+      dispatch(fetchStandardVehicle(standardVehicleId));
     }
-  } catch (error) {
-    console.error('Failed to upload image:', error);
-    showNotification('error', 'Lỗi upload', `Không thể upload hình ảnh ${field === 'imgSPI' ? 'SPI' : 'AOI'}`);
-  }
-};
-   // Xử lý chụp ảnh từ camera
+  }, [standardVehicleId, dispatch]);
 
-    const set = <K extends keyof StandardVehicleData>(k: K, v: StandardVehicleData[K]) =>
+  // FIXED: Chỉ sync khi mở modal LẦN ĐẦU, KHÔNG sync khi user đã edit hoặc đang upload
+  useEffect(() => {
+    if (open && standardVehicle && !hasUserEditedRef.current && !isUploadingRef.current) {
+      setForm(standardVehicle);
+    }
+  }, [open]); // ⚠️ CHỈ chạy khi open thay đổi, KHÔNG listen standardVehicle
+
+  // Reset flags khi đóng modal
+  useEffect(() => {
+    if (!open) {
+      hasUserEditedRef.current = false;
+      isUploadingRef.current = false;
+    }
+  }, [open]);
+
+  // FIXED: Upload handler với flag protection cho CÁ 2 trường imgSPI và imgAOI
+  const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!standardVehicleId) {
+      showNotification('error', 'Lỗi upload', 'Không tìm thấy StandardVehicle ID');
+      return;
+    }
+
+    try {
+      // Set flag TRƯỚC KHI upload
+      isUploadingRef.current = true;
+
+      if (field === 'imgSPI') {
+        const result = await dispatch(uploadSPIImage({ 
+          id: Number(standardVehicleId), 
+          file 
+        })).unwrap();
+        
+        // Chỉ cập nhật field imgSPI, KHÔNG trigger re-sync toàn bộ form
+        if (result?.imageUrl) {
+          setForm(prev => ({
+            ...prev,
+            imgSPI: result.imageUrl
+          }));
+        }
+        
+        showNotification('success', 'Thành công', 'Upload hình ảnh SPI thành công');
+      } else if (field === 'imgAOI') {
+        const result = await dispatch(uploadAOIImage({ 
+          id: Number(standardVehicleId), 
+          file 
+        })).unwrap();
+        
+        // Chỉ cập nhật field imgAOI, KHÔNG trigger re-sync toàn bộ form
+        if (result?.imageUrl) {
+          setForm(prev => ({
+            ...prev,
+            imgAOI: result.imageUrl
+          }));
+        }
+        
+        showNotification('success', 'Thành công', 'Upload hình ảnh AOI thành công');
+      }
+
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      showNotification('error', 'Lỗi upload', `Không thể upload hình ảnh ${field === 'imgSPI' ? 'SPI' : 'AOI'}`);
+    } finally {
+      // Reset flag SAU KHI upload xong (thành công hay thất bại)
+      isUploadingRef.current = false;
+    }
+  };
+
+  // Wrapper cho set() để đánh dấu user đã edit
+  const set = <K extends keyof StandardVehicleData>(k: K, v: StandardVehicleData[K]) => {
+    hasUserEditedRef.current = true; // Đánh dấu user đã edit
     setForm((s) => ({ ...s, [k]: v }));
+  };
+    
+  const submit = async() => {
+    if (!standardVehicleId) {
+      showNotification('error', 'Lỗi lưu Standard Vehicle', 'Không tìm thấy StandardVehicle ID');
+      return;
+    }
+
+    if (!smdSheetId) {
+      showNotification('error', 'Lỗi lưu Standard Vehicle', 'Không tìm thấy SMD Sheet ID');
+      return;
+    }
+
+    try {
+      // Dispatch action để update
+      await dispatch(updateStandardVehicle({
+        id: smdSheetId,
+        data: form
+      })).unwrap();
       
-    const submit = async() => {
-            if (!standardVehicleId) {
-              showNotification('error', 'Lỗi lưu Standard Vehicle', 'Không tìm thấy StandardVehicle ID');
-              return;
-            }
+      // Fetch lại data SAU KHI lưu thành công
+      if (standardVehicleId) {
+        await dispatch(fetchStandardVehicle(standardVehicleId)).unwrap();
+      }
       
-            if (!smdSheetId) {
-              showNotification('error', 'Lỗi lưu Standard Vehicle', 'Không tìm thấy SMD Sheet ID');
-              return;
-            }
+      // Reset flags
+      hasUserEditedRef.current = false;
+      isUploadingRef.current = false;
       
-            try {
-              // Dispatch action để update
-              await dispatch(updateStandardVehicle({
-                id: smdSheetId,
-                data: form
-              })).unwrap();
-              
-              setOpen(false);
-            } catch (error) {
-              console.error('Failed to update StandardVehicles:', error);
-              showNotification('error', 'Lỗi lưu Standard Vehicle', 'Có lỗi xảy ra khi cập nhật StandardVehicles');
-            }
-    };
+      setOpen(false);
+      showNotification('success', 'Thành công', 'Cập nhật Standard Vehicle thành công');
+    } catch (error) {
+      console.error('Failed to update StandardVehicles:', error);
+      showNotification('error', 'Lỗi lưu Standard Vehicle', 'Có lỗi xảy ra khi cập nhật StandardVehicles');
+    }
+  };
   return (
     <div className="p-0 py-4 w-full">
       <Notification
@@ -902,8 +932,8 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerSpecGTAL ?? ""}
-            onChange={(e) => set("printerSpecGTAL", e.target.value ? Number(e.target.value) : undefined)}
-            type="number"
+            onChange={(e) => set("printerSpecGTAL", e.target.value )}
+            type="text"
           />
         </div>
 
@@ -912,8 +942,8 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerSpecTDQ ?? ""}
-            onChange={(e) => set("printerSpecTDQ", e.target.value ? Number(e.target.value) : undefined)}
-            type="number"
+            onChange={(e) => set("printerSpecTDQ", e.target.value )}
+            type="text"
           />
         </div>
       </div>
@@ -923,8 +953,8 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
         <input
           className="block w-full border rounded px-3 py-2 text-sm min-w-0"
           value={form.printerSpecTDKC ?? ""}
-          onChange={(e) => set("printerSpecTDKC", e.target.value ? Number(e.target.value) : undefined)}
-          type="number"
+          onChange={(e) => set("printerSpecTDKC", e.target.value )}
+          type="text"
         />
       </div>
 
@@ -934,8 +964,8 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerSpecSLL ?? ""}
-            onChange={(e) => set("printerSpecSLL", e.target.value ? Number(e.target.value) : undefined)}
-            type="number"
+            onChange={(e) => set("printerSpecSLL", e.target.value )}
+            type="text"
           />
         </div>
 
@@ -944,8 +974,8 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerSpecDSL ?? ""}
-            onChange={(e) => set("printerSpecDSL", e.target.value ? Number(e.target.value) : undefined)}
-            type="number"
+            onChange={(e) => set("printerSpecDSL", e.target.value )}
+            type="text"
           />
         </div>
       </div>
@@ -956,8 +986,8 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerRealGTAL ?? ""}
-            onChange={(e) => set("printerRealGTAL", e.target.value ? Number(e.target.value) : undefined)}
-            type="number"
+            onChange={(e) => set("printerRealGTAL", e.target.value )}
+            type="text"
           />
         </div>
 
@@ -966,8 +996,8 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerRealTDQ ?? ""}
-            onChange={(e) => set("printerRealTDQ", e.target.value ? Number(e.target.value) : undefined)}
-            type="number"
+            onChange={(e) => set("printerRealTDQ", e.target.value )}
+            type="text"
           />
         </div>
       </div>
@@ -977,8 +1007,8 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
         <input
           className="block w-full border rounded px-3 py-2 text-sm min-w-0"
           value={form.printerRealTDKC ?? ""}
-          onChange={(e) => set("printerRealTDKC", e.target.value ? Number(e.target.value) : undefined)}
-          type="number"
+          onChange={(e) => set("printerRealTDKC", e.target.value )}
+          type="text"
         />
       </div>
 
@@ -987,8 +1017,8 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerRealSLL ?? ""}
-            onChange={(e) => set("printerRealSLL", e.target.value ? Number(e.target.value) : undefined)}
-            type="number"
+            onChange={(e) => set("printerRealSLL", e.target.value )}
+            type="text"
           />
       </div>
 
@@ -997,8 +1027,8 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerRealDSL ?? ""}
-            onChange={(e) => set("printerRealDSL", e.target.value ? Number(e.target.value) : undefined)}
-            type="number"
+            onChange={(e) => set("printerRealDSL", e.target.value )}
+            type="text"
           />
       </div>
 
@@ -1008,7 +1038,7 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerProgram ?? ""}
             onChange={(e) => set("printerProgram", e.target.value)}
-            type="number"
+            type="text"
           />
       </div>
       
@@ -1133,7 +1163,7 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.mounterProgram ?? ""}
             onChange={(e) => set("mounterProgram", e.target.value)}
-            type="number"
+            type="text"
           />
       </div>
 
@@ -1142,8 +1172,8 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.pointMounter ?? ""}
-            onChange={(e) => set("pointMounter", e.target.value ? Number(e.target.value) : undefined)}
-            type="number"
+            onChange={(e) => set("pointMounter", e.target.value )}
+            type="text"
           />
       </div>
       
@@ -1200,8 +1230,8 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
             <input
               className="block w-full border rounded px-3 py-2 text-sm min-w-0"
               value={form.reFlowSettingRail ?? ""}
-              onChange={(e) => set("reFlowSettingRail", e.target.value ? Number(e.target.value) : undefined)}
-              type="number"
+              onChange={(e) => set("reFlowSettingRail", e.target.value )}
+              type="text"
             />
           </div>
           <div className="min-w-0">
@@ -1209,8 +1239,8 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
             <input
               className="block w-full border rounded px-3 py-2 text-sm min-w-0"
               value={form.reFlowRealRail ?? ""}
-              onChange={(e) => set("reFlowRealRail", e.target.value ? Number(e.target.value) : undefined)}
-              type="number"
+              onChange={(e) => set("reFlowRealRail", e.target.value )}
+              type="text"
             />
           </div>
         </div>
@@ -1221,7 +1251,7 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.reflowProgram ?? ""}
             onChange={(e) => set("reflowProgram", e.target.value )}
-            type="number"
+            type="text"
           />
       </div>
 
@@ -1230,8 +1260,8 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.reflowSpeed ?? ""}
-            onChange={(e) => set("reflowSpeed", e.target.value ? Number(e.target.value) : undefined)}
-            type="number"
+            onChange={(e) => set("reflowSpeed", e.target.value )}
+            type="text"
           />
       </div>
       </div>
@@ -1279,8 +1309,8 @@ const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.Change
     <input
       className="block w-full border rounded px-3 py-2 text-sm min-w-0"
       value={form.pointSAOI ?? ""}
-      onChange={(e) => set("pointSAOI", e.target.value ? Number(e.target.value) : undefined)}
-      type="number"
+      onChange={(e) => set("pointSAOI", e.target.value )}
+      type="text"
     />
   </div>
   {/** Người kiểm tra */}

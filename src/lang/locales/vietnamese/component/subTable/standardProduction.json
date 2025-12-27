@@ -1,0 +1,46 @@
+{
+  "standardProduction": {
+    "title": "Tiêu chuẩn sản xuất",
+    "status": {
+      "saved": "Đã lưu",
+      "standardProductionId": "StandardProduction ID",
+      "changeModelId": "ChangeModel ID"
+    },
+    "fields": {
+      "numMASK": "Số quản lý trên Mask",
+      "numMES": "Số đăng ký trên MES",
+      "numScanPrinter": "Số dao quét Printer",
+      "numScanSignMES": "Số đăng ký dao quét trên MES",
+      "mlS3Closed": "Liệu MSL3 mở đóng gói",
+      "useOnly": "Chỉ sử dụng",
+      "labelProgram": "Chương trình máy label",
+      "imageStandard": "Hình ảnh Standard Production"
+    },
+    "options": {
+      "duksan": "Duksan",
+      "heesung": "Heesung",
+      "clear": "Xóa"
+    },
+    "modal": {
+      "title": "Chi tiết Tiêu chuẩn sản xuất"
+    },
+    "button": {
+      "uploadImage": "Hình ảnh Standard Production",
+      "captureImage": "Chụp ảnh Standard Production",
+      "viewImage": "Xem ảnh"
+    },
+    "imagePreview": {
+      "title": "Hình ảnh Standard Production",
+      "selected": "Ảnh đã chọn:"
+    },
+    "error": {
+      "noId": "Không tìm thấy StandardProduction ID",
+      "noSheetId": "Không tìm thấy SMD Sheet ID",
+      "updateFailed": "Có lỗi xảy ra khi cập nhật StandardProductions",
+      "uploadFailed": "Có lỗi xảy ra khi upload hình ảnh"
+    },
+    "success": {
+      "uploadImage": "Upload hình ảnh Standard Production thành công"
+    }
+  }
+}

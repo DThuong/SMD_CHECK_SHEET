@@ -159,7 +159,7 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
           <div className="mb-3">
             <div className="text-xs font-semibold text-gray-600 mb-1">Thời gian bắt đầu</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.startTime || "—"}
+              {formatDateTime(form.startTime) || "—"}
             </div>
           </div>
 
@@ -167,7 +167,7 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
           <div className="mb-3">
             <div className="text-xs font-semibold text-gray-600 mb-1">Thời gian kết thúc</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.endTime || "—"}
+              {formatDateTime(form.endTime) || "—"}
             </div>
           </div>
 

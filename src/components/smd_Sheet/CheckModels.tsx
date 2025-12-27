@@ -17,7 +17,7 @@ const initialFormState: CheckModelData = {
   usedCNcard: undefined,
   revS15: "",
   revMounter: "",
-  qty: undefined,
+  qty: "",
   feederCheck: "",
   opAccept: "",
   jig: undefined,
@@ -48,7 +48,6 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
 
   // SUBMIT WITHOUT VALIDATION
   const submit = async () => {
-    console.log("checkmodelid được tìm thấy khi chỉnh sửa: ",checkModelId); // log ra undefined khi cập nhật thông tin sheet nhưng khi tạo sheet và sửa lại bình thường ?
     if (!checkModelId) {
       showNotification('error', 'Lỗi', 'Không tìm thấy CheckModel ID. Vui lòng thử lại.');
       return;
@@ -196,13 +195,13 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
             <div className="min-w-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">Feeder Check</div>
               <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-                {form.feederCheck || "—"}
+                {formatDateTime(form.feederCheck) || "—"}
               </div>
             </div>
             <div className="min-w-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">OP Accept</div>
               <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-                {form.opAccept || "—"}
+                {formatDateTime(form.opAccept) || "—"}
               </div>
             </div>
           </div>
@@ -386,11 +385,11 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
           <label className="text-xs">
             Qty
             <input 
-              type="number"
+              type="text"
               value={form.qty ?? ""} 
               placeholder="Nhập qty..."
               onChange={(e) => {
-                const val = e.target.value ? Number(e.target.value) : undefined;
+                const val = e.target.value;
                 set("qty", val);
               }}
               className="mt-1 block w-full border rounded px-3 py-2 text-base"

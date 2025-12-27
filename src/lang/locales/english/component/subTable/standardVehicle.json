@@ -1,0 +1,119 @@
+{
+  "standardVehicle": {
+    "title": "Equipment Standards",
+    "status": {
+      "saved": "Saved",
+      "standardVehicleId": "StandardVehicle ID",
+      "changeModelId": "ChangeModel ID"
+    },
+    "sections": {
+      "printer": "Printer",
+      "spi": "SPI",
+      "mount": "Mount",
+      "reflow": "Reflow",
+      "aoi": "AOI",
+      "output": "OUTPUT",
+      "worker": "Worker"
+    },
+    "printer": {
+      "title": "Printer",
+      "specGTAL": "Pressure Value Spec (kg)",
+      "specTDQ": "Scan Speed Spec (mm/s)",
+      "specTDKC": "Table Separation Speed Spec (mm/s)",
+      "specSLL": "Wipe Count Spec",
+      "specDSL": "Blade Usage Spec",
+      "realGTAL": "Actual Pressure Value (kg)",
+      "realTDQ": "Actual Scan Speed (mm/s)",
+      "realTDKC": "Actual Table Separation Speed (mm/s)",
+      "realSLL": "Actual Wipe Count",
+      "realDSL": "Actual Blade Usage",
+      "program": "Printer Program",
+      "vacuumBlock": "Check if vacuum block affects PCB or components",
+      "settingSpec": "Standard Spec Provided",
+      "realSetting": "Actual Setting Value",
+      "pressureValue": "Screen Sprint Setting Value",
+      "pressureSpec": "Pressure Value",
+      "speedSpec": "Scan Speed",
+      "separationSpeed": "Table Separation Speed",
+      "wipeCount": "Wipe Count",
+      "bladeUsed": "Blade Usage"
+    },
+    "spi": {
+      "title": "SPI",
+      "checkItems": "Check Items (Verify SPI Setting Standards)",
+      "inspectionSetting": "Inspection Setting Conditions (volume: 60-180%; Area: 40-200%; ofset: 0.15, short: 60)",
+      "inspectionOk": "Inspection Setting OK",
+      "program": "SPI Program",
+      "rev": "REV",
+      "imageSPI": "SPI Image"
+    },
+    "mount": {
+      "title": "Mount",
+      "checkFirst3Boards": "Check if first 3 boards are OK after component mounting",
+      "checkBottomBoard": "Check bottom board for defects or component damage",
+      "program": "Mounter Program",
+      "point": "Mounter Point"
+    },
+    "reflow": {
+      "title": "Reflow",
+      "conveyorWidth": "Check conveyor width condition",
+      "settingRail": "Rail Setting Value (mm)",
+      "realRail": "Actual Rail Value (mm)",
+      "program": "Reflow Program",
+      "speed": "Reflow Speed"
+    },
+    "aoi": {
+      "title": "AOI",
+      "xray3Boards": "Check if X-ray of first 3 boards is OK",
+      "checker": "Inspector",
+      "maoiProgram": "mAoi Program",
+      "saoiProgram": "sAoi Program",
+      "pointSAOI": "sAoi Point",
+      "imageAOI": "AOI Image"
+    },
+    "output": {
+      "title": "Output",
+      "magazineDistance": "Check setting condition, input magazine distance at uploader",
+      "checker": "Inspector",
+      "settingValue": "Setting Value as Required",
+      "model": "Model",
+      "pitch": "Pitch"
+    },
+    "worker": {
+      "title": "Worker",
+      "name": "Name",
+      "note": "Note",
+      "nameOP": "OP Name",
+      "nameAOI": "AOI Name",
+      "sampleCheck": "Sample Check (5PCB)",
+      "errorName": "Error Name",
+      "errorCount": "Error Count",
+      "repairStatus": "Repair Status"
+    },
+    "modal": {
+      "title": "Vehicle Check Details"
+    },
+    "button": {
+      "uploadImageSPI": "SPI Image",
+      "uploadImageAOI": "AOI Image",
+      "captureImageSPI": "Capture SPI Photo",
+      "captureImageAOI": "Capture AOI Photo",
+      "orCapture": "📸 Or capture photo",
+      "viewImage": "View Image"
+    },
+    "imagePreview": {
+      "selected": "Selected photo:"
+    },
+    "error": {
+      "noId": "StandardVehicle ID not found",
+      "noSheetId": "SMD Sheet ID not found",
+      "updateFailed": "Error occurred while updating StandardVehicles",
+      "uploadSPIFailed": "Unable to upload SPI image",
+      "uploadAOIFailed": "Unable to upload AOI image"
+    },
+    "success": {
+      "uploadSPI": "SPI image uploaded successfully",
+      "uploadAOI": "AOI image uploaded successfully"
+    }
+  }
+}

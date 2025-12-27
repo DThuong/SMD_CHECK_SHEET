@@ -1,0 +1,119 @@
+{
+  "standardVehicle": {
+    "title": "Tiêu chuẩn thiết bị",
+    "status": {
+      "saved": "Đã lưu",
+      "standardVehicleId": "StandardVehicle ID",
+      "changeModelId": "ChangeModel ID"
+    },
+    "sections": {
+      "printer": "Printer",
+      "spi": "SPI",
+      "mount": "Mount",
+      "reflow": "Reflow",
+      "aoi": "AOI",
+      "output": "OUTPUT",
+      "worker": "Công nhân"
+    },
+    "printer": {
+      "title": "Printer",
+      "specGTAL": "Giá trị áp lực Spec (kg)",
+      "specTDQ": "Tốc độ quét Spec (mm/s)",
+      "specTDKC": "Tốc độ khoảng cách tách bàn Spec (mm/s)",
+      "specSLL": "Số lần lau Spec",
+      "specDSL": "Dao sử dụng Spec",
+      "realGTAL": "Giá trị áp lực thực tế trên máy (kg)",
+      "realTDQ": "Tốc độ quét thực tế trên máy (mm/s)",
+      "realTDKC": "Tốc độ tách bàn thực tế trên máy (mm/s)",
+      "realSLL": "Số lần lau thực tế trên máy",
+      "realDSL": "Dao sử dụng thực tế trên máy",
+      "program": "Sprinter Program",
+      "vacuumBlock": "Sau khi sử dụng Vaccum Block thì có ảnh hưởng, tác động tới PCB hay linh kiện không ?",
+      "settingSpec": "Tiêu chuẩn Spec đưa ra",
+      "realSetting": "Giá trị cài đặt thực tế trên máy",
+      "pressureValue": "Giá trị cài đặt Screen Sprint",
+      "pressureSpec": "Giá trị áp lực",
+      "speedSpec": "Tốc độ quét",
+      "separationSpeed": "Tốc độ khoảng cách tách bàn",
+      "wipeCount": "Số lần lau",
+      "bladeUsed": "Dao sử dụng"
+    },
+    "spi": {
+      "title": "SPI",
+      "checkItems": "Hạng mục check (kiểm tra tiêu chuẩn setting SPI)",
+      "inspectionSetting": "Điều kiện setting Inspection (volume: 60-180%; Area: 40-200%; ofset: 0.15, short: 60)",
+      "inspectionOk": "Inspection Setting OK",
+      "program": "SPI Program",
+      "rev": "REV",
+      "imageSPI": "Hình ảnh SPI"
+    },
+    "mount": {
+      "title": "Mount",
+      "checkFirst3Boards": "Kiểm tra 3 board đầu tiên sau khi cắm linh kiện có OK không ?",
+      "checkBottomBoard": "Kiểm tra 1 tấm ở mặt dưới có NG hay bể linh kiện không ?",
+      "program": "Mounter Program",
+      "point": "Point Mounter"
+    },
+    "reflow": {
+      "title": "Reflow",
+      "conveyorWidth": "Kiểm tra tình trạng chiều rộng của Conveyor",
+      "settingRail": "Giá trị cài đặt Rail (mm)",
+      "realRail": "Giá trị thực tế Rail (mm)",
+      "program": "Reflow Program",
+      "speed": "Reflow Speed"
+    },
+    "aoi": {
+      "title": "AOI",
+      "xray3Boards": "Xray 3 board đầu tiên có OK hay không ?",
+      "checker": "Người kiểm tra",
+      "maoiProgram": "Chương trình mAoi",
+      "saoiProgram": "Chương trình sAoi",
+      "pointSAOI": "Point sAoi",
+      "imageAOI": "Hình ảnh AOI"
+    },
+    "output": {
+      "title": "Output",
+      "magazineDistance": "Kiểm tra tình trạng setting, khoảng cách input magazine tại uploader ?",
+      "checker": "Người kiểm tra",
+      "settingValue": "Giá trị cài đặt theo yêu cầu",
+      "model": "Model",
+      "pitch": "Pitch"
+    },
+    "worker": {
+      "title": "Công nhân",
+      "name": "Tên",
+      "note": "Ghi chú",
+      "nameOP": "Tên OP",
+      "nameAOI": "Tên AOI",
+      "sampleCheck": "Mẫu kiểm tra (5PCB)",
+      "errorName": "Tên lỗi",
+      "errorCount": "Số lượng lỗi",
+      "repairStatus": "Tình trạng sửa chữa"
+    },
+    "modal": {
+      "title": "Chi tiết Vehicle Check"
+    },
+    "button": {
+      "uploadImageSPI": "Hình ảnh SPI",
+      "uploadImageAOI": "Hình ảnh AOI",
+      "captureImageSPI": "Chụp ảnh SPI",
+      "captureImageAOI": "Chụp ảnh AOI",
+      "orCapture": "📸 Hoặc chụp ảnh",
+      "viewImage": "Xem ảnh"
+    },
+    "imagePreview": {
+      "selected": "Ảnh đã chọn:"
+    },
+    "error": {
+      "noId": "Không tìm thấy StandardVehicle ID",
+      "noSheetId": "Không tìm thấy SMD Sheet ID",
+      "updateFailed": "Có lỗi xảy ra khi cập nhật StandardVehicles",
+      "uploadSPIFailed": "Không thể upload hình ảnh SPI",
+      "uploadAOIFailed": "Không thể upload hình ảnh AOI"
+    },
+    "success": {
+      "uploadSPI": "Upload hình ảnh SPI thành công",
+      "uploadAOI": "Upload hình ảnh AOI thành công"
+    }
+  }
+}

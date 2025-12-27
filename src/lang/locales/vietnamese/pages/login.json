@@ -1,0 +1,25 @@
+{
+  "login": {
+    "title": "Welcome Back",
+    "subtitle": "Please login to your account",
+    "fields": {
+      "username": "Username",
+      "password": "Password"
+    },
+    "placeholder": {
+      "username": "Username",
+      "password": "Password"
+    },
+    "button": {
+      "login": "Login",
+      "loggingIn": "Đang đăng nhập..."
+    },
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "contactIT": "Contact IT",
+    "error": {
+      "loginFailed": "Đăng nhập thất bại"
+    }
+  }
+}

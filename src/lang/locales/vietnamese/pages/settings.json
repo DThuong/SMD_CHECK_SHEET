@@ -1,0 +1,21 @@
+{
+  "settings": {
+    "title": "Cài đặt",
+    "theme": {
+      "title": "Chế độ sáng/tối",
+      "description": "Chuyển đổi giữa chế độ sáng và tối"
+    },
+    "language": {
+      "title": "Ngôn ngữ",
+      "current": "Ngôn ngữ hiện tại",
+      "translating": "Đang dịch nội dung...",
+      "note": "Lưu ý:",
+      "noteText": "Toàn bộ nội dung trang sẽ được dịch tự động. Bạn không cần sửa bất kỳ component nào."
+    },
+    "languages": {
+      "vi": "Tiếng Việt",
+      "en": "English",
+      "ko": "한국어"
+    }
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "standardVehicle": {
+    "title": "장비 표준",
+    "status": {
+      "saved": "저장됨",
+      "standardVehicleId": "StandardVehicle ID",
+      "changeModelId": "변경모델 ID"
+    },
+    "sections": {
+      "printer": "프린터",
+      "spi": "SPI",
+      "mount": "마운트",
+      "reflow": "리플로우",
+      "aoi": "AOI",
+      "output": "출력",
+      "worker": "작업자"
+    },
+    "printer": {
+      "title": "프린터",
+      "specGTAL": "압력 값 사양 (kg)",
+      "specTDQ": "스캔 속도 사양 (mm/s)",
+      "specTDKC": "테이블 분리 속도 사양 (mm/s)",
+      "specSLL": "와이핑 횟수 사양",
+      "specDSL": "블레이드 사용 사양",
+      "realGTAL": "실제 압력 값 (kg)",
+      "realTDQ": "실제 스캔 속도 (mm/s)",
+      "realTDKC": "실제 테이블 분리 속도 (mm/s)",
+      "realSLL": "실제 와이핑 횟수",
+      "realDSL": "실제 블레이드 사용",
+      "program": "프린터 프로그램",
+      "vacuumBlock": "진공 블록 사용 후 PCB 또는 부품에 영향을 미치는지 확인",
+      "settingSpec": "사양 표준 제공",
+      "realSetting": "실제 설정 값",
+      "pressureValue": "스크린 스프린트 설정 값",
+      "pressureSpec": "압력 값",
+      "speedSpec": "스캔 속도",
+      "separationSpeed": "테이블 분리 속도",
+      "wipeCount": "와이핑 횟수",
+      "bladeUsed": "블레이드 사용"
+    },
+    "spi": {
+      "title": "SPI",
+      "checkItems": "검사 항목 (SPI 설정 표준 확인)",
+      "inspectionSetting": "검사 설정 조건 (volume: 60-180%; Area: 40-200%; ofset: 0.15, short: 60)",
+      "inspectionOk": "검사 설정 OK",
+      "program": "SPI 프로그램",
+      "rev": "REV",
+      "imageSPI": "SPI 이미지"
+    },
+    "mount": {
+      "title": "마운트",
+      "checkFirst3Boards": "부품 장착 후 처음 3개 보드가 정상인지 확인",
+      "checkBottomBoard": "하단 1개 보드에 불량 또는 부품 파손이 없는지 확인",
+      "program": "마운터 프로그램",
+      "point": "마운터 포인트"
+    },
+    "reflow": {
+      "title": "리플로우",
+      "conveyorWidth": "컨베이어 너비 상태 확인",
+      "settingRail": "레일 설정 값 (mm)",
+      "realRail": "실제 레일 값 (mm)",
+      "program": "리플로우 프로그램",
+      "speed": "리플로우 속도"
+    },
+    "aoi": {
+      "title": "AOI",
+      "xray3Boards": "X-ray 처음 3개 보드가 정상인지 확인",
+      "checker": "검사자",
+      "maoiProgram": "mAoi 프로그램",
+      "saoiProgram": "sAoi 프로그램",
+      "pointSAOI": "sAoi 포인트",
+      "imageAOI": "AOI 이미지"
+    },
+    "output": {
+      "title": "출력",
+      "magazineDistance": "업로더의 입력 매거진 거리 설정 상태 확인",
+      "checker": "검사자",
+      "settingValue": "요구 사항에 따른 설정 값",
+      "model": "모델",
+      "pitch": "피치"
+    },
+    "worker": {
+      "title": "작업자",
+      "name": "이름",
+      "note": "비고",
+      "nameOP": "OP 이름",
+      "nameAOI": "AOI 이름",
+      "sampleCheck": "샘플 검사 (5PCB)",
+      "errorName": "오류 이름",
+      "errorCount": "오류 수량",
+      "repairStatus": "수리 상태"
+    },
+    "modal": {
+      "title": "장비 점검 상세"
+    },
+    "button": {
+      "uploadImageSPI": "SPI 이미지",
+      "uploadImageAOI": "AOI 이미지",
+      "captureImageSPI": "SPI 사진 촬영",
+      "captureImageAOI": "AOI 사진 촬영",
+      "orCapture": "📸 또는 사진 촬영",
+      "viewImage": "이미지 보기"
+    },
+    "imagePreview": {
+      "selected": "선택한 사진:"
+    },
+    "error": {
+      "noId": "StandardVehicle ID를 찾을 수 없습니다",
+      "noSheetId": "SMD Sheet ID를 찾을 수 없습니다",
+      "updateFailed": "StandardVehicles 업데이트 중 오류가 발생했습니다",
+      "uploadSPIFailed": "SPI 이미지를 업로드할 수 없습니다",
+      "uploadAOIFailed": "AOI 이미지를 업로드할 수 없습니다"
+    },
+    "success": {
+      "uploadSPI": "SPI 이미지 업로드 성공",
+      "uploadAOI": "AOI 이미지 업로드 성공"
+    }
+  }
+}

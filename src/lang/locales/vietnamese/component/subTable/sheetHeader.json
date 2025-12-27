@@ -1,0 +1,37 @@
+{
+  "sheetHeader": {
+    "title": "SMD Check Sheet Change Model",
+    "fields": {
+      "pqcSMD": "PQC SMD",
+      "fileAttach": "FILE ATTACH",
+      "lcrFile": "LCR FILE (xlsx)",
+      "reflowFile": "REFLOW FILE (pdf)"
+    },
+    "status": {
+      "bothUploaded": "Cả hai file đã được upload thành công.",
+      "notUploaded": "Chưa upload",
+      "currentFile": "File hiện tại"
+    },
+    "modal": {
+      "title": "Upload LCR & REFLOW Files",
+      "selectNewFile": "Chọn file mới:",
+      "removeFile": "Xóa file",
+      "required": "*"
+    },
+    "button": {
+      "viewDetail": "Xem chi tiết",
+      "edit": "Chỉnh sửa"
+    },
+    "error": {
+      "noSheetId": "Không tìm thấy Change Model ID!",
+      "missingFiles": "Làm ơn upload cả 2 file: pdf và excel.",
+      "uploadFailed": "Có lỗi xảy ra khi upload file."
+    },
+    "success": {
+      "uploadSuccess": "Cả hai file đã được upload thành công."
+    },
+    "loading": {
+      "uploading": "Đang tải..."
+    }
+  }
+}

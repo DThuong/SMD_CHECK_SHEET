@@ -1,5 +1,5 @@
 import ViewDetailButton from "../general/ViewDetailButton";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Modal from "../general/Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchStandardProduction, updateStandardProduction, uploadStandardProductionFile } from "../../redux/slices/subTableSlice";
@@ -16,8 +16,8 @@ const initialStandardProductState: StandardProductionData = {
     id: undefined,
     numMASK: "",
     numMES: "",
-    numScanPrinter: undefined,
-    numScanSignMES: undefined,
+    numScanPrinter: "",
+    numScanSignMES: "",
     mlS3Closed: "",
     useOnly: "",
     labelProgram: "",
@@ -43,6 +43,8 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
   const isSaved = completedTables.includes('StandardProduction');
 
   const { notification, showNotification,  hideNotification } = useNotification();
+  const isUploadingRef = useRef(false);
+  const hasUserEditedRef = useRef(false);
 
   // xử lý upload hình ảnh + preview modal
   const [imagePreview, setImagePreview] = useState<{
@@ -73,20 +75,29 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
     });
   };
 
-  // fetch data khi StandardProduction thay đổi
-      useEffect(() => {
-        if (standardProductionId) {
-          dispatch(fetchStandardProduction(standardProductionId));
-        }
-      }, [standardProductionId, dispatch]);
-      // sync form với redux store thay vì sử dụng context
-      useEffect(() => {
-        if (standardProduction) {
-          setForm(standardProduction);
-        }
-      }, [standardProduction]);
+   // fetch data khi StandardProduction thay đổi
+  useEffect(() => {
+    if (standardProductionId) {
+      dispatch(fetchStandardProduction(standardProductionId));
+    }
+  }, [standardProductionId, dispatch]);
 
-  // xử lý upload hình ảnh
+  // Chỉ sync khi mở modal LẦN ĐẦU, KHÔNG sync khi user đã edit hoặc đang upload
+  useEffect(() => {
+    if (open && standardProduction && !hasUserEditedRef.current && !isUploadingRef.current) {
+      setForm(standardProduction);
+    }
+  }, [open]); // CHỈ chạy khi open thay đổi, KHÔNG listen standardProduction
+
+  // Reset flags khi đóng modal
+  useEffect(() => {
+    if (!open) {
+      hasUserEditedRef.current = false;
+      isUploadingRef.current = false;
+    }
+  }, [open]);
+
+  // xử lý upload hình ảnh với flag
   const handleImageUpload = async (field: 'imgStandard', event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -97,59 +108,75 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
     }
   
     try {
-      // Upload file lên server (KHÔNG hiển thị preview base64 nữa)
+      // Set flag TRƯỚC KHI upload
+      isUploadingRef.current = true;
+      
       if (field === 'imgStandard') {
         const result = await dispatch(uploadStandardProductionFile({ 
           standardProductionId: Number(standardProductionId), 
           file 
         })).unwrap();
-        
-        // Cập nhật URL từ server vào form
+      
+        // Chỉ cập nhật field imgStandard, KHÔNG trigger re-sync toàn bộ form
         if (result?.imageUrl) {
-          set(field, result.imageUrl);
+          setForm(prev => ({
+            ...prev,
+            imgStandard: result.imageUrl
+          }));
         }
         
         showNotification('success', 'Thành công', 'Upload hình ảnh Standard Production thành công');
       }
   
-      // Fetch lại data để đảm bảo sync với server
-      if (standardProductionId) {
-        await dispatch(fetchStandardProduction(standardProductionId)).unwrap();
-      }
     } catch (error) {
       console.error('Failed to upload image:', error);
       showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
+    } finally {
+      // Reset flag SAU KHI upload xong (thành công hay thất bại)
+      isUploadingRef.current = false;
     }
   };
   
 
-  const set = <K extends keyof StandardProductionData>(k: K, v: StandardProductionData[K]) =>
-  setForm((s) => ({ ...s, [k]: v }));
+  // Wrapper cho set() để đánh dấu user đã edit
+  const set = <K extends keyof StandardProductionData>(k: K, v: StandardProductionData[K]) => {
+    hasUserEditedRef.current = true; // Đánh dấu user đã edit
+    setForm((s) => ({ ...s, [k]: v }));
+  };
     
   const submit = async() => {
-    // kiểm tra program Check id
-          if (!standardProductionId) {
-            showNotification('error', 'Lỗi lưu Standard Production', 'Không tìm thấy StandardProduction ID');
-            return;
-          }
-    
-          if (!smdSheetId) {
-            showNotification('error', 'Lỗi lưu Standard Production', 'Không tìm thấy SMD Sheet ID');
-            return;
-          }
-    
-          try {
-            // Dispatch action để update
-            await dispatch(updateStandardProduction({
-              id: smdSheetId,
-              data: form
-            })).unwrap();
-            
-            setOpen(false);
-          } catch (error) {
-            console.error('Failed to update StandardProductions:', error);
-            showNotification('error', 'Lỗi lưu Standard Production', 'Có lỗi xảy ra khi cập nhật StandardProductions');
-          }
+    if (!standardProductionId) {
+      showNotification('error', 'Lỗi lưu Standard Production', 'Không tìm thấy StandardProduction ID');
+      return;
+    }
+
+    if (!smdSheetId) {
+      showNotification('error', 'Lỗi lưu Standard Production', 'Không tìm thấy SMD Sheet ID');
+      return;
+    }
+
+    try {
+      // Dispatch action để update
+      await dispatch(updateStandardProduction({
+        id: standardProductionId,
+        data: form
+      })).unwrap();
+      
+      //Fetch lại data SAU KHI lưu thành công
+      if (standardProductionId) {
+        await dispatch(fetchStandardProduction(standardProductionId)).unwrap();
+      }
+      
+      // Reset flags
+      hasUserEditedRef.current = false;
+      isUploadingRef.current = false;
+      
+      setOpen(false);
+      showNotification('success', 'Thành công', 'Cập nhật Standard Production thành công');
+    } catch (error) {
+      console.error('Failed to update StandardProductions:', error);
+      showNotification('error', 'Lỗi lưu Standard Production', 'Có lỗi xảy ra khi cập nhật StandardProductions');
+    }
   };
   return (
     <div className="p-0 py-4 w-full">
@@ -361,7 +388,7 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
     Số dao quét Printer
     <input 
         value={form.numScanPrinter ?? ""} 
-        onChange={(e) => set("numScanPrinter", e.target.value ? Number(e.target.value) : undefined)}
+        onChange={(e) => set("numScanPrinter", e.target.value)}
         className="mt-1 block w-full border rounded px-3 py-2 text-sm"
         placeholder=""
     />
@@ -371,7 +398,7 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
     Số đăng ký dao quét trên MES
     <input 
         value={form.numScanSignMES ?? ""} 
-        onChange={(e) => set("numScanSignMES", e.target.value ? Number(e.target.value) : undefined)}
+        onChange={(e) => set("numScanSignMES", e.target.value)}
         className="mt-1 block w-full border rounded px-3 py-2 text-sm"
         placeholder=""
     />

@@ -1,5 +1,5 @@
 import ViewDetailButton from "../general/ViewDetailButton"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Modal from "../general/Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchPQCCheck, updatePQCCheck } from "../../redux/slices/subTableSlice";
@@ -40,6 +40,9 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
        const isSaved = completedTables.includes('PQCCheck');
        const { notification, showNotification, hideNotification } = useNotification();
 
+      const isUploadingRef = useRef(false);
+      const hasUserEditedRef = useRef(false);
+
          // xử lý upload hình ảnh + preview modal
   const [imagePreview, setImagePreview] = useState<{
     isOpen: boolean;
@@ -69,85 +72,109 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
     });
   };
 
-    // xử lý upload hình ảnh
-    const handleImageUpload = async (field: 'imgIC', event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-    
-      if (!pqcCheckId) {
-        showNotification('error', 'Lỗi upload', 'Không tìm thấy StandardProduction ID');
-        return;
-      }
-    
-      try {
-        // Upload file lên server (KHÔNG hiển thị preview base64 nữa)
-        if (field === 'imgIC') {
-          const result = await dispatch(uploadPQCCheckImage({ 
-            pqcCheckId: Number(pqcCheckId), 
-            file 
-          })).unwrap();
-          
-          // Cập nhật URL từ server vào form
-          if (result?.imageUrl) {
-            set(field, result.imageUrl);
-          }
-          
-          showNotification('success', 'Thành công', 'Upload hình ảnh Standard Production thành công');
+  //  FIXED: Upload handler với flag protection
+  const handleImageUpload = async (field: 'imgIC', event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+  
+    if (!pqcCheckId) {
+      showNotification('error', 'Lỗi upload', 'Không tìm thấy PQC Check ID');
+      return;
+    }
+  
+    try {
+      //  Set flag TRƯỚC KHI upload
+      isUploadingRef.current = true;
+      
+      if (field === 'imgIC') {
+        const result = await dispatch(uploadPQCCheckImage({ 
+          pqcCheckId: Number(pqcCheckId), 
+          file 
+        })).unwrap();
+        
+        //  Chỉ cập nhật field imgIC, KHÔNG trigger re-sync toàn bộ form
+        if (result?.imageUrl) {
+          setForm(prev => ({
+            ...prev,
+            imgIC: result.imageUrl
+          }));
         }
-    
-        // Fetch lại data để đảm bảo sync với server
-        if (pqcCheckId) {
-          await dispatch(fetchPQCCheck(pqcCheckId)).unwrap();
-        }
-      } catch (error) {
-        console.error('Failed to upload image:', error);
-        showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
+        
+        showNotification('success', 'Thành công', 'Upload hình ảnh IC thành công');
       }
-    };
+  
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
+    } finally {
+      //  Reset flag SAU KHI upload xong (thành công hay thất bại)
+      isUploadingRef.current = false;
+    }
+  };
+  
+  // fetch data khi pqcCheck thay đổi
+  useEffect(() => {
+    if (pqcCheckId) {
+      dispatch(fetchPQCCheck(pqcCheckId));
+    }
+  }, [pqcCheckId, dispatch]);
+
+  //  FIXED: Chỉ sync khi mở modal LẦN ĐẦU, KHÔNG sync khi user đã edit hoặc đang upload
+  useEffect(() => {
+    if (open && pqcCheck && !hasUserEditedRef.current && !isUploadingRef.current) {
+      setForm(pqcCheck);
+    }
+  }, [open]); // ⚠️ CHỈ chạy khi open thay đổi, KHÔNG listen pqcCheck
+
+  //  Reset flags khi đóng modal
+  useEffect(() => {
+    if (!open) {
+      hasUserEditedRef.current = false;
+      isUploadingRef.current = false;
+    }
+  }, [open]);
+
+  //  Wrapper cho set() để đánh dấu user đã edit
+  const set = <K extends keyof PQCCheckData>(k: K, v: PQCCheckData[K]) => {
+    hasUserEditedRef.current = true; // Đánh dấu user đã edit
+    setForm((s) => ({ ...s, [k]: v }));
+  };
+
+  const submit = async () => {
+    if (!pqcCheckId) {
+      showNotification('error', 'Lỗi lưu PQC Checks', 'Không tìm thấy PQC Check ID');
+      return;
+    }
     
-   
-       // fetch data khi programcheck thay đổi
-       useEffect(() => {
-         if (pqcCheckId) {
-           dispatch(fetchPQCCheck(pqcCheckId));
-         }
-       }, [pqcCheckId, dispatch]);
-       // sync form với redux store thay vì sử dụng context
-       useEffect(() => {
-         if (pqcCheck) {
-           setForm(pqcCheck);
-         }
-       }, [pqcCheck]);
-   
-       const set = <K extends keyof PQCCheckData>(k: K, v: PQCCheckData[K]) =>
-         setForm((s) => ({ ...s, [k]: v }));
-   
-       const submit = async () => {
-         // kiểm tra id
-         if (!pqcCheckId) {
-           showNotification('error', 'Lỗi lưu PQC Checks', 'Không tìm thấy PQC Check ID');
-           return;
-         }
-         
-         console.log("smdSheet id của pqc: ",smdSheetId)
-         if (!smdSheetId) {
-           showNotification('error', 'Lỗi lưu PQC Checks', 'Không tìm thấy SMD Sheet ID');
-           return;
-         }
-   
-         try {
-           // Dispatch action để update
-           await dispatch(updatePQCCheck({
-             id: smdSheetId,
-             data: form
-           })).unwrap();
-           
-           setOpen(false);
-         } catch (error) {
-           console.error('Failed to update pqc checks:', error);
-           showNotification('error', 'Lỗi lưu PQC Checks', 'Có lỗi xảy ra khi cập nhật pqc Checks');
-         }
-       };
+    console.log("smdSheet id của pqc: ", smdSheetId)
+    if (!smdSheetId) {
+      showNotification('error', 'Lỗi lưu PQC Checks', 'Không tìm thấy SMD Sheet ID');
+      return;
+    }
+
+    try {
+      // Dispatch action để update
+      await dispatch(updatePQCCheck({
+        id: smdSheetId,
+        data: form
+      })).unwrap();
+      
+      // Fetch lại data SAU KHI lưu thành công
+      if (pqcCheckId) {
+        await dispatch(fetchPQCCheck(pqcCheckId)).unwrap();
+      }
+      
+      // Reset flags
+      hasUserEditedRef.current = false;
+      isUploadingRef.current = false;
+      
+      setOpen(false);
+      showNotification('success', 'Thành công', 'Cập nhật PQC Check thành công');
+    } catch (error) {
+      console.error('Failed to update pqc checks:', error);
+      showNotification('error', 'Lỗi lưu PQC Checks', 'Có lỗi xảy ra khi cập nhật pqc Checks');
+    }
+  };
 
   return (
     <div className="p-0 py-4 w-full">
@@ -287,14 +314,14 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
           <div className="mb-3 min-w-0">
             <div className="text-xs font-semibold text-gray-600 mb-1">Thời gian bắt đầu đo LCR</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
-              {form.startLCR || "—"}
+              {formatDateTime(form.startLCR) || "—"}
             </div>
           </div>
 
           <div className="mb-3 min-w-0">
             <div className="text-xs font-semibold text-gray-600 mb-1">Thời gian kết thúc đo LCR</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
-              {form.endLCR || "—"}
+              {formatDateTime(form.endLCR) || "—"}
             </div>
           </div>
 

@@ -1,0 +1,36 @@
+{
+  "timeChangeModel": {
+    "title": "Model Change Time",
+    "status": {
+      "saved": "Saved",
+      "timeChangeModelId": "TimeChangeModel ID",
+      "changeModelId": "ChangeModel ID"
+    },
+    "fields": {
+      "category": "Category",
+      "name": "Name",
+      "qc": "QC",
+      "nameQC": "QC Name",
+      "result": "Result",
+      "nameResult": "Result Name",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "countTime": "Duration (minutes)",
+      "history": "History"
+    },
+    "placeholder": {
+      "qc": "Enter QC name...",
+      "result": "Enter result name...",
+      "countTime": "Enter duration...",
+      "history": "Enter history..."
+    },
+    "modal": {
+      "title": "Model Change Time Details"
+    },
+    "error": {
+      "noId": "timeChangeModel ID not found",
+      "noSheetId": "SMD Sheet ID not found",
+      "updateFailed": "Error occurred while updating timeChangeModel"
+    }
+  }
+}

@@ -479,7 +479,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
                           <FaCamera size={15} />
                         </div>
                         <div className="inline-flex items-center mx-2">
-                          Chụp ảnh Standard Production
+                          Chụp ảnh PQC Check
                         </div>
                     </label>
                     </div>

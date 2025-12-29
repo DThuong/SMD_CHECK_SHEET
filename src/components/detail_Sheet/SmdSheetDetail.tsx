@@ -145,7 +145,7 @@ const SmdSheetDetail = () => {
         navigate(0);
       }, 1000);
       }else{
-        showNotification('warning', 'Thiếu file', 'Làm ơn upload cả 2 file: pdf và excel.');
+        showNotification('warning', 'Thiếu file', 'Làm ơn upload cả 2 file: REFLOW và LCR.');
       }
       
       

@@ -18,11 +18,11 @@ import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../redux/hooks';
 import Notification from '../../components/general/Notification';
 import { MdFavoriteBorder } from "react-icons/md";
+import { useSearchParams } from 'react-router-dom';
 
 // Redux actions
 import { 
   fetchChangeModel,
-  getSheetWithFullObject,
   getSheetByFilter,
   updateSheetStatus,
   getSheetStatusHistory,
@@ -75,6 +75,8 @@ const Logs = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const resultsRef = useRef<HTMLDivElement>(null);
   const { notification, showNotification, hideNotification } = useNotification();
+  const [searchParams] = useSearchParams();
+  const statusFromUrl = searchParams.get('status');
 
   // Filter state
   const [filter, setFilter] = useState<SheetFilter>({
@@ -89,6 +91,45 @@ const Logs = () => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 5;
+
+   // EFFECT 1: Set filter từ URL (chạy khi statusFromUrl thay đổi)
+  useEffect(() => {
+    if (statusFromUrl) {
+      console.log('📍 Nhận status từ Dashboard:', statusFromUrl);
+      setFilter(prev => ({ ...prev, status: statusFromUrl }));
+    }
+  }, [statusFromUrl]);
+
+  // EFFECT 2: Auto-fetch khi filter.status được set từ URL
+  useEffect(() => {
+    // Chỉ fetch khi status từ URL và đã được set vào filter
+    if (statusFromUrl && filter.status === statusFromUrl && filter.status !== 'all') {
+      console.log('🔄 Tự động fetch với status:', filter.status);
+      
+      const autoFetch = async () => {
+        try {
+          await dispatch(getSheetByFilter({ 
+            status: filter.status 
+          })).unwrap();
+          
+          console.log('✅ Fetch sheets thành công');
+        } catch (error: any) {
+          console.error('❌ Lỗi khi fetch sheets:', error);
+          showNotification('error', 'Lỗi', error.message || 'Không thể tải sheets');
+        }
+      };
+
+      autoFetch();
+    }
+  }, [filter.status, statusFromUrl, dispatch]);
+
+  // EFFECT 3: Load initial data (khi không có filter từ URL)
+  useEffect(() => {
+    if (!statusFromUrl) {
+      console.log('📂 Load tất cả sheets (không có filter từ URL)');
+      loadSheets();
+    }
+  }, []); // Chỉ chạy 1 lần khi component mount
 
   // ==================== LOAD SHEETS ====================
   const loadSheets = async () => {
@@ -127,11 +168,6 @@ const Logs = () => {
       }
     }
   };
-
-  // ==================== EFFECTS ====================
-  useEffect(() => {
-    loadSheets();
-  }, []);
 
   // ==================== FILTER HANDLERS ====================
   const applyFilter = () => {

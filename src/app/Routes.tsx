@@ -57,7 +57,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     if (user?.role === 'PQC') return <Navigate to="/" replace />;
     // Nếu là role khác -> về route của role đó
     const roleLower = user?.role?.toLowerCase();
-    return <Navigate to={`/${roleLower}/smd-sheet-logs`} replace />;
+    return <Navigate to={`/${roleLower}/dashboard`} replace />;
   }
   
   return <>{children}</>;
@@ -106,7 +106,7 @@ const LoginRoute = ({ children }: { children: React.ReactNode }) => {
     
     // ENG, SUPERVISOR, MANAGER, MANAGER_KOREA -> route theo role
     const roleLower = user?.role?.toLowerCase();
-    return <Navigate to={`/${roleLower}/smd-sheet-logs`} replace />;
+    return <Navigate to={`/${roleLower}/dashboard`} replace />;
   }
   
   return <>{children}</>;
@@ -143,6 +143,7 @@ const App = () => {
         {/* ========== DYNAMIC ROLE ROUTES (ENG, SUPERVISOR, MANAGER, MANAGER_KOREA) ========== */}
         <Route path="/:role" element={<RoleBasedRoute><RoleBasedLayout /></RoleBasedRoute>}>
           <Route path="/:role/smd-sheet-logs" element={<Logs />} />
+          <Route path="/:role/dashboard" element={<Dashboard />} />
           <Route path="/:role/settings" element={<Settings />} />
           <Route path="/:role/sheet-detail/:id" element={<SheetDetailViewer />} />
           <Route path="/:role/files/:id/:fileType" element={<FileDetailViewer />} />
@@ -159,7 +160,7 @@ const App = () => {
 const RoleDynamicRedirect = () => {
   const { user } = useAppSelector((state) => state.auth);
   const roleLower = user?.role?.toLowerCase();
-  return <Navigate to={`/${roleLower}/smd-sheet-logs`} replace />;
+  return <Navigate to={`/${roleLower}/dashboard`} replace />;
 };
 
 export default App;

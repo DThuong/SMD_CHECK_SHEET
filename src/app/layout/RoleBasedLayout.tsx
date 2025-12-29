@@ -34,12 +34,11 @@ const RoleBasedLayout = () => {
   const userRoleLower = user?.role?.toLowerCase();
 
   if (role !== userRoleLower) {
-    return <Navigate to={`/${userRoleLower}/smd-sheet-logs`} replace />;
+    return <Navigate to={`/${userRoleLower}/dashboard`} replace />;
   }
 
   const getRoleDisplayName = (roleName: string) => {
     const roleMap: Record<string, string> = {
-      pqc: "PQC",
       eng: "Engineering",
       supervisior: "Supervisor",
       manager: "Manager",
@@ -52,6 +51,7 @@ const RoleBasedLayout = () => {
   };
 
   const menuItems = [
+    { name: "Dashboard", path: `/${role}/dashboard`, shouldReload: false },
     { name: "Smd Sheet", path: `/${role}/smd-sheet-logs`, shoudReload: true },
     { name: "Settings", path: `/${role}/settings`, shouldReload: false },
   ];
@@ -88,7 +88,7 @@ const RoleBasedLayout = () => {
         {/* Phần header sidebar - chỉ hiện trên desktop */}
         <div className="hidden md:block md:w-64 lg:w-full px-4 py-3 border-gray-200">
           <Link
-            to={`/${role}/smd-sheet-logs`}
+            to={`/${role}/dashboard`}
             className="text-decoration-none lg:text-4xl md:text-2xl font-bold text-gray-800"
           >
             {getRoleDisplayName(role || "")} Dashboard
@@ -133,9 +133,9 @@ const RoleBasedLayout = () => {
                 setSidebarOpen(false);
               }}
             >
-              <HiUser className="w-5 h-5 text-gray-700" />
+              <HiUser className="w-5 h-5 text-gray-700 mx-1" />
               <span className="hidden sm:inline text-gray-700 ml-2 truncate max-w-[150px]">
-                Welcome, {user?.username}
+                Xin Chào, {user?.username}
               </span>
             </button>
 

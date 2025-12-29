@@ -490,6 +490,46 @@ export const getSheetByFilter = createAsyncThunk(
     }
   },
 )
+
+// api xóa sheet id
+export const deleteSheetById = createAsyncThunk(
+  'changeModel/delete',
+  async (sheetId: number, { rejectWithValue }) => {
+    try {
+      const response = await smdApi.delete(`ChangeModel/${sheetId}`);
+      return response.data as ChangeModelResponse;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return rejectWithValue('Không tìm thấy sheet với ID này.');
+      }
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.message || 
+        'Không thể xóa sheet'
+      );
+    }
+  }
+)
+
+// api get all by user id
+export const getAllSheetByUserId = createAsyncThunk(
+  'changeModel/getAllByUserId',
+  async (_, { rejectWithValue }) => { 
+    try {
+      const response = await smdApi.get('ChangeModel/GetAllByUserId');
+      return response.data as ChangeModelResponse[];
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        return rejectWithValue('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+      }
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.message || 
+        'Không thể tải sheets của bạn'
+      );
+    }
+  }
+);
 // ==================== SLICE ====================
 
 const changeModelSlice = createSlice({
@@ -757,6 +797,36 @@ const changeModelSlice = createSlice({
         state.error = null;
       })
       .addCase(getSheetByFilter.rejected, (state, action) => {
+        state.loadingList = false;
+        state.error = action.payload as string;
+      });
+    // Xóa sheet theo id
+    builder
+      .addCase(deleteSheetById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteSheetById.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(deleteSheetById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+      // ==================== GET ALL SHEETS BY USER ID ====================
+      builder
+      .addCase(getAllSheetByUserId.pending, (state) => {
+        state.loadingList = true;
+        state.error = null;
+      })
+      .addCase(getAllSheetByUserId.fulfilled, (state, action) => {
+        state.loadingList = false;
+        state.sheets = action.payload;
+        state.filteredSheets = action.payload;
+        state.error = null;
+      })
+      .addCase(getAllSheetByUserId.rejected, (state, action) => {
         state.loadingList = false;
         state.error = action.payload as string;
       });

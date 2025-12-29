@@ -469,7 +469,7 @@ const Dashboard = () => {
               <tbody>
                 {statusStats.map((status, index) => {
                   const descriptions: Record<string, string> = {
-                    'Pending': 'Chờ PQC xác nhận',
+                    'pending': 'Chờ PQC xác nhận',
                     'PQCDone': 'Chờ ENG xác nhận',
                     'ENGDone': 'Chờ Supervisor xác nhận',
                     'SupervisiorDone': 'Chờ Manager xác nhận',

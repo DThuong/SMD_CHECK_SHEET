@@ -379,7 +379,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
             IC nạp kế hoạch
             <input
               value={form.icPlan ?? ""}
-              onChange={(e) => set("icPlan", e.target.value)}
+              onChange={(e) => set("icPlan", e.target.value.toUpperCase())}
               className="mt-1 block w-full border rounded px-3 py-2 text-sm"
             />
           </label>
@@ -388,7 +388,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
             Checksum thực tế
             <input
               value={form.checksumReal ?? ""}
-              onChange={(e) => set("checksumReal", e.target.value)}
+              onChange={(e) => set("checksumReal", e.target.value.toUpperCase())}
               className="mt-1 block w-full border rounded px-3 py-2 text-sm"
             />
           </label>
@@ -397,7 +397,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
             Xác nhận khi có thay đổi Checksum mới
             <input
               value={form.checksumConfirm ?? ""}
-              onChange={(e) => set("checksumConfirm", e.target.value)}
+              onChange={(e) => set("checksumConfirm", e.target.value.toUpperCase())}
               className="mt-1 block w-full border rounded px-3 py-2 text-sm"
             />
           </label>
@@ -407,7 +407,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
               Tuner
               <input
                 value={form.turner ?? ""}
-                onChange={(e) => set("turner", e.target.value)}
+                onChange={(e) => set("turner", e.target.value.toUpperCase())}
                 className="mt-1 block w-full border rounded px-3 py-2 text-sm"
               />
             </label>
@@ -440,7 +440,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
             Tên PQC
             <input
               value={form.nameCheck ?? ""}
-              onChange={(e) => set("nameCheck", e.target.value)}
+              onChange={(e) => set("nameCheck", e.target.value.toUpperCase())}
               className="mt-1 block w-full border rounded px-3 py-2 text-sm"
             />
           </label>

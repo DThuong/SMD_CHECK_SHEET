@@ -945,7 +945,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerSpecGTAL ?? ""}
-            onChange={(e) => set("printerSpecGTAL", e.target.value )}
+            onChange={(e) => set("printerSpecGTAL", e.target.value.toUpperCase() )}
             type="text"
           />
         </div>
@@ -955,7 +955,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerSpecTDQ ?? ""}
-            onChange={(e) => set("printerSpecTDQ", e.target.value )}
+            onChange={(e) => set("printerSpecTDQ", e.target.value.toUpperCase() )}
             type="text"
           />
         </div>
@@ -966,7 +966,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
         <input
           className="block w-full border rounded px-3 py-2 text-sm min-w-0"
           value={form.printerSpecTDKC ?? ""}
-          onChange={(e) => set("printerSpecTDKC", e.target.value )}
+          onChange={(e) => set("printerSpecTDKC", e.target.value.toUpperCase() )}
           type="text"
         />
       </div>
@@ -977,7 +977,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerSpecSLL ?? ""}
-            onChange={(e) => set("printerSpecSLL", e.target.value )}
+            onChange={(e) => set("printerSpecSLL", e.target.value.toUpperCase() )}
             type="text"
           />
         </div>
@@ -987,7 +987,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerSpecDSL ?? ""}
-            onChange={(e) => set("printerSpecDSL", e.target.value )}
+            onChange={(e) => set("printerSpecDSL", e.target.value.toUpperCase() )}
             type="text"
           />
         </div>
@@ -999,7 +999,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerRealGTAL ?? ""}
-            onChange={(e) => set("printerRealGTAL", e.target.value )}
+            onChange={(e) => set("printerRealGTAL", e.target.value.toUpperCase() )}
             type="text"
           />
         </div>
@@ -1009,7 +1009,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerRealTDQ ?? ""}
-            onChange={(e) => set("printerRealTDQ", e.target.value )}
+            onChange={(e) => set("printerRealTDQ", e.target.value.toUpperCase() )}
             type="text"
           />
         </div>
@@ -1020,7 +1020,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
         <input
           className="block w-full border rounded px-3 py-2 text-sm min-w-0"
           value={form.printerRealTDKC ?? ""}
-          onChange={(e) => set("printerRealTDKC", e.target.value )}
+          onChange={(e) => set("printerRealTDKC", e.target.value.toUpperCase() )}
           type="text"
         />
       </div>
@@ -1030,7 +1030,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerRealSLL ?? ""}
-            onChange={(e) => set("printerRealSLL", e.target.value )}
+            onChange={(e) => set("printerRealSLL", e.target.value.toUpperCase() )}
             type="text"
           />
       </div>
@@ -1040,7 +1040,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerRealDSL ?? ""}
-            onChange={(e) => set("printerRealDSL", e.target.value )}
+            onChange={(e) => set("printerRealDSL", e.target.value.toUpperCase() )}
             type="text"
           />
       </div>
@@ -1050,7 +1050,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.printerProgram ?? ""}
-            onChange={(e) => set("printerProgram", e.target.value)}
+            onChange={(e) => set("printerProgram", e.target.value.toUpperCase())}
             type="text"
           />
       </div>
@@ -1079,7 +1079,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.spiProgram ?? ""}
-            onChange={(e) => set("spiProgram", e.target.value)}
+            onChange={(e) => set("spiProgram", e.target.value.toUpperCase())}
             type="text"
           />
       </div>
@@ -1089,7 +1089,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.rev ?? ""}
-            onChange={(e) => set("rev", e.target.value)}
+            onChange={(e) => set("rev", e.target.value.toUpperCase())}
             type="text"
           />
       </div>
@@ -1175,7 +1175,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.mounterProgram ?? ""}
-            onChange={(e) => set("mounterProgram", e.target.value)}
+            onChange={(e) => set("mounterProgram", e.target.value.toUpperCase())}
             type="text"
           />
       </div>
@@ -1185,7 +1185,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.pointMounter ?? ""}
-            onChange={(e) => set("pointMounter", e.target.value )}
+            onChange={(e) => set("pointMounter", e.target.value.toUpperCase() )}
             type="text"
           />
       </div>
@@ -1243,7 +1243,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
             <input
               className="block w-full border rounded px-3 py-2 text-sm min-w-0"
               value={form.reFlowSettingRail ?? ""}
-              onChange={(e) => set("reFlowSettingRail", e.target.value )}
+              onChange={(e) => set("reFlowSettingRail", e.target.value.toUpperCase() )}
               type="text"
             />
           </div>
@@ -1252,7 +1252,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
             <input
               className="block w-full border rounded px-3 py-2 text-sm min-w-0"
               value={form.reFlowRealRail ?? ""}
-              onChange={(e) => set("reFlowRealRail", e.target.value )}
+              onChange={(e) => set("reFlowRealRail", e.target.value.toUpperCase() )}
               type="text"
             />
           </div>
@@ -1263,7 +1263,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.reflowProgram ?? ""}
-            onChange={(e) => set("reflowProgram", e.target.value )}
+            onChange={(e) => set("reflowProgram", e.target.value.toUpperCase() )}
             type="text"
           />
       </div>
@@ -1273,7 +1273,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.reflowSpeed ?? ""}
-            onChange={(e) => set("reflowSpeed", e.target.value )}
+            onChange={(e) => set("reflowSpeed", e.target.value.toUpperCase() )}
             type="text"
           />
       </div>
@@ -1302,7 +1302,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
     <input
       className="block w-full border rounded px-3 py-2 text-sm min-w-0"
       value={form.maoiProgram ?? ""}
-      onChange={(e) => set("maoiProgram", e.target.value)}
+      onChange={(e) => set("maoiProgram", e.target.value.toUpperCase())}
       type="text"
     />
   </div>
@@ -1312,7 +1312,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
     <input
       className="block w-full border rounded px-3 py-2 text-sm min-w-0"
       value={form.saoiProgram ?? ""}
-      onChange={(e) => set("saoiProgram", e.target.value)}
+      onChange={(e) => set("saoiProgram", e.target.value.toUpperCase())}
       type="text"
     />
   </div>
@@ -1322,7 +1322,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
     <input
       className="block w-full border rounded px-3 py-2 text-sm min-w-0"
       value={form.pointSAOI ?? ""}
-      onChange={(e) => set("pointSAOI", e.target.value )}
+      onChange={(e) => set("pointSAOI", e.target.value.toUpperCase())}
       type="text"
     />
   </div>
@@ -1332,7 +1332,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
     <input
       className="block w-full border rounded px-3 py-2 text-sm min-w-0"
       value={form.aoiCheck ?? ""}
-      onChange={(e) => set("aoiCheck", e.target.value)}
+      onChange={(e) => set("aoiCheck", e.target.value.toUpperCase())}
       type="text"
     />
   </div>
@@ -1418,7 +1418,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.outputChecker ?? ""}
-            onChange={(e) => set("outputChecker", e.target.value)}
+            onChange={(e) => set("outputChecker", e.target.value.toUpperCase())}
           />
         </div>
 
@@ -1428,7 +1428,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
             <input
               className="block w-full border rounded px-3 py-2 text-sm min-w-0"
               value={form.outputModelValue ?? ""}
-              onChange={(e) => set("outputModelValue", e.target.value)}
+              onChange={(e) => set("outputModelValue", e.target.value.toUpperCase())}
             />
           </div>
           <div className="min-w-0">
@@ -1436,7 +1436,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
             <input
               className="block w-full border rounded px-3 py-2 text-sm min-w-0"
               value={form.outputPitchValue ?? ""}
-              onChange={(e) => set("outputPitchValue", e.target.value)}
+              onChange={(e) => set("outputPitchValue", e.target.value.toUpperCase())}
             />
           </div>
         </div>
@@ -1453,7 +1453,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.nameOP ?? ""}
-            onChange={(e) => set("nameOP", e.target.value)}
+            onChange={(e) => set("nameOP", e.target.value.toUpperCase())}
           />
         </div>
 
@@ -1462,7 +1462,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <input
             className="block w-full border rounded px-3 py-2 text-sm min-w-0"
             value={form.nameAOI ?? ""}
-            onChange={(e) => set("nameAOI", e.target.value)}
+            onChange={(e) => set("nameAOI", e.target.value.toUpperCase())}
           />
         </div>
       </div>

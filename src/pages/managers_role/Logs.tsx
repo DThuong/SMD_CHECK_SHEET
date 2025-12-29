@@ -22,6 +22,7 @@ import { MdFavoriteBorder } from "react-icons/md";
 // Redux actions
 import { 
   fetchChangeModel,
+  getSheetWithFullObject,
   getSheetByFilter,
   updateSheetStatus,
   getSheetStatusHistory,
@@ -181,7 +182,7 @@ const Logs = () => {
     setSelectedSheet(sheet);
     setShowDetail(true);
     
-    // ✅ Load status history cho sheet này
+    // Load status history cho sheet này
     try {
       await dispatch(getSheetStatusHistory(sheet.id)).unwrap();
     } catch (error) {
@@ -248,7 +249,7 @@ const Logs = () => {
 
       showNotification('success', `Xác nhận thành công bởi ${roleNames[role]}!`);
 
-      // ✅ Reload history sau khi confirm
+      // Reload history sau khi confirm
       await dispatch(getSheetStatusHistory(sheetId)).unwrap();
       await loadSheets();
 
@@ -407,6 +408,7 @@ const Logs = () => {
   const offset = currentPage * itemsPerPage;
   const currentSheets = sortedSheets.slice(offset, offset + itemsPerPage);
 
+
   const handlePageChange = (selectedItem: { selected: number }) => {
     setCurrentPage(selectedItem.selected);
     
@@ -450,7 +452,7 @@ const Logs = () => {
       <div className="max-w-8xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-4">
           <div className="flex flex-col items-center mb-4 gap-2">
-            <div className="text-3xl font-bold text-gray-800">Chi tiết SMD Sheet #{selectedSheet.id}</div>
+            <div className="text-3xl font-bold text-gray-800">Chi tiết SMD Sheet: #{selectedSheet.id}</div>
             
           </div>
 
@@ -757,10 +759,13 @@ const Logs = () => {
                   <thead>
                     <tr className="bg-gray-100">
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
-                        Id
+                        STT
                       </th>
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
                         Sheet id
+                      </th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                        WorkOrder
                       </th>
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
                         Người tạo
@@ -784,6 +789,11 @@ const Logs = () => {
                         </td>
                         <td className="border border-gray-300 px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
                           <span className="font-semibold text-blue-600">#{sheet.id}</span>
+                        </td>
+                        <td className="border border-gray-300 px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
+                            <span className={`font-semibold ${sheet.checkModel?.workOrder ? 'text-blue-600' : 'text-gray-400'}`}>
+                              {sheet.checkModel?.workOrder || 'Chưa có'}
+                            </span>
                         </td>
                         <td className="border border-gray-300 px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
                           <div className="flex flex-col">

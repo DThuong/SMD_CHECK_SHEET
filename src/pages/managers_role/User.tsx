@@ -85,7 +85,7 @@ const User = () => {
     setEditingUser(null);
   };
 
-  // ✅ RESET ADD USER FORM
+  // RESET ADD USER FORM
   const resetAddUserForm = (): void => {
     setAddUserData({
       username: '',
@@ -114,7 +114,7 @@ const User = () => {
     }
   };
 
-  // ✅ HANDLE ADD USER INPUT CHANGE
+  // HANDLE ADD USER INPUT CHANGE
   const handleAddUserInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
     const { name, value } = e.target;
     setAddUserData(prev => ({
@@ -139,19 +139,19 @@ const User = () => {
     resetForm();
   };
 
-  // ✅ OPEN ADD USER MODAL
+  // OPEN ADD USER MODAL
   const handleOpenAddUserModal = (): void => {
     resetAddUserForm();
     setShowAddUserModal(true);
   };
 
-  // ✅ CLOSE ADD USER MODAL
+  // CLOSE ADD USER MODAL
   const handleCloseAddUserModal = (): void => {
     setShowAddUserModal(false);
     resetAddUserForm();
   };
 
-  // ✅ SUBMIT ADD USER
+  // SUBMIT ADD USER
   const handleAddUser = async (): Promise<void> => {
     // Validate
     if (!addUserData.username.trim()) {

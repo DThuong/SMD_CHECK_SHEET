@@ -66,7 +66,7 @@ const SmdSheetDetail = () => {
           }
         }
         
-        // ✅ StandardProduction
+        //  StandardProduction
         if (result.standardProduction) {
           dispatch(setStandardProduction(result.standardProduction));
           
@@ -75,11 +75,10 @@ const SmdSheetDetail = () => {
           } else {
             const missing = getMissingFields(result.standardProduction, REQUIRED_FIELDS_CONFIG.StandardProduction);
             console.log(missing);
-
           }
         }
         
-        // ✅ TimeChangeModel
+        // TimeChangeModel
         if (result.timeChangeModel) {
           dispatch(setTimeChangeModel(result.timeChangeModel));
           
@@ -91,7 +90,7 @@ const SmdSheetDetail = () => {
           }
         }
         
-        // ✅ StandardVehicle
+        //  StandardVehicle
         if (result.standardVehicle) {
           dispatch(setStandardVehicle(result.standardVehicle));
           
@@ -103,7 +102,7 @@ const SmdSheetDetail = () => {
           }
         }
         
-        // ✅ PQCCheck
+        //  PQCCheck
         if (result.pqcCheck) {
           dispatch(setPQCCheck(result.pqcCheck));
           
@@ -214,7 +213,7 @@ const SmdSheetDetail = () => {
   const getStatusBadge = (sheet: ChangeModelResponse) => {
   const status = sheet.status?.toLowerCase();
   
-  // ✅ Kiểm tra xem có phải trạng thái "Done" không
+  //  Kiểm tra xem có phải trạng thái "Done" không
   const isDone = status && status !== 'pending';
   
   // Status label mapping (hiển thị đẹp cho user)
@@ -227,10 +226,10 @@ const SmdSheetDetail = () => {
     'koreamanagerdone': 'Korea Manager Done',
   };
 
-  // ✅ Lấy label đẹp
+  //  Lấy label đẹp
   const label = statusLabels[status || 'pending'] || (sheet.status || 'Unknown');
 
-  // ✅ Chọn màu: Pending = Vàng, Done = Xanh lá
+  //  Chọn màu: Pending = Vàng, Done = Xanh lá
   const bgColor = isDone ? 'bg-green-100' : 'bg-yellow-100';
   const textColor = isDone ? 'text-green-700' : 'text-yellow-700';
   const iconColor = isDone ? '#16a34a' : '#f59e0b'; // green-600 : yellow-500
@@ -257,7 +256,7 @@ const SmdSheetDetail = () => {
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
           <div>
             <h1 className="text-xl font-bold text-gray-800">
-              Chi tiết Sheet #{currentSheet.id}
+              Chi tiết Sheet: #{currentSheet?.id} & WorkOrder:{currentSheet?.checkModel?.workOrder !== '' ? currentSheet?.checkModel?.workOrder : 'Chưa Có'}
             </h1>
             {currentSheet.createAt && (
               <p className="text-xs text-gray-500 mt-1 mb-0">

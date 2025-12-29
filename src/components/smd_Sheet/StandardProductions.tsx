@@ -381,8 +381,8 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
         Số quản lý trên Mask
         <input 
           value={form.numMASK ?? ""} 
-          onChange={(e) => set("numMASK", e.target.value)} 
-          className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+          onChange={(e) => set("numMASK", e.target.value.toUpperCase())} 
+          className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
           placeholder=""
         />
       </label>
@@ -391,8 +391,8 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
         Số đăng ký trên MES
         <input 
           value={form.numMES ?? ""} 
-          onChange={(e) => set("numMES", e.target.value)} 
-          className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+          onChange={(e) => set("numMES", e.target.value.toUpperCase())} 
+          className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
           placeholder=""
         />
       </label>
@@ -402,8 +402,8 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
     Số dao quét Printer
     <input 
         value={form.numScanPrinter ?? ""} 
-        onChange={(e) => set("numScanPrinter", e.target.value)}
-        className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+        onChange={(e) => set("numScanPrinter", e.target.value.toUpperCase())}
+        className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
         placeholder=""
     />
     </label>
@@ -412,8 +412,8 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
     Số đăng ký dao quét trên MES
     <input 
         value={form.numScanSignMES ?? ""} 
-        onChange={(e) => set("numScanSignMES", e.target.value)}
-        className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+        onChange={(e) => set("numScanSignMES", e.target.value.toUpperCase())}
+        className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
         placeholder=""
     />
     </label>
@@ -422,8 +422,8 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
       Liệu MSL3 mở đóng gói
       <input 
         value={form.mlS3Closed ?? ""} 
-        onChange={(e) => set("mlS3Closed", e.target.value)} 
-        className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+        onChange={(e) => set("mlS3Closed", e.target.value.toUpperCase())} 
+        className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
         placeholder=""
       />
     </label>
@@ -432,8 +432,8 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
       Chương trình máy label
       <input 
         value={form.labelProgram ?? ""} 
-        onChange={(e) => set("labelProgram", e.target.value)} 
-        className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+        onChange={(e) => set("labelProgram", e.target.value.toUpperCase())} 
+        className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
         placeholder=""
       />
     </label>

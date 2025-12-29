@@ -7,17 +7,18 @@ import { BsCalendarDate } from "react-icons/bs";
 import { FaRegClock } from "react-icons/fa";
 import { Link } from 'react-router-dom';
 import ReactPaginate from 'react-paginate';
-import { getSheetWithFullObject } from '../redux/slices/changeModelSlice';
+import { getAllSheetByUserId, getSheetWithFullObject } from '../redux/slices/changeModelSlice';
 // redux
 import { useAppSelector, useAppDispatch } from '../redux/hooks';
 import { createChangeModel, clearSheet, clearError, setCurrentSheet } from '../redux/slices/changeModelSlice';
 import { addCompletedTable, clearAllSubTableData, resetCompletedTables, setCheckModel, setPQCCheck, setStandardProduction, setStandardVehicle, setTimeChangeModel } from '../redux/slices/subTableSlice';
-import { getSheetByFilter, fetchChangeModel } from '../redux/slices/changeModelSlice';
+import { getSheetByFilter, fetchChangeModel, deleteSheetById } from '../redux/slices/changeModelSlice';
 import type { ChangeModelResponse } from '../redux/slices/changeModelSlice';
 import { useNotification } from '../redux/hooks';
 import Notification from '../components/general/Notification';
 import { hasAllRequiredData, REQUIRED_FIELDS_CONFIG } from '../utils/requiredFieldsConfig';
 import { AiOutlineLock } from 'react-icons/ai'; 
+import { ConfirmModal } from '../components/general/ConfirmModal';
 
 type SheetFilter = {
   workOrder: string;
@@ -38,6 +39,16 @@ const Home = () => {
   const [showSheets, setShowSheets] = useState(false);
   const [loadingSheets, setLoadingSheets] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const [deletingSheetId, setDeletingSheetId] = useState<number | null>(null);
+
+  const [confirmCreateModal, setConfirmCreateModal] = useState(false);
+  const [confirmDeleteModal, setConfirmDeleteModal] = useState<{
+    open: boolean;
+    sheet: ChangeModelResponse | null;
+  }>({
+    open: false,
+    sheet: null
+  });
 
   const { user, isAuthenticated, loading } = useAppSelector(state => state.auth);
   const { 
@@ -223,9 +234,11 @@ const Home = () => {
       return;
     }
 
-    //  Không có filter → Load tất cả
-    console.log('Using Get All API');
-    await dispatch(fetchChangeModel()).unwrap();
+    // PQC: load sheet all
+    if (user?.role === 'PQC') {
+      await dispatch(fetchChangeModel()).unwrap();
+      return;
+    }
     
   } catch (error: any) {
     console.error('❌ Lỗi khi tải sheets:', error);
@@ -340,6 +353,33 @@ const canViewDetail = (sheet: ChangeModelResponse): boolean => {
   return true;
 };
 
+// KIỂM TRA QUYỀN XÓA SHEET
+const canDeleteSheet = (sheet: ChangeModelResponse): boolean => {
+   if (!user) return false;
+
+  const status = sheet.status?.toLowerCase();
+  const userRole = user.role?.toUpperCase();
+
+  // QUY TẮC 1: Chỉ được xóa sheet ở trạng thái "Pending"
+  // Sheet đã được ký (PQCDone, ENGDone, ...) KHÔNG được xóa
+  if (status !== 'pending') {
+    return false; // Không ai được xóa sheet đã được duyệt
+  }
+
+  // QUY TẮC 2: PQC chỉ xóa sheet do chính mình tạo
+  if (userRole === 'PQC') {
+    if (!sheet.account) return false;
+    return sheet.account.id === user.id || sheet.account.userName === user.username;
+  }
+  // QUY TẮC 3: Các role khác (ENG, SUPERVISOR, MANAGER, KOREA_MANAGER)
+  // Option A: Chỉ MANAGER/KOREA_MANAGER mới được xóa
+  // return ['MANAGER', 'KOREAMANAGER'].includes(userRole);
+  // Option B: Tất cả role cao hơn PQC đều được xóa sheet Pending
+  // return ['ENG', 'SUPERVISIOR', 'MANAGER', 'KOREAMANAGER'].includes(userRole);
+  // Option C: Không ai được xóa ngoài PQC (strict mode)
+  return false;
+}
+
 //  HANDLE VIEW DETAIL WITH PERMISSION CHECK
 const handleViewDetail = (sheet: ChangeModelResponse) => {
   // Kiểm tra quyền
@@ -356,6 +396,46 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
   navigate(`/pqc-sheet-detail/${sheet.id}`);
 };
 
+// Hàm này chỉ hiển thị modal xác nhận xóa
+  const handleDeleteSheet = (sheet: ChangeModelResponse) => {
+    setConfirmDeleteModal({
+      open: true,
+      sheet: sheet
+    });
+  };
+
+  // Hàm này mới thực sự xóa sheet (khi user confirm)
+  const handleConfirmDelete = async () => {
+    const sheet = confirmDeleteModal.sheet;
+    if (!sheet) return;
+
+    try {
+      // Đóng modal trước
+      setConfirmDeleteModal({ open: false, sheet: null });
+      
+      setDeletingSheetId(sheet.id); // Set loading state
+      
+      const result = await dispatch(deleteSheetById(sheet.id)).unwrap();
+      
+      if (result) {
+        showNotification('success', 'Xóa sheet thành công', `Sheet #${sheet.id} đã được xóa`);
+        
+        // SMART PAGINATION: Nếu xóa item cuối cùng của trang
+        const totalPages = Math.ceil((sortedSheets.length - 1) / itemsPerPage);
+        if (currentPage >= totalPages && currentPage > 0) {
+          setCurrentPage(currentPage - 1); // Lùi về trang trước
+        }
+        
+        // Reload danh sách
+        await loadSheets();
+      }
+    } catch (error: any) {
+      showNotification('error', 'Lỗi khi xóa sheet', error.message || 'Vui lòng thử lại');
+    } finally {
+      setDeletingSheetId(null); // Clear loading state
+    }
+  };
+
   //  HANDLE CREATE NEW SHEET
   const handleCreateNewSheet = async () => {
     if (user?.role?.toUpperCase() !== 'PQC') {
@@ -363,7 +443,15 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
       return;
     }
 
+    setConfirmCreateModal(true);
+  };
+
+  // Hàm này mới thực sự tạo sheet (khi user confirm)
+  const handleConfirmCreateSheet = async () => {
     try {
+      // Đóng modal trước
+      setConfirmCreateModal(false);
+      
       dispatch(clearSheet());
       dispatch(clearAllSubTableData());
       setActiveTab('create');
@@ -372,14 +460,16 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
       
       const result = await dispatch(createChangeModel()).unwrap();
       
-      console.log(' Sheet mới đã được tạo:', result);
       setCurrentSheet(result);
       
       await new Promise(res => setTimeout(res, 500));
       setShowSheets(true);
       
+      showNotification('success', 'Tạo sheet mới thành công!');
+      
     } catch (error) {
       console.error('❌ Lỗi khi tạo sheet:', error);
+      showNotification('error', 'Không thể tạo sheet mới. Vui lòng thử lại.');
     } finally {
       setLoadingSheets(false);
     }
@@ -458,6 +548,17 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
           >
             {creatingSheet ? 'Đang tạo...' : 'Tạo Sheet Mới'}
           </button>
+            {/** modal xác nhận tạo sheet mới */}
+            <ConfirmModal
+              open={confirmCreateModal}
+              title="Xác nhận tạo Sheet mới"
+              message="Bạn có chắc chắn muốn tạo Sheet mới không?"
+              confirmText="Tạo mới"
+              cancelText="Hủy"
+              type="info"
+              onConfirm={handleConfirmCreateSheet}
+              onCancel={() => setConfirmCreateModal(false)}
+            />
 
           <button
             onClick={() => setActiveTab('list')}
@@ -467,7 +568,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                 : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
-            Sheet của tôi
+            {user?.role?.toUpperCase() === 'PQC' ? 'Sheets của tôi' : 'Tất cả Sheets'}
           </button>
         </div>
 
@@ -497,7 +598,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
             {/* Info banner */}
             <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800 mb-0 text-center">
-                Hiển thị: <strong>Tất cả Sheets</strong> | User: <strong>{user?.username}</strong> ({user?.role})
+                Hiển thị: <strong>Sheet của hệ thống</strong> | User: <strong>{user?.username}</strong> ({user?.role})
               </p>
             </div>
 
@@ -675,6 +776,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                           </div>
 
                           {/* Actions */}
+                          {/** View detail and edit */}
                           <div className="w-full lg:w-auto">
                             <button
                               onClick={() => handleViewDetail(sheet)}
@@ -695,9 +797,56 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                                 }
                               `}
                             >
-                              {canViewDetail(sheet) ? 'Xem chi tiết' : 'Không có quyền'}
+                              {canViewDetail(sheet) ? 'Xem chi tiết' : 'Không thể xem'}
                             </button>
                           </div>
+                          {/** Delete */}
+                          <div className="w-full lg:w-auto">
+                            <button
+                              onClick={() => handleDeleteSheet(sheet)}
+                              disabled={!canDeleteSheet(sheet) || deletingSheetId === sheet.id}
+                              className={`
+                                w-full 
+                                lg:min-w-[150px] 
+                                whitespace-nowrap 
+                                px-4 py-2 
+                                rounded-lg 
+                                transition-colors 
+                                text-sm 
+                                font-medium 
+                                ${
+                                  deletingSheetId === sheet.id
+                                    ? 'bg-gray-400 text-white cursor-wait' // Loading state
+                                    : canDeleteSheet(sheet)
+                                    ? 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }
+                              `}
+                            >
+                              {deletingSheetId === sheet.id 
+                                  ? '⏳ Đang xóa...' 
+                                  : canDeleteSheet(sheet) 
+                                  ? 'Xóa Sheet' 
+                                  : 'Không thể xóa'
+                                }
+                            </button>
+                          </div>
+
+                          {/* Confirm Modal for Delete */}
+                          <ConfirmModal
+                            open={confirmDeleteModal.open}
+                            title="Xác nhận xóa Sheet"
+                            message={
+                              confirmDeleteModal.sheet 
+                                ? `Bạn có chắc chắn muốn xóa Sheet #${confirmDeleteModal.sheet.id}?\n\nHành động này KHÔNG THỂ HOÀN TÁC!`
+                                : ''
+                            }
+                            confirmText="Xóa"
+                            cancelText="Hủy"
+                            type="danger"
+                            onConfirm={handleConfirmDelete}
+                            onCancel={() => setConfirmDeleteModal({ open: false, sheet: null })}
+                          />
                         </div>
                       </div>
                     ))}

@@ -136,15 +136,15 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">PCB ver</th>
               <td colSpan={2} className="border px-2 py-2 text-xs">{form.pcBver || ""}</td>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">Work Order</th>
-              <td className="border px-2 py-2">{form.workOrder || ""}</td>
+              <td className="border px-2 py-2 text-xs">{form.workOrder || ""}</td>
               <th colSpan={2} className="border px-2 py-2 text-xs bg-gray-100">Used CN card</th>
-              <td className="border px-2 py-2">
+              <td className="border px-2 py-2 text-xs">
                 {form.usedCNcard !== undefined ? (form.usedCNcard ? "Yes" : "No") : ""}
               </td>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">Qty</th>
               <td className="border px-2 py-2 text-xs">{form.qty}</td>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">JIG</th>
-              <td className="border px-2 py-2">
+              <td className="border px-2 py-2 text-xs">
                 {form.jig !== undefined ? (form.jig ? "Yes" : "No") : ""}
               </td>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">Mã PCB</th>
@@ -276,10 +276,10 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
             <input 
               value={form.lineChange ?? ""} 
               onChange={(e) => {
-                set("lineChange", e.target.value);
+                set("lineChange", e.target.value.toUpperCase());
               }}
-              className="mt-1 block w-full border rounded px-3 py-2 text-base"
-              placeholder="Nhập line đổi..."
+              className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
+              placeholder=""
             />
           </label>
 
@@ -289,10 +289,10 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
             <input 
               value={form.model ?? ""} 
               onChange={(e) => {
-                set("model", e.target.value);
+                set("model", e.target.value.toUpperCase());
               }}
-              className="mt-1 block w-full border rounded px-3 py-2 text-base"
-              placeholder="Nhập model/side..."
+              className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
+              placeholder=""
             />
           </label>
 
@@ -301,9 +301,9 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
             F Code (3in1)
             <input 
               value={form.fCode ?? ""} 
-              onChange={(e) => set("fCode", e.target.value)} 
-              className="mt-1 block w-full border rounded px-3 py-2 text-base"
-              placeholder="Nhập F code (3in1) ..."
+              onChange={(e) => set("fCode", e.target.value.toUpperCase())} 
+              className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
+              placeholder=""
             />
           </label>
 
@@ -313,9 +313,9 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
               REV S15
               <input 
                 value={form.revS15 ?? ""} 
-                onChange={(e) => set("revS15", e.target.value)} 
-                className="mt-1 block w-full border rounded px-3 py-2 text-base"
-                placeholder="Nhập REV S15 ..."
+                onChange={(e) => set("revS15", e.target.value.toUpperCase())} 
+                className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
+                placeholder=""
               />
             </label>
 
@@ -324,9 +324,9 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
               REV MOUNTER
               <input 
                 value={form.revMounter ?? ""} 
-                onChange={(e) => set("revMounter", e.target.value)} 
-                className="mt-1 block w-full border rounded px-3 py-2 text-base"
-                placeholder="Nhập REV MOUNTER ..."
+                onChange={(e) => set("revMounter", e.target.value.toUpperCase())} 
+                className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
+                placeholder=""
               />
             </label>
           </div>
@@ -361,9 +361,9 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
               PCB ver
               <input 
                 value={form.pcBver ?? ""} 
-                onChange={(e) => set("pcBver", e.target.value)} 
-                className="mt-1 block w-full border rounded px-3 py-2 text-base"
-                placeholder="Nhập PCB ver ..."
+                onChange={(e) => set("pcBver", e.target.value.toUpperCase())} 
+                className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
+                placeholder=""
               />
             </label>
 
@@ -373,10 +373,10 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
               <input 
                 value={form.workOrder ?? ""} 
                 onChange={(e) => {
-                  set("workOrder", e.target.value);
+                  set("workOrder", e.target.value.toUpperCase());
                 }}
-                className="mt-1 block w-full border rounded px-3 py-2 text-base"
-                placeholder="Nhập work order..."
+                className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
+                placeholder=""
               />
             </label>
           </div>
@@ -387,12 +387,12 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
             <input 
               type="text"
               value={form.qty ?? ""} 
-              placeholder="Nhập qty..."
+              placeholder=""
               onChange={(e) => {
-                const val = e.target.value;
+                const val = e.target.value.toUpperCase();
                 set("qty", val);
               }}
-              className="mt-1 block w-full border rounded px-3 py-2 text-base"
+              className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
               min="0"
             />
           </label>
@@ -402,9 +402,9 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
             Mã PCB (Code PCB)
             <textarea 
               value={form.codePCB ?? ""} 
-              onChange={(e) => set("codePCB", e.target.value)} 
-              className="mt-1 block w-full border rounded px-3 py-2 text-base min-h-[60px] resize-y"
-              placeholder="Nhập mã PCB..."
+              onChange={(e) => set("codePCB", e.target.value.toUpperCase())} 
+              className="mt-1 block w-full border rounded px-3 py-2 text-base min-h-[60px] resize-y uppercase"
+              placeholder=""
             />
           </label>
 

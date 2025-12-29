@@ -224,7 +224,7 @@ const SheetDetailViewer = () => {
     const getStatusBadge = (sheet: ChangeModelResponse) => {
     const status = sheet.status?.toLowerCase();
     
-    // ✅ Kiểm tra xem có phải trạng thái "Done" không
+    // Kiểm tra xem có phải trạng thái "Done" không
     const isDone = status && status !== 'pending';
     
     // Status label mapping (hiển thị đẹp cho user)
@@ -272,7 +272,7 @@ const SheetDetailViewer = () => {
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
           <div>
             <h1 className="text-xl font-bold text-gray-800">
-              Chi tiết Sheet #{currentSheet.id}
+              Chi tiết Sheet: #{currentSheet.id} & WorkOrder:{currentSheet.checkModel?.workOrder !== "" ? currentSheet.checkModel?.workOrder : "Chưa Có"}
             </h1>
             {currentSheet.createAt && (
               <p className="text-xs text-gray-500 mt-1 mb-0">

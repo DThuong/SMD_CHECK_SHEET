@@ -213,8 +213,8 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
           <input
             type="text"
             value={form.qc ?? ""}
-            onChange={(e) => set("qc", e.target.value)}
-            className="block w-full border rounded px-3 py-2 text-sm"
+            onChange={(e) => set("qc", e.target.value.toUpperCase())}
+            className="block w-full border rounded px-3 py-2 text-sm uppercase"
           />
         </div>
 
@@ -223,8 +223,8 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
           <input
             type="text"
             value={form.result ?? ""}
-            onChange={(e) => set("result", e.target.value)}
-            className="block w-full border rounded px-3 py-2 text-sm"
+            onChange={(e) => set("result", e.target.value.toUpperCase())}
+            className="block w-full border rounded px-3 py-2 text-sm uppercase"
           />
         </div>
         
@@ -264,8 +264,8 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
         <label className="text-xs block mb-1">Lịch sử</label>
         <textarea
           value={form.history ?? ""}
-          onChange={(e) => set("history", e.target.value)}
-          className="focus:outline-none block w-full border rounded px-3 py-2 text-sm min-h-20 resize-y wrap-break-words"
+          onChange={(e) => set("history", e.target.value.toUpperCase())}
+          className="focus:outline-none block w-full border rounded px-3 py-2 text-sm min-h-20 resize-y wrap-break-words uppercase"
           placeholder="Nhập lịch sử..."
         />
       </div>

@@ -1,0 +1,83 @@
+{
+  "title": "Dashboard",
+  "subtitle": "Quản lý và theo dõi trạng thái SMD Sheets",
+  "loading": "Đang tải dữ liệu dashboard...",
+  "roleBasedDashboard": {
+    "needProcess": "Cần xử lý!",
+    "noSheet": "Không có sheet",
+    "sheets": "sheet",
+    "statusCards": {
+      "needEng": "Sheets cần Engineer ký",
+      "descEng": "Sheets cần ENG ký",
+      "needSupervisor": "Sheets cần Supervisor ký",
+      "descSupervisor": "Sheets cần Supervisor ký",
+      "needManager": "Sheet cần Manager ký",
+      "descManager": "Sheets cần Manager ký",
+      "needKoreaManager": "Sheets cần Korea Manager ký",
+      "descKoreaManager": "Sheets cần Korea Manager ký",
+      "completed": "Sheets đã hoàn tất (KM đã ký)",
+      "descCompleted": "Sheets hoàn tất"
+    },
+    "quickStats": {
+      "title": "Thống kê nhanh",
+      "totalSheets": "Tổng Sheets",
+      "pending": "Đang chờ",
+      "completed": "Hoàn thành",
+      "completionRate": "Tỷ lệ hoàn thành"
+    }
+  },
+  "adminDashboard": {
+    "title": "Dashboard Analytics",
+    "subtitle": "Tổng quan hệ thống quản lý SMD sheets và người dùng hệ thống.",
+    "stats": {
+      "totalUsers": "Tổng Users",
+      "activeUsers": "đang hoạt động",
+      "smdSheets": "SMD Sheets",
+      "pending": "đang chờ",
+      "activeRate": "Tỷ lệ Active",
+      "lockedAccounts": "tài khoản bị khóa",
+      "completion": "Hoàn thành",
+      "approved": "Sheets đã duyệt"
+    }
+  },
+  "charts": {
+    "timeline": {
+      "title": "Xu hướng tạo Sheet",
+      "7days": "7 ngày",
+      "30days": "30 ngày",
+      "all": "Tất cả",
+      "count": "Số sheet tạo"
+    },
+    "roleDistribution": {
+      "title": "Phân bổ Users theo Role",
+      "count": "Số lượng"
+    },
+    "sheetStatus": {
+      "title": "Trạng thái SMD Sheets"
+    }
+  },
+  "tables": {
+    "roleDetails": {
+      "title": "Chi tiết phân quyền Users",
+      "role": "Vai trò",
+      "count": "Số lượng",
+      "percentage": "Tỷ lệ",
+      "active": "Active"
+    },
+    "statusAnalysis": {
+      "title": "Phân tích trạng thái Sheets",
+      "status": "Trạng thái",
+      "count": "Số lượng",
+      "percentage": "Tỷ lệ",
+      "description": "Mô tả"
+    }
+  },
+  "statusDescriptions": {
+    "pending": "Chờ PQC xác nhận",
+    "pqcDone": "Chờ ENG xác nhận",
+    "engDone": "Chờ Supervisor xác nhận",
+    "supervisorDone": "Chờ Manager xác nhận",
+    "managerDone": "Chờ Korea Manager xác nhận",
+    "koreaManagerDone": "Đã hoàn thành"
+  }
+}

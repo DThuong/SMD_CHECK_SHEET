@@ -7,12 +7,12 @@ import { BsCalendarDate } from "react-icons/bs";
 import { FaRegClock } from "react-icons/fa";
 import { Link } from 'react-router-dom';
 import ReactPaginate from 'react-paginate';
-import { getAllSheetByUserId, getSheetWithFullObject } from '../redux/slices/changeModelSlice';
+import { getSheetWithFullObject, getSheetByFilter } from '../redux/slices/changeModelSlice';
 // redux
 import { useAppSelector, useAppDispatch } from '../redux/hooks';
 import { createChangeModel, clearSheet, clearError, setCurrentSheet } from '../redux/slices/changeModelSlice';
 import { addCompletedTable, clearAllSubTableData, resetCompletedTables, setCheckModel, setPQCCheck, setStandardProduction, setStandardVehicle, setTimeChangeModel } from '../redux/slices/subTableSlice';
-import { getSheetByFilter, fetchChangeModel, deleteSheetById } from '../redux/slices/changeModelSlice';
+import { fetchChangeModel, deleteSheetById } from '../redux/slices/changeModelSlice';
 import type { ChangeModelResponse } from '../redux/slices/changeModelSlice';
 import { useNotification } from '../redux/hooks';
 import Notification from '../components/general/Notification';
@@ -234,7 +234,7 @@ const Home = () => {
       return;
     }
 
-    // PQC: load sheet all
+    // PQC: load sheet của cả hệ thống
     if (user?.role === 'PQC') {
       await dispatch(fetchChangeModel()).unwrap();
       return;
@@ -286,7 +286,7 @@ const Home = () => {
       toDate: '',
       status: 'all'
     });
-    // Load lại tất cả sheets
+    // Load lại sheet của hệ thống
     try {
       await dispatch(fetchChangeModel()).unwrap();
       setCurrentPage(0);
@@ -344,12 +344,6 @@ const Home = () => {
 //  KIỂM TRA QUYỀN XEM CHI TIẾT
 const canViewDetail = (sheet: ChangeModelResponse): boolean => {
   if (!user) return false;
-  // PQC chỉ được xem sheet do chính mình tạo
-  if (user.role?.toUpperCase() === 'PQC') {
-    if (!sheet.account) return false;
-    return sheet.account.id === user.id || sheet.account.userName === user.username;
-  }
-  // Các role khác (ENG, SUPERVISOR, MANAGER, KOREA_MANAGER) có thể xem tất cả
   return true;
 };
 
@@ -766,12 +760,12 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                               {getStatusBadge(sheet)}
 
                               {/* 🔒 ICON KHÓA nếu không có quyền */}
-                              {!canViewDetail(sheet) && (
+                              {/* {!canViewDetail(sheet) && (
                                 <span className="px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-semibold flex items-center gap-1">
                                   <AiOutlineLock size={13} />
                                   Bị khóa
                                 </span>
-                              )}
+                              )} */}
                             </div>
                           </div>
 

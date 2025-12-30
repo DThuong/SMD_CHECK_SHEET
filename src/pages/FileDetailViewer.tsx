@@ -1,44 +1,51 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../redux/hooks';
-import LCRFileViewer from '../components/files/LCRFileViewer';
+import LCRDataTable from '../components/files/LCRDataTable';
+import LCRFullTable from '../components/files/LCRFullTable';
 import ReflowPDFViewer from '../components/files/ReflowPDFViewer';
 import LoadingSpinner from '../components/general/LoadingSpinner';
-import { getLcrFile, getReflowFile, clearLcrFile, clearReflowFile } from '../redux/slices/FileSlice';
+import { getLcrFileData, getReflowFile, clearLcrFile, clearReflowFile } from '../redux/slices/FileSlice';
 import { getSheetWithFullObject } from '../redux/slices/changeModelSlice';
 
 type FileType = 'lcr' | 'reflow';
+type LcrViewMode = 'expandable' | 'full';
 
 const FileDetailViewer = () => {
   const { id, fileType } = useParams<{ id: string; fileType: FileType }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const location = useLocation();
+  const [lcrViewMode, setLcrViewMode] = useState<LcrViewMode>('expandable');
   
   const { currentSheet, loading: sheetLoading } = useAppSelector((state) => state.changeModel);
-  const { lcrFileUrl, reflowFileUrl, loading: fileLoading, error: fileError } = useAppSelector(
+  const { lcrFileData, reflowFileUrl, loading: fileLoading, error: fileError } = useAppSelector(
     (state) => state.fileSlice
   );
 
-  // Load sheet nếu chưa có trong Redux (khi reload trang)
+  // ✅ Load sheet nếu chưa có trong Redux (khi reload trang)
   useEffect(() => {
     if (id && !currentSheet) {
-      console.log(`FileDetailViewer: Loading sheet ${id} because currentSheet is null`);
+      console.log(`📄 FileDetailViewer: Loading sheet ${id} because currentSheet is null`);
       dispatch(getSheetWithFullObject(Number(id)));
     }
   }, [id, currentSheet, dispatch]);
 
-  // Load files
+  // ✅ Load files
   useEffect(() => {
     if (id) {
       const sheetId = parseInt(id);
-      console.log(`FileDetailViewer: Loading files for sheet ${sheetId}`);
-      dispatch(getLcrFile(sheetId));
+      console.log(`📂 FileDetailViewer: Loading files for sheet ${sheetId}`);
+      
+      // Load LCR data (JSON)
+      dispatch(getLcrFileData(sheetId));
+      
+      // Load Reflow file (PDF)
       dispatch(getReflowFile(sheetId));
     }
 
     return () => {
-      console.log('FileDetailViewer: Cleaning up files');
+      console.log('🧹 FileDetailViewer: Cleaning up files');
       dispatch(clearLcrFile());
       dispatch(clearReflowFile());
     };
@@ -50,12 +57,12 @@ const FileDetailViewer = () => {
     navigate(newPath, { replace: true });
   };
 
-  //  Loading state - chờ load sheet
+  // ✅ Loading state - chờ load sheet hoặc files
   if (sheetLoading || fileLoading) {
     return <LoadingSpinner />;
   }
 
-  //  Error state
+  // ✅ Error state
   if (fileError) {
     return (
       <div className="container mx-auto p-4 my-4 max-w-8xl">
@@ -72,8 +79,7 @@ const FileDetailViewer = () => {
     );
   }
 
-  //  FIX: CHỈ hiển thị "Sheet not found" khi ĐÃ TẢI XONG nhưng vẫn không có data
-  // KHÔNG hiển thị khi đang load (sheetLoading = false nhưng currentSheet = null trong lần render đầu)
+  // ✅ Sheet not found (chỉ hiển thị sau khi đã load xong)
   if (!sheetLoading && !currentSheet && id) {
     console.warn(`⚠️ FileDetailViewer: Sheet ${id} not found after loading`);
     return (
@@ -91,79 +97,139 @@ const FileDetailViewer = () => {
     );
   }
 
-  //  Nếu chưa có currentSheet, hiển thị loading (đang chờ load)
+  // ✅ Chờ load sheet
   if (!currentSheet) {
     return <LoadingSpinner />;
   }
 
-  //  Ưu tiên URL từ Redux (Blob URL), fallback sang currentSheet
-  const lcrUrl = lcrFileUrl || currentSheet.excelFileUrl;
+  // ✅ Check file availability
+  const hasLcrData = !!lcrFileData;
+  const hasReflowFile = !!reflowFileUrl || !!currentSheet.pdfFileUrl;
   const reflowUrl = reflowFileUrl || currentSheet.pdfFileUrl;
 
-  console.log('FileDetailViewer Render:', {
+  console.log('📊 FileDetailViewer Render:', {
     sheetId: currentSheet.id,
-    lcrUrl: lcrUrl ? 'EXISTS' : 'MISSING',
-    reflowUrl: reflowUrl ? 'EXISTS' : 'MISSING',
-    currentTab: fileType
+    hasLcrData,
+    hasReflowFile,
+    currentTab: fileType,
+    lcrDataCount: lcrFileData?.count
   });
 
   return (
     <div className="container p-4 max-w-8xl mx-auto">
       {/* Header */}
-      <div>
+      <div className="mb-6">
         <button
           onClick={() => navigate(-1)}
-          className="mb-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition"
+          className="mb-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition inline-flex items-center gap-2"
         >
-          ← Quay lại
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Quay lại
         </button>
         
         <h1 className="text-2xl font-bold text-gray-800">
           Xem chi tiết file
         </h1>
         <p className="text-sm text-gray-600 mt-1">
-          Change Model ID: {currentSheet.id}
+          Change Model ID: <span className="font-semibold">{currentSheet.id}</span>
         </p>
       </div>
 
       {/* Tabs */}
       <div className="mb-4 border-b border-gray-300">
-        <div className="flex gap-4">
-          <button
-            onClick={() => handleChangeTab('lcr')}
-            disabled={!lcrUrl}
-            className={`px-6 py-3 font-semibold transition ${
-              fileType === 'lcr'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-blue-600'
-            } ${!lcrUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            LCR File (Excel)
-          </button>
-          
-          <button
-            onClick={() => handleChangeTab('reflow')}
-            disabled={!reflowUrl}
-            className={`px-6 py-3 font-semibold transition ${
-              fileType === 'reflow'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-blue-600'
-            } ${!reflowUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            Reflow File (PDF)
-          </button>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex gap-4">
+            <button
+              onClick={() => handleChangeTab('lcr')}
+              disabled={!hasLcrData}
+              className={`px-6 py-3 font-semibold transition inline-flex items-center gap-2 ${
+                fileType === 'lcr'
+                  ? 'text-green-600 border-b-2 border-green-600'
+                  : 'text-gray-600 hover:text-green-600'
+              } ${!hasLcrData ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              LCR Data
+              {hasLcrData && lcrFileData && (
+                <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
+                  {lcrFileData.count}
+                </span>
+              )}
+            </button>
+            
+            <button
+              onClick={() => handleChangeTab('reflow')}
+              disabled={!hasReflowFile}
+              className={`px-6 py-3 font-semibold transition inline-flex items-center gap-2 ${
+                fileType === 'reflow'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-blue-600'
+              } ${!hasReflowFile ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              Reflow PDF
+            </button>
+          </div>
+
+          {/* View Mode Toggle (only show for LCR tab) */}
+          {fileType === 'lcr' && hasLcrData && (
+            <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+              {/* <button
+                onClick={() => setLcrViewMode('expandable')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition inline-flex items-center gap-2 ${
+                  lcrViewMode === 'expandable'
+                    ? 'bg-white text-green-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                Expandable View
+              </button> */}
+              <button
+                onClick={() => setLcrViewMode('full')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition inline-flex items-center gap-2 ${
+                  lcrViewMode === 'full'
+                    ? 'bg-white text-green-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Full Table (27 cols)
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Content */}
-      <div className="bg-white rounded-lg shadow-sm border-none">
+      <div className="bg-white rounded-lg">
         {fileType === 'lcr' && (
           <>
-            {lcrUrl ? (
-              <LCRFileViewer fileUrl={lcrUrl} />
+            {hasLcrData && lcrFileData ? (
+              <>
+                {lcrViewMode === 'expandable' ? (
+                  <LCRDataTable lcrData={lcrFileData} />
+                ) : (
+                  <LCRFullTable lcrData={lcrFileData} />
+                )}
+              </>
             ) : (
-              <div className="p-4 text-center bg-gray-50 rounded-lg">
-                <p className="text-gray-600">⚠️ LCR file has not been uploaded yet</p>
+              <div className="p-8 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p className="text-gray-600 text-lg font-medium">⚠️ LCR data has not been uploaded yet</p>
+                <p className="text-gray-500 text-sm mt-2">Upload an Excel file to view LCR measurement data</p>
               </div>
             )}
           </>
@@ -171,11 +237,15 @@ const FileDetailViewer = () => {
 
         {fileType === 'reflow' && (
           <>
-            {reflowUrl ? (
+            {hasReflowFile && reflowUrl ? (
               <ReflowPDFViewer fileUrl={reflowUrl} />
             ) : (
-              <div className="p-8 text-center bg-gray-50 rounded-lg">
-                <p className="text-gray-600">⚠️ Reflow file has not been uploaded yet</p>
+              <div className="p-8 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                <p className="text-gray-600 text-lg font-medium">⚠️ Reflow file has not been uploaded yet</p>
+                <p className="text-gray-500 text-sm mt-2">Upload a PDF file to view Reflow profile data</p>
               </div>
             )}
           </>

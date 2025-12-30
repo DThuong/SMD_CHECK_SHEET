@@ -1,5 +1,4 @@
 {
-  "logs": {
     "title": "SMD 로그 관리",
     "role": "역할",
     "info": {
@@ -91,5 +90,4 @@
       "selectFromDate": "\"시작 날짜\"를 선택해주세요",
       "invalidDateRange": "\"시작 날짜\"는 \"종료 날짜\"보다 늦을 수 없습니다"
     }
-  }
 }

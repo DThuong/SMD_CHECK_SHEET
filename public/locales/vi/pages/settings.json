@@ -1,0 +1,12 @@
+{
+  "title": "Cài đặt",
+  "themeSettings": {
+    "title": "Chế độ sáng/tối",
+    "description": "Chuyển đổi giữa chế độ sáng và tối"
+  },
+  "languageSettings": {
+    "title": "Ngôn ngữ",
+    "translating": "Đang dịch nội dung...",
+    "currentLanguage": "Ngôn ngữ hiện tại"
+  }
+}

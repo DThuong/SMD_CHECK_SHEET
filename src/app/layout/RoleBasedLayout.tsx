@@ -5,6 +5,7 @@ import { HiMenu, HiX, HiLogout, HiUser } from "react-icons/hi";
 import logo from "../../assets/image/brand_image_3.webp";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { logoutUser } from "../../redux/slices/authSlice";
+import { useTranslation } from "react-i18next";
 
 const RoleBasedLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -17,6 +18,7 @@ const RoleBasedLayout = () => {
       return false;
     }
   });
+  const { t } = useTranslation('common');
 
   useEffect(() => {
     if (!showNoti) return;
@@ -51,9 +53,9 @@ const RoleBasedLayout = () => {
   };
 
   const menuItems = [
-    { name: "Dashboard", path: `/${role}/dashboard`, shouldReload: false },
-    { name: "Smd Sheet", path: `/${role}/smd-sheet-logs`, shoudReload: true },
-    { name: "Settings", path: `/${role}/settings`, shouldReload: false },
+    { name: t('menu.dashboard'), path: `/${role}/dashboard`, shouldReload: false },
+    { name: t('menu.smdSheet'), path: `/${role}/smd-sheet-logs`, shoudReload: true },
+    { name: t('menu.settings'), path: `/${role}/settings`, shouldReload: false },
   ];
 
   const handleLogout = () => {
@@ -61,7 +63,7 @@ const RoleBasedLayout = () => {
     setUserMenuOpen(false);
   };
 
-  // ✅ Đóng cả sidebar và user menu khi click overlay
+  // Đóng cả sidebar và user menu khi click overlay
   const closeAllMenus = () => {
     setSidebarOpen(false);
     setUserMenuOpen(false);
@@ -73,10 +75,10 @@ const RoleBasedLayout = () => {
         <div className="slide-noti w-full max-w-[900px] left-1/2 -translate-x-1/2">
           <div className="noti-inner bg-green-50 border-l-4 border-green-600 p-3 rounded shadow">
             <p className="font-bold text-green-800 text-lg">
-              Đăng nhập thành công!
+              {t('msg_success')}
             </p>
             <p className="text-green-700 text-sm mt-1">
-              User: <strong>{user?.username}</strong> - Role:{" "}
+              {t('user')}: <strong>{user?.username}</strong> - {t('role')}:{" "}
               <strong>{user?.role}</strong>
             </p>
           </div>
@@ -91,7 +93,7 @@ const RoleBasedLayout = () => {
             to={`/${role}/dashboard`}
             className="text-decoration-none lg:text-4xl md:text-2xl font-bold text-gray-800"
           >
-            {getRoleDisplayName(role || "")} Dashboard
+            {getRoleDisplayName(role || "")} {t('menu.dashboard')}
           </Link>
         </div>
 
@@ -119,7 +121,7 @@ const RoleBasedLayout = () => {
               sidebarOpen ? "hidden" : "block"
             }`}
           >
-            {getRoleDisplayName(role || "")} Dashboard
+            {getRoleDisplayName(role || "")} {t('menu.dashboard')}
           </h1>
 
           {/* User Menu - ẨN KHI SIDEBAR MỞ TRÊN MOBILE */}
@@ -135,11 +137,11 @@ const RoleBasedLayout = () => {
             >
               <HiUser className="w-5 h-5 text-gray-700 mx-1" />
               <span className="hidden sm:inline text-gray-700 ml-2 truncate max-w-[150px]">
-                Xin Chào, {user?.username}
+                {t('hello')}, {user?.username}
               </span>
             </button>
 
-            {/* ✅ USER MENU DROPDOWN - DESKTOP */}
+            {/* USER MENU DROPDOWN - DESKTOP */}
             {userMenuOpen && (
               <div className="hidden md:block absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                 <button
@@ -148,7 +150,7 @@ const RoleBasedLayout = () => {
                   className="flex items-center w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 disabled:opacity-50"
                 >
                   <HiLogout className="w-4 h-4 mr-2" />
-                  Logout
+                  {t('logout')}
                 </button>
               </div>
             )}
@@ -158,7 +160,7 @@ const RoleBasedLayout = () => {
 
       {/* Main container */}
       <div className="flex flex-1 overflow-hidden">
-        {/* ✅ SIDEBAR - DESKTOP (Relative positioning) */}
+        {/* SIDEBAR - DESKTOP (Relative positioning) */}
         <aside className="hidden md:flex md:flex-col md:w-64 lg:w-96 bg-white shadow-lg">
           <nav className="flex-1 my-3 overflow-y-auto px-3 py-2">
             {menuItems.map((item) => (
@@ -184,7 +186,7 @@ const RoleBasedLayout = () => {
           </div>
         </aside>
 
-        {/* ✅ SIDEBAR - MOBILE với OVERLAY */}
+        {/* SIDEBAR - MOBILE với OVERLAY */}
         {sidebarOpen && (
           <>
             {/* Sidebar panel - 70% width - Z-INDEX CAO HƠN */}
@@ -249,7 +251,7 @@ const RoleBasedLayout = () => {
           </>
         )}
 
-        {/* ✅ USER MENU - MOBILE FULL OVERLAY */}
+        {/* USER MENU - MOBILE FULL OVERLAY */}
         {userMenuOpen && (
           <>
             {/* User menu panel - FULL WIDTH */}
@@ -276,7 +278,7 @@ const RoleBasedLayout = () => {
                   className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-gray-500 text-white border rounded-xl! hover:bg-red-600 transition-colors text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <HiLogout className="w-6 h-6" />
-                  Logout
+                  {t('logout')}
                 </button>
               </div>
             </div>

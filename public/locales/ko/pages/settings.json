@@ -1,0 +1,12 @@
+{
+  "title": "설정",
+  "themeSettings": {
+    "title": "라이트/다크 모드",
+    "description": "라이트 모드와 다크 모드 전환"
+  },
+  "languageSettings": {
+    "title": "언어",
+    "translating": "콘텐츠 번역 중...",
+    "currentLanguage": "현재 언어"
+  }
+}

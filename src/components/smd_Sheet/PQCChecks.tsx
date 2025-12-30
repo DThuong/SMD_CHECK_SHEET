@@ -274,7 +274,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
       </tr>
       {/** Row 36: pqc image */}
       <tr>
-        <td colSpan={1} className="border border-gray-300 px-2 py-2 text-xs bg-gray-100 font-bold">Hình ảnh IC</td>
+        <td colSpan={1} className="border border-gray-300 px-2 py-2 text-xs bg-gray-100 font-bold">Hình ảnh IC Image</td>
         <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs">
             <div className="flex items-center justify-center">
               <div className="flex items-center justify-center gap-2">
@@ -450,7 +450,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
             <input type="checkbox" checked={form.resultLCR} onChange={(e) => set("resultLCR", e.target.checked)} />
           </div>
 
-             <label className="block text-sm font-medium mb-1">Hình ảnh Standard Production</label>
+             <label className="block text-sm font-medium mb-1">Hình ảnh IC Image</label>
                 <div className="">
                   <input
                     type="file"
@@ -479,7 +479,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
                           <FaCamera size={15} />
                         </div>
                         <div className="inline-flex items-center mx-2">
-                          Chụp ảnh PQC Check
+                          Chụp ảnh IC Image
                         </div>
                     </label>
                     </div>

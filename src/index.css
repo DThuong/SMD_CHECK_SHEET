@@ -198,3 +198,20 @@ body {
 #google_translate_element select {
   visibility: hidden !important;
 }
+
+/* Custom animation cho card pulse slow */
+@keyframes pulse-slow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* Apply animation class */
+.animate-pulse-slow {
+  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

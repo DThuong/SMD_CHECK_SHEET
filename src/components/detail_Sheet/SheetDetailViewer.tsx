@@ -22,7 +22,6 @@ import {
 // Import các sub-components
 import CheckModels from "../smd_Sheet/CheckModels";
 import PQCChecks from "../smd_Sheet/PQCChecks";
-// import ProgramChecks from "./smd_Sheet/ProgramChecks";
 import SheetHeader from "../smd_Sheet/SheetHeader";
 import StandardProductionSection from "../smd_Sheet/StandardProductions";
 import StandardVehicles from "../smd_Sheet/StandardVehicles";
@@ -207,7 +206,7 @@ const SheetDetailViewer = () => {
   if (error || !currentSheet) {
     return (
       <div className="max-w-8xl mx-auto my-4 p-8 text-center">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <h2 className="text-xl font-bold text-red-800 mb-2">⚠️ Có lỗi xảy ra</h2>
           <p className="text-red-600 mb-4">{error || 'Không tìm thấy dữ liệu'}</p>
           <button
@@ -333,7 +332,7 @@ const SheetDetailViewer = () => {
       {/* Buttons */}
       <div className="w-full sticky bottom-0 bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-4 flex items-center justify-center gap-3 shadow-lg mt-4 z-10">
         <button
-          onClick={() => navigate(`/${user?.role}/smd-sheet-logs`)}
+          onClick={() => navigate(-1)}
           className="px-4 py-3 bg-gray-600 text-white text-sm font-semibold hover:bg-gray-700 transition-colors"
         >
           Quay lại

@@ -1,0 +1,83 @@
+{
+  "title": "대시보드",
+  "subtitle": "SMD 시트 상태 관리 및 모니터링",
+  "loading": "대시보드 데이터 로딩 중...",
+  "roleBasedDashboard": {
+    "needProcess": "조치 필요!",
+    "noSheet": "시트 없음",
+    "sheets": "시트",
+    "statusCards": {
+      "needEng": "엔지니어 서명 필요 시트",
+      "descEng": "ENG 서명 필요 시트",
+      "needSupervisor": "감독자 서명 필요 시트",
+      "descSupervisor": "감독자 서명 필요 시트",
+      "needManager": "관리자 서명 필요 시트",
+      "descManager": "관리자 서명 필요 시트",
+      "needKoreaManager": "한국 관리자 서명 필요 시트",
+      "descKoreaManager": "한국 관리자 서명 필요 시트",
+      "completed": "완료된 시트 (KM 서명 완료)",
+      "descCompleted": "완료된 시트"
+    },
+    "quickStats": {
+      "title": "빠른 통계",
+      "totalSheets": "전체 시트",
+      "pending": "대기 중",
+      "completed": "완료됨",
+      "completionRate": "완료율"
+    }
+  },
+  "adminDashboard": {
+    "title": "대시보드 분석",
+    "subtitle": "SMD 시트 및 사용자 시스템 관리 개요",
+    "stats": {
+      "totalUsers": "전체 사용자",
+      "activeUsers": "활성",
+      "smdSheets": "SMD 시트",
+      "pending": "대기 중",
+      "activeRate": "활성 비율",
+      "lockedAccounts": "잠긴 계정",
+      "completion": "완료",
+      "approved": "승인된 시트"
+    }
+  },
+  "charts": {
+    "timeline": {
+      "title": "시트 생성 추세",
+      "7days": "7일",
+      "30days": "30일",
+      "all": "전체",
+      "count": "생성된 시트"
+    },
+    "roleDistribution": {
+      "title": "역할별 사용자 분포",
+      "count": "개수"
+    },
+    "sheetStatus": {
+      "title": "SMD 시트 상태"
+    }
+  },
+  "tables": {
+    "roleDetails": {
+      "title": "사용자 권한 세부 정보",
+      "role": "역할",
+      "count": "개수",
+      "percentage": "비율",
+      "active": "활성"
+    },
+    "statusAnalysis": {
+      "title": "시트 상태 분석",
+      "status": "상태",
+      "count": "개수",
+      "percentage": "비율",
+      "description": "설명"
+    }
+  },
+  "statusDescriptions": {
+    "pending": "PQC 확인 대기 중",
+    "pqcDone": "ENG 확인 대기 중",
+    "engDone": "감독자 확인 대기 중",
+    "supervisorDone": "관리자 확인 대기 중",
+    "managerDone": "한국 관리자 확인 대기 중",
+    "koreaManagerDone": "완료됨"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "dashboard": "대시보드",
+  "hello": "안녕하세요",
+  "logout": "로그아웃",
+  "menu": {
+    "dashboard": "대시보드",
+    "smdSheet": "SMD 시트",
+    "settings": "설정"
+  },
+  "roles": {
+    "engineering": "엔지니어링",
+    "supervisor": "감독자",
+    "manager": "관리자",
+    "koreaManager": "한국 관리자"
+  },
+  "msg_success": "로그인 성공!",
+  "user": "사용자",
+  "role": "역할"
+}

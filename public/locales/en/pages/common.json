@@ -1,0 +1,19 @@
+{
+  "dashboard": "Dashboard",
+  "hello": "Hello",
+  "logout": "Logout",
+  "menu": {
+    "dashboard": "Dashboard",
+    "smdSheet": "SMD Sheet",
+    "settings": "Settings"
+  },
+  "roles": {
+    "engineering": "Engineering",
+    "supervisor": "Supervisor",
+    "manager": "Manager",
+    "koreaManager": "Korea Manager"
+  },
+  "msg_success": "Login successful!",
+  "user": "User",
+  "role": "Role"
+}

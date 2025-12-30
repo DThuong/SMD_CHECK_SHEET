@@ -1,0 +1,19 @@
+{
+  "dashboard": "Dashboard",
+  "hello": "Xin chào",
+  "logout": "Đăng xuất",
+  "menu": {
+    "dashboard": "Dashboard",
+    "smdSheet": "SMD Sheet",
+    "settings": "Cài đặt"
+  },
+  "roles": {
+    "engineering": "Engineering",
+    "supervisor": "Supervisor",
+    "manager": "Manager",
+    "koreaManager": "Korea Manager"
+  },
+  "msg_success": "Đăng nhập thành công!",
+  "user": "Người dùng",
+  "role": "Vai trò"
+}

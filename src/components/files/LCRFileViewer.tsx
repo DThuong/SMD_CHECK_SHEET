@@ -7,15 +7,19 @@ interface LCRFileViewerProps {
   fileData?: File | null;
 }
 
+/**
+ * @deprecated This component displays LCR as PDF preview (old method)
+ * Use LCRDataTable component instead for better data visualization
+ */
 const LCRFileViewer = ({ fileUrl, fileData }: LCRFileViewerProps) => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const {currentSheet} = useAppSelector((state) => state.changeModel);
+  const { currentSheet } = useAppSelector((state) => state.changeModel);
   const dispatch = useAppDispatch();
   const { showNotification } = useNotification();
 
-   const handleDownloadfile = async () => {
+  const handleDownloadfile = async () => {
     if (!currentSheet?.id) {
       showNotification('error', 'Lỗi', 'Không tìm thấy Sheet ID');
       return;
@@ -35,21 +39,15 @@ const LCRFileViewer = ({ fileUrl, fileData }: LCRFileViewerProps) => {
         setLoading(true);
         setError(null);
 
-        // Ưu tiên fileUrl từ server
         if (fileUrl) {
           setPdfUrl(fileUrl);
           setLoading(false);
-        } 
-        // Fallback: dùng fileData nếu có
-        else if (fileData) {
+        } else if (fileData) {
           const url = URL.createObjectURL(fileData);
           setPdfUrl(url);
           setLoading(false);
-          
-          // Cleanup URL khi unmount
           return () => URL.revokeObjectURL(url);
-        } 
-        else {
+        } else {
           setError('No PDF file available');
           setLoading(false);
         }
@@ -104,6 +102,14 @@ const LCRFileViewer = ({ fileUrl, fileData }: LCRFileViewerProps) => {
   return (
     <>
       <div className="my-4 border-none">
+        {/* Deprecation Warning */}
+        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-300 rounded-lg">
+          <p className="text-yellow-800 text-sm">
+            ℹ️ <strong>Note:</strong> This is the old PDF preview method. 
+            The new version displays LCR data in an interactive table format for better readability.
+          </p>
+        </div>
+
         {/* PDF Viewer */}
         <div className="border-2 border-green-400 rounded-lg overflow-hidden bg-gray-100 shadow-lg">
           <iframe
@@ -119,7 +125,6 @@ const LCRFileViewer = ({ fileUrl, fileData }: LCRFileViewerProps) => {
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-3 mt-3">
-          {/* Download */}
           <button
             onClick={handleDownloadfile}
             className="px-5 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-decoration-none inline-flex items-center gap-2 font-medium shadow-sm hover:shadow-md"
@@ -130,7 +135,6 @@ const LCRFileViewer = ({ fileUrl, fileData }: LCRFileViewerProps) => {
             Download LCR Excel
           </button>
 
-          {/* Open new tab */}
           <a
             href={pdfUrl}
             target="_blank"

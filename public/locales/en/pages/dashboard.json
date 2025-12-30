@@ -1,0 +1,83 @@
+{
+  "title": "Dashboard",
+  "subtitle": "Manage and monitor SMD Sheets status",
+  "loading": "Loading dashboard data...",
+  "roleBasedDashboard": {
+    "needProcess": "Need Action!",
+    "noSheet": "No sheets",
+    "sheets": "sheet",
+    "statusCards": {
+      "needEng": "Sheets need Engineer signature",
+      "descEng": "Sheets need ENG signature",
+      "needSupervisor": "Sheets need Supervisor signature",
+      "descSupervisor": "Sheets need Supervisor signature",
+      "needManager": "Sheets need Manager signature",
+      "descManager": "Sheets need Manager signature",
+      "needKoreaManager": "Sheets need Korea Manager signature",
+      "descKoreaManager": "Sheets need Korea Manager signature",
+      "completed": "Completed sheets (KM signed)",
+      "descCompleted": "Completed sheets"
+    },
+    "quickStats": {
+      "title": "Quick Stats",
+      "totalSheets": "Total Sheets",
+      "pending": "Pending",
+      "completed": "Completed",
+      "completionRate": "Completion Rate"
+    }
+  },
+  "adminDashboard": {
+    "title": "Dashboard Analytics",
+    "subtitle": "Overview of SMD sheets and user system management.",
+    "stats": {
+      "totalUsers": "Total Users",
+      "activeUsers": "active",
+      "smdSheets": "SMD Sheets",
+      "pending": "pending",
+      "activeRate": "Active Rate",
+      "lockedAccounts": "locked accounts",
+      "completion": "Completion",
+      "approved": "Approved Sheets"
+    }
+  },
+  "charts": {
+    "timeline": {
+      "title": "Sheet Creation Trend",
+      "7days": "7 days",
+      "30days": "30 days",
+      "all": "All",
+      "count": "Sheets created"
+    },
+    "roleDistribution": {
+      "title": "User Distribution by Role",
+      "count": "Count"
+    },
+    "sheetStatus": {
+      "title": "SMD Sheet Status"
+    }
+  },
+  "tables": {
+    "roleDetails": {
+      "title": "User Permission Details",
+      "role": "Role",
+      "count": "Count",
+      "percentage": "Percentage",
+      "active": "Active"
+    },
+    "statusAnalysis": {
+      "title": "Sheet Status Analysis",
+      "status": "Status",
+      "count": "Count",
+      "percentage": "Percentage",
+      "description": "Description"
+    }
+  },
+  "statusDescriptions": {
+    "pending": "Waiting for PQC confirmation",
+    "pqcDone": "Waiting for ENG confirmation",
+    "engDone": "Waiting for Supervisor confirmation",
+    "supervisorDone": "Waiting for Manager confirmation",
+    "managerDone": "Waiting for Korea Manager confirmation",
+    "koreaManagerDone": "Completed"
+  }
+}

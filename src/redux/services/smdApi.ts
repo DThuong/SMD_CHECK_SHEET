@@ -26,16 +26,6 @@ const createSmdApi = (): AxiosInstance => {
         config.headers.Authorization = `Bearer ${token}`;
       }
 
-       // Debug
-      console.log('API Request:', {
-        method: config.method?.toUpperCase(),
-        url: config.url,
-        baseURL: config.baseURL,
-        fullURL: `${config.baseURL}${config.url}`,
-        headers: config.headers
-      });
-    
-
       // Tự động xử lý FormData
       if (config.data instanceof FormData) {
         // Xóa Content-Type để axios tự set multipart/form-data với boundary

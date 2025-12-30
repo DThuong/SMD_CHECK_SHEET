@@ -4,48 +4,35 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import Backend from 'i18next-http-backend';
 
 i18n
-  .use(Backend) // Load translation files
-  .use(LanguageDetector) // Detect user language
-  .use(initReactI18next) // Pass i18n to react-i18next
+  .use(Backend)
+  .use(LanguageDetector)
+  .use(initReactI18next)
   .init({
-    fallbackLng: 'vi', // Ngôn ngữ mặc định
-    defaultNS: 'translation', // Namespace mặc định
+    fallbackLng: 'vi',
+    lng: localStorage.getItem('appLanguage') || 'vi',
     
-    // Khai báo tất cả namespaces
-    ns: [
-      'translation',
-      'checkModel',
-      'pqcCheck',
-      'sheetHeader',
-      'standardProduction',
-      'standardVehicle',
-      'timeChangeModel',
-      'smdSheet',
-      'login',
-      'logs',
-      'settings',
-      'dashboard'
-    ],
+    ns: ['settings', 'dashboard', 'logs', 'common'],
+    defaultNS: 'common',
     
     interpolation: {
-      escapeValue: false, // React đã tự động escape
+      escapeValue: false,
     },
 
-    // Cấu hình load file JSON
     backend: {
-      loadPath: '/locales/{{lng}}/{{ns}}.json', // Đường dẫn đến file JSON
+      loadPath: '/locales/{{lng}}/pages/{{ns}}.json',
     },
 
-    // Cấu hình detect ngôn ngữ
     detection: {
-      order: ['localStorage', 'navigator'], // Ưu tiên localStorage, sau đó là browser language
-      caches: ['localStorage'], // Cache vào localStorage
-      lookupLocalStorage: 'appLanguage', // Key trong localStorage
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
+      lookupLocalStorage: 'appLanguage',
     },
 
     react: {
-      useSuspense: true, // Sử dụng Suspense để load translations
+      useSuspense: false,
     },
+    
+    debug: true, // Bật để xem log
   });
 
 export default i18n;

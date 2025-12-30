@@ -1,7 +1,7 @@
-// src/pages/Settings/Settings.tsx
 import { useTheme } from '../../contexts/ThemeContext';
 import { HiSun, HiMoon, HiGlobeAlt, HiCheckCircle } from 'react-icons/hi';
-import { useState} from 'react';
+import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Language {
   code: string;
@@ -18,12 +18,57 @@ const languages: Language[] = [
 
 const Settings = () => {
   const { theme, toggleTheme } = useTheme();
-  const [currentLang, setCurrentLang] = useState(() => {
-    return localStorage.getItem('appLanguage') || 'vi';
-  });
+  const { t, i18n } = useTranslation('settings');
   const [isTranslating, setIsTranslating] = useState(false);
+  const [currentLang, setCurrentLang] = useState(i18n.language || 'vi');
+
+  // Lắng nghe thay đổi ngôn ngữ
+  useEffect(() => {
+    const handleLanguageChanged = (lng: string) => {
+      setCurrentLang(lng);
+      console.log('Language changed to:', lng);
+    };
+
+    i18n.on('languageChanged', handleLanguageChanged);
+
+    return () => {
+      i18n.off('languageChanged', handleLanguageChanged);
+    };
+  }, [i18n]);
 
   const currentLanguage = languages.find(lang => lang.code === currentLang);
+
+  const handleLanguageChange = async (langCode: string) => {
+    if (langCode === currentLang || isTranslating) return;
+    
+    setIsTranslating(true);
+    console.log('Changing language to:', langCode);
+    
+    try {
+      // Reload namespace trước khi đổi ngôn ngữ
+      await i18n.reloadResources(langCode, ['settings', 'dashboard', 'logs']);
+      
+      // Đổi ngôn ngữ
+      await i18n.changeLanguage(langCode);
+      
+      // Lưu vào localStorage
+      localStorage.setItem('appLanguage', langCode);
+      
+      // Cập nhật state
+      setCurrentLang(langCode);
+      
+      console.log('Language changed successfully to:', langCode);
+      console.log('Current translation:', t('title'));
+      
+      setTimeout(() => {
+        setIsTranslating(false);
+      }, 500);
+      
+    } catch (error) {
+      console.error('Error changing language:', error);
+      setIsTranslating(false);
+    }
+  };
 
   return (
     <div className="max-w-7xl">
@@ -33,14 +78,14 @@ const Settings = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 flex flex-col items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
             <p className="mt-4 text-gray-800 dark:text-white font-medium">
-              Đang dịch nội dung...
+              {t('languageSettings.translating')}
             </p>
           </div>
         </div>
       )}
 
       <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
-        Cài đặt
+        {t('title')}
       </h1>
 
       {/* Theme Settings */}
@@ -48,10 +93,10 @@ const Settings = () => {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-medium text-gray-800 dark:text-white">
-              Chế độ sáng/tối
+              {t('themeSettings.title')}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Chuyển đổi giữa chế độ sáng và tối
+              {t('themeSettings.description')}
             </p>
           </div>
 
@@ -79,7 +124,7 @@ const Settings = () => {
         <div className="flex items-center gap-2 mb-4">
           <HiGlobeAlt size={24} className="text-gray-800 dark:text-white" />
           <h3 className="text-lg font-medium text-gray-800 dark:text-white">
-            Ngôn ngữ
+            {t('languageSettings.title')}
           </h3>
         </div>
 
@@ -90,12 +135,12 @@ const Settings = () => {
             return (
               <button
                 key={lang.code}
-                onClick={() => {}}
+                onClick={() => handleLanguageChange(lang.code)}
                 disabled={isTranslating}
                 className={`
                   relative p-5 rounded-xl border-2 transition-all duration-300
                   ${isActive
-                    ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 shadow-lg'
+                    ? 'border-blue-500 bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 shadow-lg'
                     : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md'
                   }
                   ${isTranslating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
@@ -127,25 +172,18 @@ const Settings = () => {
           })}
         </div>
 
-        <div className="mt-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg">
+        <div className="mt-4 p-4 bg-linear-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg">
           <div className="flex items-center gap-3">
             <HiGlobeAlt className="w-6 h-6 text-blue-500" />
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Ngôn ngữ hiện tại
+                {t('languageSettings.currentLanguage')}
               </p>
               <p className="text-base font-bold text-gray-800 dark:text-white">
                 {currentLanguage?.nativeName} {currentLanguage?.flag}
               </p>
             </div>
           </div>
-        </div>
-
-        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded">
-          <p className="text-sm text-blue-800 dark:text-blue-300">
-            💡 <strong>Lưu ý:</strong> Toàn bộ nội dung trang sẽ được dịch tự động. 
-            Bạn không cần sửa bất kỳ component nào.
-          </p>
         </div>
       </div>
     </div>

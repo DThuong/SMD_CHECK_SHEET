@@ -29,6 +29,7 @@ import {
   clearStatusHistory
 } from '../../redux/slices/changeModelSlice';
 import type { ChangeModelResponse } from '../../redux/slices/changeModelSlice';
+import { useTranslation } from 'react-i18next';
 
 // ==================== CONSTANTS ====================
 const ROLES = {
@@ -77,6 +78,7 @@ const Logs = () => {
   const { notification, showNotification, hideNotification } = useNotification();
   const [searchParams] = useSearchParams();
   const statusFromUrl = searchParams.get('status');
+  const {t} = useTranslation('logs');
 
   // Filter state
   const [filter, setFilter] = useState<SheetFilter>({
@@ -95,7 +97,6 @@ const Logs = () => {
    // EFFECT 1: Set filter từ URL (chạy khi statusFromUrl thay đổi)
   useEffect(() => {
     if (statusFromUrl) {
-      console.log('📍 Nhận status từ Dashboard:', statusFromUrl);
       setFilter(prev => ({ ...prev, status: statusFromUrl }));
     }
   }, [statusFromUrl]);
@@ -104,15 +105,12 @@ const Logs = () => {
   useEffect(() => {
     // Chỉ fetch khi status từ URL và đã được set vào filter
     if (statusFromUrl && filter.status === statusFromUrl && filter.status !== 'all') {
-      console.log('🔄 Tự động fetch với status:', filter.status);
       
       const autoFetch = async () => {
         try {
           await dispatch(getSheetByFilter({ 
             status: filter.status 
           })).unwrap();
-          
-          console.log('✅ Fetch sheets thành công');
         } catch (error: any) {
           console.error('❌ Lỗi khi fetch sheets:', error);
           showNotification('error', 'Lỗi', error.message || 'Không thể tải sheets');
@@ -126,7 +124,6 @@ const Logs = () => {
   // EFFECT 3: Load initial data (khi không có filter từ URL)
   useEffect(() => {
     if (!statusFromUrl) {
-      console.log('📂 Load tất cả sheets (không có filter từ URL)');
       loadSheets();
     }
   }, []); // Chỉ chạy 1 lần khi component mount
@@ -149,7 +146,7 @@ const Logs = () => {
         fcode: hasFcode ? filter.fcode.trim() : undefined,
       };
 
-      // ✅ CHỈ thêm id khi có giá trị
+      // CHỈ thêm id khi có giá trị
       if (hasId) {
         filterParams.id = filter.id;
       }

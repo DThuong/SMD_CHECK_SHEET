@@ -530,6 +530,45 @@ export const getAllSheetByUserId = createAsyncThunk(
     }
   }
 );
+
+// api filter sheet by user id
+export const filterSheetByUserId = createAsyncThunk(
+  'changeModel/filterByUserId',
+  async (params: { fromDate?: string; toDate?: string; status?: string; workOrder?: string; fcode?: string; id?: number }, { rejectWithValue }) => {
+    try {
+      const queryParams: Record<string, string> = {};
+      
+      if (params.fromDate) {
+        queryParams.FromDate = params.fromDate;
+      }
+      if (params.toDate) {
+        queryParams.ToDate = params.toDate;
+      }
+      if (params.status && params.status !== 'all') {
+        queryParams.Status = params.status;
+      }
+      if (params.workOrder && params.workOrder.trim() !== '') {
+        queryParams.WorkOrder = params.workOrder.trim();
+      }
+      if(params.fcode && params.fcode.trim() !== '') {
+        queryParams.FCode = params.fcode.trim();
+      }
+      if(params.id) {
+        queryParams.Id = params.id.toString();
+      }
+      const response = await smdApi.get('ChangeModel/filterAllForUser', { params: queryParams });
+      return response.data as ChangeModelResponse[];
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.message || 
+        'Không thể tải sheets của baise'
+      );
+    }
+      }
+)
+
+// api lấy file excel dưới dạng json
 // ==================== SLICE ====================
 
 const changeModelSlice = createSlice({
@@ -660,7 +699,6 @@ const changeModelSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      // filter 
       // ==================== GET ALL SHEETS ====================
     builder
       .addCase(fetchChangeModel.pending, (state) => {
@@ -686,15 +724,6 @@ const changeModelSlice = createSlice({
       .addCase(getSheetWithFullObject.fulfilled, (state, action) => {
         state.loading = false;
         state.currentSheet = action.payload;
-
-        // Log response từ backend
-        console.log('Backend Response:', {
-          id: action.payload.id,
-          excelFileUrl: action.payload.excelFileUrl,
-          pdfFileUrl: action.payload.pdfFileUrl,
-          excelType: typeof action.payload.excelFileUrl,
-          pdfType: typeof action.payload.pdfFileUrl,
-        });
         state.error = null;
       })
       .addCase(getSheetWithFullObject.rejected, (state, action) => {
@@ -827,6 +856,22 @@ const changeModelSlice = createSlice({
         state.error = null;
       })
       .addCase(getAllSheetByUserId.rejected, (state, action) => {
+        state.loadingList = false;
+        state.error = action.payload as string;
+      });
+      // filterSheetByUserId
+      builder
+      .addCase(filterSheetByUserId.pending, (state) => {
+        state.loadingList = true;
+        state.error = null;
+      })
+      .addCase(filterSheetByUserId.fulfilled, (state, action) => {
+        state.loadingList = false;
+        state.sheets = action.payload;
+        state.filteredSheets = action.payload;
+        state.error = null;
+      })
+      .addCase(filterSheetByUserId.rejected, (state, action) => {
         state.loadingList = false;
         state.error = action.payload as string;
       });

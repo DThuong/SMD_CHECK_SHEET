@@ -1,5 +1,4 @@
 {
-  "logs": {
     "title": "Quản lý SMD Logs",
     "role": "Role",
     "info": {
@@ -64,7 +63,8 @@
       "confirmed": "Đã xác nhận",
       "notConfirmed": "Chưa xác nhận",
       "signer": "Người ký",
-      "signButton": "Ký xác nhận"
+      "signButton": "Ký xác nhận",
+      "donthave": "Không có"
     },
     "roles": {
       "engineering": "Engineering",
@@ -91,5 +91,4 @@
       "selectFromDate": "Vui lòng chọn \"Từ ngày\"",
       "invalidDateRange": "\"Từ ngày\" không được sau \"Đến ngày\""
     }
-  }
 }

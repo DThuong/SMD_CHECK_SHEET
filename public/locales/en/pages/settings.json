@@ -1,0 +1,12 @@
+{
+  "title": "Settings",
+  "themeSettings": {
+    "title": "Light/Dark Mode",
+    "description": "Switch between light and dark modes"
+  },
+  "languageSettings": {
+    "title": "Language",
+    "translating": "Translating content...",
+    "currentLanguage": "Current language"
+  }
+}

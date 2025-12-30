@@ -24,16 +24,6 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
   const navigate = useNavigate();
   const { notification, showNotification, hideNotification } = useNotification();
 
-    console.log('🔍 SheetHeader Debug:', {
-    sheetId: currentSheet?.id,
-    excelFileUrl: currentSheet?.excelFileUrl,
-    excelFileUrlType: typeof currentSheet?.excelFileUrl,
-    excelFileUrlLength: currentSheet?.excelFileUrl?.length,
-    pdfFileUrl: currentSheet?.pdfFileUrl,
-    pdfFileUrlType: typeof currentSheet?.pdfFileUrl,
-    pdfFileUrlLength: currentSheet?.pdfFileUrl?.length,
-  });
-
   const setFile = (key: keyof FileUploadState, file?: File) => {
     setTempFileState(prev => ({ ...prev, [key]: file }));
   };

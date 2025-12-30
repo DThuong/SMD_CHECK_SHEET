@@ -8,15 +8,19 @@ import { Provider } from 'react-redux';
 import { store, persistor } from './redux/store.ts';
 import { PersistGate } from 'redux-persist/integration/react';
 import LoadingSpinner from './components/general/LoadingSpinner.tsx';
+import '../src/lang/i18n/configs.ts';
+import { LanguageProvider } from './contexts/LanguageContext.tsx';
 
 createRoot(document.getElementById('root')!).render(
     <Provider store={store}>
       <PersistGate loading={<LoadingSpinner />} persistor={persistor}>
         <BrowserRouter>
             <ThemeProvider>
-                <App />
+                <LanguageProvider>
+                      <App />
+                </LanguageProvider>
             </ThemeProvider>
         </BrowserRouter>
       </PersistGate>
-    </Provider>,
+    </Provider>
 )

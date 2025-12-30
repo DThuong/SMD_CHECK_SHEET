@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import CheckModels from "../smd_Sheet/CheckModels";
 import PQCChecks from "../smd_Sheet/PQCChecks";
-// import ProgramChecks from "./smd_Sheet/ProgramChecks";
 import SheetHeader from "../smd_Sheet/SheetHeader";
 import StandardProductionSection from "../smd_Sheet/StandardProductions";
 import StandardVehicles from "../smd_Sheet/StandardVehicles";
@@ -33,12 +32,25 @@ const SmdSheetDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
   
   // Lấy data từ Redux store
   const { currentSheet, loading, error } = useAppSelector((state) => state.changeModel);
   
   // CHỈ status Pending mới được edit
-  const canEdit = currentSheet?.status?.toLowerCase() === 'pending';
+  const canEdit = (() => {
+  if (!currentSheet || !user) return false;
+  // Chỉ sheet ở trạng thái Pending mới có thể chỉnh sửa
+  if (currentSheet.status?.toLowerCase() !== 'pending') return false;
+  // PQC chỉ chỉnh sửa sheet của chính mình
+  if (user.role?.toUpperCase() === 'PQC') {
+    if (!currentSheet.account) return false;
+    return currentSheet.account.id === user.id || 
+           currentSheet.account.userName === user.username;
+  }
+  // Các role khác (ENG, SUPERVISOR, MANAGER, KOREA_MANAGER) có thể chỉnh sửa tất cả
+  return true;
+})();
 
   // thông báo
   const { notification, showNotification, hideNotification } = useNotification();
@@ -61,8 +73,8 @@ const SmdSheetDetail = () => {
           if (hasAllRequiredData(result.checkModel, REQUIRED_FIELDS_CONFIG.CheckModel)) {
             dispatch(addCompletedTable('CheckModel'));
           } else {
-            const missing = getMissingFields(result.checkModel, REQUIRED_FIELDS_CONFIG.CheckModel);
-            console.log(missing);
+            getMissingFields(result.checkModel, REQUIRED_FIELDS_CONFIG.CheckModel);
+            // console.log(missing);
           }
         }
         
@@ -73,8 +85,8 @@ const SmdSheetDetail = () => {
           if (hasAllRequiredData(result.standardProduction, REQUIRED_FIELDS_CONFIG.StandardProduction)) {
             dispatch(addCompletedTable('StandardProduction'));
           } else {
-            const missing = getMissingFields(result.standardProduction, REQUIRED_FIELDS_CONFIG.StandardProduction);
-            console.log(missing);
+            getMissingFields(result.standardProduction, REQUIRED_FIELDS_CONFIG.StandardProduction);
+            // console.log(missing);
           }
         }
         
@@ -85,8 +97,8 @@ const SmdSheetDetail = () => {
           if (hasAllRequiredData(result.timeChangeModel, REQUIRED_FIELDS_CONFIG.TimeChangeModel)) {
             dispatch(addCompletedTable('TimeChangeModel'));
           } else {
-            const missing = getMissingFields(result.timeChangeModel, REQUIRED_FIELDS_CONFIG.TimeChangeModel);
-            console.log(missing);
+            getMissingFields(result.timeChangeModel, REQUIRED_FIELDS_CONFIG.TimeChangeModel);
+            // console.log(missing);
           }
         }
         
@@ -97,8 +109,8 @@ const SmdSheetDetail = () => {
           if (hasAllRequiredData(result.standardVehicle, REQUIRED_FIELDS_CONFIG.StandardVehicle)) {
             dispatch(addCompletedTable('StandardVehicle'));
           } else {
-            const missing = getMissingFields(result.standardVehicle, REQUIRED_FIELDS_CONFIG.StandardVehicle);
-            console.log(missing);
+            getMissingFields(result.standardVehicle, REQUIRED_FIELDS_CONFIG.StandardVehicle);
+            // console.log(missing);
           }
         }
         
@@ -109,8 +121,8 @@ const SmdSheetDetail = () => {
           if (hasAllRequiredData(result.pqcCheck, REQUIRED_FIELDS_CONFIG.PQCCheck)) {
             dispatch(addCompletedTable('PQCCheck'));
           } else {
-            const missing = getMissingFields(result.pqcCheck, REQUIRED_FIELDS_CONFIG.PQCCheck);
-            console.log(missing);
+            getMissingFields(result.pqcCheck, REQUIRED_FIELDS_CONFIG.PQCCheck);
+            // console.log(missing);
           }
         }
         
@@ -243,7 +255,7 @@ const SmdSheetDetail = () => {
 };
 
   return (
-    <div className="max-w-8xl mx-auto p-4 my-4">
+    <div className="max-w-8xl mx-auto p-4 my-4 opacity-100">
       <Notification
         show={notification.show}
         type={notification.type}
@@ -265,7 +277,7 @@ const SmdSheetDetail = () => {
             )}
             {currentSheet.account && (
               <p className="text-xs text-gray-500 mb-0">
-                Người tạo: {currentSheet.account.fullName || currentSheet.account.userName} ({currentSheet.account.role})
+                Người tạo: {currentSheet?.account?.fullName} ({currentSheet.account.role})
               </p>
             )}
           </div>
@@ -293,7 +305,7 @@ const SmdSheetDetail = () => {
       </div>
 
       {/* Hiển thị các component */}
-      <div className={!canEdit ? 'pointer-events-none opacity-80' : ''}>
+      <div className={!canEdit ? 'pointer-events-none' : ''}>
         <SheetHeader canEdit={canEdit} />
         <CheckModels canEdit={canEdit} />
         <StandardProductionSection canEdit={canEdit} />
@@ -344,6 +356,33 @@ const SmdSheetDetail = () => {
           .pointer-events-none select:focus {
             outline: none !important;
             box-shadow: none !important;
+          }
+
+          /* BUTTON "XEM CHI TIẾT" FILES - Màu xanh và hoạt động */
+          .pointer-events-none button:not([data-close-modal]) {
+            cursor: pointer !important;
+            background-color: #3b82f6 !important;
+            color: #ffffff !important;
+            border-color: #2563eb !important;
+            pointer-events: auto !important;
+            opacity: 1 !important;
+          }
+
+          /* BUTTON XEM HÌNH ẢNH (icon button) - Cho phép hoạt động */
+          .pointer-events-none button[data-view-image="true"] {
+            cursor: pointer !important;
+            background-color: transparent !important;
+            color: #3b82f6 !important;
+            border: none !important;
+            pointer-events: auto !important;
+            opacity: 1 !important;
+          }
+
+          /* Cho phép modal hoạt động bình thường */
+          [data-close-modal="true"],
+          [data-close-modal="true"] * {
+            pointer-events: auto !important;
+            cursor: pointer !important;
           }
         `}</style>
       )}

@@ -102,7 +102,7 @@ const Settings = () => {
 
           <button
             onClick={toggleTheme}
-            className="relative inline-flex items-center h-12 w-24 rounded-full bg-gray-300 dark:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+            className="relative inline-flex items-center h-12 w-24 rounded-full! bg-gray-300 dark:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
           >
             <span
               className={`h-10 w-10 transform rounded-full bg-white shadow-lg transition-transform flex items-center justify-center ${

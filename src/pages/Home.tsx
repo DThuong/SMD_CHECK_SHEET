@@ -17,7 +17,6 @@ import type { ChangeModelResponse } from '../redux/slices/changeModelSlice';
 import { useNotification } from '../redux/hooks';
 import Notification from '../components/general/Notification';
 import { hasAllRequiredData, REQUIRED_FIELDS_CONFIG } from '../utils/requiredFieldsConfig';
-import { AiOutlineLock } from 'react-icons/ai'; 
 import { ConfirmModal } from '../components/general/ConfirmModal';
 
 type SheetFilter = {
@@ -93,8 +92,6 @@ const Home = () => {
         try {
           //  Load sheet WITH full objects (bao gồm sub-tables)
           const result = await dispatch(getSheetWithFullObject(Number(sheetIdFromUrl))).unwrap();
-          
-          console.log(' Sheet restored:', result);
           
           //  Set main sheet vào Redux
           dispatch(setCurrentSheet(result));
@@ -610,9 +607,11 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                     <MdFavoriteBorder /> <span>Id</span>
                   </div>
                   <input
-                    value={filter.id}
-                    onChange={(e) => setFilter((s) => ({ ...s, id: Number(e.target.value)}))}
+                    value={filter.id || ""}
+                    onChange={(e) => setFilter((s) => ({ ...s, id: Number(e.target.value) || 0}))}
+                    onKeyDown={(e) => e.key === 'Enter' && applyFilter()}
                     placeholder="Nhập id..."
+                    min={1}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -624,6 +623,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                   <input
                     value={filter.fcode}
                     onChange={(e) => setFilter((s) => ({ ...s, fcode: e.target.value }))}
+                    onKeyDown={(e) => e.key === 'Enter' && applyFilter()}
                     placeholder="Nhập fcode..."
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
@@ -636,6 +636,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                   <input
                     value={filter.workOrder}
                     onChange={(e) => setFilter((s) => ({ ...s, workOrder: e.target.value }))}
+                    onKeyDown={(e) => e.key === 'Enter' && applyFilter()}
                     placeholder="Nhập Work Order..."
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
@@ -649,6 +650,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                   <select
                     value={filter.status}
                     onChange={(e) => setFilter((s) => ({ ...s, status: e.target.value }))}
+                    onKeyDown={(e) => e.key === 'Enter' && applyFilter()}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="all">Tất cả</option>
@@ -670,6 +672,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                     type="date"
                     max={new Date().toISOString().slice(0, 10)}
                     value={filter.fromDate}
+                    onKeyDown={(e) => e.key === 'Enter' && applyFilter()}
                     onChange={(e) => setFilter((s) => ({ ...s, fromDate: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
@@ -684,6 +687,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                     type="date"
                     max={new Date().toISOString().slice(0, 10)}
                     value={filter.toDate}
+                    onKeyDown={(e) => e.key === 'Enter' && applyFilter()}
                     onChange={(e) => setFilter((s) => ({ ...s, toDate: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />

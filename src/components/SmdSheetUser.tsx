@@ -11,6 +11,7 @@ import { updateSheetStatusToPQCDone } from '../redux/slices/changeModelSlice';
 import { useState, useEffect } from 'react';
 import { useNotification } from '../redux/hooks';
 import Notification from './general/Notification';
+import { ConfirmModal } from "./general/ConfirmModal";
 
 interface SmdSheetUserProps {
   sheetData?: ChangeModelResponse;
@@ -20,8 +21,9 @@ interface SmdSheetUserProps {
 function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
   const { user } = useAppSelector(state => state.auth);
   const { completedTables, success: subTableSuccess, lastUpdatedTable } = useAppSelector(state => state.subTable);
-  const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
+  // const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
   const dispatch = useAppDispatch();
+  const [ openModal, setOpenModal ] = useState(false);
 
   const [isCompleting, setIsCompleting] = useState(false);
 
@@ -39,6 +41,10 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
   const requiredTables = ['CheckModel', 'StandardProduction', 'TimeChangeModel', 'StandardVehicle', 'PQCCheck'];
   const allTablesCompleted = requiredTables.every(table => completedTables.includes(table));
 
+  const handleOpenModal = () => {
+    setOpenModal(true);
+  };
+
   // HANDLE COMPLETE SHEET
   const handleCompleteSheet = async () => {
     if (!sheetData?.id) {
@@ -55,35 +61,37 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
       );
       return;
     }
+    setOpenModal(false);
 
     try {
       setIsCompleting(true);
 
-      // Update status to PQCDone
-      if(currentSheet?.pdfFileUrl !== "" && currentSheet?.excelFileUrl !== "") {
-        await dispatch(updateSheetStatusToPQCDone(sheetData.id)).unwrap();
+      const res = await dispatch(updateSheetStatusToPQCDone(sheetData.id)).unwrap();
+      if(res){
+        showNotification('success', 'Hoàn thành!', 'Sheet đã được ký xác nhận thành công');
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 1000);
       }else{
-        showNotification('warning', 'Thiếu file', 'Làm ơn upload cả 2 file: REFLOW và LCR.');
+        showNotification('error', 'Lỗi', 'Không thể ký');
       }
 
-      // Hiển thị notification thành công
-      // showNotification(
-      //   'success',
-      //   'Cập nhật thành công!',
-      //   'Dữ liệu đã được lưu vào hệ thống'
-      // );
-
-      // Scroll to top sau 1.5s
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 1500);
-
+      // Update status to PQCDone
+      // if(currentSheet?.pdfFileUrl !== "" && currentSheet?.excelFileUrl !== "") {
+      // }else{
+      //   showNotification('warning', 'Thiếu file', 'Làm ơn upload cả 2 file: REFLOW và LCR.');
+      // }
     } catch (error: any) {
       console.error('❌ Lỗi khi hoàn thành:', error);
       showNotification('error', 'Lỗi khi hoàn thành', error || 'Không thể cập nhật status');
     } finally {
       setIsCompleting(false);
     }
+  };
+
+  // HANDLE: Hủy modal
+  const handleCancelModal = () => {
+    setOpenModal(false);
   };
 
   return (
@@ -95,6 +103,18 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
         title={notification.title}
         message={notification.message}
         onClose={hideNotification}
+      />
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        open={openModal}
+        title="Xác nhận hoàn thành"
+        message={"Bạn có chắc chắn đã upload đầy đủ 2 file LCR (Excel) và REFLOW (PDF) chưa?"}
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+        type={"warning"}
+        onConfirm={handleCompleteSheet}
+        onCancel={handleCancelModal}
       />
 
       {/* Progress indicator */}
@@ -165,7 +185,7 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
             {allTablesCompleted && sheetData.status !== 'PQCDone' ? (
               <div className="p-3">
                 <button
-                  onClick={handleCompleteSheet}
+                  onClick={handleOpenModal}
                   disabled={isCompleting}
                   className={`w-full px-4 py-4 rounded-lg font-bold text-lg transition-all shadow-lg ${
                     isCompleting

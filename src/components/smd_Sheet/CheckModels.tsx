@@ -147,7 +147,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
               <td className="border px-2 py-2 text-xs">
                 {form.jig !== undefined ? (form.jig ? "Yes" : "No") : ""}
               </td>
-              <th className="border px-2 py-2 text-xs text-left bg-gray-100">Mã PCB</th>
+              <th className="border px-2 py-2 text-xs text-left bg-gray-100">Code PCB</th>
               <td className="border px-2 py-2 text-xs">{form.codePCB || ""}</td>
             </tr>
           </thead>
@@ -229,7 +229,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
               </div>
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-gray-600 mb-1">Mã PCB (Code PCB)</div>
+              <div className="text-xs font-semibold text-gray-600 mb-1">Code PCB</div>
               <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
                 {form.codePCB || "—"}
               </div>
@@ -399,10 +399,19 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
           
           {/* Mã PCB */}
           <label className="text-xs">
-            Mã PCB (Code PCB)
+            Code PCB
             <textarea 
-              value={form.codePCB ?? ""} 
-              onChange={(e) => set("codePCB", e.target.value.toUpperCase())} 
+              value={form.codePCB ?? "BN41-"} 
+              onChange={(e) => {
+                const value = e.target.value.toUpperCase();
+                if (value.startsWith("BN41-")) {
+                  set("codePCB", value);
+                } else if (value.length < "BN41-".length) {
+                  // Nếu user xóa, set lại về "BN41-"
+                  set("codePCB", "BN41-");
+                }
+              }} 
+              
               className="mt-1 block w-full border rounded px-3 py-2 text-base min-h-[60px] resize-y uppercase"
               placeholder=""
             />

@@ -271,8 +271,9 @@ const SheetDetailViewer = () => {
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
           <div>
             <h1 className="text-xl font-bold text-gray-800">
-              Chi tiết Sheet: #{currentSheet.id} & WorkOrder:{currentSheet.checkModel?.workOrder !== "" ? currentSheet.checkModel?.workOrder : "Chưa Có"}
+              Chi tiết Sheet: #{currentSheet.id}
             </h1>
+            <h5>WorkOrder:{currentSheet.checkModel?.workOrder !== "" ? currentSheet.checkModel?.workOrder : "Chưa Có"}</h5>
             {currentSheet.createAt && (
               <p className="text-xs text-gray-500 mt-1 mb-0">
                 Tạo lúc: {new Date(currentSheet.createAt).toLocaleString('vi-VN')}
@@ -284,7 +285,7 @@ const SheetDetailViewer = () => {
               </p>
             )}
           </div>
-          <div className='text-center py-2'>{getStatusBadge(currentSheet)}</div>
+          <div className='text-center flex items-center justify-start py-2'>{getStatusBadge(currentSheet)}</div>
         </div>
       </div>
 

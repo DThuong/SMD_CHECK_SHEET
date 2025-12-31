@@ -6,7 +6,6 @@ import LCRFullTable from '../components/files/LCRFullTable';
 import ReflowPDFViewer from '../components/files/ReflowPDFViewer';
 import LoadingSpinner from '../components/general/LoadingSpinner';
 import { getLcrFileData, getReflowFile, clearLcrFile, clearReflowFile } from '../redux/slices/FileSlice';
-import { getSheetWithFullObject } from '../redux/slices/changeModelSlice';
 
 type FileType = 'lcr' | 'reflow';
 type LcrViewMode = 'expandable' | 'full';
@@ -16,26 +15,18 @@ const FileDetailViewer = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const location = useLocation();
-  const [lcrViewMode, setLcrViewMode] = useState<LcrViewMode>('expandable');
+  const [lcrViewMode, setLcrViewMode] = useState<LcrViewMode>('full');
   
   const { currentSheet, loading: sheetLoading } = useAppSelector((state) => state.changeModel);
   const { lcrFileData, reflowFileUrl, loading: fileLoading, error: fileError } = useAppSelector(
     (state) => state.fileSlice
   );
 
-  // ✅ Load sheet nếu chưa có trong Redux (khi reload trang)
-  useEffect(() => {
-    if (id && !currentSheet) {
-      console.log(`📄 FileDetailViewer: Loading sheet ${id} because currentSheet is null`);
-      dispatch(getSheetWithFullObject(Number(id)));
-    }
-  }, [id, currentSheet, dispatch]);
-
-  // ✅ Load files
+  // Load files
   useEffect(() => {
     if (id) {
       const sheetId = parseInt(id);
-      console.log(`📂 FileDetailViewer: Loading files for sheet ${sheetId}`);
+      console.log(` FileDetailViewer: Loading files for sheet ${sheetId}`);
       
       // Load LCR data (JSON)
       dispatch(getLcrFileData(sheetId));
@@ -45,7 +36,6 @@ const FileDetailViewer = () => {
     }
 
     return () => {
-      console.log('🧹 FileDetailViewer: Cleaning up files');
       dispatch(clearLcrFile());
       dispatch(clearReflowFile());
     };
@@ -57,12 +47,12 @@ const FileDetailViewer = () => {
     navigate(newPath, { replace: true });
   };
 
-  // ✅ Loading state - chờ load sheet hoặc files
+  // Loading state - chờ load sheet hoặc files
   if (sheetLoading || fileLoading) {
     return <LoadingSpinner />;
   }
 
-  // ✅ Error state
+  // Error state
   if (fileError) {
     return (
       <div className="container mx-auto p-4 my-4 max-w-8xl">
@@ -79,7 +69,7 @@ const FileDetailViewer = () => {
     );
   }
 
-  // ✅ Sheet not found (chỉ hiển thị sau khi đã load xong)
+  // Sheet not found (chỉ hiển thị sau khi đã load xong)
   if (!sheetLoading && !currentSheet && id) {
     console.warn(`⚠️ FileDetailViewer: Sheet ${id} not found after loading`);
     return (
@@ -97,23 +87,15 @@ const FileDetailViewer = () => {
     );
   }
 
-  // ✅ Chờ load sheet
+  // Chờ load sheet
   if (!currentSheet) {
     return <LoadingSpinner />;
   }
 
-  // ✅ Check file availability
+  // Check file availability
   const hasLcrData = !!lcrFileData;
   const hasReflowFile = !!reflowFileUrl || !!currentSheet.pdfFileUrl;
   const reflowUrl = reflowFileUrl || currentSheet.pdfFileUrl;
-
-  console.log('📊 FileDetailViewer Render:', {
-    sheetId: currentSheet.id,
-    hasLcrData,
-    hasReflowFile,
-    currentTab: fileType,
-    lcrDataCount: lcrFileData?.count
-  });
 
   return (
     <div className="container p-4 max-w-8xl mx-auto">

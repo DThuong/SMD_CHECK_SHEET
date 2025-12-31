@@ -18,7 +18,7 @@ const LCRDataTable = ({ lcrData }: LCRDataTableProps) => {
   const dispatch = useAppDispatch();
   const { showNotification } = useNotification();
 
-  // ✅ Toggle row expansion
+  // Toggle row expansion
   const toggleRow = (rowId: string) => {
     setExpandedRows(prev => {
       const newSet = new Set(prev);
@@ -31,7 +31,7 @@ const LCRDataTable = ({ lcrData }: LCRDataTableProps) => {
     });
   };
 
-  // ✅ Filter & Search
+  // Filter & Search
   const filteredData = useMemo(() => {
     let filtered = lcrData.data;
 
@@ -54,16 +54,16 @@ const LCRDataTable = ({ lcrData }: LCRDataTableProps) => {
     return filtered;
   }, [lcrData.data, filterDecide, searchTerm]);
 
-  // ✅ Pagination
+  // Pagination
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
-  // ✅ Statistics
+  // Statistics
   const okCount = lcrData.data.filter(item => item.decide === 'OK').length;
   const ngCount = lcrData.data.filter(item => item.decide === 'NG').length;
 
-  // ✅ Download handler
+  // Download handler
   const handleDownload = async () => {
     if (!currentSheet?.id) {
       showNotification('error', 'Lỗi', 'Không tìm thấy Sheet ID');
@@ -81,7 +81,7 @@ const LCRDataTable = ({ lcrData }: LCRDataTableProps) => {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Header với Statistics */}
-      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-white">
+      <div className="p-4 border-b border-gray-200 bg-linear-to-r from-green-50 to-white">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-gray-800">LCR File Data</h2>
@@ -398,7 +398,7 @@ const LCRDataTable = ({ lcrData }: LCRDataTableProps) => {
   );
 };
 
-// ✅ Helper Component: Detail Row
+// Helper Component: Detail Row
 interface DetailRowProps {
   label: string;
   value: string;

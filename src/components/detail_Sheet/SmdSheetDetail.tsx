@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import CheckModels from "../smd_Sheet/CheckModels";
@@ -27,12 +27,14 @@ import {
 import { useNotification } from '../../redux/hooks';
 import Notification from '../general/Notification';
 import { REQUIRED_FIELDS_CONFIG, hasAllRequiredData, getMissingFields } from '../../utils/requiredFieldsConfig';
+import { ConfirmModal } from '../general/ConfirmModal';
 
 const SmdSheetDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
+  const [openModal ,setOpenModal] = useState(false);
   
   // Lấy data từ Redux store
   const { currentSheet, loading, error } = useAppSelector((state) => state.changeModel);
@@ -141,6 +143,11 @@ const SmdSheetDetail = () => {
     };
   }, [id, dispatch]);
 
+  const handleOpenConfirmModal = () => {
+    // CHỈ mở modal, KHÔNG gọi API
+    setOpenModal(true);
+  };
+
   // Xử lý lưu thay đổi
   const handleSaveEdit = async () => {
     if (!canEdit) {
@@ -149,16 +156,23 @@ const SmdSheetDetail = () => {
     }
     
     if (!currentSheet?.id) return;
-    
+    setOpenModal(false);
     try {
-      if(currentSheet?.pdfFileUrl !== "" && currentSheet?.excelFileUrl !== "") {
-        await dispatch(updateSheetStatusToPQCDone(currentSheet.id)).unwrap();
+      const res = await dispatch(updateSheetStatusToPQCDone(currentSheet.id)).unwrap();
+      
+      if(res){
+        showNotification('success', 'Hoàn thành!', 'Sheet được ký xác nhận thành công!');
         setTimeout(() => {
-        navigate(0);
-      }, 1000);
+          navigate(0);
+        }, 1000);
       }else{
-        showNotification('warning', 'Thiếu file', 'Làm ơn upload cả 2 file: REFLOW và LCR.');
+        showNotification('error', 'Lỗi', 'Không thể ký');
       }
+      // if(currentSheet?.pdfFileUrl !== "" && currentSheet?.excelFileUrl !== "") {
+        
+      // }else{
+      //   showNotification('warning', 'Thiếu file', 'Làm ơn upload cả 2 file: REFLOW và LCR.');
+      // }
       
       
     } catch (error) {
@@ -254,6 +268,11 @@ const SmdSheetDetail = () => {
   );
 };
 
+  // HANDLE: Hủy modal
+  const handleCancelModal = () => {
+    setOpenModal(false);
+  };
+
   return (
     <div className="max-w-8xl mx-auto p-4 my-4 opacity-100">
       <Notification
@@ -263,13 +282,26 @@ const SmdSheetDetail = () => {
         message={notification.message}
         onClose={hideNotification}
       />
+
+      {/* Confirm Modal */}
+            <ConfirmModal
+              open={openModal}
+              title="Xác nhận ký"
+              message={"Bạn có chắc chắn đã upload đầy đủ 2 file LCR (Excel) và REFLOW (PDF) chưa?"}
+              confirmText="Xác nhận"
+              cancelText="Hủy"
+              type={"warning"}
+              onConfirm={handleSaveEdit}
+              onCancel={handleCancelModal}
+            />
       {/* Header với thông tin sheet */}
       <div className="mb-4 p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
           <div>
             <h1 className="text-xl font-bold text-gray-800">
-              Chi tiết Sheet: #{currentSheet?.id} & WorkOrder:{currentSheet?.checkModel?.workOrder !== '' ? currentSheet?.checkModel?.workOrder : 'Chưa Có'}
+              Chi tiết Sheet: #{currentSheet?.id} 
             </h1>
+            <h6>WorkOrder: {currentSheet?.checkModel?.workOrder !== '' ? currentSheet?.checkModel?.workOrder : 'Chưa Có'}</h6>
             {currentSheet.createAt && (
               <p className="text-xs text-gray-500 mt-1 mb-0">
                 Tạo lúc: {new Date(currentSheet.createAt).toLocaleString('vi-VN')}
@@ -281,7 +313,7 @@ const SmdSheetDetail = () => {
               </p>
             )}
           </div>
-          <div className='text-center py-2'>{getStatusBadge(currentSheet)}</div>
+          <div className='text-center py-2 flex items-start'>{getStatusBadge(currentSheet)}</div>
         </div>
       </div>
 
@@ -326,7 +358,7 @@ const SmdSheetDetail = () => {
         
         {canEdit && (
           <button
-            onClick={handleSaveEdit}
+            onClick={handleOpenConfirmModal}
             className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-md"
           >
             Ký xác nhận

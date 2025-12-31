@@ -648,10 +648,11 @@ const Logs = () => {
                 </div>
                 <input
                   type="number"
-                  value={filter.id}
-                  onChange={(e) => setFilter(s => ({ ...s, id: Number(e.target.value) }))}
+                  value={filter.id || ""}
+                  onChange={(e) => setFilter(s => ({ ...s, id: Number(e.target.value) || 0 }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder={`Tìm kiếm theo Id...`}
+                  min="1"
                 />
               </div>
               {/* FCode */}

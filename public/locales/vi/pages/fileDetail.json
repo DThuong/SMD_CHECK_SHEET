@@ -1,0 +1,27 @@
+{
+    "backButton": "Quay lại",
+    "title": "Xem chi tiết file",
+    "changeModelId": "Change Model ID",
+    "tabs": {
+      "lcrData": "LCR Data",
+      "reflowPdf": "Reflow PDF"
+    },
+    "viewMode": {
+      "expandableView": "Expandable View",
+      "fullTable": "Full Table (27 cols)"
+    },
+    "errors": {
+      "loadingFiles": "Error loading files",
+      "sheetNotFound": "Sheet not found"
+    },
+    "emptyStates": {
+      "lcrNotUploaded": {
+        "title": "⚠️ LCR data has not been uploaded yet",
+        "description": "Upload an Excel file to view LCR measurement data"
+      },
+      "reflowNotUploaded": {
+        "title": "⚠️ Reflow file has not been uploaded yet",
+        "description": "Upload a PDF file to view Reflow profile data"
+      }
+    }
+}

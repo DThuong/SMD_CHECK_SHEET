@@ -1,5 +1,4 @@
 {
-  "standardVehicle": {
     "title": "Tiêu chuẩn thiết bị",
     "status": {
       "saved": "Đã lưu",
@@ -115,5 +114,4 @@
       "uploadSPI": "Upload hình ảnh SPI thành công",
       "uploadAOI": "Upload hình ảnh AOI thành công"
     }
-  }
 }

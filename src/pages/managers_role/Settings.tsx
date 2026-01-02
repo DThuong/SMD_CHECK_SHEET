@@ -122,7 +122,7 @@ const Settings = () => {
       {/* Language Settings */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
         <div className="flex items-center gap-2 mb-4">
-          <HiGlobeAlt size={24} className="text-gray-800 dark:text-white" />
+          {/* <HiGlobeAlt size={24} className="text-gray-800 dark:text-white" /> */}
           <h3 className="text-lg font-medium text-gray-800 dark:text-white">
             {t('languageSettings.title')}
           </h3>

@@ -11,6 +11,7 @@ import ImageViewIcon from "../files/ImageViewIcon";
 import { FaCamera } from "react-icons/fa6";
 import { IoEyeSharp } from "react-icons/io5";
 import ImagePreviewModal from "../files/ImagePreviewModal";
+import { useTranslation } from "react-i18next";
 
 const initialPQCChecksState: PQCCheckData = {
   id: undefined,
@@ -42,6 +43,9 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
 
       const isUploadingRef = useRef(false);
       const hasUserEditedRef = useRef(false);
+
+      const {t} = useTranslation('pqcCheck');
+      const {t: t2} = useTranslation('common');
 
          // xử lý upload hình ảnh + preview modal
   const [imagePreview, setImagePreview] = useState<{
@@ -142,7 +146,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
   if (!pqcCheckId) {
     return (
       <div className="p-4 bg-gray-50 rounded border border-gray-200">
-        <p className="text-sm text-gray-500">Đang tải dữ liệu Standard Production...</p>
+        <p className="text-sm text-gray-500">Đang tải dữ liệu pqc check...</p>
       </div>
     );
   }
@@ -206,7 +210,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
           {isSaved && <span className="text-green-600">✓</span>}
           <span>PQCCheck ID: <strong>{pqcCheckId}</strong></span>
           {currentSheet?.id && <span>| ChangeModel ID: <strong>{currentSheet.id}</strong></span>}
-          {isSaved && <span className="ml-auto font-semibold">Đã lưu</span>}
+          {isSaved && <span className="ml-auto font-semibold">{t('status.saved')}</span>}
         </div>
       )}
       {/* Website View - Bảng ngang */}
@@ -215,17 +219,17 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
     <tbody>
       {/** Row 31 */}
       <tr>
-        <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">PQC kiểm tra board đầu</th>
+        <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('title')}</th>
         <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
       </tr>
 
       {/** Row 32 */}
       <tr>
-        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">IC nạp kế hoạch</th>
+        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.icPlan')}</th>
         <td colSpan={8} className="border border-gray-600 px-2 py-2 text-xs">{form.icPlan || ""}</td>
-        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Checksum thực tế</th>
+        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.checksumReal')}</th>
         <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.checksumReal || ""}</td>
-        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Xác nhận có thay đổi <br /> check sum mới</th>
+        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.checksumConfirm')}</th>
         <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">
           <div className="flex items-center justify-center">
             <input 
@@ -248,11 +252,11 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
 
       {/** Row 34 */}
       <tr>
-        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Công đoạn</th>
-        <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Thời gian bắt đầu đo LCR</th>
-        <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Thời gian kết thúc đo LCR</th>
-        <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">tên</th>
-        <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Kết quả đo LCR</th>
+        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.stage')}</th>
+        <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.startLCR')}</th>
+        <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.endLCR')}</th>
+        <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.nameCheck')}</th>
+        <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.resultLCR')}</th>
       </tr>
 
       {/** Row 35 */}
@@ -274,7 +278,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
       </tr>
       {/** Row 36: pqc image */}
       <tr>
-        <td colSpan={1} className="border border-gray-300 px-2 py-2 text-xs bg-gray-100 font-bold">Hình ảnh IC Image</td>
+        <td colSpan={1} className="border border-gray-300 px-2 py-2 text-xs bg-gray-100 font-bold">{t('fields.imageIC')}</td>
         <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs">
             <div className="flex items-center justify-center">
               <div className="flex items-center justify-center gap-2">
@@ -294,24 +298,24 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
       {/* Mobile View - Card dọc (mỗi trường 1 dòng full-width) */}
       <div className="lg:hidden">
         <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm" onClick={() => setOpen(true)}>
-    <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">PQC kiểm tra board đầu</h3>
+    <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">{t('title')}</h3>
           {/* each field full width row */}
           <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">IC nạp kế hoạch</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.icPlan')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
               {form.icPlan || "—"}
             </div>
           </div>
 
           <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Checksum thực tế</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.checksumReal')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
               {form.checksumReal || "—"}
             </div>
           </div>
 
           <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Xác nhận khi có thay đổi Checksum mới</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.checksumConfirm')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
               {form.checksumConfirm || "—"}
             </div>
@@ -325,28 +329,28 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
           </div>
 
           <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Thời gian bắt đầu đo LCR</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.startLCR')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
               {formatDateTime(form.startLCR) || "—"}
             </div>
           </div>
 
           <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Thời gian kết thúc đo LCR</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.endLCR')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
               {formatDateTime(form.endLCR) || "—"}
             </div>
           </div>
 
           <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">PQC Name</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.pqcName')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
               {form.nameCheck || "—"}
             </div>
           </div>
 
           <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Kết quả đo LCR</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.resultLCR')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
               {form.resultLCR ? "OK" : "NG"}
             </div>
@@ -354,7 +358,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
 
           {/** Hình ảnh image ic */}
           <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh image IC</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.imageICLabel')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
               <ImageViewIcon 
                 imageUrl={form.imgIC} 
@@ -368,7 +372,7 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
 
       {/* Buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
-        <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>Chỉnh sửa</ViewDetailButton>
+        <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>{t2('button.edit')}</ViewDetailButton>
         {/* <ViewDetailButton color="green" onOpen={() => submit()}>Lưu</ViewDetailButton> */}
       </div>
 

@@ -13,6 +13,10 @@
     "manager": "관리자",
     "koreaManager": "한국 관리자"
   },
+  "button": {
+    "edit": "편집",
+    "viewDetail": "상세 보기"
+  },
   "msg_success": "로그인 성공!",
   "user": "사용자",
   "role": "역할"

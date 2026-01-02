@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { loginUser, clearError } from '../redux/slices/authSlice';
 import { getDeviceInfo } from '../utils/deviceInfo';
+import { useTranslation } from 'react-i18next';
 
 const inputClass = "w-full px-4 py-3 border rounded-lg outline-none transition focus:border-blue-500 focus:shadow";
 
@@ -11,9 +12,10 @@ const Login = () => {
   const [remember, setRemember] = useState<boolean>(false);
   const dispatch = useAppDispatch();
   const { loading, error } = useAppSelector((state) => state.auth);
+  const { i18n } = useTranslation();
 
   useEffect(() => {
-    // QUAN TRỌNG: Chỉ clear token, KHÔNG XÓA device ID
+    //Chỉ clear token, KHÔNG XÓA device ID
     try {
       const currentPath = window.location.pathname;
       if (currentPath === '/login') {
@@ -43,11 +45,21 @@ const Login = () => {
       const deviceInfo = getDeviceInfo();
       console.log('📱 Đang login với Device Info:', deviceInfo);
       
-      await dispatch(loginUser({
+      const resultAction = await dispatch(loginUser({
         username, 
         password,
         deviceInfo
       })).unwrap();
+
+      // Set Korean cho KoreaManager ngay sau khi login thành công
+      if (resultAction?.role === 'KoreaManager') {
+        await i18n.changeLanguage('ko');
+        localStorage.setItem('appLanguage', 'ko');
+      } else {
+        // Role khác: set Vietnamese (hoặc giữ default)
+        await i18n.changeLanguage('vi');
+        localStorage.setItem('appLanguage', 'vi');
+      }
     } catch (error) {
       console.error('Login failed: ', error);
     }

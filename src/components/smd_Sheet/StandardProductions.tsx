@@ -1,5 +1,5 @@
 import ViewDetailButton from "../general/ViewDetailButton";
-import { useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import Modal from "../general/Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchStandardProduction, updateStandardProduction, uploadStandardProductionFile } from "../../redux/slices/subTableSlice";
@@ -10,6 +10,7 @@ import ImageViewIcon from "../files/ImageViewIcon";
 import { IoEyeSharp } from "react-icons/io5";
 import { FaCamera } from "react-icons/fa6";
 import ImagePreviewModal from "../files/ImagePreviewModal";
+import { useTranslation } from "react-i18next";
 
 
 const initialStandardProductState: StandardProductionData = {
@@ -45,6 +46,9 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
   const { notification, showNotification,  hideNotification } = useNotification();
   const isUploadingRef = useRef(false);
   const hasUserEditedRef = useRef(false);
+
+  const {t} = useTranslation('standardProduction');
+  const {t: t2} = useTranslation('common');
 
   // xử lý upload hình ảnh + preview modal
   const [imagePreview, setImagePreview] = useState<{
@@ -209,30 +213,30 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
           {isSaved && <span className="text-green-600">✓</span>}
           <span>StandardProduction ID: <strong>{standardProductionId}</strong></span>
           {currentSheet?.id && <span>| ChangeModel ID: <strong>{currentSheet.id}</strong></span>}
-          {isSaved && <span className="ml-auto font-semibold">Đã lưu</span>}
+          {isSaved && <span className="ml-auto font-semibold">{t('status.saved')}</span>}
         </div>
       )}
-        {/** repsponsive for website */}
+        {/** repsponsive for desktop */}
         <div className='hidden lg:block w-full overflow-x-auto'>
         <table className="border border-gray-600 w-full text-center opacity-80">
           <tbody>
             {/* Row 10 */}
             <tr>
-              <th rowSpan={3} className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Tiêu chuẩn sản xuất</th>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số quản lý trên Mask</th>
+              <th rowSpan={3} className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">{t('title')}</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.numMASK')}</th>
               <td className="border border-gray-600 px-2 py-2 text-xs">{form.numMASK || ""}</td>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số dao quét Printer</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.numScanPrinter')}</th>
               <td className="border border-gray-600 px-2 py-2 text-xs">{form.numScanPrinter || ""}</td>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Liệu MSL3 mở đóng gói</th>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chỉ sử dụng</th>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Chương trình máy label</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.mlS3Closed')}</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.useOnly')}</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.labelProgram')}</th>
             </tr>
 
             {/* Row 11 */}
             <tr>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số đăng ký trên MES</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.numMES')}</th>
               <td className="border border-gray-600 px-2 py-2 text-xs">{form.numMES || ""}</td>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số đăng ký dao quét trên MES</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.numScanSignMES')}</th>
               <td className="border border-gray-600 px-2 py-2 text-xs">{form.numScanSignMES || ""}</td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.mlS3Closed || ""}</td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
@@ -266,7 +270,7 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
 
             {/** row 12: hình ảnh standard production */}
             <tr>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Hình ảnh Standard Production</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.imageStandard')}</th>
               <td colSpan={10} className="border border-gray-600 px-2 py-2 text-xs">
                 <div className="flex items-center justify-center">
                   <div className="flex items-center justify-center gap-2">
@@ -287,18 +291,18 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
 {/* Mobile View - Card dọc */}
 <div className="lg:hidden">
   <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm" onClick={() => setOpen(true)}>
-    <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Tiêu chuẩn sản xuất</h3>
+    <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">{t('title')}</h3>
     {/* Row 1: Số quản lý trên Mask & Số đăng ký trên MES */}
     <div className="grid grid-cols-2 gap-4 mb-3">
       <div className="min-w-0">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Số quản lý trên Mask</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.numMASK')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
           {form.numMASK || "—"}
         </div>
       </div>
 
       <div className="min-w-0">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Số đăng ký trên MES</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.numMES')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
           {form.numMES || "—"}
         </div>
@@ -307,7 +311,7 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
 
     {/* Row 2: Số dao quét Printer */}
         <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Số dao quét Printer</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.numScanPrinter')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
             {form.numScanPrinter || "—"}
         </div>
@@ -315,7 +319,7 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
 
         {/* Row 3: Số đăng ký dao quét trên MES */}
         <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Số đăng ký dao quét trên MES</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.numScanSignMES')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
             {form.numScanSignMES || "—"}
         </div>
@@ -324,14 +328,14 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
     {/* Row 3: Liệu MSL3 mở đóng gói & Chương trình máy label */}
     <div className="grid grid-cols-2 gap-4 mb-3">
       <div className="min-w-0">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Liệu MSL3 mở đóng gói</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.mlS3Closed')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
           {form.mlS3Closed || "—"}
         </div>
       </div>
 
       <div className="min-w-0">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Chương trình máy label</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.labelProgram')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
           {form.labelProgram || "—"}
         </div>
@@ -340,7 +344,7 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
 
     {/* Row 4: Chỉ sử dụng (full width) */}
     <div className="mb-3">
-      <div className="text-xs font-semibold text-gray-600 mb-1">Chỉ sử dụng</div>
+      <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.useOnly')}</div>
       <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
         {form.useOnly === "Duksan" 
           ? "Duksan" 
@@ -352,7 +356,7 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
 
     {/** Hình ảnh Standard production */}
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh Standard Production</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.imageStandard')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
           <ImageViewIcon 
             imageUrl={form.imgStandard} 
@@ -365,7 +369,7 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
 </div>
       {/** buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
-        <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>Chỉnh sửa</ViewDetailButton>
+        <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>{t('button.edit')}</ViewDetailButton>
         {/* <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton> */}
       </div>
 

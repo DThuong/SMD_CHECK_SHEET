@@ -11,6 +11,7 @@ import Notification from "../general/Notification";
 import { FaCamera } from "react-icons/fa";
 import { IoEyeSharp } from "react-icons/io5";
 import { normalizeImageUrl } from "../../utils/imageUrl";
+import { useTranslation } from "react-i18next";
 
 const initialStandardVehiclesState: StandardVehicleData = {
   printerSpecGTAL: "",
@@ -82,6 +83,9 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
     const isUploadingRef = useRef(false);
     const hasUserEditedRef = useRef(false);
 
+    const {t} = useTranslation('standardVehicle');
+    const {t: t2} = useTranslation('common');
+
     // Xử lý upload hình ảnh preview modal
     const [imagePreview, setImagePreview] = useState<{
     isOpen: boolean;
@@ -141,7 +145,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
   if (!standardVehicleId) {
     return (
       <div className="p-4 bg-gray-50 rounded border border-gray-200">
-        <p className="text-sm text-gray-500">Đang tải dữ liệu Standard Production...</p>
+        <p className="text-sm text-gray-500">Đang tải dữ liệu Standard Vehicle...</p>
       </div>
     );
   }
@@ -259,7 +263,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           {isSaved && <span className="text-green-600">✓</span>}
           <span>StandardVehicle ID: <strong>{standardVehicleId}</strong></span>
           {currentSheet?.id && <span>| ChangeModel ID: <strong>{currentSheet.id}</strong></span>}
-          {isSaved && <span className="ml-auto font-semibold">Đã lưu</span>}
+          {isSaved && <span className="ml-auto font-semibold">{t('status.saved')}</span>}
         </div>
       )}
       {/* Desktop View */}
@@ -268,7 +272,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
           <tbody>
             {/* Row 16 */}
             <tr>
-              <th className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Tiêu chuẩn thiết bị</th>
+              <th className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">{t('title')}</th>
               <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
             </tr>
 
@@ -277,17 +281,17 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
             {/** Row 17 */}
             <tr>
               <th rowSpan={5} className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Printer</th>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Giá trị cài đặt Screen Sprint</th>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Giá trị áp lực</th>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Tốc độ quét</th>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Tốc độ khoảng cách tách bàn</th>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số lần lau</th>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Dao sử dụng</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('printer.pressureValue')}</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('printer.pressureSpec')}</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('printer.speedSpec')}</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('printer.separationSpeed')}</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('printer.wipeCount')}</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('printer.bladeUsed')}</th>
             </tr>
 
             {/** Row 18 */}
             <tr>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100 text-left!">Tiêu chuẩn Spec đưa ra</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100 text-left!">{t('printer.settingSpec')}</th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerSpecGTAL || ""} kg</td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerSpecTDQ || ""} mm/s</td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerSpecTDKC || ""} mm/s</td>
@@ -297,7 +301,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
 
             {/** Row 19 */}
             <tr>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100 text-left!">Giá trị cài đặt thực tế trên máy</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100 text-left!">{t('printer.realSetting')}</th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerRealGTAL || ""} kg</td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerRealTDQ || ""} mm/s</td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.printerRealTDKC || ""} mm/s</td>
@@ -308,7 +312,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
             {/** Row 20 */}
             <tr>
               <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">
-                Sau khi sử dụng Vaccum Block thì có ảnh hưởng tác động tới pcb hay linh kiện không ?
+                {t('printer.vacuumBlock')}
               </th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
                 <div className="flex items-center justify-center flex-row gap-2">
@@ -332,7 +336,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
             {/** Row 21 */}
             <tr>
               <th colSpan={1} rowSpan={5} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">SPI</th>
-              <th colSpan={8} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Hạng mục check (kiểm tra tiêu chuẩn setting SPI)</th>
+              <th colSpan={8} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('spi.checkItems')}</th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
             </tr>
@@ -341,7 +345,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
 
             {/** Row 22 */}
             <tr>
-              <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">Điều kiện setting Inspection (volume: 60-180%; Area: 40-200%; ofset: 0.15, short: 60)</th>
+              <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">{t('spi.inspectionSetting')}</th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
                 <div className="flex items-center justify-center flex-row gap-2">
                   <label className="font-bold text-xs">OK</label>
@@ -364,7 +368,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
             {/** Row 22.0.2: hình ảnh SPI */}
             <tr>
               <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100 text-left!">
-                Hình ảnh SPI
+                {t('spi.imageSPI')}
               </th>
               <td colSpan={11} className="border border-gray-600 px-2 py-2">
                 <div className="flex items-center justify-center">
@@ -388,7 +392,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
             {/** Row 23 */}
             <tr>
               <th colSpan={1} rowSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Mount</th>
-              <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">Kiểm tra 3 board đầu tiên sau khi cắm linh kiện có ok không ?</th>
+              <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">{t('mount.checkFirst3Boards')}</th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
                 <div className="flex items-center justify-center flex-row gap-2">
                   <label className="font-bold text-xs">OK</label>
@@ -404,7 +408,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
 
              {/** Row 24 */}
             <tr>
-              <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">Kiểm tra 1 tấm ở mặt dưới có NG hay bể linh kiện không ?</th>
+              <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">{t('mount.checkBottomBoard')}</th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
                 <div className="flex items-center justify-center flex-row gap-2">
                   <label className="font-bold text-xs">OK</label>
@@ -432,7 +436,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
             {/** Row 25 */}
             <tr>
               <th colSpan={1} rowSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Reflow</th>
-              <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">Kiểm tra tình trạng chiều rộng của Conveyor ?</th>
+              <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">{t('reflow.conveyorWidth')}</th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
                 <div className="flex items-center justify-center flex-row gap-2">
                   <label className="font-bold text-xs">OK</label>
@@ -460,9 +464,9 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
 
             {/** Row 26 */}
             <tr>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">Giá trị cài đặt Rail</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">{t('reflow.settingRail')}</th>
               <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.reFlowSettingRail || ""} mm</th>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100 text-left!">Giá trị thực tế Rail</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100 text-left!">{t('reflow.realRail')}</th>
               <th colSpan={3} className="border border-gray-600 px-2 py-2 text-xs">{form.reFlowRealRail || ""} mm</th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 bg-gray-300"></td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
@@ -474,7 +478,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
                 AOI
               </th>
               <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">
-                Xray 3 board đầu tiên có OK hay không ?
+                {t('aoi.xray3Boards')}
               </th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
                 <div className="flex items-center justify-center flex-row gap-2">
@@ -487,7 +491,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
                 </div>
               </td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-left! text-xs">
-                Người kiểm tra: {form.aoiCheck || ""}
+                {t('aoi.checker')}: {form.aoiCheck || ""}
               </td>
 
             </tr>
@@ -513,7 +517,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
             {/** Row 27.0.4: hình ảnh AOI */}
             <tr>
               <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100 text-left!">
-                Hình ảnh AOI
+                {t('aoi.imageAOI')}
               </th>
               <td colSpan={11} className="border border-gray-600 px-2 py-2">
                 <div className="flex items-center justify-center">
@@ -531,7 +535,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
               <th rowSpan={2} className="border px-2 py-2 text-xs bg-gray-100">OUTPUT</th>
 
               <th colSpan={8} className="border px-2 py-2 text-left text-xs bg-gray-100">
-                Kiểm tra tình trạng setting. khoảng cách input magazine tại uploader ?
+                {t('output.magazineDistance')}
               </th>
 
               <td colSpan={2} className="border px-2 py-2">
@@ -546,7 +550,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
               </td>
 
               <td colSpan={2} className="border px-2 py-2 text-xs">
-                Người kiểm tra: {form.outputChecker || ""}
+                {t('output.checker')}: {form.outputChecker || ""}
               </td>
             </tr>
 
@@ -554,7 +558,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
             <tr>
 
               <th colSpan={8} className="border px-2 py-2 text-xs bg-gray-100">
-                <div className="font-semibold mb-1">Giá trị cài đặt theo yêu cầu</div>
+                <div className="font-semibold mb-1">{t('output.settingValue')}</div>
                 <div className="flex justify-center gap-4">
                   <span>Model: {form.outputModelValue || ""}</span>
                   <span>Pitch: {form.outputPitchValue || ""}</span>
@@ -567,13 +571,13 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
 
             {/** Row 28 */}
             <tr>
-              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Công nhân</th>
-              <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Tên</th>
-              <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Ghi chú</th>
-              <th colSpan={1} rowSpan={3} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Mẫu kiểm tra (5PCB)</th>
-              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Tên lỗi</th>
-              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số lượng lỗi</th>
-              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Tình trạng sửa chữa</th>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('worker.title')}</th>
+              <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('worker.name')}</th>
+              <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('worker.note')}</th>
+              <th colSpan={1} rowSpan={3} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('worker.sampleCheck')}</th>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('worker.errorName')}</th>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('worker.errorCount')}</th>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('worker.repairStatus')}</th>
             </tr>
 
             {/** Row 29 */}
@@ -602,17 +606,17 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
     <div className="lg:hidden space-y-4">
     {/* Printer Section */}
     <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
-      <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200">Printer</h3>
+      <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200">{t('printer.title')}</h3>
       
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">Áp lực Spec (kg)</div>
+          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.specGTAL')}</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
             {form.printerSpecGTAL || "—"}
           </div>
         </div>
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">Áp lực thực tế (kg)</div>
+          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.realGTAL')}</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
             {form.printerRealGTAL || "—"}
           </div>
@@ -621,13 +625,13 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
 
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">Tốc độ quét Spec (mm/s)</div>
+          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.specTDQ')}</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
             {form.printerSpecTDQ || "—"}
           </div>
         </div>
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">Tốc độ quét thực tế (mm/s)</div>
+          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.realTDQ')}</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
             {form.printerRealTDQ || "—"}
           </div>
@@ -636,13 +640,13 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
 
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">Tốc độ tách bàn Spec (mm/s)</div>
+          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.specTDKC')}</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
             {form.printerSpecTDKC || "—"}
           </div>
         </div>
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">Tốc độ tách bàn thực tế (mm/s)</div>
+          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.realTDKC')}</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
             {form.printerRealTDKC || "—"}
           </div>
@@ -651,13 +655,13 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
 
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">Số lần lau Spec</div>
+          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.specSLL')}</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
             {form.printerSpecSLL || "—"}
           </div>
         </div>
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">Số lần lau thực tế</div>
+          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.realSLL')}</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
             {form.printerRealSLL || "—"}
           </div>
@@ -666,13 +670,13 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
 
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">Dao sử dụng Spec</div>
+          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.specDSL')}</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
             {form.printerSpecDSL || "—"}
           </div>
         </div>
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">Dao sử dụng thực tế</div>
+          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.realDSL')}</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
             {form.printerRealDSL || "—"}
           </div>
@@ -680,7 +684,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
       </div>
 
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Vacuum Block</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.vacuumBlock')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
           {form.printerQ1 ? "✓ OK" : "—"}
         </div>
@@ -717,7 +721,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
       </div>
 
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Inspection Setting OK</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('spi.inspectionSetting')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
           {form.spiQ1 ? "✓ OK" : "—"}
         </div>
@@ -725,7 +729,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
 
       {/** Hình ảnh SPI */}
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh SPI</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('spi.imageSPI')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
           <ImageViewIcon 
             imageUrl={form.imgSPI} 
@@ -757,14 +761,14 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
       </div>
       
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Kiểm tra 3 board đầu tiên sau khi cắm linh kiện có OK không ?</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('mount.checkFirst3Boards')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
           {form.mountQ1 ? "✓ OK" : "—"}
         </div>
       </div>
 
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Kiểm tra 1 tấm ở mặt dưới có NG hay bể linh kiện không ?</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('mount.checkBottomBoard')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
           {form.mountQ2 ? "✓ OK" : "—"}
         </div>
@@ -776,7 +780,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
       <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Reflow</h3>
       
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Chiều rộng Conveyor</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('reflow.conveyorWidth')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
           {form.reflowQ1 ? "✓ OK" : "—"}
         </div>
@@ -784,13 +788,13 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
 
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">Rail cài đặt (mm)</div>
+          <div className="text-xs font-semibold text-gray-600 mb-1">{t('reflow.settingRail')}</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
             {form.reFlowSettingRail || "—"}
           </div>
         </div>
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">Rail thực tế (mm)</div>
+          <div className="text-xs font-semibold text-gray-600 mb-1">{t('reflow.realRail')}</div>
           <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
             {form.reFlowRealRail || "—"}
           </div>
@@ -819,21 +823,21 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
       <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">AOI</h3>
       
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Xray 3 board đầu tiên có OK hay không ?</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('aoi.xray3Boards')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
           {form.aoiQ1 ? "✓ OK" : "—"}
         </div>
       </div>
 
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Chương trình mAoi</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">mAoi Program</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
           {form.maoiProgram || "—"}
         </div>
       </div>
 
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Chương trình sAoi</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">sAoi Program</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
           {form.saoiProgram || "—"}
         </div>
@@ -847,7 +851,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
       </div>
 
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Người kiểm tra</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('aoi.checker')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
           {form.aoiCheck || "—"}
         </div>
@@ -855,7 +859,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
 
       {/** Hình ảnh AOI */}
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh AOI</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('aoi.imageAOI')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
           <ImageViewIcon 
             imageUrl={form.imgAOI} 
@@ -871,14 +875,14 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
       <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Output</h3>
       
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Khoảng cách input magazine tại uploader</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('output.magazineDistance')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
           {form.outputQ1 ? "✓ OK" : "—"}
         </div>
       </div>
 
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Người kiểm tra</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('output.checker')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
           {form.outputChecker || "—"}
         </div>
@@ -902,11 +906,11 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
 
     {/* Worker Section */}
     <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
-      <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Công nhân</h3>
+      <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">{t('worker.title')}</h3>
       <div className="mb-4">
         <h4 className="text-xs font-bold text-gray-600 mb-2">OP</h4>
           <div className="min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Tên</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('worker.name')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
               {form.nameOP|| "—"}
             </div>
@@ -916,7 +920,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
       <div>
         <h4 className="text-xs font-bold text-gray-600 mb-2">AOI</h4>
           <div className="min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Tên</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('worker.name')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
               {form.nameAOI || "—"}
             </div>
@@ -928,7 +932,7 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
 
   {/* Buttons */}
   <div className="flex flex-row justify-end w-full gap-2 mt-3">
-    <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>Chỉnh sửa</ViewDetailButton>
+    <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>{t2('button.edit')}</ViewDetailButton>
     {/* <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton> */}
   </div>
 

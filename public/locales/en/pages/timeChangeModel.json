@@ -1,6 +1,5 @@
 {
-  "timeChangeModel": {
-    "title": "Model Change Time",
+    "title": "Model change time",
     "status": {
       "saved": "Saved",
       "timeChangeModelId": "TimeChangeModel ID",
@@ -13,15 +12,15 @@
       "nameQC": "QC Name",
       "result": "Result",
       "nameResult": "Result Name",
-      "startTime": "Start Time",
-      "endTime": "End Time",
-      "countTime": "Duration (minutes)",
+      "startTime": "Start time",
+      "endTime": "End time",
+      "countTime": "Minutes",
       "history": "History"
     },
     "placeholder": {
       "qc": "Enter QC name...",
-      "result": "Enter result name...",
-      "countTime": "Enter duration...",
+      "result": "Enter Result name...",
+      "countTime": "Enter minutes...",
       "history": "Enter history..."
     },
     "modal": {
@@ -30,7 +29,6 @@
     "error": {
       "noId": "timeChangeModel ID not found",
       "noSheetId": "SMD Sheet ID not found",
-      "updateFailed": "Error occurred while updating timeChangeModel"
+      "updateFailed": "An error occurred while updating timeChangeModel"
     }
-  }
 }

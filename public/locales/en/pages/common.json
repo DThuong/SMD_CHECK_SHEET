@@ -13,6 +13,10 @@
     "manager": "Manager",
     "koreaManager": "Korea Manager"
   },
+  "button": {
+    "edit": "Edit",
+    "viewDetail": "View details"
+  },
   "msg_success": "Login successful!",
   "user": "User",
   "role": "Role"

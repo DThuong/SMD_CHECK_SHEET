@@ -1,0 +1,54 @@
+{
+  "title": "Chi tiết Sheet",
+  "workOrder": "WorkOrder",
+  "noWorkOrder": "Chưa Có",
+  "createdAt": "Tạo lúc",
+  "createdBy": "Người tạo",
+  "status": {
+    "pending": "Pending",
+    "pqcDone": "PQC Done",
+    "engDone": "Engineer Done",
+    "supervisorDone": "Supervisor Done",
+    "managerDone": "Manager Done",
+    "koreaManagerDone": "Korea Manager Done",
+    "unknown": "Unknown"
+  },
+  "mode": {
+    "edit": "Chế độ chỉnh sửa",
+    "editDescription": "Bạn có thể thay đổi và lưu nội dung",
+    "view": "Chế độ xem",
+    "viewDescription": "Sheet này chỉ có thể xem",
+    "viewOnly": "Chỉ xem",
+    "noEditPermission": "(Manager không có quyền chỉnh sửa)",
+    "notYourTurn": "(Chưa đến lượt xác nhận)",
+    "cannotSign": "Không thể ký"
+  },
+  "button": {
+    "back": "Quay lại",
+    "confirm": "Ký xác nhận",
+    "confirming": "Đang xác nhận...",
+    "signBy": "Ký xác nhận ({{role}})"
+  },
+  "loading": {
+    "loadingData": "Đang tải dữ liệu..."
+  },
+  "error": {
+    "title": "⚠️ Có lỗi xảy ra",
+    "notFound": "Không tìm thấy dữ liệu",
+    "loadError": "Lỗi khi tải sheet",
+    "noPermission": "Bạn không có quyền xác nhận bước này!",
+    "confirmFailed": "Xác nhận thất bại",
+    "confirmError": "Đã xảy ra lỗi khi xác nhận bước này"
+  },
+  "success": {
+    "confirmSuccess": "Xác nhận thành công bởi"
+  },
+  "section": {
+    "header": "Thông tin cơ bản",
+    "checkModel": "Kiểm tra Model",
+    "standardProduction": "Tiêu chuẩn sản xuất",
+    "timeChangeModel": "Thời gian thay đổi Model",
+    "standardVehicle": "Tiêu chuẩn xe",
+    "pqcCheck": "Kiểm tra PQC"
+  }
+}

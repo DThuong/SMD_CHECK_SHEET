@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { ChangeEvent } from 'react';
-import { FaUser, FaPhone, FaSearch, FaEdit, FaTrash, FaSave, FaTimes, FaFilter, FaKey, FaUserPlus } from 'react-icons/fa';
+import { FaUser, FaPhone, FaSearch, FaEdit, FaTrash, FaSave, FaTimes, FaKey, FaUserPlus } from 'react-icons/fa';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { 
   fetchUsers, 
@@ -649,7 +649,7 @@ const User = () => {
                     name="password"
                     value={addUserData.password}
                     onChange={handleAddUserInputChange}
-                    placeholder="Tối thiểu 6 ký tự"
+                    placeholder="Tối thiểu 3 ký tự"
                     required
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   />

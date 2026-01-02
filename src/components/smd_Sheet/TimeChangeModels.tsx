@@ -7,6 +7,7 @@ import type { TimeChangeModelData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import { formatDateTime } from "../../utils/formatTime";
+import { useTranslation } from "react-i18next";
 
 const initialTimeChangeState: TimeChangeModelData = {
     qc: "",
@@ -30,6 +31,8 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
       const timeChangeModelId = currentSheet?.timeChangeModelId || timeChangeModel?.id;
       const isSaved = completedTables.includes('TimeChangeModel');
       const { notification, showNotification,  hideNotification } = useNotification();
+      const {t} = useTranslation('timeChangeModel');
+      const {t: t2} = useTranslation('common');
   
       // fetch data khi programcheck thay đổi
       useEffect(() => {
@@ -90,7 +93,7 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
           {isSaved && <span className="text-green-600">✓</span>}
           <span>TimeChangeModel ID: <strong>{timeChangeModelId}</strong></span>
           {currentSheet?.id && <span>| ChangeModel ID: <strong>{currentSheet.id}</strong></span>}
-          {isSaved && <span className="ml-auto font-semibold">Đã lưu</span>}
+          {isSaved && <span className="ml-auto font-semibold">{t('status.saved')}</span>}
         </div>
       )}
       {/* Desktop View */}
@@ -100,19 +103,19 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
             {/* Row 12 - Title */}
             <tr>
               <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">
-                Thời gian đổi model
+                {t('title')}
               </th>
               <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
             </tr>
 
             {/* Row 13 - Section Headers */}
             <tr>
-              <th className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Hạng mục</th>
-              <th className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Tên</th>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Thời gian bắt đầu</th>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Thời gian kết thúc</th>
-              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Số phút</th>
-              <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Lịch sử</th>
+              <th className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.category')}</th>
+              <th className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.name')}</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.startTime')}</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.endTime')}</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.countTime')}</th>
+              <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.history')}</th>
             </tr>
 
             {/* Row 14 - Result */}
@@ -137,11 +140,11 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
       {/* Mobile View - Card dọc */}
       <div className="lg:hidden">
         <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
-          <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200">Thời gian đổi model</h3>
+          <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200">{t('title')}</h3>
 
           {/* tên QC */}
           <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Tên QC</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.nameQC')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
               {form.qc || "—"}
             </div>
@@ -149,7 +152,7 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
 
           {/* Tên Result */}
           <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Tên Result</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.nameResult')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
               {form.result || "—"}
             </div>
@@ -157,7 +160,7 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
           
           {/* Thời gian bắt đầu */}
           <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Thời gian bắt đầu</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.startTime')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
               {formatDateTime(form.startTime) || "—"}
             </div>
@@ -165,7 +168,7 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
 
           {/* Thời gian kết thúc */}
           <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Thời gian kết thúc</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.endTime')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
               {formatDateTime(form.endTime) || "—"}
             </div>
@@ -173,7 +176,7 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
 
           {/* Số phút */}
           <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Số phút</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.countTime')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
               {form.countTime ?? "—"}
             </div>
@@ -181,7 +184,7 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
 
           {/* Lịch sử */}
           <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Lịch sử</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.history')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 whitespace-pre-wrap wrap-break-word">
               {form.history || "—"}
             </div>
@@ -192,7 +195,7 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
 
       {/* Buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
-        <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>Chỉnh sửa</ViewDetailButton>
+        <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>{t2('button.edit')}</ViewDetailButton>
         {/* <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton> */}
       </div>
 

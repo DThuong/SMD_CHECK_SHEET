@@ -1,0 +1,27 @@
+{
+    "backButton": "뒤로 가기",
+    "title": "파일 상세 보기",
+    "changeModelId": "Change Model ID",
+    "tabs": {
+      "lcrData": "LCR 데이터",
+      "reflowPdf": "Reflow PDF"
+    },
+    "viewMode": {
+      "expandableView": "확장 가능한 보기",
+      "fullTable": "전체 테이블 (27 열)"
+    },
+    "errors": {
+      "loadingFiles": "파일 로드 오류",
+      "sheetNotFound": "시트를 찾을 수 없습니다"
+    },
+    "emptyStates": {
+      "lcrNotUploaded": {
+        "title": "⚠️ LCR 데이터가 아직 업로드되지 않았습니다",
+        "description": "LCR 측정 데이터를 보려면 Excel 파일을 업로드하세요"
+      },
+      "reflowNotUploaded": {
+        "title": "⚠️ Reflow 파일이 아직 업로드되지 않았습니다",
+        "description": "Reflow 프로파일 데이터를 보려면 PDF 파일을 업로드하세요"
+      }
+    }
+}

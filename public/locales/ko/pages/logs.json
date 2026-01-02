@@ -63,7 +63,9 @@
       "confirmed": "확인됨",
       "notConfirmed": "확인되지 않음",
       "signer": "서명자",
-      "signButton": "서명 확인"
+      "signButton": "서명 확인",
+      "by": "작성자",
+      "donthave": "없음"
     },
     "roles": {
       "engineering": "Engineering",
@@ -80,7 +82,10 @@
     "error": {
       "invalidUser": "유효하지 않은 사용자입니다!",
       "noPermission": "이 단계를 확인할 권한이 없습니다!",
-      "confirmFailed": "이 단계를 확인하는 중 오류가 발생했습니다"
+      "confirmFailed": "이 단계를 확인하는 중 오류가 발생했습니다",
+      "cannotLoadSheets": "시트를 불러올 수 없습니다",
+      "loadSheetsFailed": "시트 로드 실패",
+      "fetchError": "데이터 로드 중 오류 발생"
     },
     "success": {
       "confirmed": "다음에 의해 성공적으로 확인됨"
@@ -89,5 +94,9 @@
       "selectToDate": "\"종료 날짜\"를 선택해주세요",
       "selectFromDate": "\"시작 날짜\"를 선택해주세요",
       "invalidDateRange": "\"시작 날짜\"는 \"종료 날짜\"보다 늦을 수 없습니다"
-    }
+    },
+    "pagination": {
+    "previous": "이전",
+    "next": "다음"
+  }
 }

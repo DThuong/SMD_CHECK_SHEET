@@ -1,5 +1,4 @@
 {
-  "timeChangeModel": {
     "title": "Thời gian đổi model",
     "status": {
       "saved": "Đã lưu",
@@ -32,5 +31,4 @@
       "noSheetId": "Không tìm thấy SMD Sheet ID",
       "updateFailed": "Có lỗi xảy ra khi cập nhật timeChangeModel"
     }
-  }
 }

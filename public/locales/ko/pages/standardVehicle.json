@@ -1,8 +1,7 @@
 {
-  "standardVehicle": {
     "title": "장비 표준",
     "status": {
-      "saved": "저장됨",
+      "saved": "저장",
       "standardVehicleId": "StandardVehicle ID",
       "changeModelId": "변경모델 ID"
     },
@@ -115,5 +114,4 @@
       "uploadSPI": "SPI 이미지 업로드 성공",
       "uploadAOI": "AOI 이미지 업로드 성공"
     }
-  }
 }

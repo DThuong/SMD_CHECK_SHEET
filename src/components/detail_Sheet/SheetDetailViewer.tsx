@@ -30,6 +30,7 @@ import { FaRegClock } from 'react-icons/fa6';
 import { useNotification } from '../../redux/hooks';
 import Notification from '../general/Notification';
 import { REQUIRED_FIELDS_CONFIG, hasAllRequiredData, getMissingFields } from '../../utils/requiredFieldsConfig';
+import { useTranslation } from 'react-i18next';
 
 const SheetDetailViewer = () => {
   const { id } = useParams<{ id: string }>();
@@ -41,6 +42,7 @@ const SheetDetailViewer = () => {
   const { user } = useAppSelector((state) => state.auth);
   const { notification, showNotification, hideNotification } = useNotification();
   const [confirming, setConfirming] = useState(false);
+  const {t} = useTranslation('sheetDetail');
 
   // PHÂN QUYỀN CHÍNH XÁC
   const canEdit = () => {
@@ -161,7 +163,7 @@ const SheetDetailViewer = () => {
   // XỬ LÝ KÝ XÁC NHẬN
   const handleConfirm = async () => {
     if (!canConfirm()) {
-      showNotification('error', 'Bạn không có quyền xác nhận bước này!');
+      showNotification('error', `${t('error.confirmError')}`);
       return;
     }
 
@@ -174,7 +176,7 @@ const SheetDetailViewer = () => {
         userRole: user.role as string
       })).unwrap();
       
-      showNotification('success', `Xác nhận thành công bởi ${user.role}!`);
+      showNotification('success', `${t('success.confirmSuccess')} ${user.role}!`);
       
       setTimeout(() => {
         navigate(0);
@@ -182,7 +184,7 @@ const SheetDetailViewer = () => {
       
     } catch (error: any) {
       console.error('❌ Lỗi khi xác nhận:', error);
-      showNotification('error', 'Xác nhận thất bại', error || 'Đã xảy ra lỗi khi xác nhận bước này');
+      showNotification('error', t('error.confirmFailed'), error || t('error.confirmError'));
     } finally {
       setConfirming(false);
     }
@@ -197,7 +199,7 @@ const SheetDetailViewer = () => {
           <div className="h-20 bg-gray-200 rounded"></div>
           <div className="h-64 bg-gray-200 rounded"></div>
         </div>
-        <p className="text-center text-gray-600 mt-4">Đang tải dữ liệu...</p>
+        <p className="text-center text-gray-600 mt-4">{t('loading.loadingData')}</p>
       </div>
     );
   }
@@ -207,13 +209,13 @@ const SheetDetailViewer = () => {
     return (
       <div className="max-w-8xl mx-auto my-4 p-8 text-center">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <h2 className="text-xl font-bold text-red-800 mb-2">⚠️ Có lỗi xảy ra</h2>
+          <h2 className="text-xl font-bold text-red-800 mb-2">{t('error.title')}</h2>
           <p className="text-red-600 mb-4">{error || 'Không tìm thấy dữ liệu'}</p>
           <button
             onClick={() => navigate(-1)}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Quay lại
+            {t('button.back')}
           </button>
         </div>
       </div>
@@ -271,17 +273,17 @@ const SheetDetailViewer = () => {
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
           <div>
             <h1 className="text-xl font-bold text-gray-800">
-              Chi tiết Sheet: #{currentSheet.id}
+              {t('title')}: #{currentSheet.id}
             </h1>
-            <h5>WorkOrder:{currentSheet.checkModel?.workOrder !== "" ? currentSheet.checkModel?.workOrder : "Chưa Có"}</h5>
+            <h6>WorkOrder:{currentSheet.checkModel?.workOrder !== "" ? currentSheet.checkModel?.workOrder : t('noWorkOrder')}</h6>
             {currentSheet.createAt && (
               <p className="text-xs text-gray-500 mt-1 mb-0">
-                Tạo lúc: {new Date(currentSheet.createAt).toLocaleString('vi-VN')}
+                {t('createdAt')}: {new Date(currentSheet.createAt).toLocaleString('vi-VN')}
               </p>
             )}
             {currentSheet.account && (
               <p className="text-xs text-gray-500 mb-0">
-                Người tạo: {currentSheet.account?.fullName || currentSheet.account.userName} ({currentSheet.account.role})
+                {t('createdBy')}: {currentSheet.account?.fullName || currentSheet.account.userName} ({currentSheet.account.role})
               </p>
             )}
           </div>
@@ -300,9 +302,9 @@ const SheetDetailViewer = () => {
             <div className="flex items-center justify-center">
               <span className="flex items-center gap-2 text-green-800">
                 <MdModeEdit size={20} />
-                Chế độ chỉnh sửa
+                {t('mode.edit')}
               </span>
-              <span className="ml-1">- Bạn có thể thay đổi và lưu nội dung</span>
+              <span className="ml-1">- {t('mode.editDescription')}</span>
             </div>
           ) : (
             <div className='flex items-center justify-center'>
@@ -310,10 +312,10 @@ const SheetDetailViewer = () => {
                 <div className="">
                   <IoEyeSharp size={20} />
                 </div>
-                <p className='mb-0'>Chế độ xem - Sheet này chỉ có thể xem</p>
+                <p className='mb-0'>{t('mode.view')} - {t('mode.viewDescription')}</p>
               </div>
               {user?.role === 'Manager' || user?.role === 'KoreaManager'
-                ? ' (Manager không có quyền chỉnh sửa)'
+                ? t('mode.noEditPermission')
                 : ''}
             </div>
           )}
@@ -336,7 +338,7 @@ const SheetDetailViewer = () => {
           onClick={() => navigate(-1)}
           className="px-4 py-3 bg-gray-600 text-white text-sm font-semibold hover:bg-gray-700 transition-colors"
         >
-          Quay lại
+          {t('button.back')}
         </button>
         
         {isConfirmable && (
@@ -345,15 +347,15 @@ const SheetDetailViewer = () => {
             disabled={confirming}
             className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {confirming ? 'Đang xác nhận...' : `Ký xác nhận (${user?.role})`}
+            {confirming ? t('button.confirming') : `${t('button.confirm')} (${user?.role})`}
           </button>
         )}
         
         {!isConfirmable && (
           <div className="flex-1 px-4 py-3 bg-gray-300 text-gray-600  font-semibold text-center text-sm cursor-not-allowed">
             {user?.role === 'Manager' || user?.role === 'KoreaManager' 
-              ? '👁️ Chỉ xem (Chưa đến lượt xác nhận)'
-              : '🔒 Không thể ký'}
+              ? `👁️ ${t('mode.viewOnly')} ${t('mode.notYourTurn')}`
+              : `🔒 ${t('mode.cannotSign')}`}
           </div>
         )}
       </div>

@@ -7,6 +7,7 @@ import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import { useNavigate } from "react-router-dom";
 import { IoEyeSharp } from "react-icons/io5";
+import { useTranslation } from "react-i18next";
 
 interface FileUploadState {
   lcr?: File;
@@ -23,6 +24,8 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
   const { user } = useAppSelector(state => state.auth);
   const navigate = useNavigate();
   const { notification, showNotification, hideNotification } = useNotification();
+  const {t} = useTranslation('sheetHeader');
+  const {t: t2} = useTranslation('common');
 
   const setFile = (key: keyof FileUploadState, file?: File) => {
     setTempFileState(prev => ({ ...prev, [key]: file }));
@@ -46,7 +49,7 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
         pdfFile: tempFileState.reflow,
       })).unwrap();
 
-      showNotification('success', 'Upload thành công!', 'Cả hai file đã được upload thành công.');
+      showNotification('success', 'Upload thành công!', t('success_msg'));
       setTempFileState({});
       setOpen(false);
     } catch (err: any) {
@@ -85,11 +88,11 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
   
   const lcrName = currentSheet?.excelFileUrl && currentSheet.excelFileUrl !== ""
     ? currentSheet.excelFileUrl.split('/').pop() 
-    : 'Chưa có file';
+    : t('noFile');
   
   const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl !== ""
     ? currentSheet.pdfFileUrl.split('/').pop() 
-    : 'Chưa có file';
+    : t('noFile');
 
   const modalLcrName = tempFileState.lcr?.name || lcrName;
   const modalReflowName = tempFileState.reflow?.name || reflowName;
@@ -116,7 +119,7 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
           {bothFilesUploaded && (
           <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-xs text-green-800 font-semibold flex items-center gap-2 mb-0">
-              ✓ Cả hai file đã được upload thành công.
+              ✓ {t('success_msg')}
             </p>
           </div>
         )}
@@ -218,13 +221,13 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
               disabled={false}
             >
               <div className="flex gap-2 items-center justify-center">
-                <div><IoEyeSharp size={20} /></div> <div>Xem chi tiết</div>
+                <div><IoEyeSharp size={20} /></div> <div>{t2('button.viewDetail')}</div>
               </div>
             </ViewDetailButton>
           )}
           
           <ViewDetailButton onOpen={handleOpenModal} disabled={!canEdit}>
-            Chỉnh sửa
+            {t2('button.edit')}
           </ViewDetailButton>
         </div>
 

@@ -5,6 +5,8 @@ import LCRDataTable from '../components/files/LCRDataTable';
 import LCRFullTable from '../components/files/LCRFullTable';
 import ReflowPDFViewer from '../components/files/ReflowPDFViewer';
 import LoadingSpinner from '../components/general/LoadingSpinner';
+import { getSheetWithFullObject } from '../redux/slices/changeModelSlice';
+import { useTranslation } from 'react-i18next';
 import { getLcrFileData, getReflowFile, clearLcrFile, clearReflowFile } from '../redux/slices/FileSlice';
 
 type FileType = 'lcr' | 'reflow';
@@ -22,15 +24,16 @@ const FileDetailViewer = () => {
     (state) => state.fileSlice
   );
 
+  const { t } = useTranslation('fileDetail');
+
   // Load files
   useEffect(() => {
     if (id) {
       const sheetId = parseInt(id);
-      console.log(` FileDetailViewer: Loading files for sheet ${sheetId}`);
-      
+      // console.log(` FileDetailViewer: Loading files for sheet ${sheetId}`);
+      dispatch(getSheetWithFullObject(sheetId));
       // Load LCR data (JSON)
       dispatch(getLcrFileData(sheetId));
-      
       // Load Reflow file (PDF)
       dispatch(getReflowFile(sheetId));
     }
@@ -108,14 +111,14 @@ const FileDetailViewer = () => {
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          Quay lại
+          {t('backButton')}
         </button>
         
         <h1 className="text-2xl font-bold text-gray-800">
-          Xem chi tiết file
+          {t('title')}
         </h1>
         <p className="text-sm text-gray-600 mt-1">
-          Change Model ID: <span className="font-semibold">{currentSheet.id}</span>
+          {t('changeModelId')}: <span className="font-semibold">{currentSheet.id}</span>
         </p>
       </div>
 

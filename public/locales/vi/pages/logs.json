@@ -41,7 +41,7 @@
       "koreaManagerDone": "Korea Manager đã hoàn thành"
     },
     "table": {
-      "id": "Id",
+      "id": "ID",
       "sheetId": "Sheet id",
       "createdBy": "Người tạo",
       "createTime": "Thời gian tạo",
@@ -64,6 +64,7 @@
       "notConfirmed": "Chưa xác nhận",
       "signer": "Người ký",
       "signButton": "Ký xác nhận",
+      "by": "bởi",
       "donthave": "Không có"
     },
     "roles": {
@@ -81,7 +82,10 @@
     "error": {
       "invalidUser": "Người dùng không hợp lệ!",
       "noPermission": "Bạn không có quyền xác nhận bước này!",
-      "confirmFailed": "Đã xảy ra lỗi khi xác nhận bước này"
+      "confirmFailed": "Đã xảy ra lỗi khi xác nhận bước này",
+      "cannotLoadSheets": "Không thể tải sheets",
+      "loadSheetsFailed": "Tải sheets thất bại",
+      "fetchError": "Có lỗi xảy ra khi tải dữ liệu"
     },
     "success": {
       "confirmed": "Xác nhận thành công bởi"
@@ -90,5 +94,9 @@
       "selectToDate": "Vui lòng chọn \"Đến ngày\"",
       "selectFromDate": "Vui lòng chọn \"Từ ngày\"",
       "invalidDateRange": "\"Từ ngày\" không được sau \"Đến ngày\""
-    }
+    },
+    "pagination": {
+    "previous": "Trước",
+    "next": "Sau"
+  }
 }

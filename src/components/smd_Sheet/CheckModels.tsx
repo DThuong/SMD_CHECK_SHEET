@@ -7,6 +7,7 @@ import type { CheckModelData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import { formatDateTime } from "../../utils/formatTime";
+import { useTranslation } from "react-i18next";
 
 const initialFormState: CheckModelData = {
   lineChange: "",
@@ -36,6 +37,8 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
   const [form, setForm] = useState<CheckModelData>(initialFormState);
 
   const isSaved = completedTables.includes('CheckModel');
+  const {t} = useTranslation('checkModel');
+  const {t: t2} = useTranslation('common');
 
   useEffect(() => {
       if (checkModel) {
@@ -101,7 +104,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
           {isSaved && <span className="text-green-600">✓</span>}
           <span>CheckModel ID: <strong>{checkModelId}</strong></span>
           {currentSheet?.id && <span>| ChangeModel ID: <strong>{currentSheet.id}</strong></span>}
-          {isSaved && <span className="ml-auto font-semibold">Đã lưu</span>}
+          {isSaved && <span className="ml-auto font-semibold">{t('saved')}</span>}
         </div>
       )}
 
@@ -110,11 +113,11 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
         <table className="border border-gray-600 w-full text-center opacity-80">
           <thead>
             <tr>
-              <th rowSpan={2} className="border px-2 py-2 text-xs bg-gray-100">Line đổi</th>
+              <th rowSpan={2} className="border px-2 py-2 text-xs bg-gray-100">{t('line')}</th>
               <td rowSpan={2} className="border px-2 py-2 text-xs">{form.lineChange || ""}</td>
               <td rowSpan={2} className="border px-2 py-2 text-xs bg-gray-300"></td>
               <th className="border px-2 py-2 text-xs bg-gray-100">Model/Side</th>
-              <th colSpan={2} className="border px-2 py-2 text-xs bg-gray-100">{form.model}</th>
+              <th colSpan={2} className="border px-2 py-2 text-xs">{form.model}</th>
               <th className="border px-2 py-2 text-xs bg-gray-100">REV S15</th>
               <td className="border px-2 py-2 text-xs">{form.revS15 || ""}</td>
               <th rowSpan={2} className="border px-2 py-2 text-xs bg-gray-100">DATE</th>
@@ -256,7 +259,7 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
       {/* Buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
         <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>
-          {isSaved ? 'Chỉnh sửa' : 'Chỉnh sửa'}
+          {t2('button.edit')}
         </ViewDetailButton>
       </div>
 

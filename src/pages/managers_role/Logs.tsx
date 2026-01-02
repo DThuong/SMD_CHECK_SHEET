@@ -79,6 +79,7 @@ const Logs = () => {
   const [searchParams] = useSearchParams();
   const statusFromUrl = searchParams.get('status');
   const {t} = useTranslation('logs');
+  const {t: t2} = useTranslation('sheetDetail');
 
   // Filter state
   const [filter, setFilter] = useState<SheetFilter>({
@@ -113,7 +114,7 @@ const Logs = () => {
           })).unwrap();
         } catch (error: any) {
           console.error('❌ Lỗi khi fetch sheets:', error);
-          showNotification('error', 'Lỗi', error.message || 'Không thể tải sheets');
+          showNotification('error', 'Lỗi', error.message || t('error.cannotLoadSheets'));
         }
       };
 
@@ -171,11 +172,11 @@ const Logs = () => {
     setCurrentPage(0);
     
     if (filter.fromDate && !filter.toDate) {
-      showNotification('warning', 'Vui lòng chọn "Đến ngày"');
+      showNotification('warning', t('warning.selectFromDate'));
       return;
     }
     if (!filter.fromDate && filter.toDate) {
-      showNotification('warning', 'Vui lòng chọn "Từ ngày"');
+      showNotification('warning', t('warning.selectToDate'));
       return;
     }
 
@@ -183,7 +184,7 @@ const Logs = () => {
       const from = new Date(filter.fromDate);
       const to = new Date(filter.toDate);
       if (from > to) {
-        showNotification('warning', '"Từ ngày" không được sau "Đến ngày"');
+        showNotification('warning', t('warning.invalidDateRange'));
         resetFilter();
         return;
       }
@@ -255,7 +256,7 @@ const Logs = () => {
   ) => {
     try {
       if (!user) {
-        showNotification('error', 'Người dùng không hợp lệ!');
+        showNotification('error', t('error.invalidUser'));
         return;
       }
 
@@ -263,7 +264,7 @@ const Logs = () => {
       if (!sheet) return;
 
       if (!canConfirmAtStep(sheet, role)) {
-        showNotification('error', 'Bạn không có quyền xác nhận bước này!');
+        showNotification('error', t('error.noPermission'));
         return;
       }
 
@@ -279,8 +280,8 @@ const Logs = () => {
         [ROLES.MANAGER]: 'Manager',
         [ROLES.KOREA_MANAGER]: 'Korea Manager'
       };
-
-      showNotification('success', `Xác nhận thành công bởi ${roleNames[role]}!`);
+      const successMsg = t('success.confirmed')
+      showNotification('success', `${successMsg} ${roleNames[role]}!`);
 
       // Reload history sau khi confirm
       await dispatch(getSheetStatusHistory(sheetId)).unwrap();
@@ -295,7 +296,7 @@ const Logs = () => {
 
     } catch (error: any) {
       console.error('Error confirming sheet:', error);
-      showNotification('error', 'Xác nhận thất bại', error || 'Đã xảy ra lỗi khi xác nhận bước này');
+      showNotification('error', t('error.loadSheetsFailed'), error || t('error.confirmFailed'));
     }
   };
 
@@ -405,9 +406,9 @@ const Logs = () => {
               
               {isConfirmed && stepInfo ? (
                 <div className="text-xs text-gray-600 space-y-1">
-                  <div className="text-green-700 font-medium">✓ Đã xác nhận</div>
+                  <div className="text-green-700 font-medium">✓ {t('detail.confirmed')}</div>
                   <div className="text-gray-500">
-                    Bởi: {stepInfo.account?.fullName || stepInfo.account?.userName}
+                    {t('detail.by')}: {stepInfo.account?.fullName || stepInfo.account?.userName}
                   </div>
                   <div className="text-gray-500">
                     {formatDateTime(stepInfo.changedAt)}
@@ -418,10 +419,10 @@ const Logs = () => {
                   onClick={() => handleConfirmStep(sheet.id, role.key)}
                   className={`mt-2 w-full px-3 py-1.5 bg-${role.color}-600 text-white rounded text-xs font-medium hover:bg-${role.color}-700 transition-colors`}
                 >
-                  Ký xác nhận
+                  {t('detail.signButton')}
                 </button>
               ) : (
-                <div className="text-xs text-gray-400 mt-2">Chưa xác nhận</div>
+                <div className="text-xs text-gray-400 mt-2">{t('detail.notConfirmed')}</div>
               )}
             </div>
           );
@@ -485,7 +486,7 @@ const Logs = () => {
       <div className="max-w-8xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-4">
           <div className="flex flex-col items-center mb-4 gap-2">
-            <div className="text-3xl font-bold text-gray-800">Chi tiết SMD Sheet: #{selectedSheet.id}</div>
+            <div className="text-3xl font-bold text-gray-800">{t('detail.title')}: #{selectedSheet.id}</div>
             
           </div>
 
@@ -494,13 +495,13 @@ const Logs = () => {
               <div className="flex items-center gap-2">
                 <FaRegUserCircle className="w-5 h-5" />
                 <span className="text-sm text-gray-700">
-                  <strong>Người tạo:</strong> {selectedSheet.account?.fullName || selectedSheet.account?.userName} ({selectedSheet.account?.role})
+                  <strong>{t('detail.createdBy')}:</strong> {selectedSheet.account?.fullName || selectedSheet.account?.userName} ({selectedSheet.account?.role})
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <AiOutlineCalendar className="w-5 h-5" />
                 <span className="text-sm text-gray-700">
-                  <strong>Thời gian:</strong> {formatDateTime(selectedSheet.createAt)}
+                  <strong>{t('detail.time')}:</strong> {formatDateTime(selectedSheet.createAt)}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -508,17 +509,17 @@ const Logs = () => {
               </div>
             </div>
 
-            {/* ✅ Tiến trình ký xác nhận - CẬP NHẬT PHẦN NÀY */}
+            {/* Tiến trình ký xác nhận - CẬP NHẬT PHẦN NÀY */}
             <div className="mt-4 pt-4 border-t border-blue-200">
               <strong className="text-sm text-gray-700 mb-2 flex items-center gap-2">
                 <AiOutlineHistory className="w-5 h-5" />
-                Tiến trình ký xác nhận:
+                {t('detail.signatureProgress')}:
               </strong>
               
               {loadingHistory ? (
                 <div className="text-center py-6">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  <p className="mt-2 text-sm text-gray-600">Đang tải lịch sử...</p>
+                  <p className="mt-2 text-sm text-gray-600">{t('detail.loading')}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
@@ -545,10 +546,10 @@ const Logs = () => {
                         
                         {isConfirmed && signerInfo ? (
                           <div className="text-xs text-gray-600 space-y-1">
-                            <div className="text-green-700 font-medium">✓ Đã xác nhận</div>
+                            <div className="text-green-700 font-medium">✓ {t('detail.confirmed')}</div>
                             {/* ✅ HIỂN THỊ TÊN NGƯỜI KÝ */}
                             <div className="text-gray-700">
-                              <strong>Người ký:</strong><br/>
+                              <strong>{t('detail.signer')}:</strong><br/>
                               {signerInfo.account?.fullName || signerInfo.account?.userName || 'N/A'}
                             </div>
                             {/* ✅ HIỂN THỊ THỜI GIAN KÝ */}
@@ -561,10 +562,10 @@ const Logs = () => {
                             onClick={() => handleConfirmStep(selectedSheet.id, role.key)}
                             className="mt-2 w-full px-3 py-2 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition-colors"
                           >
-                            Ký xác nhận
+                            {t('detail.signButton')}
                           </button>
                         ) : (
-                          <div className="text-xs text-gray-400">Chưa xác nhận</div>
+                          <div className="text-xs text-gray-400">{t('detail.notConfirmed')}</div>
                         )}
                       </div>
                     );
@@ -581,7 +582,7 @@ const Logs = () => {
               onClick={handleCloseDetail}
               className="px-4 py-3 bg-gray-500 text-white hover:bg-gray-600 transition-colors"
             >
-              Quay lại
+              {t('button.back')}
             </button>
               <button
                 onClick={() => {
@@ -590,7 +591,7 @@ const Logs = () => {
                 }}
                 className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
               >
-                Xem toàn bộ sheet
+                {t('button.viewFullSheet')}
               </button>
             </div>
           </div>
@@ -615,21 +616,21 @@ const Logs = () => {
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 text-center!">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-              Quản lý SMD Logs
+              {t('title')}
             </h1>
             <div className="text-sm text-gray-600">
-              Role: <span className="font-semibold">{user?.role}</span>
+              {t('role')}: <span className="font-semibold">{user?.role}</span>
             </div>
           </div>
 
           {/* Info banner */}
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-xs sm:text-sm text-blue-800 text-center mb-0">
-              {user?.role === ROLES.ENG && 'Bạn có thể xem, chỉnh sửa và xác nhận ở bước ENG'}
-              {user?.role === ROLES.SUPERVISOR && 'Bạn có thể xem, chỉnh sửa và xác nhận ở bước SUPERVISOR'}
-              {user?.role === ROLES.MANAGER && 'Bạn có thể xem và xác nhận ở bước MANAGER (KHÔNG sửa)'}
-              {user?.role === ROLES.KOREA_MANAGER && 'Bạn có thể xem và xác nhận ở bước KOREA MANAGER (KHÔNG sửa)'}
-              {user?.role === 'ADMIN' && 'Bạn có quyền xem tất cả sheets'}
+              {user?.role === ROLES.ENG && t('info.eng')}
+              {user?.role === ROLES.SUPERVISOR && t('info.supervisor')}
+              {user?.role === ROLES.MANAGER && t('info.manager')}
+              {user?.role === ROLES.KOREA_MANAGER && t('info.koreaManager')}
+              {user?.role === 'Admin' && t('info.admin')}
             </p>
           </div>
 
@@ -637,75 +638,75 @@ const Logs = () => {
           <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center gap-2 mb-3">
               <AiOutlineSearch className="w-5 h-5 text-gray-600" />
-              <h3 className="font-semibold text-gray-700">Tìm kiếm</h3>
+              <h3 className="font-semibold text-gray-700">{t('search.title')}</h3>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {/* Id */}
               <div>
                 <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <MdFavoriteBorder /><span>Id</span>
+                  <MdFavoriteBorder /><span>{t('search.id')}</span>
                 </div>
                 <input
                   type="number"
                   value={filter.id || ""}
                   onChange={(e) => setFilter(s => ({ ...s, id: Number(e.target.value) || 0 }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder={`Tìm kiếm theo Id...`}
+                  placeholder={t('search.placeholder.id')}
                   min="1"
                 />
               </div>
               {/* FCode */}
               <div>
                 <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <MdFavoriteBorder /><span>FCode</span>
+                  <MdFavoriteBorder /><span>{t('search.fcode')}</span>
                 </div>
                 <input
                   type="text"
                   value={filter.fcode}
                   onChange={(e) => setFilter(s => ({ ...s, fcode: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder={`Tìm kiếm theo fcode...`}
+                  placeholder={t('search.placeholder.fcode')}
                 />
               </div>
               {/* Work Order */}
               <div>
                 <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <MdFavoriteBorder /><span>Work Order</span>
+                  <MdFavoriteBorder /><span>{t('search.workOrder')}</span>
                 </div>
                 <input
                   type="text"
                   value={filter.workOrder}
                   onChange={(e) => setFilter(s => ({ ...s, workOrder: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder={`Tìm kiếm theo work order...`}
+                  placeholder={t('search.placeholder.workOrder')}
                 />
               </div>
 
               {/* Status */}
               <div>
                 <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <MdSignalWifiStatusbar2Bar /><span>Trạng Thái</span>
+                  <MdSignalWifiStatusbar2Bar /><span>{t('search.status')}</span>
                 </div>
                 <select
                   value={filter.status}
                   onChange={(e) => setFilter(s => ({ ...s, status: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="all">Tất cả trạng thái</option>
-                  <option value={STATUS.PENDING}>Đang chờ</option>
-                  <option value={STATUS.PQC_DONE}>PQC đã hoàn thành</option>
-                  <option value={STATUS.ENG_DONE}>Engineering đã hoàn thành</option>
-                  <option value={STATUS.SUPERVISOR_DONE}>Supervisor đã hoàn thành</option>
-                  <option value={STATUS.MANAGER_DONE}>Manager đã hoàn thành</option>
-                  <option value={STATUS.KOREA_MANAGER_DONE}>Korea Manager đã hoàn thành</option>
+                  <option value="all">{t('status.all')}</option>
+                  <option value={STATUS.PENDING}>{t('status.pending')}</option>
+                  <option value={STATUS.PQC_DONE}>{t('status.pqcDone')}</option>
+                  <option value={STATUS.ENG_DONE}>{t('status.engDone')}</option>
+                  <option value={STATUS.SUPERVISOR_DONE}>{t('status.supervisorDone')}</option>
+                  <option value={STATUS.MANAGER_DONE}>{t('status.managerDone')}</option>
+                  <option value={STATUS.KOREA_MANAGER_DONE}>{t('status.koreaManagerDone')}</option>
                 </select>
               </div>
 
               {/* From Date */}
               <div>
                 <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <FaCalendarAlt /><span>Từ ngày</span>
+                  <FaCalendarAlt /><span>{t('search.fromDate')}</span>
                 </div>
                 <input
                   type="date"
@@ -719,7 +720,7 @@ const Logs = () => {
               {/* To Date */}
               <div>
                 <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <FaCalendarAlt /><span>Đến ngày</span>
+                  <FaCalendarAlt /><span>{t('search.toDate')}</span>
                 </div>
                 <input
                   type="date"
@@ -739,7 +740,7 @@ const Logs = () => {
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
               >
                 <AiOutlineSearch className="w-4 h-4" />
-                {loadingList ? 'Đang tìm kiếm...' : 'Tìm kiếm'}
+                {loadingList ? t('search.button.searching') : t('search.button.search')}
               </button>
               <button
                 onClick={resetFilter}
@@ -747,15 +748,15 @@ const Logs = () => {
                 className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
               >
                 <AiOutlineClose className="w-4 h-4" />
-                Thay đổi bộ lọc
+                {t('search.button.reset')}
               </button>
             </div>
 
             {/* Result Count */}
             <div className="mt-3 text-sm text-gray-600" ref={resultsRef}>
-              Số trang: <span className="font-semibold text-blue-600">{currentSheets.length}</span> / <span className="font-semibold">{sortedSheets.length}</span> sheet
+              {t('search.result.count')}: <span className="font-semibold text-blue-600">{currentSheets.length}</span> / <span className="font-semibold">{sortedSheets.length}</span> sheet
               {pageCount > 1 && (
-                <span className="ml-2"> (page {currentPage + 1}/{pageCount})</span>
+                <span className="ml-2"> ({t('search.result.page')} {currentPage + 1}/{pageCount})</span>
               )}
             </div>
           </div>
@@ -771,18 +772,18 @@ const Logs = () => {
           {loadingList ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-              <p className="mt-4 text-gray-600">Đang tìm kiếm...</p>
+              <p className="mt-4 text-gray-600">{t('search.button.searching')}</p>
             </div>
           ) : currentSheets.length === 0 ? (
             <div className="text-center py-12">
               <AiOutlineClockCircle className="w-16 h-16 mx-auto text-gray-400 mb-4" />
               <p className="text-gray-600 text-lg">
-                {sortedSheets.length === 0 ? '' : 'Tạm thời không có sheet nào phù hợp'}
+                {sortedSheets.length === 0 ? '' : t('empty.noSheets')}
               </p>
               <p className="text-gray-500 text-sm mt-2">
                 {sortedSheets.length === 0 
-                  ? (user?.role === ROLES.PQC ? 'Tạo sheet mới' : 'Chờ PQC tạo sheet')
-                  : 'Thay đổi bộ lọc'}
+                  ? (user?.role === ROLES.PQC ? t('empty.createNew') : t('empty.waitPQC'))
+                  : t('empty.changeFilter')}
               </p>
             </div>
           ) : (
@@ -796,22 +797,22 @@ const Logs = () => {
                         STT
                       </th>
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
-                        Sheet id
+                        {t('table.sheetId')}
                       </th>
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
                         WorkOrder
                       </th>
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
-                        Người tạo
+                        {t('table.createdBy')}
                       </th>
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
-                        Thời gian tạo
+                        {t('table.createTime')}
                       </th>
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">
-                        Trạng thái
+                        {t('table.status')}
                       </th>
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">
-                        Hành động
+                        {t('table.action')}
                       </th>
                     </tr>
                   </thead>
@@ -826,7 +827,7 @@ const Logs = () => {
                         </td>
                         <td className="border border-gray-300 px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
                             <span className={`font-semibold ${sheet.checkModel?.workOrder ? 'text-blue-600' : 'text-gray-400'}`}>
-                              {sheet.checkModel?.workOrder || 'Chưa có'}
+                              {sheet.checkModel?.workOrder || t2('noWorkOrder')}
                             </span>
                         </td>
                         <td className="border border-gray-300 px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
@@ -848,7 +849,7 @@ const Logs = () => {
                               className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs font-medium whitespace-nowrap"
                             >
                               <AiOutlineEye className="w-3 h-3 sm:w-4 sm:h-4" />
-                              <span>Xem</span>
+                              <span>{t('button.view')}</span>
                             </button>
                             {canEdit(sheet) && (
                               <button
@@ -859,7 +860,7 @@ const Logs = () => {
                                 className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium whitespace-nowrap"
                               >
                                 <AiOutlineEdit className="w-3 h-3 sm:w-4 sm:h-4" />
-                                <span>Chỉnh sửa</span>
+                                <span>{t('button.edit')}</span>
                               </button>
                             )}
                           </div>
@@ -886,7 +887,7 @@ const Logs = () => {
 
                     <div className="mb-3 pb-3 border-b border-gray-200 flex items-center flex-row gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-gray-700">Được tạo bởi:</span>
+                        <span className="text-xs font-semibold text-gray-700">{t('table.createdBy')}:</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm text-gray-900">
@@ -901,7 +902,7 @@ const Logs = () => {
                     <div className="mb-3 pb-3 border-b border-gray-200">
                       <div className="flex items-center gap-2 mb-2">
                         <AiOutlineCalendar className="w-4 h-4 text-gray-600" />
-                        <span className="text-xs font-semibold text-gray-700">Ngày tạo</span>
+                        <span className="text-xs font-semibold text-gray-700">{t('table.createTime')}</span>
                       </div>
                       <div className="pl-6 text-sm text-gray-900">
                         {formatDateTime(sheet.createAt)}
@@ -914,7 +915,7 @@ const Logs = () => {
                         className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                       >
                         <AiOutlineEye className="w-4 h-4" />
-                        <span>Xem</span>
+                        <span>{t('button.view')}</span>
                       </button>
                       {canEdit(sheet) && (
                         <button
@@ -925,7 +926,7 @@ const Logs = () => {
                           className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
                         >
                           <AiOutlineEdit className="w-4 h-4" />
-                          <span>Chỉnh sửa</span>
+                          <span>{t('button.edit')}</span>
                         </button>
                       )}
                     </div>
@@ -939,8 +940,8 @@ const Logs = () => {
                   <div className="w-full max-w-full">
                     <div className="overflow-x-auto scrollbar-hide">
                       <ReactPaginate
-                        previousLabel='Trước'
-                        nextLabel='Sau'
+                        previousLabel={t('pagination.previous')}
+                        nextLabel={t('pagination.next')}
                         breakLabel={'...'}
                         pageCount={pageCount}
                         marginPagesDisplayed={1}
@@ -949,8 +950,8 @@ const Logs = () => {
                         forcePage={currentPage}
                         containerClassName={'flex items-center lg:justify-center md:justify-center gap-1 sm:gap-2 px-2 min-w-max sm:px-0'}
                         pageLinkClassName={'px-3 py-2 sm:px-3 sm:py-2 rounded-lg block ring-1 ring-inset ring-gray-300 hover:bg-blue-50 hover:ring-blue-500 transition-all text-xs sm:text-sm font-medium no-underline'}
-                        previousLinkClassName={'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline'}
-                        nextLinkClassName={'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline'}
+                        previousLinkClassName={'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline!'}
+                        nextLinkClassName={'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline!'}
                         breakLinkClassName={'px-1 sm:px-3 py-1.5 sm:py-2 text-gray-500 text-xs sm:text-sm no-underline'}
                         activeLinkClassName={'!bg-blue-600 !text-white !ring-blue-600 no-underline'}
                         disabledClassName={'opacity-50 cursor-not-allowed'}

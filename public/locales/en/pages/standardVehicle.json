@@ -1,0 +1,117 @@
+{
+    "title": "Equipment standard",
+    "status": {
+      "saved": "Saved",
+      "standardVehicleId": "StandardVehicle ID",
+      "changeModelId": "ChangeModel ID"
+    },
+    "sections": {
+      "printer": "Printer",
+      "spi": "SPI",
+      "mount": "Mount",
+      "reflow": "Reflow",
+      "aoi": "AOI",
+      "output": "OUTPUT",
+      "worker": "Worker"
+    },
+    "printer": {
+      "title": "Printer",
+      "specGTAL": "Spec pressure value (kg)",
+      "specTDQ": "Spec scan speed (mm/s)",
+      "specTDKC": "Spec table separation distance speed (mm/s)",
+      "specSLL": "Spec wipe count",
+      "specDSL": "Spec blade used",
+      "realGTAL": "Actual pressure value on machine (kg)",
+      "realTDQ": "Actual scan speed on machine (mm/s)",
+      "realTDKC": "Actual table separation speed on machine (mm/s)",
+      "realSLL": "Actual wipe count on machine",
+      "realDSL": "Actual blade used on machine",
+      "program": "Sprinter Program",
+      "vacuumBlock": "After using Vacuum Block, does it affect or impact PCB or components?",
+      "settingSpec": "Spec standard provided",
+      "realSetting": "Actual setting value on machine",
+      "pressureValue": "Screen Sprint setting value",
+      "pressureSpec": "Pressure value",
+      "speedSpec": "Scan speed",
+      "separationSpeed": "Table separation distance speed",
+      "wipeCount": "Wipe count",
+      "bladeUsed": "Blade used"
+    },
+    "spi": {
+      "title": "SPI",
+      "checkItems": "Check items (check SPI setting standard)",
+      "inspectionSetting": "Inspection setting conditions (volume: 60-180%; Area: 40-200%; offset: 0.15, short: 60)",
+      "inspectionOk": "Inspection Setting OK",
+      "program": "SPI Program",
+      "rev": "REV",
+      "imageSPI": "SPI Image"
+    },
+    "mount": {
+      "title": "Mount",
+      "checkFirst3Boards": "Check if the first 3 boards after component mounting are OK?",
+      "checkBottomBoard": "Check if 1 board on the bottom side has NG or broken components?",
+      "program": "Mounter Program",
+      "point": "Point Mounter"
+    },
+    "reflow": {
+      "title": "Reflow",
+      "conveyorWidth": "Check conveyor width condition",
+      "settingRail": "Rail setting value (mm)",
+      "realRail": "Rail actual value (mm)",
+      "program": "Reflow Program",
+      "speed": "Reflow Speed"
+    },
+    "aoi": {
+      "title": "AOI",
+      "xray3Boards": "Are the first 3 Xray boards OK?",
+      "checker": "Inspector",
+      "maoiProgram": "mAoi Program",
+      "saoiProgram": "sAoi Program",
+      "pointSAOI": "Point sAoi",
+      "imageAOI": "AOI Image"
+    },
+    "output": {
+      "title": "Output",
+      "magazineDistance": "Check setting condition, input magazine distance at uploader?",
+      "checker": "Inspector",
+      "settingValue": "Setting value as required",
+      "model": "Model",
+      "pitch": "Pitch"
+    },
+    "worker": {
+      "title": "Worker",
+      "name": "Name",
+      "note": "Note",
+      "nameOP": "OP Name",
+      "nameAOI": "AOI Name",
+      "sampleCheck": "Sample check (5PCB)",
+      "errorName": "Error name",
+      "errorCount": "Error count",
+      "repairStatus": "Repair status"
+    },
+    "modal": {
+      "title": "Vehicle Check Details"
+    },
+    "button": {
+      "uploadImageSPI": "SPI Image",
+      "uploadImageAOI": "AOI Image",
+      "captureImageSPI": "Capture SPI Image",
+      "captureImageAOI": "Capture AOI Image",
+      "orCapture": "📸 Or capture image",
+      "viewImage": "View Image"
+    },
+    "imagePreview": {
+      "selected": "Selected image:"
+    },
+    "error": {
+      "noId": "StandardVehicle ID not found",
+      "noSheetId": "SMD Sheet ID not found",
+      "updateFailed": "An error occurred while updating StandardVehicles",
+      "uploadSPIFailed": "Cannot upload SPI image",
+      "uploadAOIFailed": "Cannot upload AOI image"
+    },
+    "success": {
+      "uploadSPI": "SPI image uploaded successfully",
+      "uploadAOI": "AOI image uploaded successfully"
+    }
+}

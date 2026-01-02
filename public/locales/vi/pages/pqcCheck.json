@@ -1,5 +1,4 @@
 {
-  "pqcCheck": {
     "title": "PQC kiểm tra board đầu",
     "status": {
       "saved": "Đã lưu",
@@ -49,5 +48,4 @@
     "success": {
       "uploadImage": "Upload hình ảnh Standard Production thành công"
     }
-  }
 }

@@ -1,8 +1,7 @@
 {
-  "standardProduction": {
     "title": "생산 표준",
     "status": {
-      "saved": "저장됨",
+      "saved": "저장",
       "standardProductionId": "StandardProduction ID",
       "changeModelId": "변경모델 ID"
     },
@@ -27,7 +26,9 @@
     "button": {
       "uploadImage": "표준 생산 이미지",
       "captureImage": "표준 생산 사진 촬영",
-      "viewImage": "이미지 보기"
+      "viewImage": "이미지 보기",
+      "edit": "편집",
+      "viewDetail": "상세 보기"
     },
     "imagePreview": {
       "title": "표준 생산 이미지",
@@ -42,5 +43,4 @@
     "success": {
       "uploadImage": "표준 생산 이미지 업로드 성공"
     }
-  }
 }

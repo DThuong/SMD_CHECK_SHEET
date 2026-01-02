@@ -1,8 +1,7 @@
 {
-  "pqcCheck": {
     "title": "PQC 첫 보드 검사",
     "status": {
-      "saved": "저장됨",
+      "saved": "저장",
       "pqcCheckId": "PQCCheck ID",
       "changeModelId": "변경모델 ID"
     },
@@ -49,5 +48,4 @@
     "success": {
       "uploadImage": "표준 생산 이미지 업로드 성공"
     }
-  }
 }

@@ -1,5 +1,4 @@
 {
-  "standardProduction": {
     "title": "Tiêu chuẩn sản xuất",
     "status": {
       "saved": "Đã lưu",
@@ -27,7 +26,9 @@
     "button": {
       "uploadImage": "Hình ảnh Standard Production",
       "captureImage": "Chụp ảnh Standard Production",
-      "viewImage": "Xem ảnh"
+      "viewImage": "Xem ảnh",
+      "edit": "Chỉnh sửa",
+      "viewDetail": "Xem chi tiết"
     },
     "imagePreview": {
       "title": "Hình ảnh Standard Production",
@@ -42,5 +43,4 @@
     "success": {
       "uploadImage": "Upload hình ảnh Standard Production thành công"
     }
-  }
 }

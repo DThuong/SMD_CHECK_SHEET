@@ -1,0 +1,54 @@
+{
+  "title": "Sheet Detail",
+  "workOrder": "Work Order",
+  "noWorkOrder": "Not Available",
+  "createdAt": "Created at",
+  "createdBy": "Created by",
+  "status": {
+    "pending": "Pending",
+    "pqcDone": "PQC Done",
+    "engDone": "Engineer Done",
+    "supervisorDone": "Supervisor Done",
+    "managerDone": "Manager Done",
+    "koreaManagerDone": "Korea Manager Done",
+    "unknown": "Unknown"
+  },
+  "mode": {
+    "edit": "Edit Mode",
+    "editDescription": "You can modify and save content",
+    "view": "View Mode",
+    "viewDescription": "This sheet is view-only",
+    "viewOnly": "View Only",
+    "noEditPermission": "(Manager has no edit permission)",
+    "notYourTurn": "(Not your turn to confirm)",
+    "cannotSign": "Cannot sign"
+  },
+  "button": {
+    "back": "Back",
+    "confirm": "Sign & Confirm",
+    "confirming": "Confirming...",
+    "signBy": "Sign & Confirm ({{role}})"
+  },
+  "loading": {
+    "loadingData": "Loading data..."
+  },
+  "error": {
+    "title": "⚠️ An error occurred",
+    "notFound": "Data not found",
+    "loadError": "Error loading sheet",
+    "noPermission": "You don't have permission to confirm this step!",
+    "confirmFailed": "Confirmation failed",
+    "confirmError": "An error occurred while confirming this step"
+  },
+  "success": {
+    "confirmSuccess": "Successfully confirmed by"
+  },
+  "section": {
+    "header": "Basic Information",
+    "checkModel": "Check Model",
+    "standardProduction": "Standard Production",
+    "timeChangeModel": "Time Change Model",
+    "standardVehicle": "Standard Vehicle",
+    "pqcCheck": "PQC Check"
+  }
+}

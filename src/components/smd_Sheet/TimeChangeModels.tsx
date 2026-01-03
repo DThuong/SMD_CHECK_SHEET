@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import Modal from "../general/Modal";
 import ViewDetailButton from "../general/ViewDetailButton";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
@@ -18,7 +18,7 @@ const initialTimeChangeState: TimeChangeModelData = {
     history: "",
 };
 
-const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
+const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
   const [form, setForm] = useState<TimeChangeModelData>(initialTimeChangeState);
       const [open, setOpen] = useState(false);
   
@@ -277,6 +277,6 @@ const TimeChangeModels = ({canEdit}: {canEdit: boolean}) => {
 </Modal>
     </div>
   );
-};
+});
 
 export default TimeChangeModels;

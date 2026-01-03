@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import Modal from "../general/Modal";
 import ViewDetailButton from "../general/ViewDetailButton";
 import { useAppDispatch, useAppSelector  } from "../../redux/hooks";
@@ -26,7 +26,7 @@ const initialFormState: CheckModelData = {
 };
 
 
-export default function CheckModels({canEdit}: {canEdit: boolean}) {
+const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
   const dispatch = useAppDispatch();
   const { completedTables } = useAppSelector(state => state.subTable);
   const checkModel = useAppSelector(state => state.subTable.checkModel);
@@ -476,4 +476,6 @@ export default function CheckModels({canEdit}: {canEdit: boolean}) {
       </Modal>
     </div>
   );
-}
+});
+
+export default CheckModels;

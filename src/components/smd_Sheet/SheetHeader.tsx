@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import Modal from "../general/Modal";
 import ViewDetailButton from "../general/ViewDetailButton";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { uploadBothFiles } from "../../redux/slices/changeModelSlice";
+import { getSheetWithFullObject, uploadBothFiles } from "../../redux/slices/changeModelSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +14,7 @@ interface FileUploadState {
   reflow?: File;
 }
 
-const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
+const SheetHeader = memo(({ canEdit }: { canEdit: boolean }) => {
   const dispatch = useAppDispatch();
   const { currentSheet, error, uploadLoading } = useAppSelector((state) => state.changeModel);
   
@@ -48,6 +48,7 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
         excelFile: tempFileState.lcr,
         pdfFile: tempFileState.reflow,
       })).unwrap();
+      await dispatch(getSheetWithFullObject(currentSheet.id)).unwrap(); // fetch lại sheet để update tên file
 
       showNotification('success', 'Upload thành công!', t('success_msg'));
       setTempFileState({});
@@ -86,13 +87,13 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
     e.target.value = ''; 
   };
   
-  const lcrName = currentSheet?.excelFileUrl && currentSheet.excelFileUrl !== ""
-    ? currentSheet.excelFileUrl.split('/').pop() 
-    : t('noFile');
-  
-  const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl !== ""
-    ? currentSheet.pdfFileUrl.split('/').pop() 
-    : t('noFile');
+  const lcrName = currentSheet?.excelFileUrl && currentSheet.excelFileUrl.trim() !== ""
+  ? currentSheet.excelFileUrl.split('/').pop() 
+  : t('noFile');
+
+const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !== ""
+  ? currentSheet.pdfFileUrl.split('/').pop() 
+  : t('noFile');
 
   const modalLcrName = tempFileState.lcr?.name || lcrName;
   const modalReflowName = tempFileState.reflow?.name || reflowName;
@@ -104,6 +105,17 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
     !!currentSheet?.pdfFileUrl && 
     currentSheet.pdfFileUrl.trim() !== "";
 
+  const hasLcrFile = currentSheet?.excelFileUrl && currentSheet.excelFileUrl.trim() !== "";
+  const hasReflowFile = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !== "";
+
+
+  console.log('File names:', {
+  lcrName,
+  reflowName,
+  excelFileUrl: currentSheet?.excelFileUrl,
+  pdfFileUrl: currentSheet?.pdfFileUrl,
+  splitResult: currentSheet?.excelFileUrl?.split('/').pop(),
+});
   return (
     <div>
       <Notification
@@ -152,7 +164,7 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
                   currentSheet?.excelFileUrl ? 'bg-green-50' : 'bg-orange-50'
                 }`}>
                   <div className="text-sm font-semibold truncate text-gray-800">
-                    {currentSheet?.excelFileUrl || currentSheet?.excelFileUrl === "" ? (
+                    {hasLcrFile ? (
                       <>✓ {lcrName}</>
                     ) : (
                       <>⚠️ Chưa upload</>
@@ -164,7 +176,7 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
                   currentSheet?.pdfFileUrl ? 'bg-green-50' : 'bg-orange-50'
                 }`}>
                   <div className="text-sm font-semibold truncate text-gray-800">
-                    {currentSheet?.pdfFileUrl || currentSheet?.pdfFileUrl === ""  ? (
+                    {hasReflowFile  ? (
                       <>✓ {reflowName}</>
                     ) : (
                       <>⚠️ Chưa upload</>
@@ -323,6 +335,6 @@ const SheetHeader = ({ canEdit }: { canEdit: boolean }) => {
       </div>
     </div>
   );
-};
+});
 
 export default SheetHeader;

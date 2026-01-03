@@ -1,5 +1,5 @@
 import ViewDetailButton from "../general/ViewDetailButton"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, memo } from "react"
 import Modal from "../general/Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchPQCCheck, updatePQCCheck } from "../../redux/slices/subTableSlice";
@@ -26,7 +26,7 @@ const initialPQCChecksState: PQCCheckData = {
   imgIC: ""
 };
 
-const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
+const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
       const [form, setForm] = useState<PQCCheckData>(initialPQCChecksState);
        const [open, setOpen] = useState(false);
    
@@ -521,6 +521,6 @@ const PQCChecks = ({canEdit}: {canEdit: boolean}) => {
       />
     </div>
   )
-}
+})
 
 export default PQCChecks

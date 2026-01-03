@@ -616,13 +616,14 @@ const changeModelSlice = createSlice({
         state.error = null;
       })
       .addCase(uploadFile.fulfilled, (state, action) => {
+        console.log('Upload response:', action.payload);
         state.uploadLoading = false;
         // Cập nhật URL tương ứng
         if (state.currentSheet) {
           if (action.payload.fileType === 'excel') {
-            state.currentSheet.excelFileUrl = action.payload.data.excelFileUrl;
+            state.currentSheet.excelFileUrl = action.payload.data.url;
           } else {
-            state.currentSheet.pdfFileUrl = action.payload.data.pdfFileUrl;
+            state.currentSheet.pdfFileUrl = action.payload.data.url;
           }
         }
       })
@@ -642,10 +643,10 @@ const changeModelSlice = createSlice({
         // Cập nhật cả 2 URLs nếu có
         if (state.currentSheet) {
           if (action.payload.excel?.data?.excelFileUrl) {
-            state.currentSheet.excelFileUrl = action.payload.excel.data.excelFileUrl;
+            state.currentSheet.excelFileUrl = action.payload.excel.data.url;
           }
           if (action.payload.pdf?.data?.pdfFileUrl) {
-            state.currentSheet.pdfFileUrl = action.payload.pdf.data.pdfFileUrl;
+            state.currentSheet.pdfFileUrl = action.payload.pdf.data.url;
           }
         }
       })

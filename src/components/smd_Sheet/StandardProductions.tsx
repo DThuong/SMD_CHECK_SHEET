@@ -1,5 +1,5 @@
 import ViewDetailButton from "../general/ViewDetailButton";
-import { use, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, memo } from "react";
 import Modal from "../general/Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchStandardProduction, updateStandardProduction, uploadStandardProductionFile } from "../../redux/slices/subTableSlice";
@@ -26,7 +26,7 @@ const initialStandardProductState: StandardProductionData = {
 };
 
 // Standard Production Section
-const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
+const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
 
   const dispatch = useAppDispatch();
     // khai báo loading để xử lý loading state trong modal
@@ -48,7 +48,6 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
   const hasUserEditedRef = useRef(false);
 
   const {t} = useTranslation('standardProduction');
-  const {t: t2} = useTranslation('common');
 
   // xử lý upload hình ảnh + preview modal
   const [imagePreview, setImagePreview] = useState<{
@@ -538,6 +537,6 @@ const StandardProductionSection = ({canEdit}: {canEdit: boolean}) => {
   />
     </div>
   );
-};
+});
 
 export default StandardProductionSection

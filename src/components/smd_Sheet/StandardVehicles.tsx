@@ -1,6 +1,6 @@
 import ViewDetailButton from "../general/ViewDetailButton"
 import Modal from "../general/Modal";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, memo } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchStandardVehicle, updateStandardVehicle,uploadAOIImage, uploadSPIImage } from "../../redux/slices/subTableSlice";
 import ImagePreviewModal from "../files/ImagePreviewModal";
@@ -63,7 +63,7 @@ const initialStandardVehiclesState: StandardVehicleData = {
   id: 0,
 };
 
-const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
+const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
    const dispatch = useAppDispatch();
       // khai báo loading để xử lý loading state trong modal
     const { completedTables } = useAppSelector(state => state.subTable);
@@ -1482,6 +1482,6 @@ const StandardVehicles = ({canEdit}: {canEdit: boolean}) => {
   />
     </div>
   )
-}
+});
 
-export default StandardVehicles
+export default StandardVehicles;

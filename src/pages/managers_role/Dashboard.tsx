@@ -141,7 +141,7 @@ const Dashboard = () => {
   const completionRate = React.useMemo(() => {
     if (!sheets || sheets.length === 0) return 0;
     const completed = sheets.filter(s => 
-      s.status === 'KoreaManagerDone' || s.status === 'ManagerDone'
+      s.status === 'KoreaManagerDone'
     ).length;
     return Math.round((completed / sheets.length) * 100);
   }, [sheets]);

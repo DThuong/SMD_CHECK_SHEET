@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import SmdSheetUser from "../components/SmdSheetUser";
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { AiOutlineSearch, AiOutlineClose } from 'react-icons/ai';
 import { MdFavoriteBorder } from "react-icons/md";
 import { BsCalendarDate } from "react-icons/bs";
@@ -50,6 +50,7 @@ const Home = () => {
   });
 
   const { user, isAuthenticated, loading } = useAppSelector(state => state.auth);
+  const location = useLocation();
   const { 
     currentSheet, 
     loading: creatingSheet, 
@@ -83,7 +84,8 @@ const Home = () => {
   // RESTORE SHEET + SUB-TABLES KHI RELOAD
   useEffect(() => {
     const restoreSheet = async () => {
-      if (activeTab === 'create' && sheetIdFromUrl && !currentSheet) {
+      if (sheetIdFromUrl) {
+        setActiveTab('create');
         setLoadingSheets(true);
         
         //  Reset completed tables trước khi load
@@ -151,7 +153,7 @@ const Home = () => {
     };
 
     restoreSheet();
-  }, [activeTab, sheetIdFromUrl, currentSheet, dispatch]);
+  }, [location.search,sheetIdFromUrl, dispatch]);
 
 
   // Notification logic

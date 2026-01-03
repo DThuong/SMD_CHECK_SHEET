@@ -50,6 +50,11 @@ const FileDetailViewer = () => {
     navigate(newPath, { replace: true });
   };
 
+   const handleGoBack = () => {
+    // Navigate về trang home với tab=create và sheetId
+    navigate(`/?tab=create&sheetId=${id}`, { replace: true });
+  };
+
   // Loading state - chờ load sheet hoặc files
   if (sheetLoading || fileLoading) {
     return <LoadingSpinner />;
@@ -62,7 +67,7 @@ const FileDetailViewer = () => {
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600">Error loading files: {fileError}</p>
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleGoBack}
             className="mt-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
           >
             ← Go Back
@@ -80,7 +85,7 @@ const FileDetailViewer = () => {
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600">Sheet not found</p>
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleGoBack}
             className="mt-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
           >
             ← Go Back
@@ -105,7 +110,7 @@ const FileDetailViewer = () => {
       {/* Header */}
       <div className="mb-6">
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleGoBack}
           className="mb-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition inline-flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

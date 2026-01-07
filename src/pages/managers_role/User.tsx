@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react';
 import type { ChangeEvent } from 'react';
 import { FaUser, FaPhone, FaSearch, FaEdit, FaTrash, FaSave, FaTimes, FaKey, FaUserPlus } from 'react-icons/fa';
@@ -330,6 +331,7 @@ const User = () => {
       case 'Supervisior': return 'bg-gray-100 text-black border-blue-300';
       case 'ENG': return 'bg-gray-100 text-black border-blue-300';
       case 'PQC': return 'bg-gray-100 text-black border-blue-300';
+      case 'PQCLeader': return 'bg-yellow-100 text-yellow-700 border-yellow-400';
       default: return 'bg-gray-100 text-gray-700 border-gray-300';
     }
   };
@@ -715,6 +717,7 @@ const User = () => {
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   >
                     <option value="PQC">PQC</option>
+                    <option value="PQCLeader">PQC Leader</option>
                     <option value="ENG">ENG</option>
                     <option value="Supervisior">Supervisior</option>
                     <option value="Manager">Manager</option>
@@ -949,6 +952,7 @@ const User = () => {
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
                     <option value="PQC">PQC</option>
+                    <option value="PQCLeader">PQC Leader</option>
                     <option value="ENG">ENG</option>
                     <option value="Supervisior">Supervisior</option>
                     <option value="Manager">Manager</option>

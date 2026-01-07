@@ -7,6 +7,8 @@
     "noSheet": "시트 없음",
     "sheets": "시트",
     "statusCards": {
+      "needPQCLeader": "PQC Leader 서명 필요 시트",
+      "descPQCLeader": "PQC Leader 서명 필요 시트",
       "needEng": "엔지니어 서명 필요 시트",
       "descEng": "ENG 서명 필요 시트",
       "needSupervisor": "감독자 서명 필요 시트",

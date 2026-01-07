@@ -1,13 +1,18 @@
-import { useEffect, useState, memo } from "react";
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useEffect, useState, memo, useRef } from "react";
 import Modal from "../general/Modal";
 import ViewDetailButton from "../general/ViewDetailButton";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { updateTimeChangeModel, fetchTimeChangeModel } from "../../redux/slices/subTableSlice";
+import { updateTimeChangeModel, fetchTimeChangeModel, uploadTimeChangeModelIssueImage } from "../../redux/slices/subTableSlice";
 import type { TimeChangeModelData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import { formatDateTime } from "../../utils/formatTime";
 import { useTranslation } from "react-i18next";
+import ImageViewIcon from "../files/ImageViewIcon";
+import { FaCamera } from "react-icons/fa";
+import { IoEyeSharp } from "react-icons/io5";
+import ImagePreviewModal from "../files/ImagePreviewModal";
 
 const initialTimeChangeState: TimeChangeModelData = {
     qc: "",
@@ -16,10 +21,12 @@ const initialTimeChangeState: TimeChangeModelData = {
     endTime: undefined, // time
     countTime: undefined,
     history: "",
+    note: "",
+    imgIssue: "",
 };
 
 const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
-  const [form, setForm] = useState<TimeChangeModelData>(initialTimeChangeState);
+      const [form, setForm] = useState<TimeChangeModelData>(initialTimeChangeState);
       const [open, setOpen] = useState(false);
   
       const dispatch = useAppDispatch();
@@ -33,8 +40,81 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
       const { notification, showNotification,  hideNotification } = useNotification();
       const {t} = useTranslation('timeChangeModel');
       const {t: t2} = useTranslation('common');
+
+      const isUploadingRef = useRef(false);
+
+       // xử lý upload hình ảnh + preview modal
+      const [imagePreview, setImagePreview] = useState<{
+        isOpen: boolean;
+        imageUrl: string;
+        title: string;
+      }>({
+        isOpen: false,
+        imageUrl: "",
+        title: ""
+      });
+
+      // hàm mở preview
+      const openImagePreview = (imageUrl: string, title: string) => {
+        setImagePreview({
+          isOpen: true,
+          imageUrl,
+          title
+        });
+      };
+
+      // hàm đóng preview
+      const closeImagePreview = () => {
+        setImagePreview({
+          isOpen: false,
+          imageUrl: "",
+          title: ""
+        });
+      };
+
+        // xử lý upload hình ảnh với flag
+        const handleImageUpload = async (field: 'imgIssue', event: React.ChangeEvent<HTMLInputElement>) => {
+          const file = event.target.files?.[0];
+          if (!file) return;
+        
+          if (!timeChangeModelId) {
+            showNotification('error', 'Lỗi upload', 'Không tìm thấy TimeChangeModel ID');
+            return;
+          }
+        
+          try {
+            // Set flag TRƯỚC KHI upload
+            isUploadingRef.current = true;
+            
+            if (field === 'imgIssue') {
+              const result = await dispatch(uploadTimeChangeModelIssueImage({ 
+                timeChangeModelId: Number(timeChangeModelId), 
+                file 
+              })).unwrap();
+            
+              // Chỉ cập nhật field, KHÔNG trigger re-sync toàn bộ form
+              if (result?.imageUrl) {
+                setForm(prev => ({
+                  ...prev,
+                  imgIssue: result.imageUrl
+                }));
+              }
+              
+              showNotification('success', 'Thành công', 'Upload hình ảnh time change model: Vấn đề phát sinh thành công');
+            }
+        
+          } catch (error) {
+            console.error('Failed to upload image:', error);
+            showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
+          } finally {
+            // Reset flag SAU KHI upload xong (thành công hay thất bại)
+            isUploadingRef.current = false;
+          }
+        };
+        
+
   
-      // fetch data khi programcheck thay đổi
+      // fetch data khi timeChangeModel thay đổi
       useEffect(() => {
         if (timeChangeModelId) {
           dispatch(fetchTimeChangeModel(timeChangeModelId));
@@ -133,6 +213,28 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
               <th className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">QC</th>
               <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.qc || ""}</td>
             </tr>
+
+            {/*** Row 16 - Note */}
+            <tr>
+              <th className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Ghi chú vấn đề phát sinh</th>
+              <td colSpan={13} className="border border-gray-600 px-2 py-2 text-xs">{form.note || ""}</td>
+            </tr>
+
+            {/** Row 17 - Hình ảnh vấn đề phát sinh */}
+            <tr>
+              <th className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Hình ảnh vấn đề phát sinh</th>
+              <td colSpan={13} className="border border-gray-600 px-2 py-2 text-xs">
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <ImageViewIcon 
+                      imageUrl={form.imgIssue} 
+                      title="Hình ảnh vấn đề phát sinh"
+                      onView={openImagePreview}
+                    />
+                  </div>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -187,6 +289,26 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
             <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.history')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 whitespace-pre-wrap wrap-break-word">
               {form.history || "—"}
+            </div>
+          </div>
+
+          {/** Note */}
+          <div className="mb-3 min-w-0">
+            <div className="text-xs font-semibold text-gray-600 mb-1">Ghi chú vấn đề phát sinh</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 whitespace-pre-wrap wrap-break-word">
+              {form.note || "—"}
+            </div>
+          </div>
+
+          {/** Hình ảnh Vấn đề phát sinh */}
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh vấn đề phát sinh</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
+              <ImageViewIcon 
+                imageUrl={form.imgIssue} 
+                title="Hình ảnh Vấn đề phát sinh"
+                onView={openImagePreview}
+              />
             </div>
           </div>
         </div>
@@ -257,7 +379,7 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
         <input
           type="number"
           value={form.countTime ?? ""}
-          onChange={(e) => set("countTime", e.target.value ? Number(e.target.value) : undefined)}
+          onChange={(e) => set("countTime", Number(e.target.value))}
           className="block w-full border rounded px-3 py-2 text-sm"
           placeholder="Nhập số phút..."
         />
@@ -269,12 +391,87 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
           value={form.history ?? ""}
           onChange={(e) => set("history", e.target.value.toUpperCase())}
           className="focus:outline-none block w-full border rounded px-3 py-2 text-sm min-h-20 resize-y wrap-break-words uppercase"
-          placeholder="Nhập lịch sử..."
+          placeholder=""
         />
       </div>
+
+      {/** Vấn đề phát sinh */}
+      <div className="min-w-0">
+        <label className="text-xs block mb-1">Ghi chú vấn đề phát sinh</label>
+        <textarea
+          value={form.note}
+          onChange={(e) => set("note", e.target.value.toUpperCase())}
+          className="focus:outline-none block w-full border rounded px-3 py-2 text-sm min-h-20 resize-y wrap-break-words uppercase"
+          placeholder=""
+        />
+      </div>
+
+      {/** Hình ảnh vấn đề phát sinh */}
+        <label className="block text-xs font-medium mb-1 mt-2">Hình ảnh vấn đề phát sinh</label>
+            <div className="">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageUpload('imgIssue', e)}
+                className="border border-gray-300 rounded px-3 py-2 w-full"
+              />
+            </div>
+      
+            
+                  <div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={(e) => handleImageUpload('imgIssue', e)}
+                    className="hidden"
+                    id="camera-capture-issue-timeChangeModel"
+                  />
+                  <label
+                  htmlFor="camera-capture-issue-timeChangeModel"
+                  className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
+                >
+                  {/* Thêm display: inline-block hoặc inline-flex */}
+                    <div className="inline-flex items-center">
+                      <FaCamera size={15} />
+                    </div>
+                    <div className="inline-flex items-center mx-2">
+                      Chụp ảnh vấn đề phát sinh
+                    </div>
+                </label>
+                </div>
+            
+            {/* Preview Section */}
+            {form.imgIssue && (
+            <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
+              <div className="flex items-center gap-3">
+                <img 
+                  src={form.imgIssue} 
+                  alt="Standard Production Preview" 
+                  className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
+                  onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh TimeChangeModel: vấn đề phát sinh")} 
+                />
+                <button
+                  type="button"
+                  onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh TimeChangeModel: vấn đề phát sinh")}
+                  className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+                >
+                  <IoEyeSharp size={20} />
+                  <span className="text-sm font-medium">Xem ảnh</span>
+                </button>
+              </div>
+            </div>
+          )}
     </div>
   </div>
 </Modal>
+<ImagePreviewModal
+    isOpen={imagePreview.isOpen}
+    imageUrl={imagePreview.imageUrl}
+    title={imagePreview.title}
+    onClose={closeImagePreview}
+  />
     </div>
   );
 });

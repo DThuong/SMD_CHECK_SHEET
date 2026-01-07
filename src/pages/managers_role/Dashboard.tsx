@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { FaUsers, FaFileAlt, FaChartLine, FaCheckCircle, FaSpinner, FaClock, FaUserCheck } from 'react-icons/fa';
@@ -22,6 +23,7 @@ const Dashboard = () => {
   const statusKeyMap: Record<string, string> = {
     'pending': 'pending',
     'PQCDone': 'pqcDone',
+    'PQCLeaderDone': 'pqcLeaderDone', // thêm
     'ENGDone': 'engDone',
     'SupervisiorDone': 'supervisorDone',
     'ManagerDone': 'managerDone',
@@ -68,6 +70,7 @@ const Dashboard = () => {
 
     const colors: Record<string, string> = {
       'PQC': '#3b82f6',
+      'PQCLeader': '#3b82f3', // thêm
       'ENG': '#10b981',
       'Supervisior': '#f59e0b',
       'Manager': '#ef4444',
@@ -91,6 +94,7 @@ const Dashboard = () => {
     const statusColors: Record<string, string> = {
       'Pending': '#94a3b8',
       'PQCDone': '#3b82f6',
+      'PQCLeaderDone': '#3b82f3', // thêm
       'ENGDone': '#10b981',
       'SupervisiorDone': '#f59e0b',
       'ManagerDone': '#ef4444',
@@ -175,14 +179,72 @@ const Dashboard = () => {
   
   // DASHBOARD CHO ENG/SUPERVISOR/MANAGER/KOREA_MANAGER
   if (user?.role !== 'Admin') {
-    // Định nghĩa cards theo role
-    const roleCards = {
+  // Định nghĩa cards theo role
+  const roleCards = {
+    'PQCLeader': [
+    { 
+      status: 'PQCDone', 
+      label: t('roleBasedDashboard.statusCards.needPQCLeader'),
+      description: t('roleBasedDashboard.statusCards.descPQCLeader'),
+      color: 'blue',
+      icon: '',
+      isUserCard: true
+    },
+    { 
+      status: 'PQCLeaderDone', 
+      label: t('roleBasedDashboard.statusCards.needEng'),
+      description: t('roleBasedDashboard.statusCards.descEng'),
+      color: 'green',
+      icon: '',
+      isUserCard: false
+    },
+    { 
+      status: 'ENGDone', 
+      label: t('roleBasedDashboard.statusCards.needSupervisor'),
+      description: t('roleBasedDashboard.statusCards.descSupervisor'),
+      color: 'green',
+      icon: '',
+      isUserCard: false
+    },
+    { 
+      status: 'SupervisiorDone', 
+      label: t('roleBasedDashboard.statusCards.needManager'),
+      description: t('roleBasedDashboard.statusCards.descManager'),
+      color: 'purple',
+      icon: '',
+      isUserCard: false
+    },
+    { 
+      status: 'ManagerDone', 
+      label: t('roleBasedDashboard.statusCards.needKoreaManager'),
+      description: t('roleBasedDashboard.statusCards.descKoreaManager'),
+      color: 'orange',
+      icon: '',
+      isUserCard: false
+    },
+    { 
+      status: 'KoreaManagerDone', 
+      label: t('roleBasedDashboard.statusCards.completed'),
+      description: t('roleBasedDashboard.statusCards.descCompleted'),
+      color: 'teal',
+      icon: '',
+      isUserCard: false
+    }
+  ],
   'ENG': [
     { 
       status: 'PQCDone', 
+      label: t('roleBasedDashboard.statusCards.needPQCLeader'),
+      description: t('roleBasedDashboard.statusCards.descPQCLeader'),
+      color: 'blue',
+      icon: '',
+      isUserCard: false
+    },
+    { 
+      status: 'PQCLeaderDone', 
       label: t('roleBasedDashboard.statusCards.needEng'),
       description: t('roleBasedDashboard.statusCards.descEng'),
-      color: 'blue',
+      color: 'green',
       icon: '',
       isUserCard: true
     },
@@ -222,9 +284,17 @@ const Dashboard = () => {
   'Supervisior': [
     { 
       status: 'PQCDone', 
+      label: t('roleBasedDashboard.statusCards.needPQCLeader'),
+      description: t('roleBasedDashboard.statusCards.descPQCLeader'),
+      color: 'blue',
+      icon: '',
+      isUserCard: false
+    },
+    { 
+      status: 'PQCLeaderDone', 
       label: t('roleBasedDashboard.statusCards.needEng'),
       description: t('roleBasedDashboard.statusCards.descEng'),
-      color: 'blue',
+      color: 'green',
       icon: '',
       isUserCard: false
     },
@@ -264,9 +334,17 @@ const Dashboard = () => {
   'Manager': [
     { 
       status: 'PQCDone', 
+      label: t('roleBasedDashboard.statusCards.needPQCLeader'),
+      description: t('roleBasedDashboard.statusCards.descPQCLeader'),
+      color: 'blue',
+      icon: '',
+      isUserCard: false
+    },
+    { 
+      status: 'PQCLeaderDone', 
       label: t('roleBasedDashboard.statusCards.needEng'),
       description: t('roleBasedDashboard.statusCards.descEng'),
-      color: 'blue',
+      color: 'green',
       icon: '',
       isUserCard: false
     },
@@ -306,9 +384,17 @@ const Dashboard = () => {
   'KoreaManager': [
     { 
       status: 'PQCDone', 
+      label: t('roleBasedDashboard.statusCards.needPQCLeader'),
+      description: t('roleBasedDashboard.statusCards.descPQCLeader'),
+      color: 'blue',
+      icon: '',
+      isUserCard: false
+    },
+    { 
+      status: 'PQCLeaderDone', 
       label: t('roleBasedDashboard.statusCards.needEng'),
       description: t('roleBasedDashboard.statusCards.descEng'),
-      color: 'blue',
+      color: 'green',
       icon: '',
       isUserCard: false
     },

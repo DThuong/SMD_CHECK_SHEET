@@ -2,7 +2,7 @@ import ViewDetailButton from "../general/ViewDetailButton";
 import { useEffect, useRef, useState, memo } from "react";
 import Modal from "../general/Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { fetchStandardProduction, updateStandardProduction, uploadStandardProductionFile } from "../../redux/slices/subTableSlice";
+import { fetchStandardProduction, updateStandardProduction, uploadStandardProductionFile, uploadStandardProductionIssueImage } from "../../redux/slices/subTableSlice";
 import type { StandardProductionData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
@@ -23,6 +23,8 @@ const initialStandardProductState: StandardProductionData = {
     useOnly: "",
     labelProgram: "",
     imgStandard: "",
+    note: "",
+    imgIssue: "",
 };
 
 // Standard Production Section
@@ -115,7 +117,7 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
   }
 
   // xử lý upload hình ảnh với flag
-  const handleImageUpload = async (field: 'imgStandard', event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (field: 'imgStandard' | 'imgIssue', event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
   
@@ -143,6 +145,23 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
         }
         
         showNotification('success', 'Thành công', 'Upload hình ảnh Standard Production thành công');
+      }
+
+      if (field === 'imgIssue') {
+        const result = await dispatch(uploadStandardProductionIssueImage({ 
+          StandardProductionId: Number(standardProductionId), 
+          file 
+        })).unwrap();
+      
+        // Chỉ cập nhật field imgStandard, KHÔNG trigger re-sync toàn bộ form
+        if (result?.imageUrl) {
+          setForm(prev => ({
+            ...prev,
+            imgIssue: result.imageUrl
+          }));
+        }
+        
+        showNotification('success', 'Thành công', 'Upload hình ảnh Standard Production: Vấn đề phát sinh thành công');
       }
   
     } catch (error) {
@@ -282,6 +301,26 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
                 </div>
               </td>
             </tr>
+            {/** row 12.1: Ghi chú vấn đề phát sinh */}
+            <tr>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Ghi chú vấn đề phát sinh</th>
+              <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">{form.note || ""}</td>
+            </tr>
+            {/** row 13: hình ảnh vấn đề phát sinh */}
+            <tr>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Hình ảnh vấn đề phát sinh</th>
+              <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <ImageViewIcon 
+                      imageUrl={form.imgIssue} 
+                      title="Hình ảnh vấn đề phát sinh"
+                      onView={openImagePreview}
+                    />
+                  </div>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -360,6 +399,26 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
           <ImageViewIcon 
             imageUrl={form.imgStandard} 
             title="Hình ảnh Standard Production"
+            onView={openImagePreview}
+          />
+        </div>
+      </div>
+
+    {/* ghi chú vấn đề phát sinh */}
+    <div className="mb-3">
+      <div className="text-xs font-semibold text-gray-600 mb-1">Ghi chú vấn đề phát sinh</div>
+      <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
+        {form.note || "—"}
+      </div>
+    </div>
+
+    {/** hình ảnh vấn đề phát sinh */}
+    <div className="mb-3">
+        <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh vấn đề phát sinh</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
+          <ImageViewIcon 
+            imageUrl={form.imgIssue} 
+            title="Hình ảnh StandardProduction: Vấn đề phát sinh"
             onView={openImagePreview}
           />
         </div>
@@ -518,6 +577,73 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
           <button
             type="button"
             onClick={() => openImagePreview(form.imgStandard!, "Hình ảnh Standard Production")}
+            className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            <IoEyeSharp size={20} />
+            <span className="text-sm font-medium">Xem ảnh</span>
+          </button>
+        </div>
+      </div>
+    )}
+
+    <label className="text-xs">
+      Ghi chú vấn đề phát sinh
+      <textarea 
+        value={form.note} 
+        onChange={(e) => set("note", e.target.value.toUpperCase())} 
+        className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
+        placeholder=""
+      />
+    </label>
+
+      <label className="block text-sm font-medium mb-1">Hình ảnh Vấn đề phát sinh</label>
+      <div className="">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleImageUpload('imgIssue', e)}
+          className="border border-gray-300 rounded px-3 py-2 w-full"
+        />
+      </div>
+
+      
+            <div>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => handleImageUpload('imgIssue', e)}
+              className="hidden"
+              id="camera-capture-issue-standard"
+            />
+            <label
+            htmlFor="camera-capture-issue-standard"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
+          >
+            {/* Thêm display: inline-block hoặc inline-flex */}
+              <div className="inline-flex items-center">
+                <FaCamera size={15} />
+              </div>
+              <div className="inline-flex items-center mx-2">
+                Chụp ảnh vấn đề phát sinh
+              </div>
+          </label>
+          </div>
+      
+      {/* Preview Section */}
+      {form.imgIssue && (
+      <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
+        <div className="flex items-center gap-3">
+          <img 
+            src={form.imgIssue} 
+            alt="Standard Production Preview" 
+            className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
+            onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Standard Production: Vấn đề phát sinh")} 
+          />
+          <button
+            type="button"
+            onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Standard Production: Vấn đề phát sinh")}
             className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
           >
             <IoEyeSharp size={20} />

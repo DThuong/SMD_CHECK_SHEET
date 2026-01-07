@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo } from 'react';
 import { useAppDispatch, useAppSelector, useNotification } from '../../redux/hooks';
 import { downloadLCRExcelFile } from '../../redux/slices/FileSlice';
@@ -14,16 +16,21 @@ interface LCRFullTableProps {
 const LCRFullTable = ({ lcrData }: LCRFullTableProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterDecide, setFilterDecide] = useState<'ALL' | 'OK' | 'NG'>('ALL');
+  const [filterDecide, setFilterDecide] = useState<'ALL' | 'OK' | 'NG' | 'SKIP'>('ALL');
   const itemsPerPage = 20;
 
   const { currentSheet } = useAppSelector((state) => state.changeModel);
   const dispatch = useAppDispatch();
   const { showNotification } = useNotification();
 
-  // ✅ Filter & Search
+  // Filter & Search
   const filteredData = useMemo(() => {
     let filtered = lcrData.data;
+
+    filtered = filtered.filter(item => {
+      const range = item.range?.trim() || '';
+      return range !== '' && range !== '0.0~0.0';
+    });
 
     if (filterDecide !== 'ALL') {
       filtered = filtered.filter(item => item.decide === filterDecide);
@@ -35,23 +42,33 @@ const LCRFullTable = ({ lcrData }: LCRFullTableProps) => {
         item.loc.toLowerCase().includes(term) ||
         item.partCode.toLowerCase().includes(term) ||
         item.model.toLowerCase().includes(term) ||
-        item.measure.toLowerCase().includes(term)
+        item.measure.toLowerCase().includes(term) ||
+        item.decide.toLowerCase().includes(term)
       );
     }
 
     return filtered;
   }, [lcrData.data, filterDecide, searchTerm]);
 
-  // ✅ Pagination
+  // Pagination
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
-  // ✅ Statistics
-  const okCount = lcrData.data.filter(item => item.decide === 'OK').length;
-  const ngCount = lcrData.data.filter(item => item.decide === 'NG').length;
+  // Statistics
+    const validData = useMemo(() => {
+    return lcrData.data.filter(item => {
+      const range = item.range?.trim() || '';
+      return range !== '' && range !== '0.0~0.0';
+    });
+  }, [lcrData.data]);
 
-  // ✅ Download handler
+  const okCount = validData.filter(item => item.decide === 'OK').length;
+  const ngCount = validData.filter(item => item.decide === 'NG').length;
+  const skipCount = validData.filter(item => item.decide === 'SKIP').length;
+  const validCount = validData.length;
+
+  // Download handler
   const handleDownload = async () => {
     if (!currentSheet?.id) {
       showNotification('error', 'Lỗi', 'Không tìm thấy Sheet ID');
@@ -74,25 +91,51 @@ const LCRFullTable = ({ lcrData }: LCRFullTableProps) => {
           <div>
             <h2 className="text-xl font-bold text-gray-800">LCR File Data - Full View</h2>
             <p className="text-sm text-gray-600 mt-1">
-              Total: <span className="font-semibold">{lcrData.count}</span> items | 
-              <span className="text-xs text-gray-500 ml-2">Scroll horizontally to view all 27 columns →</span>
+              Total: <span className="font-semibold">{validCount}</span> items 
+              <span className="text-xs text-gray-400 ml-1">
+                ({lcrData.count - validCount} items hidden)
+              </span> | 
+              <span className="text-xs text-gray-500 ml-2">Kéo sang ngang để xem toàn bộ 27 cột →</span>
             </p>
           </div>
           
           {/* Statistics */}
           <div className="flex gap-4">
+            {/**total */}
+            <div className="px-4 py-2 bg-gray-100 rounded-lg">
+              <p className="text-xs text-gray-600">Total</p>
+              <p className="text-lg font-bold text-gray-600">{validCount}</p>
+            </div>
             <div className="px-4 py-2 bg-green-100 rounded-lg">
               <p className="text-xs text-gray-600">OK</p>
               <p className="text-lg font-bold text-green-600">{okCount}</p>
+            </div>
+            <div className="px-4 py-2 bg-orange-100 rounded-lg">
+              <p className="text-xs text-gray-600">SKIP</p>
+              <p className="text-lg font-bold text-orange-600">{skipCount}</p>
             </div>
             <div className="px-4 py-2 bg-red-100 rounded-lg">
               <p className="text-xs text-gray-600">NG</p>
               <p className="text-lg font-bold text-red-600">{ngCount}</p>
             </div>
+            
             <div className="px-4 py-2 bg-blue-100 rounded-lg">
               <p className="text-xs text-gray-600">Pass Rate</p>
               <p className="text-lg font-bold text-blue-600">
-                {((okCount / lcrData.count) * 100).toFixed(1)}%
+                {validCount > 0 ? ((okCount / validCount) * 100).toFixed(1) : '0.0'}%
+              </p>
+            </div>
+            <div className="px-4 py-2 bg-orange-100 rounded-lg">
+              <p className="text-xs text-gray-600">Skip Rate</p>
+              <p className="text-lg font-bold text-orange-600">
+                {validCount > 0 ? ((skipCount / validCount) * 100).toFixed(1) : '0.0'}%
+              </p>
+            </div>
+            {/** NG Rate */}
+            <div className="px-4 py-2 bg-red-100 rounded-lg">
+              <p className="text-xs text-gray-600">NG Rate</p>
+              <p className="text-lg font-bold text-red-600">
+                {validCount > 0 ? ((ngCount / validCount) * 100).toFixed(1) : '0.0'}%
               </p>
             </div>
           </div>
@@ -116,7 +159,7 @@ const LCRFullTable = ({ lcrData }: LCRFullTableProps) => {
           </div>
 
           <div className="flex gap-2">
-            {(['ALL', 'OK', 'NG'] as const).map((status) => (
+            {(['ALL', 'OK', 'SKIP', 'NG'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => {

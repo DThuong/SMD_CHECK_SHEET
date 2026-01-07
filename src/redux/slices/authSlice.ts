@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // quản lý trạng thái authentication
 // createSlice: hàm của redux toolkit giúp tạo Slice (gồm reducer + action)
 // createAsyncThunk: hàm của redux toolkit giúp tạo action async với các tham số (payloadAction) với các trạng thái (pending, fulfilled, rejected) sinh tự động

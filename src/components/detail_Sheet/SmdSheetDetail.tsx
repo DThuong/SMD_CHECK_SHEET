@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import CheckModels from "../smd_Sheet/CheckModels";
 import PQCChecks from "../smd_Sheet/PQCChecks";
@@ -35,6 +36,18 @@ const SmdSheetDetail = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
   const [openModal ,setOpenModal] = useState(false);
+  const location = useLocation();
+  const returnPath = (location.state as any)?.returnPath || '/?tab=list';
+
+  const handleGoBack = () => {
+    if (returnPath) {
+      // Priority 1: Navigate về exact path đã lưu
+      navigate(returnPath);
+    } else {
+      // Priority 2: Fallback navigate(-1)
+      navigate(-1);
+    }
+  };
   
   // Lấy data từ Redux store
   const { currentSheet, loading, error } = useAppSelector((state) => state.changeModel);
@@ -338,7 +351,7 @@ const SmdSheetDetail = () => {
 
       {/* Hiển thị các component */}
       <div className={!canEdit ? 'pointer-events-none' : ''}>
-        <SheetHeader canEdit={canEdit} />
+        <SheetHeader canEdit={canEdit} returnPath={returnPath} />
         <CheckModels canEdit={canEdit} />
         <StandardProductionSection canEdit={canEdit} />
         <TimeChangeModels canEdit={canEdit} />
@@ -350,7 +363,7 @@ const SmdSheetDetail = () => {
       {/* Buttons */}
       <div className="w-full sticky bottom-0 bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-4 flex items-center justify-center gap-3 shadow-lg mt-4 z-10">
         <button
-          onClick={() => navigate('/my-sheets')}
+          onClick={handleGoBack}
           className="px-4 lg:py-3 md:py-3 py-3 bg-gray-600 text-white rounded-lg! font-semibold hover:bg-gray-700 transition-colors"
         >
           Quay lại

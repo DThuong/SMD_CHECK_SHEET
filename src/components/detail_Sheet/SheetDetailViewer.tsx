@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { IoEyeSharp } from "react-icons/io5";
 import { MdModeEdit } from "react-icons/md";
@@ -36,6 +38,8 @@ const SheetDetailViewer = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const location = useLocation();
+  const returnPath = (location.state as any)?.returnPath;
   
   // Lấy data từ Redux store
   const { currentSheet, loading, error } = useAppSelector((state) => state.changeModel);
@@ -48,14 +52,20 @@ const SheetDetailViewer = () => {
   const canEdit = () => {
     if (!user || !currentSheet) return false;
     
-    const userRole = user.role;
-    const status = currentSheet.status?.toLowerCase();
-    
-    if (userRole === 'ENG' && status === 'pqcdone') return true;
-    if (userRole === 'Supervisior' && status === 'engdone') return true;
+  const userRole = user.role;
+  const status = currentSheet.status?.toLowerCase();
+  // PQCLeader chỉ edit khi PQCDone
+  if (userRole === 'PQCLeader' && status === 'pqcdone') return true;
+  
+  // ENG chỉ edit khi PQCLeaderDone
+  if (userRole === 'ENG' && status === 'pqcleaderdone') return true;
+  
+  // SUPERVISOR chỉ edit khi ENGDone
+  if (userRole === 'Supervisior' && status === 'engdone') return true;
     
     return false;
   };
+
 
   const canConfirm = () => {
     if (!user || !currentSheet) return false;
@@ -64,8 +74,10 @@ const SheetDetailViewer = () => {
     const status = currentSheet.status?.toLowerCase();
     
     switch (userRole) {
-      case 'ENG':
+      case 'PQCLeader':
         return status === 'pqcdone';
+      case 'ENG':
+      return status === 'pqcleaderdone';
       case 'Supervisior':
         return status === 'engdone';
       case 'Manager':
@@ -74,6 +86,17 @@ const SheetDetailViewer = () => {
         return status === 'managerdone';
       default:
         return false;
+    }
+  };
+
+
+   const handleBack = () => {
+    if (returnPath) {
+      // Priority 1: Navigate về exact path đã lưu
+      navigate(returnPath);
+    } else {
+      // Priority 2: Fallback navigate(-1)
+      navigate(-1);
     }
   };
 
@@ -97,7 +120,7 @@ const SheetDetailViewer = () => {
                   }
                 }
                 
-                // ✅ StandardProduction
+                // StandardProduction
                 if (result.standardProduction) {
                   dispatch(setStandardProduction(result.standardProduction));
                   
@@ -110,7 +133,7 @@ const SheetDetailViewer = () => {
                   }
                 }
                 
-                // ✅ TimeChangeModel
+                // TimeChangeModel
                 if (result.timeChangeModel) {
                   dispatch(setTimeChangeModel(result.timeChangeModel));
                   
@@ -122,7 +145,7 @@ const SheetDetailViewer = () => {
                   }
                 }
                 
-                // ✅ StandardVehicle
+                // StandardVehicle
                 if (result.standardVehicle) {
                   dispatch(setStandardVehicle(result.standardVehicle));
                   
@@ -134,7 +157,7 @@ const SheetDetailViewer = () => {
                   }
                 }
                 
-                // ✅ PQCCheck
+                // PQCCheck
                 if (result.pqcCheck) {
                   dispatch(setPQCCheck(result.pqcCheck));
                   
@@ -232,6 +255,7 @@ const SheetDetailViewer = () => {
     const statusLabels: Record<string, string> = {
       'pending': 'Pending',
       'pqcdone': 'PQC Done',
+      'pqcleaderdone': 'PQC Leader Done',
       'engdone': 'Engineer Done',
       'supervisiordone': 'Supervisor Done',
       'managerdone': 'Manager Done',
@@ -324,7 +348,7 @@ const SheetDetailViewer = () => {
 
       {/* Hiển thị các component */}
       <div className={!isEditable ? 'pointer-events-none' : ''}>
-        <SheetHeader canEdit={isEditable} />
+        <SheetHeader canEdit={isEditable} returnPath={returnPath} />
         <CheckModels canEdit={isEditable} />
         <StandardProductionSection canEdit={isEditable} />
         <TimeChangeModels canEdit={isEditable} />
@@ -335,7 +359,7 @@ const SheetDetailViewer = () => {
       {/* Buttons */}
       <div className="w-full sticky bottom-0 bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-4 flex items-center justify-center gap-3 shadow-lg mt-4 z-10">
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleBack}
           className="px-4 py-3 bg-gray-600 text-white text-sm font-semibold hover:bg-gray-700 transition-colors"
         >
           {t('button.back')}

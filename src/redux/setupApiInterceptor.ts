@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/redux/setupApiInterceptor.ts
 import type { AxiosInstance } from "axios";
 import type { Store } from "@reduxjs/toolkit";
@@ -7,19 +8,15 @@ let isLoggingOut = false;
 
 export const setupApiInterceptor = (api: AxiosInstance, store: Store) => {
   
-  // ✅ REQUEST INTERCEPTOR - Check mỗi khi gọi API
+  // REQUEST INTERCEPTOR - Check mỗi khi gọi API
   api.interceptors.request.use(
     (config) => {
       const state = store.getState() as { auth: any };
       const reduxToken = state.auth.token;
       const localToken = localStorage.getItem('token');
       
-      // ✅ CRITICAL CHECK: Token mismatch
+      // CRITICAL CHECK: Token mismatch
       if (reduxToken && localToken && reduxToken !== localToken) {
-        console.warn('⚠️ REQUEST INTERCEPTOR: Token mismatch detected!');
-        console.log('Redux token:', reduxToken.substring(0, 20) + '...');
-        console.log('Local token:', localToken.substring(0, 20) + '...');
-        
         if (!isLoggingOut) {
           isLoggingOut = true;
           

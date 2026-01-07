@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../redux/hooks';
@@ -18,6 +19,11 @@ const FileDetailViewer = () => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const [lcrViewMode, setLcrViewMode] = useState<LcrViewMode>('full');
+
+  const from = (location.state as any)?.from;
+  const returnPath = (location.state as any)?.returnPath;
+  const originalReturnPath = (location.state as any)?.originalReturnPath;
+  const user = useAppSelector((state) => state.auth.user);
   
   const { currentSheet, loading: sheetLoading } = useAppSelector((state) => state.changeModel);
   const { lcrFileData, reflowFileUrl, loading: fileLoading, error: fileError } = useAppSelector(
@@ -47,12 +53,29 @@ const FileDetailViewer = () => {
   const handleChangeTab = (tab: FileType) => {
     if (!id) return;
     const newPath = location.pathname.replace(/(lcr|reflow)$/, tab);  
-    navigate(newPath, { replace: true });
+    navigate(newPath, { 
+      replace: true,
+      state: { from, returnPath, originalReturnPath } // Giữ lại state khi đổi tab
+    });
   };
 
-   const handleGoBack = () => {
-    // Navigate về trang home với tab=create và sheetId
-    navigate(`/?tab=create&sheetId=${id}`, { replace: true });
+    const handleGoBack = () => {
+    if (returnPath) {
+      // Priority 1: Navigate về SheetDetailViewer VÀ truyền lại originalReturnPath
+      navigate(returnPath, {
+        state: { 
+          from: 'logs',
+          returnPath: originalReturnPath // Truyền lại path của Logs
+        }
+      });
+    } else if (from === 'sheetDetail') {
+      // Priority 2: Build path từ role và id
+      const roleLower = user?.role?.toLowerCase();
+      navigate(`/${roleLower}/sheet-detail/${id}`);
+    } else {
+      // Priority 3: Fallback về home
+      navigate(`/?tab=create&sheetId=${id}`, { replace: true });
+    }
   };
 
   // Loading state - chờ load sheet hoặc files
@@ -170,19 +193,6 @@ const FileDetailViewer = () => {
           {/* View Mode Toggle (only show for LCR tab) */}
           {fileType === 'lcr' && hasLcrData && (
             <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
-              {/* <button
-                onClick={() => setLcrViewMode('expandable')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition inline-flex items-center gap-2 ${
-                  lcrViewMode === 'expandable'
-                    ? 'bg-white text-green-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                </svg>
-                Expandable View
-              </button> */}
               <button
                 onClick={() => setLcrViewMode('full')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition inline-flex items-center gap-2 ${

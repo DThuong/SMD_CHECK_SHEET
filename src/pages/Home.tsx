@@ -1,3 +1,6 @@
+/* eslint-disable no-empty */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from 'react';
 import SmdSheetUser from "../components/SmdSheetUser";
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
@@ -18,6 +21,13 @@ import { useNotification } from '../redux/hooks';
 import Notification from '../components/general/Notification';
 import { hasAllRequiredData, REQUIRED_FIELDS_CONFIG } from '../utils/requiredFieldsConfig';
 import { ConfirmModal } from '../components/general/ConfirmModal';
+import { 
+  saveHomeFilterState, 
+  getHomeFilterState,
+  saveSelectedSheetId,
+  getSelectedSheetId,
+  clearSelectedSheetId
+} from '../utils/navigationState';
 
 type SheetFilter = {
   workOrder: string;
@@ -39,6 +49,7 @@ const Home = () => {
   const [loadingSheets, setLoadingSheets] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
   const [deletingSheetId, setDeletingSheetId] = useState<number | null>(null);
+  const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
 
   const [confirmCreateModal, setConfirmCreateModal] = useState(false);
   const [confirmDeleteModal, setConfirmDeleteModal] = useState<{
@@ -63,16 +74,25 @@ const Home = () => {
   const itemsPerPage = 5;
   const { showNotification, hideNotification, notification } = useNotification();
 
+  // Filter state
+  const [filter, setFilter] = useState<SheetFilter>({
+    workOrder: '',
+    fromDate: '',
+    fcode: '',
+    toDate: '',
+    id: 0,
+    status: 'all'
+  });
+
   useEffect(() => {
     if(!loading && !isAuthenticated){
       navigate('/login');
     }
   }, [loading, isAuthenticated]);
 
-    useEffect(() => {
+  useEffect(() => {
     const params: Record<string, string> = { tab: activeTab };
     
-    // Nếu đang ở tab create VÀ có currentSheet → thêm sheetId vào URL
     if (activeTab === 'create' && currentSheet?.id) {
       params.sheetId = currentSheet.id.toString();
     }
@@ -80,27 +100,18 @@ const Home = () => {
     setSearchParams(params, { replace: true });
   }, [activeTab, currentSheet?.id, setSearchParams]);
 
-   // RESTORE SHEET KHI RELOAD (nếu có sheetId trong URL)
-  // RESTORE SHEET + SUB-TABLES KHI RELOAD
+  // RESTORE SHEET KHI RELOAD
   useEffect(() => {
     const restoreSheet = async () => {
       if (sheetIdFromUrl) {
         setActiveTab('create');
         setLoadingSheets(true);
-        
-        //  Reset completed tables trước khi load
         dispatch(resetCompletedTables());
         
         try {
-          //  Load sheet WITH full objects (bao gồm sub-tables)
           const result = await dispatch(getSheetWithFullObject(Number(sheetIdFromUrl))).unwrap();
-          
-          //  Set main sheet vào Redux
           dispatch(setCurrentSheet(result));
           
-          //  LOAD CÁC BẢNG CON VÀO REDUX (giống SmdSheetDetail)
-          
-          // CheckModel
           if (result.checkModel) {
             dispatch(setCheckModel(result.checkModel));
             if (hasAllRequiredData(result.checkModel, REQUIRED_FIELDS_CONFIG.CheckModel)) {
@@ -108,7 +119,6 @@ const Home = () => {
             }
           }
           
-          // StandardProduction
           if (result.standardProduction) {
             dispatch(setStandardProduction(result.standardProduction));
             if (hasAllRequiredData(result.standardProduction, REQUIRED_FIELDS_CONFIG.StandardProduction)) {
@@ -116,7 +126,6 @@ const Home = () => {
             }
           }
           
-          // TimeChangeModel
           if (result.timeChangeModel) {
             dispatch(setTimeChangeModel(result.timeChangeModel));
             if (hasAllRequiredData(result.timeChangeModel, REQUIRED_FIELDS_CONFIG.TimeChangeModel)) {
@@ -124,7 +133,6 @@ const Home = () => {
             }
           }
           
-          // StandardVehicle
           if (result.standardVehicle) {
             dispatch(setStandardVehicle(result.standardVehicle));
             if (hasAllRequiredData(result.standardVehicle, REQUIRED_FIELDS_CONFIG.StandardVehicle)) {
@@ -132,7 +140,6 @@ const Home = () => {
             }
           }
           
-          // PQCCheck
           if (result.pqcCheck) {
             dispatch(setPQCCheck(result.pqcCheck));
             if (hasAllRequiredData(result.pqcCheck, REQUIRED_FIELDS_CONFIG.PQCCheck)) {
@@ -153,25 +160,23 @@ const Home = () => {
     };
 
     restoreSheet();
-  }, [location.search,sheetIdFromUrl, dispatch]);
-
+  }, [location.search, sheetIdFromUrl, dispatch]);
 
   // Notification logic
   const [showLoginNoti, setShowLoginNoti] = useState(() => {
-  try {
-    return sessionStorage.getItem("justLoggedIn") === "1";
-  } catch {
-    return false;
-  }
-});
+    try {
+      return sessionStorage.getItem("justLoggedIn") === "1";
+    } catch {
+      return false;
+    }
+  });
 
-    useEffect(() => {
+  useEffect(() => {
     if (!showLoginNoti) return;
     try { sessionStorage.removeItem("justLoggedIn"); } catch {}
     const timer = setTimeout(() => setShowLoginNoti(false), 2000);
     return () => clearTimeout(timer);
   }, [showLoginNoti]);
-
 
   // Notification khi có lỗi
   const [showErrorNoti, setShowErrorNoti] = useState(false);
@@ -187,71 +192,122 @@ const Home = () => {
     }
   }, [sheetError, dispatch]);
 
-  // Filter state
-  const [filter, setFilter] = useState<SheetFilter>({
-    workOrder: '',
-    fromDate: '',
-    fcode: '',
-    toDate: '',
-    id: 0,
-    status: 'all'
-  });
+  // ✅ PATTERN TỪ LOGS: Load sheets với filter được truyền vào
+  const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
+    try {
+      const hasWorkOrder = filterToUse.workOrder.trim() !== '';
+      const hasDateRange = filterToUse.fromDate !== '' && filterToUse.toDate !== '';
+      const hasStatus = filterToUse.status !== '' && filterToUse.status !== 'all';
+      const hasFcode = filterToUse.fcode.trim() !== '';
+      const hasId = filterToUse.id && filterToUse.id > 0;
+
+      if (hasWorkOrder || hasDateRange || hasStatus || hasFcode || hasId) {
+        const filterParams: any = {
+          workOrder: hasWorkOrder ? filterToUse.workOrder.trim() : undefined,
+          fromDate: hasDateRange ? filterToUse.fromDate : undefined,
+          toDate: hasDateRange ? filterToUse.toDate : undefined,
+          status: hasStatus ? filterToUse.status : undefined,
+          fcode: hasFcode ? filterToUse.fcode.trim() : undefined,
+        };
+
+        if (hasId) {
+          filterParams.id = filterToUse.id;
+        }
+
+        await dispatch(getSheetByFilter(filterParams)).unwrap();
+        return;
+      }
+
+      if (user?.role === 'PQC') {
+        await dispatch(fetchChangeModel()).unwrap();
+        return;
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Lỗi khi tải sheets:', error);
+      if (error?.message) {
+        showNotification('error', `Lỗi khi tải sheets: ${error.message}`);
+      }
+    }
+  };
+
+  // ✅ PATTERN TỪ LOGS: EFFECT 1 - Load initial data hoặc restore saved state
+  useEffect(() => {
+    const savedState = getHomeFilterState();
+    const savedSheetId = getSelectedSheetId();
+    
+    // Restore highlight nếu có
+    if (savedSheetId) {
+      setSelectedSheetId(savedSheetId);
+    }
+    
+    if (savedState.filter) {
+      // Restore from saved state
+      setFilter(savedState.filter);
+      setCurrentPage(savedState.currentPage);
+      setActiveTab(savedState.activeTab as 'create' | 'list');
+      
+      // Load sheets sau khi setFilter
+      if (savedState.activeTab === 'list') {
+        setTimeout(() => {
+          loadSheetsWithFilter(savedState.filter);
+          
+          // Scroll to highlighted row
+          if (savedSheetId) {
+            setTimeout(() => {
+              const row = document.getElementById(`sheet-row-${savedSheetId}`);
+              if (row) {
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }, 500);
+          }
+        }, 100);
+      }
+    } else {
+      // Load all sheets nếu không có saved state
+      if (activeTab === 'list') {
+        loadSheets();
+      }
+    }
+
+    // Clear highlight sau 2 giây
+    if (savedSheetId) {
+      const timer = setTimeout(() => {
+        setSelectedSheetId(null);
+        clearSelectedSheetId();
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, []); // CHỈ CHẠY 1 LẦN KHI MOUNT
+
+  // ✅ PATTERN TỪ LOGS: EFFECT 2 - Auto save filter state
+  useEffect(() => {
+    if (filteredSheets && filteredSheets.length > 0 && activeTab === 'list') {
+      saveHomeFilterState(filter, currentPage, activeTab);
+    }
+  }, [filter, currentPage, activeTab, filteredSheets]);
 
   // Load sheets khi chuyển sang tab list
   useEffect(() => {
     if (activeTab === 'list') {
-      resetFilter();
-      loadSheets();
+      const savedState = getHomeFilterState();
+      if (!savedState.filter) {
+        resetFilter();
+        loadSheets();
+      }
     }
   }, [activeTab]);
 
-  // SMART LOAD SHEETS - Tự động chọn API phù hợp
+  // Load sheets
   const loadSheets = async () => {
-  try {
-    const hasWorkOrder = filter.workOrder.trim() !== '';
-    const hasDateRange = filter.fromDate !== '' && filter.toDate !== '';
-    const hasStatus = filter.status !== '' && filter.status !== 'all';
-    const hasFcode = filter.fcode.trim() !== '';
-    const hasId = filter.id && filter.id > 0;
+    await loadSheetsWithFilter(filter);
+  };
 
-    // Có bất kỳ filter nào → Dùng filterAll API
-    if (hasWorkOrder || hasDateRange || hasStatus || hasFcode || hasId) {
-      const filterParams: any = {
-        workOrder: hasWorkOrder ? filter.workOrder.trim() : undefined,
-        fromDate: hasDateRange ? filter.fromDate : undefined,
-        toDate: hasDateRange ? filter.toDate : undefined,
-        status: hasStatus ? filter.status : undefined,
-        fcode: hasFcode ? filter.fcode.trim() : undefined,
-      };
-
-      //  CHỈ thêm id khi có giá trị > 0
-      if (hasId) {
-        filterParams.id = filter.id;
-      }
-
-      await dispatch(getSheetByFilter(filterParams)).unwrap();
-      return;
-    }
-
-    // PQC: load sheet của cả hệ thống
-    if (user?.role === 'PQC') {
-      await dispatch(fetchChangeModel()).unwrap();
-      return;
-    }
-    
-  } catch (error: any) {
-    console.error('❌ Lỗi khi tải sheets:', error);
-    // Optionally show error to user
-    if (error?.message) {
-      showNotification('error', `Lỗi khi tải sheets: ${error.message}`);
-    }
-  }
-};
-
-  //  APPLY FILTER - Gọi lại API khi user click "Tìm kiếm"
+  // Apply filter
   const applyFilter = () => {
     setCurrentPage(0);
-    // Validate date range nếu chỉ có 1 ngày
+    
     if (filter.fromDate && !filter.toDate) {
       showNotification('error', 'Vui lòng chọn "Đến ngày"');
       return;
@@ -261,7 +317,6 @@ const Home = () => {
       return;
     }
 
-    // Validate date range logic
     if (filter.fromDate && filter.toDate) {
       const from = new Date(filter.fromDate);
       const to = new Date(filter.toDate);
@@ -275,7 +330,7 @@ const Home = () => {
     loadSheets();
   };
 
-  //  RESET FILTER
+  // Reset filter
   const resetFilter = async () => {
     setFilter({ 
       workOrder: '', 
@@ -285,7 +340,7 @@ const Home = () => {
       toDate: '',
       status: 'all'
     });
-    // Load lại sheet của hệ thống
+    
     try {
       await dispatch(fetchChangeModel()).unwrap();
       setCurrentPage(0);
@@ -294,7 +349,7 @@ const Home = () => {
     }
   };
 
-  //  FORMAT DATETIME
+  // Format datetime
   const formatDateTime = (dateString?: string): string => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -307,89 +362,81 @@ const Home = () => {
     });
   };
 
-  //  GET STATUS BADGE COLOR & TEXT
+  // Get status badge
   const getStatusBadge = (sheet: ChangeModelResponse) => {
-  const status = sheet.status?.toLowerCase();
-  
-  //  Kiểm tra xem có phải trạng thái "Done" không
-  const isDone = status && status !== 'pending';
-  
-  // Status label mapping (hiển thị đẹp cho user)
-  const statusLabels: Record<string, string> = {
-    'pending': 'Pending',
-    'pqcdone': 'PQC Done',
-    'engdone': 'Engineer Done',
-    'supervisiordone': 'Supervisor Done',
-    'managerdone': 'Manager Done',
-    'koreamanagerdone': 'Korea Manager Done',
+    const status = sheet.status?.toLowerCase();
+    const isDone = status && status !== 'pending';
+    
+    const statusLabels: Record<string, string> = {
+      'pending': 'Pending',
+      'pqcdone': 'PQC Done',
+      'engdone': 'Engineer Done',
+      'supervisiordone': 'Supervisor Done',
+      'managerdone': 'Manager Done',
+      'koreamanagerdone': 'Korea Manager Done',
+    };
+
+    const label = statusLabels[status || 'pending'] || (sheet.status || 'Unknown');
+    const bgColor = isDone ? 'bg-green-50' : 'bg-yellow-100';
+    const textColor = isDone ? 'text-green-700' : 'text-yellow-700';
+    const iconColor = isDone ? '#16a34a' : '#FFCC33';
+
+    return (
+      <div className={`flex items-center gap-1 ${bgColor} ${textColor} rounded-full px-2 py-1 text-xs font-medium`}>
+        <FaRegClock color={iconColor} /> 
+        <span>{label}</span>
+      </div>
+    );
   };
 
-  //  Lấy label đẹp
-  const label = statusLabels[status || 'pending'] || (sheet.status || 'Unknown');
+  const canViewDetail = (sheet: ChangeModelResponse): boolean => {
+    if (!user) return false;
+    return true;
+  };
 
-  //  Chọn màu: Pending = Vàng, Done = Xanh lá
-  const bgColor = isDone ? 'bg-green-50' : 'bg-yellow-100';
-  const textColor = isDone ? 'text-green-700' : 'text-yellow-700';
-  const iconColor = isDone ? '#16a34a' : '#FFCC33'; // green-600 : yellow-500
+  const canDeleteSheet = (sheet: ChangeModelResponse): boolean => {
+    if (!user) return false;
 
-  return (
-    <div className={`flex items-center gap-1 ${bgColor} ${textColor} rounded-full px-2 py-1 text-xs font-medium`}>
-      <FaRegClock color={iconColor} /> 
-      <span>{label}</span>
-    </div>
-  );
-};
+    const status = sheet.status?.toLowerCase();
+    const userRole = user.role?.toUpperCase();
 
-//  KIỂM TRA QUYỀN XEM CHI TIẾT
-const canViewDetail = (sheet: ChangeModelResponse): boolean => {
-  if (!user) return false;
-  return true;
-};
+    if (status !== 'pending') {
+      return false;
+    }
 
-// KIỂM TRA QUYỀN XÓA SHEET
-const canDeleteSheet = (sheet: ChangeModelResponse): boolean => {
-   if (!user) return false;
+    if (userRole === 'PQC') {
+      if (!sheet.account) return false;
+      return sheet.account.id === user.id || sheet.account.userName === user.username;
+    }
+    
+    return false;
+  };
 
-  const status = sheet.status?.toLowerCase();
-  const userRole = user.role?.toUpperCase();
+  // ✅ PATTERN TỪ LOGS: HANDLE VIEW DETAIL - Save state trước khi navigate
+  const handleViewDetail = (sheet: ChangeModelResponse) => {
+    if (!canViewDetail(sheet)) {
+      showNotification(
+        'error', 
+        'Không có quyền truy cập', 
+        'Bạn không có quyền xem chi tiết sheet do người khác tạo ra'
+      );
+      return;
+    }
 
-  // QUY TẮC 1: Chỉ được xóa sheet ở trạng thái "Pending"
-  // Sheet đã được ký (PQCDone, ENGDone, ...) KHÔNG được xóa
-  if (status !== 'pending') {
-    return false; // Không ai được xóa sheet đã được duyệt
-  }
+    // ✅ Save state trước khi navigate (giống Logs)
+    saveHomeFilterState(filter, currentPage, activeTab);
+    saveSelectedSheetId(sheet.id);
+    
+    const currentPath = '/?tab=list'; // Path để quay về Home
+    
+    navigate(`/pqc-sheet-detail/${sheet.id}`, {
+      state: {
+        from: 'home',
+        returnPath: currentPath
+      }
+    });
+  };
 
-  // QUY TẮC 2: PQC chỉ xóa sheet do chính mình tạo
-  if (userRole === 'PQC') {
-    if (!sheet.account) return false;
-    return sheet.account.id === user.id || sheet.account.userName === user.username;
-  }
-  // QUY TẮC 3: Các role khác (ENG, SUPERVISOR, MANAGER, KOREA_MANAGER)
-  // Option A: Chỉ MANAGER/KOREA_MANAGER mới được xóa
-  // return ['MANAGER', 'KOREAMANAGER'].includes(userRole);
-  // Option B: Tất cả role cao hơn PQC đều được xóa sheet Pending
-  // return ['ENG', 'SUPERVISIOR', 'MANAGER', 'KOREAMANAGER'].includes(userRole);
-  // Option C: Không ai được xóa ngoài PQC (strict mode)
-  return false;
-}
-
-//  HANDLE VIEW DETAIL WITH PERMISSION CHECK
-const handleViewDetail = (sheet: ChangeModelResponse) => {
-  // Kiểm tra quyền
-  if (!canViewDetail(sheet)) {
-    showNotification(
-      'error', 
-      'Không có quyền truy cập', 
-      'Bạn không có quyền xem chi tiết sheet do người khác tạo ra'
-    );
-    return;
-  }
-  
-  // Cho phép xem chi tiết
-  navigate(`/pqc-sheet-detail/${sheet.id}`);
-};
-
-// Hàm này chỉ hiển thị modal xác nhận xóa
   const handleDeleteSheet = (sheet: ChangeModelResponse) => {
     setConfirmDeleteModal({
       open: true,
@@ -397,39 +444,33 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
     });
   };
 
-  // Hàm này mới thực sự xóa sheet (khi user confirm)
   const handleConfirmDelete = async () => {
     const sheet = confirmDeleteModal.sheet;
     if (!sheet) return;
 
     try {
-      // Đóng modal trước
       setConfirmDeleteModal({ open: false, sheet: null });
-      
-      setDeletingSheetId(sheet.id); // Set loading state
+      setDeletingSheetId(sheet.id);
       
       const result = await dispatch(deleteSheetById(sheet.id)).unwrap();
       
       if (result) {
         showNotification('success', 'Xóa sheet thành công', `Sheet #${sheet.id} đã được xóa`);
         
-        // SMART PAGINATION: Nếu xóa item cuối cùng của trang
         const totalPages = Math.ceil((sortedSheets.length - 1) / itemsPerPage);
         if (currentPage >= totalPages && currentPage > 0) {
-          setCurrentPage(currentPage - 1); // Lùi về trang trước
+          setCurrentPage(currentPage - 1);
         }
         
-        // Reload danh sách
         await loadSheets();
       }
     } catch (error: any) {
       showNotification('error', 'Lỗi khi xóa sheet', error.message || 'Vui lòng thử lại');
     } finally {
-      setDeletingSheetId(null); // Clear loading state
+      setDeletingSheetId(null);
     }
   };
 
-  //  HANDLE CREATE NEW SHEET
   const handleCreateNewSheet = async () => {
     if (user?.role?.toUpperCase() !== 'PQC') {
       showNotification('error', 'Chỉ PQC mới có thể tạo sheet mới');
@@ -439,10 +480,8 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
     setConfirmCreateModal(true);
   };
 
-  // Hàm này mới thực sự tạo sheet (khi user confirm)
   const handleConfirmCreateSheet = async () => {
     try {
-      // Đóng modal trước
       setConfirmCreateModal(false);
       
       dispatch(clearSheet());
@@ -468,25 +507,25 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
     }
   };
 
-  // Sort sheets by date (newest first)
+  // Sort sheets
   const sortedSheets = [...(filteredSheets || [])].sort((a, b) => {
     const dateA = new Date(a.createAt || 0).getTime();
     const dateB = new Date(b.createAt || 0).getTime();
     return dateB - dateA;
   });
 
-  // pagination cho userSheets
+  // Pagination
   const pageCount = Math.ceil(sortedSheets.length / itemsPerPage);
   const offset = currentPage * itemsPerPage;
   const currentSheets = sortedSheets.slice(offset, offset + itemsPerPage);
+  
   const handlePageChange = (selectedItem: { selected: number }) => {
     setCurrentPage(selectedItem.selected);
     
-    // Scroll đến vị trí results thay vì top
     if (resultsRef.current) {
       resultsRef.current.scrollIntoView({ 
         behavior: 'smooth',
-        block: 'start' // 'start' | 'center' | 'end' | 'nearest'
+        block: 'start'
       });
     }
   };
@@ -500,7 +539,8 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
         message={notification.message}
         onClose={hideNotification}
       />
-      {/* Thông báo đăng nhập thành công */}
+
+      {/* Login notification */}
       {user && isAuthenticated && showLoginNoti && (
         <div className="fixed top-4 left-1/2 px-3 -translate-x-1/2 z-50 w-full max-w-[900px] animate-slide-down">
           <div className="bg-green-50 border-l-4 border-green-600 p-3 rounded shadow">
@@ -512,7 +552,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
         </div>
       )}
 
-      {/* Thông báo lỗi */}
+      {/* Error notification */}
       {showErrorNoti && sheetError && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[500px] animate-slide-down">
           <div className="bg-red-50 border-l-4 border-red-600 p-4 rounded shadow-lg">
@@ -526,7 +566,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
         <Link to="/login"></Link>
       ) : null}
 
-      {/* Component home render */}
+      {/* Main content */}
       <div className="bg-white rounded-lg shadow p-4">
         {/* Tabs */}
         <div className="flex gap-2 mb-4 mx-0">
@@ -541,17 +581,17 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
           >
             {creatingSheet ? 'Đang tạo...' : 'Tạo Sheet Mới'}
           </button>
-            {/** modal xác nhận tạo sheet mới */}
-            <ConfirmModal
-              open={confirmCreateModal}
-              title="Xác nhận tạo Sheet mới"
-              message="Bạn có chắc chắn muốn tạo Sheet mới không?"
-              confirmText="Tạo mới"
-              cancelText="Hủy"
-              type="info"
-              onConfirm={handleConfirmCreateSheet}
-              onCancel={() => setConfirmCreateModal(false)}
-            />
+          
+          <ConfirmModal
+            open={confirmCreateModal}
+            title="Xác nhận tạo Sheet mới"
+            message="Bạn có chắc chắn muốn tạo Sheet mới không?"
+            confirmText="Tạo mới"
+            cancelText="Hủy"
+            type="info"
+            onConfirm={handleConfirmCreateSheet}
+            onCancel={() => setConfirmCreateModal(false)}
+          />
 
           <button
             onClick={() => setActiveTab('list')}
@@ -617,6 +657,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
+                
                 {/* fcode */}
                 <div>
                   <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
@@ -630,6 +671,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
+                
                 {/* Work Order */}
                 <div>
                   <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
@@ -644,7 +686,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                   />
                 </div>
 
-                {/* Status - 6 TRẠNG THÁI */}
+                {/* Status */}
                 <div>
                   <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
                     <FaRegClock /> <span>Trạng thái</span>
@@ -665,7 +707,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                   </select>
                 </div>
 
-                {/* From Date - Format YYYY-MM-DD */}
+                {/* From Date */}
                 <div>
                   <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
                     <BsCalendarDate /> <span>Từ ngày</span>
@@ -680,7 +722,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                   />
                 </div>
 
-                {/* To Date - Format YYYY-MM-DD */}
+                {/* To Date */}
                 <div>
                   <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
                     <BsCalendarDate /> <span>Đến ngày</span>
@@ -735,48 +777,39 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                 </div>
               ) : currentSheets.length > 0 ? (
                 <>
-                  {/*  HIỂN THỊ SHEETS THEO TRANG */}
                   <div className="grid gap-3">
                     {currentSheets.map((sheet) => (
                       <div 
-                        key={sheet.id} 
-                        className="lg:p-4 p-3 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-white cursor-pointer"
+                        key={sheet.id}
+                        id={`sheet-row-${sheet.id}`}
+                        className={`lg:p-4 p-3 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-500 bg-white cursor-pointer ${
+                          selectedSheetId === sheet.id
+                            ? 'bg-yellow-50 border-yellow-400 shadow-xl ring-2 ring-yellow-300'
+                            : ''
+                        }`}
                       >
                         <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center justify-between">
                           <div className="flex-1 w-full">
                             <div className="flex flex-wrap items-center gap-2">
-                              {/* Sheet ID */}
                               <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
                                 ID: {sheet.id}
                               </span>
                               
-                              {/* Created By */}
                               {sheet.account && (
                                 <span className="text-xs bg-amber-100 px-2 py-1 rounded-lg">
                                   Người tạo: <strong>{sheet.account.fullName || sheet.account.userName}</strong>
                                 </span>
                               )}
                               
-                              {/* Date */}
                               <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
                                 {formatDateTime(sheet.createAt)}
                               </span>
                               
-                              {/* Status Badge */}
                               {getStatusBadge(sheet)}
-
-                              {/* 🔒 ICON KHÓA nếu không có quyền */}
-                              {/* {!canViewDetail(sheet) && (
-                                <span className="px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-semibold flex items-center gap-1">
-                                  <AiOutlineLock size={13} />
-                                  Bị khóa
-                                </span>
-                              )} */}
                             </div>
                           </div>
 
                           {/* Actions */}
-                          {/** View detail and edit */}
                           <div className="w-full lg:w-auto">
                             <button
                               onClick={() => handleViewDetail(sheet)}
@@ -800,7 +833,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                               {canViewDetail(sheet) ? 'Xem chi tiết' : 'Không thể xem'}
                             </button>
                           </div>
-                          {/** Delete */}
+                          
                           <div className="w-full lg:w-auto">
                             <button
                               onClick={() => handleDeleteSheet(sheet)}
@@ -816,7 +849,7 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                                 font-medium 
                                 ${
                                   deletingSheetId === sheet.id
-                                    ? 'bg-gray-400 text-white cursor-wait' // Loading state
+                                    ? 'bg-gray-400 text-white cursor-wait'
                                     : canDeleteSheet(sheet)
                                     ? 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -832,7 +865,6 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                             </button>
                           </div>
 
-                          {/* Confirm Modal for Delete */}
                           <ConfirmModal
                             open={confirmDeleteModal.open}
                             title="Xác nhận xóa Sheet"
@@ -852,51 +884,51 @@ const handleViewDetail = (sheet: ChangeModelResponse) => {
                     ))}
                   </div>
 
-                  {/* PAGINATION COMPONENT */}
+                  {/* PAGINATION */}
                   {pageCount > 1 && (
-                  <div className="mt-4 flex justify-center px-3">
-                    <div className="w-full max-w-full">
-                      <div className="overflow-x-auto scrollbar-hide">
-                        <ReactPaginate
-                          previousLabel={'Trước'}
-                          nextLabel={'Sau'}
-                          breakLabel={'...'}
-                          pageCount={pageCount}
-                          marginPagesDisplayed={1}
-                          pageRangeDisplayed={2}
-                          onPageChange={handlePageChange}
-                          forcePage={currentPage}
-                          containerClassName={'flex items-center lg:justify-center md:justify-center gap-1 sm:gap-2 px-2 min-w-max sm:px-0'}
-                          pageClassName={''}
-                          pageLinkClassName={
-                            'px-3 py-2 sm:px-3 sm:py-2 rounded-lg block ' +
-                            'ring-1 ring-inset ring-gray-300 ' +
-                            'hover:bg-blue-50 hover:ring-blue-500 transition-all ' +
-                            'text-xs sm:text-sm font-medium no-underline'
-                          }
-                          previousClassName={''}
-                          previousLinkClassName={
-                            'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ' +
-                            'ring-1 ring-inset ring-gray-300 ' +
-                            'hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline'
-                          }
-                          nextClassName={''}
-                          nextLinkClassName={
-                            'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ' +
-                            'ring-1 ring-inset ring-gray-300 ' +
-                            'hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline'
-                          }
-                          breakClassName={''}
-                          breakLinkClassName={'px-1 sm:px-3 py-1.5 sm:py-2 text-gray-500 text-xs sm:text-sm no-underline'}
-                          activeClassName={''}
-                          activeLinkClassName={'!bg-blue-600 !text-white !ring-blue-600 no-underline'}
-                          disabledClassName={'opacity-50 cursor-not-allowed'}
-                          disabledLinkClassName={'!cursor-not-allowed hover:!bg-transparent no-underline'}
-                        />
+                    <div className="mt-4 flex justify-center px-3">
+                      <div className="w-full max-w-full">
+                        <div className="overflow-x-auto scrollbar-hide">
+                          <ReactPaginate
+                            previousLabel={'Trước'}
+                            nextLabel={'Sau'}
+                            breakLabel={'...'}
+                            pageCount={pageCount}
+                            marginPagesDisplayed={1}
+                            pageRangeDisplayed={2}
+                            onPageChange={handlePageChange}
+                            forcePage={currentPage}
+                            containerClassName={'flex items-center lg:justify-center md:justify-center gap-1 sm:gap-2 px-2 min-w-max sm:px-0'}
+                            pageClassName={''}
+                            pageLinkClassName={
+                              'px-3 py-2 sm:px-3 sm:py-2 rounded-lg block ' +
+                              'ring-1 ring-inset ring-gray-300 ' +
+                              'hover:bg-blue-50 hover:ring-blue-500 transition-all ' +
+                              'text-xs sm:text-sm font-medium no-underline'
+                            }
+                            previousClassName={''}
+                            previousLinkClassName={
+                              'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ' +
+                              'ring-1 ring-inset ring-gray-300 ' +
+                              'hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline'
+                            }
+                            nextClassName={''}
+                            nextLinkClassName={
+                              'px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ' +
+                              'ring-1 ring-inset ring-gray-300 ' +
+                              'hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline'
+                            }
+                            breakClassName={''}
+                            breakLinkClassName={'px-1 sm:px-3 py-1.5 sm:py-2 text-gray-500 text-xs sm:text-sm no-underline'}
+                            activeClassName={''}
+                            activeLinkClassName={'!bg-blue-600 !text-white !ring-blue-600 no-underline'}
+                            disabledClassName={'opacity-50 cursor-not-allowed'}
+                            disabledLinkClassName={'!cursor-not-allowed hover:!bg-transparent no-underline'}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
                 </>
               ) : (
                 <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">

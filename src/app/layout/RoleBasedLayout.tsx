@@ -1,3 +1,4 @@
+/* eslint-disable no-empty */
 // src/router/layout/RoleBasedLayout.tsx
 import { useState, useEffect } from "react";
 import { Link, NavLink, Outlet, useParams, Navigate, } from "react-router-dom";
@@ -45,6 +46,7 @@ const RoleBasedLayout = () => {
       supervisior: "Supervisor",
       manager: "Manager",
       koreamanager: "Korea Manager",
+      pqcleader: "PQC Leader",
     };
     return (
       roleMap[roleName.toLowerCase()] ||

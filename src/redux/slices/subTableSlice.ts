@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import smdApi from '../services/smdApi'; // Chỉ import smdApi
 
@@ -18,7 +19,9 @@ export interface CheckModelData {
     feederCheck?: string,
     opAccept?: string,
     jig?: boolean,
-    codePCB?: string
+    codePCB?: string,
+    note?: string, // thêm
+    imgIssue?: string // thêm
 }
 
 // StandardProduction
@@ -32,6 +35,8 @@ export interface StandardProductionData {
   useOnly?: string;
   labelProgram?: string;
   imgStandard?: string;
+  note?: string; // thêm
+  imgIssue?: string; // thêm
 }
 
 // TimeChangeModel
@@ -43,6 +48,8 @@ export interface TimeChangeModelData {
   countTime?: number;
   history?: string;
   id?: number;
+  note?: string; // thêm
+  imgIssue?: string; // thêm
 }
 
 // StandardVehicle
@@ -94,6 +101,12 @@ export interface StandardVehicleData {
   imgAOI?: string;
 
   id?: number;
+
+  note?: string; // thêm
+  imgIssue?: string; // thêm
+  imgMounter?: string; // thêm
+  imgPrinter?: string; // thêm
+  imgPrinterClean?: string; // thêm
 }
 
 // PQCCheck
@@ -108,6 +121,8 @@ export interface PQCCheckData {
   nameCheck?: string;
   resultLCR?: boolean;
   imgIC?: string;
+  note?: string; // thêm
+  imgIssue?: string; // thêm
 }
 
 // ==================== STATE ====================
@@ -278,6 +293,7 @@ export const fetchTimeChangeModel = createAsyncThunk(
   }
 );
 
+// ----------------------------------UPLOAD IMAGE ----------------------------------------
 // upload standard product image
 export const uploadStandardProductionFile = createAsyncThunk(
   'subTable/uploadStandardProductionImage',
@@ -350,6 +366,158 @@ export const uploadPQCCheckImage = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Không thể tải PQCCheck');
+    }
+  }
+)
+
+// Upload check model issue image
+export const uploadCheckModelIssueImage = createAsyncThunk(
+  'subTable/uploadCheckModelIssueImage',
+  async ({ checkModelId, file }: { checkModelId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await smdApi.put(`CheckModel/image-issue/${checkModelId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải CheckModelIssue');
+    }
+  }
+)
+
+// Upload StandardProduction issue image
+export const uploadStandardProductionIssueImage = createAsyncThunk(
+  'subTable/uploadProductionIssueImage',
+  async ({ StandardProductionId, file }: { StandardProductionId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await smdApi.put(`StandardProduction/image-issue/${StandardProductionId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải ProductionIssue');
+    }
+  }
+)
+
+// Upload StandardVehicle issue image
+export const uploadStandardVehicleIssueImage = createAsyncThunk(
+  'subTable/uploadVehicleIssueImage',
+  async ({ StandardVehicleId, file }: { StandardVehicleId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await smdApi.put(`StandardVehicle/image-issue/${StandardVehicleId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải VehicleIssue');
+    }
+  }
+)
+
+// Upload StandardVehicle mounter image
+export const uploadMounterImage = createAsyncThunk(
+  'subTable/uploadVehicleMounterImage',
+  async ({ StandardVehicleId, file }: { StandardVehicleId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await smdApi.put(`StandardVehicle/image-mounter/${StandardVehicleId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải Mounter');
+    }
+  }
+)
+
+// Upload StandardVehicle printer image
+export const uploadPrinterImage = createAsyncThunk(
+  'subTable/uploadVehiclePrinterImage',
+  async ({ StandardVehicleId, file }: { StandardVehicleId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await smdApi.put(`StandardVehicle/image-printer/${StandardVehicleId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải Printer');
+    }
+  }
+)
+
+// Upload StandardVehicle printer clean image
+export const uploadPrinterCleanImage = createAsyncThunk(
+  'subTable/uploadVehiclePrinterCleanImage',
+  async ({ StandardVehicleId, file }: { StandardVehicleId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await smdApi.put(`StandardVehicle/image-printer-clean/${StandardVehicleId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải PrinterClean');
+    }
+  }
+)
+
+// Upload timeChangeModel issue image
+export const uploadTimeChangeModelIssueImage = createAsyncThunk(
+  'subTable/uploadTimeChangeModelIssueImage',
+  async ({ timeChangeModelId, file }: { timeChangeModelId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await smdApi.put(`TimeChangeModel/image-issue/${timeChangeModelId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải TimeChangeModelIssue');
+    }
+  }
+)
+
+// Upload pqcCheck issue image
+export const uploadPQCCheckIssueImage = createAsyncThunk(
+  'subTable/uploadPQCCheckIssueImage',
+  async ({ pqcCheckId, file }: { pqcCheckId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await smdApi.put(`PQCCheck/image-issue/${pqcCheckId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải PQCCheckIssue');
     }
   }
 )
@@ -613,78 +781,220 @@ const subTableSlice = createSlice({
         state.error = action.payload as string;
         state.success = false;
       });
-
-    // Upload SPI Image
-builder
-  .addCase(uploadSPIImage.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(uploadSPIImage.fulfilled, (state, action) => {
-    state.loading = false;
-    // Cập nhật URL hình ảnh nếu backend trả về
-    if (state.standardVehicle && action.payload?.imageUrl) {
-      state.standardVehicle.imgSPI = action.payload.imageUrl;
-    }
-  })
-  .addCase(uploadSPIImage.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
-
-// Upload AOI Image
-builder
-  .addCase(uploadAOIImage.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(uploadAOIImage.fulfilled, (state, action) => {
-    state.loading = false;
-    // Cập nhật URL hình ảnh nếu backend trả về
-    if (state.standardVehicle && action.payload?.imageUrl) {
-      state.standardVehicle.imgAOI = action.payload.imageUrl;
-    }
-  })
-  .addCase(uploadAOIImage.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
-
-  // upload Standard Production Image
-  builder
-    .addCase(uploadStandardProductionFile.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    })
-    .addCase(uploadStandardProductionFile.fulfilled, (state, action) => {
-      state.loading = false;
-      // Cập nhật URL hình ảnh nếu backend trả về
-      if (state.standardProduction && action.payload?.imageUrl) {
-        state.standardProduction.imgStandard = action.payload.imageUrl;
-      }
-    })
-    .addCase(uploadStandardProductionFile.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.payload as string;
-    });
-
-    // upload pqc check Image
+    // ----------------------------------- UPLOAD IMAGE -----------------------------------
+    // Upload check model issue image
     builder
-    .addCase(uploadPQCCheckImage.pending, (state) => {
-      state.loading = true;
-      state.error = null;
+      .addCase(uploadCheckModelIssueImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadCheckModelIssueImage.fulfilled, (state, action) => {
+        state.loading = false;
+        // Cập nhật URL hình ảnh nếu backend trả về
+        if (state.standardVehicle && action.payload?.imageUrl) {
+          state.standardVehicle.imgIssue = action.payload.imageUrl;
+        }
+      })
+      .addCase(uploadCheckModelIssueImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+    // Upload StandardProduction issue image
+    builder
+      .addCase(uploadStandardProductionIssueImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadStandardProductionIssueImage.fulfilled, (state, action) => {
+        state.loading = false;
+        // Cập nhật URL hình ảnh nếu backend trả về
+        if (state.standardVehicle && action.payload?.imageUrl) {
+          state.standardVehicle.imgIssue = action.payload.imageUrl;
+        }
+      })
+      .addCase(uploadStandardProductionIssueImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+    // Upload StandardVehicle issue image
+    builder
+      .addCase(uploadStandardVehicleIssueImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadStandardVehicleIssueImage.fulfilled, (state, action) => {
+        state.loading = false;
+        // Cập nhật URL hình ảnh nếu backend trả về
+        if (state.standardVehicle && action.payload?.imageUrl) {
+          state.standardVehicle.imgIssue = action.payload.imageUrl;
+        }
+      })
+      .addCase(uploadStandardVehicleIssueImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
     })
-    .addCase(uploadPQCCheckImage.fulfilled, (state, action) => {
-      state.loading = false;
-      // Cập nhật URL hình ảnh nếu backend trả về
-      if (state.pqcCheck && action.payload?.imageUrl) {
-        state.pqcCheck.imgIC = action.payload.imageUrl;
-      }
+
+    // Upload StandardVehicle printer image
+    builder
+      .addCase(uploadPrinterImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadPrinterImage.fulfilled, (state, action) => {
+        state.loading = false;
+        // Cập nhật URL hình ảnh nếu backend trả về
+        if (state.standardVehicle && action.payload?.imageUrl) {
+          state.standardVehicle.imgPrinter = action.payload.imageUrl;
+        }
+      })
+      .addCase(uploadPrinterImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
     })
-    .addCase(uploadPQCCheckImage.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.payload as string;
-    });
+
+    // Upload StandardVehicle mounter image
+    builder
+      .addCase(uploadMounterImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadMounterImage.fulfilled, (state, action) => {
+        state.loading = false;
+        // Cập nhật URL hình ảnh nếu backend trả về
+        if (state.standardVehicle && action.payload?.imageUrl) {
+          state.standardVehicle.imgMounter = action.payload.imageUrl;
+        }
+      })
+      .addCase(uploadMounterImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+    })
+
+    // Upload StandardVehicle printer clean image
+    builder
+      .addCase(uploadPrinterCleanImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadPrinterCleanImage.fulfilled, (state, action) => {
+        state.loading = false;
+        // Cập nhật URL hình ảnh nếu backend trả về
+        if (state.standardVehicle && action.payload?.imageUrl) {
+          state.standardVehicle.imgPrinterClean = action.payload.imageUrl;
+        }
+      })
+      .addCase(uploadPrinterCleanImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+    })
+
+    // Upload timeChangeModel issue image
+    builder
+      .addCase(uploadTimeChangeModelIssueImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadTimeChangeModelIssueImage.fulfilled, (state, action) => {
+        state.loading = false;
+        // Cập nhật URL hình ảnh nếu backend trả về
+        if (state.standardVehicle && action.payload?.imageUrl) {
+          state.standardVehicle.imgIssue = action.payload.imageUrl;
+        }
+      })
+      .addCase(uploadTimeChangeModelIssueImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+    })
+
+    // Upload pqcCheck issue image
+    builder
+      .addCase(uploadPQCCheckIssueImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadPQCCheckIssueImage.fulfilled, (state, action) => {
+        state.loading = false;
+        // Cập nhật URL hình ảnh nếu backend trả về
+        if (state.standardVehicle && action.payload?.imageUrl) {
+          state.standardVehicle.imgIssue = action.payload.imageUrl;
+        }
+      })
+      .addCase(uploadPQCCheckIssueImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+    })
+    
+    // Upload SPI Image
+    builder
+      .addCase(uploadSPIImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadSPIImage.fulfilled, (state, action) => {
+        state.loading = false;
+        // Cập nhật URL hình ảnh nếu backend trả về
+        if (state.standardVehicle && action.payload?.imageUrl) {
+          state.standardVehicle.imgSPI = action.payload.imageUrl;
+        }
+      })
+      .addCase(uploadSPIImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+    // Upload AOI Image
+    builder
+      .addCase(uploadAOIImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadAOIImage.fulfilled, (state, action) => {
+        state.loading = false;
+        // Cập nhật URL hình ảnh nếu backend trả về
+        if (state.standardVehicle && action.payload?.imageUrl) {
+          state.standardVehicle.imgAOI = action.payload.imageUrl;
+        }
+      })
+      .addCase(uploadAOIImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+      // upload Standard Production Image
+      builder
+        .addCase(uploadStandardProductionFile.pending, (state) => {
+          state.loading = true;
+          state.error = null;
+        })
+        .addCase(uploadStandardProductionFile.fulfilled, (state, action) => {
+          state.loading = false;
+          // Cập nhật URL hình ảnh nếu backend trả về
+          if (state.standardProduction && action.payload?.imageUrl) {
+            state.standardProduction.imgStandard = action.payload.imageUrl;
+          }
+        })
+        .addCase(uploadStandardProductionFile.rejected, (state, action) => {
+          state.loading = false;
+          state.error = action.payload as string;
+        });
+
+      // upload pqc check Image
+      builder
+        .addCase(uploadPQCCheckImage.pending, (state) => {
+          state.loading = true;
+          state.error = null;
+        })
+        .addCase(uploadPQCCheckImage.fulfilled, (state, action) => {
+          state.loading = false;
+          // Cập nhật URL hình ảnh nếu backend trả về
+          if (state.pqcCheck && action.payload?.imageUrl) {
+            state.pqcCheck.imgIC = action.payload.imageUrl;
+          }
+        })
+        .addCase(uploadPQCCheckImage.rejected, (state, action) => {
+          state.loading = false;
+          state.error = action.payload as string;
+        });
   },
 });
 

@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/components/AuthInitializer.tsx
 import { useEffect, useState, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
@@ -56,7 +58,7 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
         }
 
         // 2. Validate role
-        const validRoles = ['PQC', 'Admin', 'ENG', 'Supervisior', 'Manager', 'KoreaManager'];
+        const validRoles = ['PQC', 'Admin', 'ENG', 'Supervisior', 'Manager', 'KoreaManager', 'PQCLeader'];
         if (user?.role && !validRoles.includes(user.role)) {
           console.log('❌ Invalid role:', user.role);
           handleLogout();
@@ -108,7 +110,7 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
     checkInitialSession();
   }, []);
 
-  // ✅ AUTO LOGOUT KHI TOKEN HẾT HẠN - Dùng setTimeout
+  // AUTO LOGOUT KHI TOKEN HẾT HẠN - Dùng setTimeout
   useEffect(() => {
     if (!tokenExpiresAt || !isAuthenticated || !token) return;
 
@@ -130,11 +132,11 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    console.log(`⏱️ Token expires in ${Math.floor(timeUntilExpiry / 1000)}s`);
+    console.log(`Token expires in ${Math.floor(timeUntilExpiry / 1000)}s`);
     
     // Setup timeout để auto logout khi hết hạn
     const timer = setTimeout(() => {
-      console.log('⏰ Auto logout - Token expired');
+      console.log('Auto logout - Token expired');
       
       const deviceId = localStorage.getItem('smd_device_id');
       localStorage.clear();

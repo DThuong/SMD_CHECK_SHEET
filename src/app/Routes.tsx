@@ -73,7 +73,7 @@ const RoleBasedRoute = ({ children }: { children: React.ReactNode }) => {
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   
   // Danh sách các role được phép
-  const allowedRoles = ['ENG', 'Supervisior', 'Manager', 'KoreaManager'];
+  const allowedRoles = ['ENG', 'Supervisior', 'Manager', 'KoreaManager', 'PQCLeader'];
   
   // Nếu là PQC -> về trang chủ
   if (user?.role === 'PQC') return <Navigate to="/" replace />;
@@ -100,6 +100,11 @@ const LoginRoute = ({ children }: { children: React.ReactNode }) => {
   if (isAuthenticated && user) {
     // PQC -> trang chủ
     if (user.role === 'PQC') return <Navigate to="/" replace />;
+    // PQCLeader -> trang chủ
+    if (user.role === 'PQCLeader') {
+      const roleLower = 'pqcleader';
+      return <Navigate to={`/${roleLower}/dashboard`} replace />;
+    }
     
     // ADMIN -> admin dashboard
     if (user.role === 'Admin') return <Navigate to="/admin/dashboard" replace />;

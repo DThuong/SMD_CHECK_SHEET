@@ -1,3 +1,4 @@
+/* eslint-disable no-empty */
 import { useState, useEffect } from "react";
 import { Link,NavLink, Outlet } from "react-router-dom";
 import { HiMenu, HiX, HiLogout, HiUser } from "react-icons/hi";

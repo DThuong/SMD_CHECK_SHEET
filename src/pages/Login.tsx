@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { loginUser, clearError } from '../redux/slices/authSlice';
@@ -43,7 +44,6 @@ const Login = () => {
     e.preventDefault();
     try {
       const deviceInfo = getDeviceInfo();
-      console.log('📱 Đang login với Device Info:', deviceInfo);
       
       const resultAction = await dispatch(loginUser({
         username, 

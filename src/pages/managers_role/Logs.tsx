@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/admin/Logs.tsx
 import { useState, useEffect, useRef } from 'react';
 import { 
@@ -20,6 +22,14 @@ import Notification from '../../components/general/Notification';
 import { MdFavoriteBorder } from "react-icons/md";
 import { useSearchParams } from 'react-router-dom';
 
+import { 
+  saveFilterState, 
+  getFilterState, 
+  saveSelectedSheetId, 
+  getSelectedSheetId,  
+  clearSelectedSheetId  
+} from '../../utils/navigationState';
+
 // Redux actions
 import { 
   fetchChangeModel,
@@ -37,12 +47,14 @@ const ROLES = {
   ENG: 'ENG',
   SUPERVISOR: 'Supervisior',
   MANAGER: 'Manager',
-  KOREA_MANAGER: 'KoreaManager'
+  KOREA_MANAGER: 'KoreaManager',
+  PQCLEADER: 'PQCLeader'
 } as const;
 
 const STATUS = {
   PENDING: 'pending',
   PQC_DONE: 'PQCDone',
+  PQCLEADER_DONE: 'PQCLeaderDone',
   ENG_DONE: 'ENGDone',
   SUPERVISOR_DONE: 'SupervisiorDone',
   MANAGER_DONE: 'ManagerDone',
@@ -81,6 +93,8 @@ const Logs = () => {
   const {t} = useTranslation('logs');
   const {t: t2} = useTranslation('sheetDetail');
 
+  const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
+
   // Filter state
   const [filter, setFilter] = useState<SheetFilter>({
     workOrder: '',
@@ -95,76 +109,127 @@ const Logs = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 5;
 
-   // EFFECT 1: Set filter từ URL (chạy khi statusFromUrl thay đổi)
-  useEffect(() => {
-    if (statusFromUrl) {
-      setFilter(prev => ({ ...prev, status: statusFromUrl }));
-    }
-  }, [statusFromUrl]);
+  // Load sheets với filter được truyền vào (không dùng state)
+const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
+  try {
+    const hasWorkOrder = filterToUse.workOrder.trim() !== '';
+    const hasDateRange = filterToUse.fromDate !== '' && filterToUse.toDate !== '';
+    const hasStatus = filterToUse.status !== '' && filterToUse.status !== 'all';
+    const hasFcode = filterToUse.fcode.trim() !== '';
+    const hasId = filterToUse.id && filterToUse.id > 0;
 
-  // EFFECT 2: Auto-fetch khi filter.status được set từ URL
-  useEffect(() => {
-    // Chỉ fetch khi status từ URL và đã được set vào filter
-    if (statusFromUrl && filter.status === statusFromUrl && filter.status !== 'all') {
-      
-      const autoFetch = async () => {
-        try {
-          await dispatch(getSheetByFilter({ 
-            status: filter.status 
-          })).unwrap();
-        } catch (error: any) {
-          console.error('❌ Lỗi khi fetch sheets:', error);
-          showNotification('error', 'Lỗi', error.message || t('error.cannotLoadSheets'));
-        }
-      };
-
-      autoFetch();
-    }
-  }, [filter.status, statusFromUrl, dispatch]);
-
-  // EFFECT 3: Load initial data (khi không có filter từ URL)
-  useEffect(() => {
-    if (!statusFromUrl) {
-      loadSheets();
-    }
-  }, []); // Chỉ chạy 1 lần khi component mount
-
-  // ==================== LOAD SHEETS ====================
-  const loadSheets = async () => {
-    try {
-      const hasWorkOrder = filter.workOrder.trim() !== '';
-      const hasDateRange = filter.fromDate !== '' && filter.toDate !== '';
-      const hasStatus = filter.status !== '' && filter.status !== 'all';
-      const hasFcode = filter.fcode.trim() !== '';
-      const hasId = filter.id && filter.id > 0;
-
-       if (hasWorkOrder || hasDateRange || hasStatus || hasFcode || hasId) {
+    if (hasWorkOrder || hasDateRange || hasStatus || hasFcode || hasId) {
       const filterParams: any = {
-        workOrder: hasWorkOrder ? filter.workOrder.trim() : undefined,
-        fromDate: hasDateRange ? filter.fromDate : undefined,
-        toDate: hasDateRange ? filter.toDate : undefined,
-        status: hasStatus ? filter.status : undefined,
-        fcode: hasFcode ? filter.fcode.trim() : undefined,
+        workOrder: hasWorkOrder ? filterToUse.workOrder.trim() : undefined,
+        fromDate: hasDateRange ? filterToUse.fromDate : undefined,
+        toDate: hasDateRange ? filterToUse.toDate : undefined,
+        status: hasStatus ? filterToUse.status : undefined,
+        fcode: hasFcode ? filterToUse.fcode.trim() : undefined,
       };
 
-      // CHỈ thêm id khi có giá trị
       if (hasId) {
-        filterParams.id = filter.id;
+        filterParams.id = filterToUse.id;
       }
 
+      console.log('📊 Fetching with filter:', filterParams);
       await dispatch(getSheetByFilter(filterParams)).unwrap();
       return;
     }
 
-
-      await dispatch(fetchChangeModel()).unwrap();
-      
-    } catch (error: any) {
-      console.error('❌ Lỗi khi tải sheets:', error);
-      if (error?.message) {
-        alert(`Lỗi: ${error.message}`);
-      }
+    await dispatch(fetchChangeModel()).unwrap();
+    
+  } catch (error: any) {
+    console.error('❌ Lỗi khi tải sheets:', error);
+    if (error?.message) {
+      alert(`Lỗi: ${error.message}`);
     }
+  }
+};
+
+    // EFFECT 1: Load initial data hoặc restore saved state
+  useEffect(() => {
+  const savedState = getFilterState();
+  const savedSheetId = getSelectedSheetId();
+  
+  // Restore highlight nếu có
+  if (savedSheetId) {
+    setSelectedSheetId(savedSheetId);
+  }
+  
+  if (statusFromUrl) {
+    // Priority 1: Load from URL params
+    setFilter(prev => ({ ...prev, status: statusFromUrl }));
+    setTimeout(() => {
+      dispatch(getSheetByFilter({ status: statusFromUrl }))
+        .unwrap()
+        .then(() => {
+          if (savedSheetId) {
+            setTimeout(() => {
+              const row = document.getElementById(`sheet-row-${savedSheetId}`);
+              if (row) {
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }, 300);
+          }
+        })
+        .catch((error: any) => {
+          console.error('❌ Lỗi khi fetch sheets:', error);
+          showNotification('error', 'Lỗi', error.message || t('error.cannotLoadSheets'));
+        });
+    }, 100);
+  } else if (savedState.filter) {
+    // Priority 2: Restore from saved state
+    setFilter(savedState.filter); //SET FILTER
+    setCurrentPage(savedState.currentPage); // SET PAGE
+    
+    // GỌI loadSheets() SAU KHI setFilter
+    setTimeout(() => {
+      loadSheetsWithFilter(savedState.filter); 
+      
+      if (savedSheetId) {
+        setTimeout(() => {
+          const row = document.getElementById(`sheet-row-${savedSheetId}`);
+          if (row) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 500);
+      }
+    }, 100);
+  } else {
+    // Priority 3: Load all sheets
+    loadSheets();
+    
+    if (savedSheetId) {
+      setTimeout(() => {
+        const row = document.getElementById(`sheet-row-${savedSheetId}`);
+        if (row) {
+          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 500);
+    }
+  }
+
+  // Clear highlight sau 2 giây
+  if (savedSheetId) {
+    const timer = setTimeout(() => {
+      setSelectedSheetId(null);
+      clearSelectedSheetId();
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }
+}, []);// CHỈ CHẠY 1 LẦN KHI MOUNT
+
+  // EFFECT 2: Auto save filter state
+  useEffect(() => {
+    if (filteredSheets && filteredSheets.length > 0) {
+      saveFilterState(filter, currentPage);
+    }
+  }, [filter, currentPage, filteredSheets]);
+
+  // ==================== LOAD SHEETS ====================
+  const loadSheets = async () => {
+    await loadSheetsWithFilter(filter);
   };
 
   // ==================== FILTER HANDLERS ====================
@@ -211,12 +276,23 @@ const Logs = () => {
     }
   };
 
+  
+  // Thêm handler cho Enter key
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      applyFilter();
+    }
+  };
+
   // ==================== VIEW HANDLERS ====================
+  // Cập nhật handleViewDetail để save navigation
   const handleViewDetail = async (sheet: ChangeModelResponse) => {
+    // Save current state
+    saveFilterState(filter, currentPage);
+    saveSelectedSheetId(sheet.id);
     setSelectedSheet(sheet);
     setShowDetail(true);
     
-    // Load status history cho sheet này
     try {
       await dispatch(getSheetStatusHistory(sheet.id)).unwrap();
     } catch (error) {
@@ -224,11 +300,18 @@ const Logs = () => {
     }
   };
 
+  // Cập nhật handleCloseDetail
   const handleCloseDetail = () => {
     setShowDetail(false);
     setSelectedSheet(null);
     dispatch(clearStatusHistory());
-    loadSheets();
+    
+    // Restore filter state (không cần reload)
+    // const savedState = getFilterState();
+    // if (savedState.filter) {
+    //   setFilter(savedState.filter);
+    //   setCurrentPage(savedState.currentPage);
+    // }
   };
 
   // ==================== CONFIRMATION LOGIC ====================
@@ -237,8 +320,12 @@ const Logs = () => {
     const status = sheet.status?.toLowerCase();
 
     switch (role) {
+      case ROLES.PQC:
+      return status === STATUS.PENDING.toLowerCase(); // PQC ký khi Pending
+      case ROLES.PQCLEADER:
+      return status === STATUS.PQC_DONE.toLowerCase(); // PQCLeader ký sau PQC
       case ROLES.ENG:
-        return status === STATUS.PQC_DONE.toLowerCase();
+      return status === STATUS.PQCLEADER_DONE.toLowerCase(); // ENG ký sau PQCLeader
       case ROLES.SUPERVISOR:
         return status === STATUS.ENG_DONE.toLowerCase();
       case ROLES.MANAGER:
@@ -252,7 +339,7 @@ const Logs = () => {
 
   const handleConfirmStep = async (
     sheetId: number, 
-    role: typeof ROLES.ENG | typeof ROLES.SUPERVISOR | typeof ROLES.MANAGER | typeof ROLES.KOREA_MANAGER
+    role: typeof ROLES.PQC | typeof ROLES.PQCLEADER | typeof ROLES.ENG | typeof ROLES.SUPERVISOR | typeof ROLES.MANAGER | typeof ROLES.KOREA_MANAGER
   ) => {
     try {
       if (!user) {
@@ -275,10 +362,12 @@ const Logs = () => {
       })).unwrap();
 
       const roleNames: Record<string, string> = {
+        [ROLES.PQCLEADER]: 'PQC Leader',
         [ROLES.ENG]: 'Engineering',
         [ROLES.SUPERVISOR]: 'Supervisor',
         [ROLES.MANAGER]: 'Manager',
-        [ROLES.KOREA_MANAGER]: 'Korea Manager'
+        [ROLES.KOREA_MANAGER]: 'Korea Manager',
+        
       };
       const successMsg = t('success.confirmed')
       showNotification('success', `${successMsg} ${roleNames[role]}!`);
@@ -314,15 +403,32 @@ const Logs = () => {
   };
 
   const canEdit = (sheet: ChangeModelResponse): boolean => {
-    if (!user) return false;
-    if (user.role !== ROLES.ENG && user.role !== ROLES.SUPERVISOR) return false;
-    
-    const status = sheet.status?.toLowerCase();
-    if (user.role === ROLES.ENG && status === STATUS.PQC_DONE.toLowerCase()) return true;
-    if (user.role === ROLES.SUPERVISOR && status === STATUS.ENG_DONE.toLowerCase()) return true;
-    
-    return false;
-  };
+  if (!user) return false;
+  
+  const status = sheet.status?.toLowerCase();
+  
+  // Chỉ check từng role riêng lẻ, không cần check !== các role khác
+  if (user.role === ROLES.PQC && status === STATUS.PENDING.toLowerCase()) {
+    return true;
+  }
+  
+  // PQCLeader chỉ edit khi PQCDone
+  if (user.role === ROLES.PQCLEADER && status === STATUS.PQC_DONE.toLowerCase()) {
+    return true;
+  }
+  
+  // ENG chỉ edit khi PQCLeaderDone
+  if (user.role === ROLES.ENG && status === STATUS.PQCLEADER_DONE.toLowerCase()) {
+    return true;
+  }
+  
+  // SUPERVISOR chỉ edit khi ENGDone
+  if (user.role === ROLES.SUPERVISOR && status === STATUS.ENG_DONE.toLowerCase()) {
+    return true;
+  }
+  
+  return false;
+};
 
   const getStatusBadge = (sheet: ChangeModelResponse) => {
     const status = sheet.status?.toLowerCase();
@@ -330,6 +436,7 @@ const Logs = () => {
     const statusConfig: Record<string, { bg: string; text: string; label: string; icon: string }> = {
       [STATUS.PENDING.toLowerCase()]: { bg: 'bg-yellow-100', text: 'text-yellow-600', label: 'Pending', icon: '' },
       [STATUS.PQC_DONE.toLowerCase()]: { bg: 'bg-green-100', text: 'text-green-700', label: 'PQC Done', icon: '✓' },
+      [STATUS.PQCLEADER_DONE.toLowerCase()]: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'PQC Leader Done', icon: '✓' },
       [STATUS.ENG_DONE.toLowerCase()]: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'ENG Done', icon: '✓' },
       [STATUS.SUPERVISOR_DONE.toLowerCase()]: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'SUP Done', icon: '✓' },
       [STATUS.MANAGER_DONE.toLowerCase()]: { bg: 'bg-indigo-100', text: 'text-indigo-700', label: 'MGR Done', icon: '✓' },
@@ -347,86 +454,6 @@ const Logs = () => {
       <div className={`inline-flex items-center gap-1 ${config.bg} ${config.text} rounded-full px-3 py-1 text-xs font-semibold`}>
         <span>{config.icon}</span>
         <span>{config.label}</span>
-      </div>
-    );
-  };
-
-  // ✅ COMPONENT HIỂN THỊ TIẾN TRÌNH KÝ (dựa trên statusHistory)
-  const SignatureProgress: React.FC<{ sheet: ChangeModelResponse }> = ({ sheet }) => {
-    const roles = [
-      { key: ROLES.ENG, label: 'Engineering', color: 'blue' },
-      { key: ROLES.SUPERVISOR, label: 'Supervisor', color: 'purple' },
-      { key: ROLES.MANAGER, label: 'Manager', color: 'orange' },
-      { key: ROLES.KOREA_MANAGER, label: 'Korea Manager', color: 'red' }
-    ];
-
-    const getStepInfo = (role: string) => {
-      // Tìm history item có status tương ứng với role
-      const historyItem = statusHistory?.find((item) => {
-        const status = item.status?.toLowerCase();
-        switch (role) {
-          case ROLES.ENG:
-            return status === STATUS.ENG_DONE.toLowerCase();
-          case ROLES.SUPERVISOR:
-            return status === STATUS.SUPERVISOR_DONE.toLowerCase();
-          case ROLES.MANAGER:
-            return status === STATUS.MANAGER_DONE.toLowerCase();
-          case ROLES.KOREA_MANAGER:
-            return status === STATUS.KOREA_MANAGER_DONE.toLowerCase();
-          default:
-            return false;
-        }
-      });
-
-      return historyItem || null;
-    };
-
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-        {roles.map((role) => {
-          const stepInfo = getStepInfo(role.key);
-          const isConfirmed = !!stepInfo;
-          const canConfirm = canConfirmAtStep(sheet, role.key);
-          
-          return (
-            <div 
-              key={role.key} 
-              className={`p-3 rounded-lg border-2 ${
-                isConfirmed ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-300'
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                {isConfirmed ? (
-                  <AiOutlineCheckCircle className="w-5 h-5 text-green-600" />
-                ) : (
-                  <AiOutlineClockCircle className="w-5 h-5 text-gray-400" />
-                )}
-                <span className="font-semibold text-xs">{role.label}</span>
-              </div>
-              
-              {isConfirmed && stepInfo ? (
-                <div className="text-xs text-gray-600 space-y-1">
-                  <div className="text-green-700 font-medium">✓ {t('detail.confirmed')}</div>
-                  <div className="text-gray-500">
-                    {t('detail.by')}: {stepInfo.account?.fullName || stepInfo.account?.userName}
-                  </div>
-                  <div className="text-gray-500">
-                    {formatDateTime(stepInfo.changedAt)}
-                  </div>
-                </div>
-              ) : canConfirm ? (
-                <button
-                  onClick={() => handleConfirmStep(sheet.id, role.key)}
-                  className={`mt-2 w-full px-3 py-1.5 bg-${role.color}-600 text-white rounded text-xs font-medium hover:bg-${role.color}-700 transition-colors`}
-                >
-                  {t('detail.signButton')}
-                </button>
-              ) : (
-                <div className="text-xs text-gray-400 mt-2">{t('detail.notConfirmed')}</div>
-              )}
-            </div>
-          );
-        })}
       </div>
     );
   };
@@ -460,6 +487,10 @@ const Logs = () => {
     const historyItem = statusHistory?.find((item) => {
       const status = item.status?.toLowerCase();
       switch (role) {
+        case ROLES.PQC:
+        return status === STATUS.PQC_DONE.toLowerCase();
+        case ROLES.PQCLEADER:
+          return status === STATUS.PQCLEADER_DONE.toLowerCase();
         case ROLES.ENG:
           return status === STATUS.ENG_DONE.toLowerCase();
         case ROLES.SUPERVISOR:
@@ -476,10 +507,14 @@ const Logs = () => {
   };
 
   const roles = [
+    
+    { key: ROLES.PQC, label: 'PQC' },
+    { key: ROLES.PQCLEADER, label: 'PQC Leader' },
     { key: ROLES.ENG, label: 'Engineering' },
     { key: ROLES.SUPERVISOR, label: 'Supervisor' },
     { key: ROLES.MANAGER, label: 'Manager' },
-    { key: ROLES.KOREA_MANAGER, label: 'Korea Manager' }
+    { key: ROLES.KOREA_MANAGER, label: 'Korea Manager' },
+
   ];
     return (
       <div className="min-h-screen bg-gray-50">
@@ -531,7 +566,7 @@ const Logs = () => {
                     return (
                       <div 
                         key={role.key} 
-                        className={`p-3 rounded-lg border-2 ${
+                        className={`p-3 rounded-lg border-2 h-32 ${
                           isConfirmed ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-300'
                         }`}
                       >
@@ -547,12 +582,12 @@ const Logs = () => {
                         {isConfirmed && signerInfo ? (
                           <div className="text-xs text-gray-600 space-y-1">
                             <div className="text-green-700 font-medium">✓ {t('detail.confirmed')}</div>
-                            {/* ✅ HIỂN THỊ TÊN NGƯỜI KÝ */}
+                            {/* HIỂN THỊ TÊN NGƯỜI KÝ */}
                             <div className="text-gray-700">
                               <strong>{t('detail.signer')}:</strong><br/>
                               {signerInfo.account?.fullName || signerInfo.account?.userName || 'N/A'}
                             </div>
-                            {/* ✅ HIỂN THỊ THỜI GIAN KÝ */}
+                            {/* HIỂN THỊ THỜI GIAN KÝ */}
                             <div className="text-gray-500">
                               {formatDateTime(signerInfo.changedAt)}
                             </div>
@@ -585,14 +620,18 @@ const Logs = () => {
               {t('button.back')}
             </button>
               <button
-                onClick={() => {
-                  const roleLower = user?.role?.toLowerCase();
-                  navigate(`/${roleLower}/sheet-detail/${selectedSheet.id}`);
-                }}
-                className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-              >
-                {t('button.viewFullSheet')}
-              </button>
+              onClick={() => {
+                const currentPath = window.location.pathname;
+                const roleLower = user?.role?.toLowerCase();
+                saveSelectedSheetId(selectedSheet.id); 
+                navigate(`/${roleLower}/sheet-detail/${selectedSheet.id}`, {
+                  state: { from: 'logs', returnPath: currentPath } // Truyền state để biết đường về
+                });
+              }}
+              className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+            >
+              {t('button.viewFullSheet')}
+            </button>
             </div>
           </div>
         </div>
@@ -626,6 +665,7 @@ const Logs = () => {
           {/* Info banner */}
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-xs sm:text-sm text-blue-800 text-center mb-0">
+              {user?.role === ROLES.PQCLEADER && 'Bạn có thể xem và ký xác nhận sheet khi PQC đã hoàn thành'}
               {user?.role === ROLES.ENG && t('info.eng')}
               {user?.role === ROLES.SUPERVISOR && t('info.supervisor')}
               {user?.role === ROLES.MANAGER && t('info.manager')}
@@ -651,6 +691,7 @@ const Logs = () => {
                   type="number"
                   value={filter.id || ""}
                   onChange={(e) => setFilter(s => ({ ...s, id: Number(e.target.value) || 0 }))}
+                  onKeyPress={handleKeyPress}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder={t('search.placeholder.id')}
                   min="1"
@@ -665,6 +706,7 @@ const Logs = () => {
                   type="text"
                   value={filter.fcode}
                   onChange={(e) => setFilter(s => ({ ...s, fcode: e.target.value }))}
+                  onKeyPress={handleKeyPress}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder={t('search.placeholder.fcode')}
                 />
@@ -678,6 +720,7 @@ const Logs = () => {
                   type="text"
                   value={filter.workOrder}
                   onChange={(e) => setFilter(s => ({ ...s, workOrder: e.target.value }))}
+                  onKeyPress={handleKeyPress}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder={t('search.placeholder.workOrder')}
                 />
@@ -691,11 +734,13 @@ const Logs = () => {
                 <select
                   value={filter.status}
                   onChange={(e) => setFilter(s => ({ ...s, status: e.target.value }))}
+                  onKeyPress={handleKeyPress}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">{t('status.all')}</option>
                   <option value={STATUS.PENDING}>{t('status.pending')}</option>
                   <option value={STATUS.PQC_DONE}>{t('status.pqcDone')}</option>
+                  <option value={STATUS.PQCLEADER_DONE}>PQC Leader Done</option>
                   <option value={STATUS.ENG_DONE}>{t('status.engDone')}</option>
                   <option value={STATUS.SUPERVISOR_DONE}>{t('status.supervisorDone')}</option>
                   <option value={STATUS.MANAGER_DONE}>{t('status.managerDone')}</option>
@@ -712,6 +757,7 @@ const Logs = () => {
                   type="date"
                   value={filter.fromDate}
                   max={new Date().toISOString().slice(0, 10)}
+                  onKeyPress={handleKeyPress}
                   onChange={(e) => setFilter(s => ({ ...s, fromDate: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -726,6 +772,7 @@ const Logs = () => {
                   type="date"
                   value={filter.toDate}
                   max={new Date().toISOString().slice(0, 10)}
+                  onKeyPress={handleKeyPress}
                   onChange={(e) => setFilter(s => ({ ...s, toDate: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -818,7 +865,11 @@ const Logs = () => {
                   </thead>
                   <tbody>
                     {currentSheets.map((sheet, index) => (
-                      <tr key={sheet.id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={sheet.id} id={`sheet-row-${sheet.id}`} className={`transition-all duration-500 ${
+                        selectedSheetId === sheet.id
+                          ? 'bg-blue-100 border-2 border-blue-400! shadow-lg' // Highlight style
+                          : 'hover:bg-gray-50 border-transparent'
+                      }`}>
                         <td className="border border-gray-300 px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700 text-center">
                           {offset + index + 1}
                         </td>
@@ -854,12 +905,16 @@ const Logs = () => {
                             {canEdit(sheet) && (
                               <button
                                 onClick={() => {
+                                  const currentPath = window.location.pathname;
                                   const roleLower = user?.role?.toLowerCase();
-                                  navigate(`/${roleLower}/sheet-detail/${sheet.id}`);
+                                  saveSelectedSheetId(sheet.id);
+                                  navigate(`/${roleLower}/sheet-detail/${sheet.id}`, {
+                                    state: { from: 'logs', returnPath: currentPath },
+                                  });
                                 }}
                                 className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium whitespace-nowrap"
                               >
-                                <AiOutlineEdit className="w-3 h-3 sm:w-4 sm:h-4" />
+                                <AiOutlineEdit className="w-4 h-4" />
                                 <span>{t('button.edit')}</span>
                               </button>
                             )}
@@ -874,7 +929,12 @@ const Logs = () => {
               {/* Mobile View */}
               <div className="md:hidden my-4">
                 {currentSheets.map((sheet, index) => (
-                  <div key={sheet.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-4">
+                  <div key={sheet.id} id={`sheet-row-${sheet.id}`} // Thêm ID để scroll
+            className={`border border-gray-200 rounded-lg shadow-sm p-4 mb-4 transition-all duration-500 ${
+              selectedSheetId === sheet.id
+                ? 'bg-yellow-50 border-yellow-400 shadow-xl ring-2 ring-yellow-300' // Mobile highlight
+                : 'bg-white'
+            }`}>
                     <div className="flex justify-between items-start mb-3 pb-3 border-b border-gray-200">
                       <div className="flex flex-col">
                         <span className="text-xs text-gray-500">#{offset + index + 1}</span>
@@ -920,12 +980,16 @@ const Logs = () => {
                       {canEdit(sheet) && (
                         <button
                           onClick={() => {
+                            const currentPath = window.location.pathname;
                             const roleLower = user?.role?.toLowerCase();
-                            navigate(`/${roleLower}/sheet-detail/${sheet.id}`);
+                            saveSelectedSheetId(sheet.id);
+                            navigate(`/${roleLower}/sheet-detail/${sheet.id}`, {
+                              state: { from: 'logs', returnPath: currentPath } // Truyền state
+                            });
                           }}
-                          className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                          className="inline-flex items-center justify-center gap-1 px-2 py-3 bg-green-600 text-white hover:bg-green-700 transition-colors text-xs font-medium whitespace-nowrap"
                         >
-                          <AiOutlineEdit className="w-4 h-4" />
+                          <AiOutlineEdit className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span>{t('button.edit')}</span>
                         </button>
                       )}

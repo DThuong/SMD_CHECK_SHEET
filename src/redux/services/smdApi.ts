@@ -4,10 +4,6 @@ import type { AxiosInstance } from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://172.16.162.103:5000/api";
 
-console.log('🌐 Environment Mode:', import.meta.env.MODE);
-console.log('🌐 VITE_API_URL from env:', import.meta.env.VITE_API_URL);
-console.log('🌐 Final API_BASE_URL:', BASE_URL);
-
 //Tạo axios instance cơ bản
 const createSmdApi = (): AxiosInstance => {
   const api = axios.create({

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import smdApi from '../services/smdApi';
 import type { CheckModelData, StandardProductionData, TimeChangeModelData, StandardVehicleData, PQCCheckData } from './subTableSlice';
@@ -32,6 +33,7 @@ export interface ChangeModelResponse {
   excelFileUrl?: string;
   pdfFileUrl?: string;
   createAt?: string;
+  noteFile?: string; // thêm
 
   // object 
   checkModel?: CheckModelData;
@@ -134,6 +136,19 @@ export const uploadBothFiles = createAsyncThunk(
       return results;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Upload failed');
+    }
+  }
+);
+
+// update note file
+export const updateNoteFile = createAsyncThunk(
+  'changeModel/updateNoteFile',
+  async ({ changeModelId, noteFile }: { changeModelId: number; noteFile: string }, { rejectWithValue }) => {
+    try {
+      const response = await smdApi.put(`ChangeModel/update-note-file/${changeModelId}`, { noteFile });
+      return response.data as ChangeModelResponse;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || 'Update note file failed');
     }
   }
 );
@@ -277,12 +292,20 @@ export const updateSheetStatus = createAsyncThunk(
             return rejectWithValue('PQC chỉ có thể xác nhận sheet ở trạng thái Pending');
           }
           break;
+        
+          case 'PQCLeader':
+          if (currentStatusLower === 'pqcdone') {
+            newStatus = 'PQCLeaderLDone';
+          } else {
+            return rejectWithValue('PQC Leader chỉ có thể xác nhận sau khi PQC hoàn thành');
+          }
+          break;
           
         case 'ENG':
-          if (currentStatusLower === 'pqcdone') {
+          if (currentStatusLower === 'pqcleaderdone') {
             newStatus = 'ENGDone';
           } else {
-            return rejectWithValue('ENG chỉ có thể xác nhận sau khi PQC hoàn thành');
+            return rejectWithValue('ENG chỉ có thể xác nhận sau khi PQC Leader hoàn thành');
           }
           break;
           
@@ -874,6 +897,22 @@ const changeModelSlice = createSlice({
       })
       .addCase(filterSheetByUserId.rejected, (state, action) => {
         state.loadingList = false;
+        state.error = action.payload as string;
+      });
+
+      // Update note file
+      builder
+      .addCase(updateNoteFile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateNoteFile.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentSheet = action.payload;
+        state.error = null;
+      })
+      .addCase(updateNoteFile.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload as string;
       });
   },

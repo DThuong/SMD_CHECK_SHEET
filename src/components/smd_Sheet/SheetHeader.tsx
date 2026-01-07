@@ -1,20 +1,29 @@
-import { useState, memo } from "react";
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, memo, useEffect } from "react";
 import Modal from "../general/Modal";
 import ViewDetailButton from "../general/ViewDetailButton";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { getSheetWithFullObject, uploadBothFiles } from "../../redux/slices/changeModelSlice";
+import { getSheetWithFullObject, uploadBothFiles, updateNoteFile } from "../../redux/slices/changeModelSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import { useNavigate } from "react-router-dom";
 import { IoEyeSharp } from "react-icons/io5";
 import { useTranslation } from "react-i18next";
+// import { useLocation } from "react-router-dom";
 
 interface FileUploadState {
   lcr?: File;
   reflow?: File;
+  noteFile?: string;
 }
 
-const SheetHeader = memo(({ canEdit }: { canEdit: boolean }) => {
+interface SheetHeaderProps {
+  canEdit: boolean;
+  returnPath?: string; 
+}
+
+const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
   const dispatch = useAppDispatch();
   const { currentSheet, error, uploadLoading } = useAppSelector((state) => state.changeModel);
   
@@ -26,6 +35,13 @@ const SheetHeader = memo(({ canEdit }: { canEdit: boolean }) => {
   const { notification, showNotification, hideNotification } = useNotification();
   const {t} = useTranslation('sheetHeader');
   const {t: t2} = useTranslation('common');
+  const [tempNoteFile, setTempNoteFile] = useState<string>('');
+
+  useEffect(() => {
+  if (currentSheet?.noteFile) {
+    setTempNoteFile(currentSheet.noteFile);
+  }
+}, [currentSheet?.noteFile]);
 
   const setFile = (key: keyof FileUploadState, file?: File) => {
     setTempFileState(prev => ({ ...prev, [key]: file }));
@@ -48,6 +64,13 @@ const SheetHeader = memo(({ canEdit }: { canEdit: boolean }) => {
         excelFile: tempFileState.lcr,
         pdfFile: tempFileState.reflow,
       })).unwrap();
+       //  Update noteFile nếu có thay đổi
+    if (tempNoteFile !== currentSheet.noteFile) {
+      await dispatch(updateNoteFile({
+        changeModelId: currentSheet.id,
+        noteFile: tempNoteFile
+      })).unwrap();
+    }
       await dispatch(getSheetWithFullObject(currentSheet.id)).unwrap(); // fetch lại sheet để update tên file
 
       showNotification('success', 'Upload thành công!', t('success_msg'));
@@ -78,7 +101,13 @@ const SheetHeader = memo(({ canEdit }: { canEdit: boolean }) => {
       basePath = `/${user.role.toLowerCase()}/files`;
     }
     
-    navigate(`${basePath}/${currentSheet.id}/reflow`);
+    navigate(`${basePath}/${currentSheet.id}/reflow`, {
+      state: { 
+        from: 'sheetDetail',
+        returnPath: window.location.pathname, // Current sheet detail path
+        originalReturnPath: returnPath || '/?tab=list' // Sử dụng returnPath từ props
+      }
+    });
   };
 
   const handleFileChange = (type: keyof FileUploadState, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,7 +127,7 @@ const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !=
   const modalLcrName = tempFileState.lcr?.name || lcrName;
   const modalReflowName = tempFileState.reflow?.name || reflowName;
 
-  // CHECK CẢ 2 FILE - DỰA VÀO currentSheet, KHÔNG DỰA VÀO completedTables
+  // CHECK CẢ 2 FILE - DỰA VÀO currentSheet
     const bothFilesUploaded = 
     !!currentSheet?.excelFileUrl && 
     currentSheet.excelFileUrl.trim() !== "" &&
@@ -108,14 +137,6 @@ const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !=
   const hasLcrFile = currentSheet?.excelFileUrl && currentSheet.excelFileUrl.trim() !== "";
   const hasReflowFile = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !== "";
 
-
-  console.log('File names:', {
-  lcrName,
-  reflowName,
-  excelFileUrl: currentSheet?.excelFileUrl,
-  pdfFileUrl: currentSheet?.pdfFileUrl,
-  splitResult: currentSheet?.excelFileUrl?.split('/').pop(),
-});
   return (
     <div>
       <Notification
@@ -157,6 +178,9 @@ const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !=
                 <th colSpan={2} className="border border-gray-600 px-2 py-1 text-xs font-semibold bg-gray-100">
                   REFLOW FILE (pdf)
                 </th>
+                 <th colSpan={2} className="border border-gray-600 px-2 py-1 text-xs font-semibold bg-gray-100">
+                  NOTE FILE
+                </th>
               </tr>
 
               <tr>
@@ -165,7 +189,7 @@ const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !=
                 }`}>
                   <div className="text-sm font-semibold truncate text-gray-800">
                     {hasLcrFile ? (
-                      <>✓ {lcrName}</>
+                      <>{lcrName}</>
                     ) : (
                       <>⚠️ Chưa upload</>
                     )}
@@ -177,9 +201,21 @@ const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !=
                 }`}>
                   <div className="text-sm font-semibold truncate text-gray-800">
                     {hasReflowFile  ? (
-                      <>✓ {reflowName}</>
+                      <>{reflowName}</>
                     ) : (
                       <>⚠️ Chưa upload</>
+                    )}
+                  </div>
+                </td>
+
+                <td colSpan={2} className={`border border-gray-600 px-2 py-1 text-xs text-left ${
+                  currentSheet?.noteFile && currentSheet.noteFile.trim() !== '' ? 'bg-green-50' : 'bg-orange-50'
+                }`}>
+                  <div className="text-sm font-semibold truncate text-gray-800">
+                    {currentSheet?.noteFile && currentSheet.noteFile.trim() !== '' ? (
+                      <>{currentSheet.noteFile.split('/').pop()}</>
+                    ) : (
+                      <>⚠️ Chưa có ghi chú</>
                     )}
                   </div>
                 </td>
@@ -219,6 +255,19 @@ const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !=
                   {currentSheet?.pdfFileUrl 
                     ? `✓ ${reflowName}` 
                     : `⚠️ Chưa upload`}
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <div className="text-xs font-semibold text-gray-600 mb-1">Note File</div>
+                <div className={`w-full text-sm px-2 py-1 border rounded truncate overflow-hidden ${
+                  currentSheet?.noteFile && currentSheet.noteFile.trim() !== ''
+                    ? 'bg-green-50 border-green-300 text-green-800' 
+                    : 'bg-gray-50 border-gray-300 text-gray-600'
+                }`}>
+                  {currentSheet?.noteFile && currentSheet.noteFile.trim() !== ''
+                    ? currentSheet.noteFile
+                    : 'Chưa có ghi chú'}
                 </div>
               </div>
             </div>
@@ -329,6 +378,17 @@ const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !=
                   Xóa file
                 </button>
               )}
+            </div>
+
+            <div className="p-3 border rounded-lg bg-gray-50">
+              <h4 className="text-sm font-semibold mb-2">Ghi chú File</h4>
+              <textarea
+                value={tempNoteFile}
+                onChange={(e) => setTempNoteFile(e.target.value)}
+                placeholder="Nhập ghi chú về file..."
+                className="w-full border rounded px-3 py-2 text-sm min-h-20"
+                disabled={uploadLoading}
+              />
             </div>
           </div>
         </Modal>

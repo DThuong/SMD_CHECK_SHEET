@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import CheckModels from "./smd_Sheet/CheckModels";
 import PQCChecks from "./smd_Sheet/PQCChecks";
 // import ProgramChecks from "./smd_Sheet/ProgramChecks";

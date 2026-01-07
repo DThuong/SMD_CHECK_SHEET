@@ -7,6 +7,8 @@
     "noSheet": "Không có sheet",
     "sheets": "sheet",
     "statusCards": {
+      "needPQCLeader": "Sheets cần PQC Leader ký",
+      "descPQCLeader": "Sheets cần PQC Leader ký",
       "needEng": "Sheets cần Engineer ký",
       "descEng": "Sheets cần ENG ký",
       "needSupervisor": "Sheets cần Supervisor ký",

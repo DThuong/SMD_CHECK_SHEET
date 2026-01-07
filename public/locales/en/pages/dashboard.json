@@ -7,6 +7,8 @@
     "noSheet": "No sheets",
     "sheets": "sheet",
     "statusCards": {
+      "needPQCLeader": "Sheets need PQC Leader signature",
+      "descPQCLeader": "Sheets need PQC Leader signature",
       "needEng": "Sheets need Engineer signature",
       "descEng": "Sheets need ENG signature",
       "needSupervisor": "Sheets need Supervisor signature",

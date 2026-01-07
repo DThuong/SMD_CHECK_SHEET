@@ -1,9 +1,16 @@
-import { useState, useEffect, memo } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useState, useEffect, memo, useRef } from "react";
 import Modal from "../general/Modal";
 import ViewDetailButton from "../general/ViewDetailButton";
 import { useAppDispatch, useAppSelector  } from "../../redux/hooks";
 import { updateCheckModel } from "../../redux/slices/subTableSlice";
+import ImagePreviewModal from "../files/ImagePreviewModal";
+import ImageViewIcon from "../files/ImageViewIcon";
+import { FaCamera } from "react-icons/fa";
+import { IoEyeSharp } from "react-icons/io5";
 import type { CheckModelData } from "../../redux/slices/subTableSlice";
+import { uploadCheckModelIssueImage } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import { formatDateTime } from "../../utils/formatTime";
@@ -23,6 +30,8 @@ const initialFormState: CheckModelData = {
   opAccept: "",
   jig: undefined,
   codePCB: "",
+  note: "",
+  imgIssue: "",
 };
 
 
@@ -35,10 +44,81 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
   const { notification, showNotification, hideNotification } = useNotification();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<CheckModelData>(initialFormState);
+  const isUploadingRef = useRef(false);
 
   const isSaved = completedTables.includes('CheckModel');
   const {t} = useTranslation('checkModel');
   const {t: t2} = useTranslation('common');
+
+  // xử lý upload hình ảnh + preview modal
+  const [imagePreview, setImagePreview] = useState<{
+    isOpen: boolean;
+    imageUrl: string;
+    title: string;
+  }>({
+    isOpen: false,
+    imageUrl: "",
+    title: ""
+  });
+
+  // hàm mở preview
+  const openImagePreview = (imageUrl: string, title: string) => {
+    setImagePreview({
+      isOpen: true,
+      imageUrl,
+      title
+    });
+  };
+
+  // hàm đóng preview
+  const closeImagePreview = () => {
+    setImagePreview({
+      isOpen: false,
+      imageUrl: "",
+      title: ""
+    });
+  };
+
+    // xử lý upload hình ảnh với flag
+    const handleImageUpload = async (field: 'imgIssue', event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+    
+      if (!checkModelId) {
+        showNotification('error', 'Lỗi upload', 'Không tìm thấy CheckModel ID');
+        return;
+      }
+    
+      try {
+        // Set flag TRƯỚC KHI upload
+        isUploadingRef.current = true;
+        
+        if (field === 'imgIssue') {
+          const result = await dispatch(uploadCheckModelIssueImage({ 
+            checkModelId: Number(checkModelId), 
+            file 
+          })).unwrap();
+        
+          // Chỉ cập nhật field imgStandard, KHÔNG trigger re-sync toàn bộ form
+          if (result?.imageUrl) {
+            setForm(prev => ({
+              ...prev,
+              imgIssue: result.imageUrl
+            }));
+          }
+          
+          showNotification('success', 'Thành công', 'Upload hình ảnh Check Model Issue thành công');
+        }
+    
+      } catch (error) {
+        console.error('Failed to upload image:', error);
+        showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
+      } finally {
+        // Reset flag SAU KHI upload xong (thành công hay thất bại)
+        isUploadingRef.current = false;
+      }
+    };
+
 
   useEffect(() => {
       if (checkModel) {
@@ -71,6 +151,8 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
         opAccept: form.opAccept,
         jig: form.jig,
         codePCB: form.codePCB,
+        note: form.note,
+        imgIssue: form.imgIssue
       };
 
       // dispatch redux action
@@ -152,6 +234,26 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
               </td>
               <th className="border px-2 py-2 text-xs text-left bg-gray-100">Code PCB</th>
               <td className="border px-2 py-2 text-xs">{form.codePCB || ""}</td>
+            </tr>
+
+            <tr>
+              <th className="border px-2 py-2 text-xs text-left bg-gray-100">Ghi chú Vấn đề phát sinh</th>
+              <td colSpan={13} className="border px-2 py-2 text-xs">{form.note || ""}</td>
+            </tr>
+
+            <tr>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Hình ảnh Vấn đề phát sinh</th>
+              <td colSpan={13} className="border border-gray-600 px-2 py-2 text-xs">
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <ImageViewIcon 
+                      imageUrl={form.imgIssue} 
+                      title="Hình ảnh CheckModel: Vấn đề phát sinh"
+                      onView={openImagePreview}
+                    />
+                  </div>
+                </div>
+              </td>
             </tr>
           </thead>
         </table>
@@ -253,6 +355,23 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
               </div>
             </div>
           </div>
+
+          <div className="min-w-0 mb-2">
+              <div className="text-xs font-semibold text-gray-600 mb-1">Ghi chú vấn đề phát sinh</div>
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.note || "—"}
+              </div>
+          </div>
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh vấn đề phát sinh</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
+              <ImageViewIcon 
+                imageUrl={form.imgIssue} 
+                title="Hình ảnh CheckModel: Vấn đề phát sinh"
+                onView={openImagePreview}
+              />
+          </div>
+      </div>
         </div>
       </div>
 
@@ -471,9 +590,82 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
                 </button>
               </div>
             </div>
+
+            {/** note */}
+            <label className="text-xs">
+            Ghi chú vấn đề phát sinh
+            <textarea 
+              value={form.note} 
+              onChange={(e) => set("note", e.target.value.toUpperCase())} 
+              
+              className="mt-1 block w-full border rounded px-3 py-2 text-base min-h-[60px] resize-y uppercase"
+              placeholder=""
+            />
+          </label>
+            {/** imgIssue */}
+              <label className="block text-sm font-medium mb-1">Hình ảnh Standard Production</label>
+                  <div className="">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload('imgIssue', e)}
+                      className="border border-gray-300 rounded px-3 py-2 w-full"
+                    />
+                  </div>
+                        <div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          onChange={(e) => handleImageUpload('imgIssue', e)}
+                          className="hidden"
+                          id="camera-capture-checkmodel-issue-image"
+                        />
+                        <label
+                        htmlFor="camera-capture-checkmodel-issue-image"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
+                      >
+                        {/* Thêm display: inline-block hoặc inline-flex */}
+                          <div className="inline-flex items-center">
+                            <FaCamera size={15} />
+                          </div>
+                          <div className="inline-flex items-center mx-2">
+                            Chụp ảnh Vấn đề phát sinh
+                          </div>
+                      </label>
+                      </div>
+                  
+                  {/* Preview Section */}
+                  {form.imgIssue && (
+                  <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={form.imgIssue} 
+                        alt="CheckModel: Vân đề phát sinh Preview" 
+                        className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
+                        onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh CheckModel: Vấn đề phát sinh")} 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh CheckModel: Vấn đề phát sinh")}
+                        className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+                      >
+                        <IoEyeSharp size={20} />
+                        <span className="text-sm font-medium">Xem ảnh</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
           </div>
         </div>
       </Modal>
+      <ImagePreviewModal
+        isOpen={imagePreview.isOpen}
+        imageUrl={imagePreview.imageUrl}
+        title={imagePreview.title}
+        onClose={closeImagePreview}
+      />
     </div>
   );
 });

@@ -2,7 +2,7 @@ import ViewDetailButton from "../general/ViewDetailButton"
 import Modal from "../general/Modal";
 import { useEffect, useState, useRef, memo } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { fetchStandardVehicle, updateStandardVehicle,uploadAOIImage, uploadSPIImage } from "../../redux/slices/subTableSlice";
+import { fetchStandardVehicle, updateStandardVehicle,uploadAOIImage, uploadSPIImage, uploadStandardVehicleIssueImage, uploadMounterImage, uploadPrinterImage, uploadPrinterCleanImage } from "../../redux/slices/subTableSlice";
 import ImagePreviewModal from "../files/ImagePreviewModal";
 import ImageViewIcon from "../files/ImageViewIcon";
 import type { StandardVehicleData } from "../../redux/slices/subTableSlice";
@@ -61,6 +61,12 @@ const initialStandardVehiclesState: StandardVehicleData = {
   imgAOI: "",
 
   id: 0,
+
+  note: "",
+  imgIssue: "",
+  imgMounter: "",
+  imgPrinter: "",
+  imgPrinterClean: "",
 };
 
 const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
@@ -152,7 +158,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 
 
   // FIXED: Upload handler với flag protection cho CÁ 2 trường imgSPI và imgAOI
-  const handleImageUpload = async (field: 'imgSPI' | 'imgAOI', event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (field: 'imgSPI' | 'imgAOI' | 'imgMounter' | 'imgPrinter' | 'imgPrinterClean' | 'imgIssue', event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -195,6 +201,66 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
         }
         
         showNotification('success', 'Thành công', 'Upload hình ảnh AOI thành công');
+      } else if (field === 'imgMounter') {
+        const result = await dispatch(uploadMounterImage({ 
+          StandardVehicleId: Number(standardVehicleId), 
+          file 
+        })).unwrap();
+        
+        // Chỉ cập nhật field, KHÔNG trigger re-sync toàn bộ form
+        if (result?.imageUrl) {
+          setForm(prev => ({
+            ...prev,
+            imgMounter: result.imageUrl
+          }));
+        }
+        
+        showNotification('success', 'Thành công', 'Upload hình ảnh sau mounter thành công');
+      } else if (field === 'imgPrinter') {
+        const result = await dispatch(uploadPrinterImage({ 
+          StandardVehicleId: Number(standardVehicleId), 
+          file 
+        })).unwrap();
+        
+        // Chỉ cập nhật field, KHÔNG trigger re-sync toàn bộ form
+        if (result?.imageUrl) {
+          setForm(prev => ({
+            ...prev,
+            imgPrinter: result.imageUrl
+          }));
+        }
+        
+        showNotification('success', 'Thành công', 'Upload hình ảnh sau printer thành công');
+      } else if (field === 'imgIssue') {
+        const result = await dispatch(uploadStandardVehicleIssueImage({ 
+          StandardVehicleId: Number(standardVehicleId), 
+          file 
+        })).unwrap();
+        
+        // Chỉ cập nhật field, KHÔNG trigger re-sync toàn bộ form
+        if (result?.imageUrl) {
+          setForm(prev => ({
+            ...prev,
+            imgIssue: result.imageUrl
+          }));
+        }
+        
+        showNotification('success', 'Thành công', 'Upload hình ảnh StandardVehicle: vấn đề phát sinh thành công');
+      }else if (field === 'imgPrinterClean') {
+        const result = await dispatch(uploadPrinterCleanImage({ 
+          StandardVehicleId: Number(standardVehicleId), 
+          file 
+        })).unwrap();
+        
+        // Chỉ cập nhật field, KHÔNG trigger re-sync toàn bộ form
+        if (result?.imageUrl) {
+          setForm(prev => ({
+            ...prev,
+            imgPrinterClean: result.imageUrl
+          }));
+        }
+        
+        showNotification('success', 'Thành công', 'Upload hình ảnh sau printer thành công');
       }
 
     } catch (error) {
@@ -280,7 +346,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 
             {/** Row 17 */}
             <tr>
-              <th rowSpan={5} className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Printer</th>
+              <th rowSpan={7} className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Printer</th>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('printer.pressureValue')}</th>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('printer.pressureSpec')}</th>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('printer.speedSpec')}</th>
@@ -331,6 +397,37 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
             <tr>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100 text-left!">Sprinter Program</th>
               <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">{form.printerProgram || ""}</td>
+            </tr>
+            {/** row 20.2: thêm hình ảnh sau printer */}
+            <tr>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">Hình ảnh sau printer</th>
+              <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <ImageViewIcon 
+                      imageUrl={form.imgPrinter} 
+                      title="Hình ảnh sau printer"
+                      onView={openImagePreview}
+                    />
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            {/** row 20.3: thêm hình ảnh cleaning printer */}
+            <tr>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">Hình ảnh cleaning printer tự động</th>
+              <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <ImageViewIcon 
+                      imageUrl={form.imgPrinterClean} 
+                      title="Hình ảnh cleaning printer tự động"
+                      onView={openImagePreview}
+                    />
+                  </div>
+                </div>
+              </td>
             </tr>
 
             {/** Row 21 */}
@@ -391,7 +488,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 
             {/** Row 23 */}
             <tr>
-              <th colSpan={1} rowSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Mount</th>
+              <th colSpan={1} rowSpan={5} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Mount</th>
               <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">{t('mount.checkFirst3Boards')}</th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
                 <div className="flex items-center justify-center flex-row gap-2">
@@ -431,6 +528,22 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
             <tr>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100 text-left!">Point Mounter</th>
               <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">{form.pointMounter || ""}</td>
+            </tr>
+
+            {/** row 23.3: hình ảnh sau mounter */}
+            <tr>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">Hình ảnh sau mounter</th>
+              <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <ImageViewIcon 
+                      imageUrl={form.imgMounter} 
+                      title="Hình ảnh sau mounter"
+                      onView={openImagePreview}
+                    />
+                  </div>
+                </div>
+              </td>
             </tr>
 
             {/** Row 25 */}
@@ -599,6 +712,27 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
               <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
               <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
             </tr>
+
+             {/** row 31: Ghi chú vấn đề phát sinh */}
+            <tr>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Ghi chú vấn đề phát sinh</th>
+              <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs">{form.note || ""}</td>
+            </tr>
+            {/** row 32: hình ảnh vấn đề phát sinh */}
+            <tr>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Hình ảnh vấn đề phát sinh</th>
+              <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs">
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <ImageViewIcon 
+                      imageUrl={form.imgIssue} 
+                      title="Hình ảnh vấn đề phát sinh"
+                      onView={openImagePreview}
+                    />
+                  </div>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -698,6 +832,28 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
         </div>
       </div>
 
+      {/** Hình ảnh sau printer */}
+      <div className="mb-3">
+        <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh sau printer</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
+          <ImageViewIcon 
+            imageUrl={form.imgPrinter} 
+            title="Hình ảnh sau printer"
+            onView={openImagePreview}
+          />
+        </div>
+      </div>
+      {/** Hình ảnh cleaning printer */}
+      <div className="mb-3">
+        <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh cleaning printer</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
+          <ImageViewIcon 
+            imageUrl={form.imgPrinterClean} 
+            title="Hình ảnh cleaning printer"
+            onView={openImagePreview}
+          />
+        </div>
+      </div>
     </div>
 
     {/* SPI Section */}
@@ -771,6 +927,17 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
         <div className="text-xs font-semibold text-gray-600 mb-1">{t('mount.checkBottomBoard')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
           {form.mountQ2 ? "✓ OK" : "—"}
+        </div>
+      </div>
+
+      <div className="mb-3">
+        <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh sau mounter</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
+          <ImageViewIcon 
+            imageUrl={form.imgMounter} 
+            title="Hình ảnh sau mounter"
+            onView={openImagePreview}
+          />
         </div>
       </div>
     </div>
@@ -928,6 +1095,32 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
       </div>
     </div>
 
+    {/* Notes Section */}
+    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
+      <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Vấn đề phát sinh</h3>
+      <div className="mb-4">
+          <div className="min-w-0">
+            <div className="text-xs font-semibold text-gray-600 mb-1">Ghi chú vấn đề phát sinh</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+              {form.note|| "—"}
+            </div>
+          </div>
+      </div>
+
+      <div>
+         <div className="mb-3">
+        <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh vấn đề phát sinh</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
+          <ImageViewIcon 
+            imageUrl={form.imgIssue} 
+            title="Hình ảnh StandardProduction: Vấn đề phát sinh"
+            onView={openImagePreview}
+          />
+        </div>
+      </div>
+      </div>
+    </div>
+
   </div>
 
   {/* Buttons */}
@@ -1071,6 +1264,120 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
         <label htmlFor="vacuumBlockOk" className="text-xs mx-2">
           Sau khi sử dụng Vaccum Block thì có ảnh hưởng, tác động tới PCB hay linh kiện không ?
         </label>
+      </div>
+
+      <div className="min-w-0 mb-3 mt-2">
+           <label className="block text-xs font-medium mb-1">Hình ảnh sau printer</label>
+                <div className="">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload('imgPrinter', e)}
+                    className="border border-gray-300 rounded px-3 py-2 w-full"
+                  />
+                </div>
+                      <div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(e) => handleImageUpload('imgPrinter', e)}
+                        className="hidden"
+                        id="camera-capture-printer-after"
+                      />
+                      <label
+                      htmlFor="camera-capture-printer-after"
+                      className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
+                    >
+                      {/* Thêm display: inline-block hoặc inline-flex */}
+                        <div className="inline-flex items-center">
+                          <FaCamera size={15} />
+                        </div>
+                        <div className="inline-flex items-center mx-2">
+                          Chụp ảnh sau printer
+                        </div>
+                    </label>
+                    </div>
+                
+                {/* Preview Section */}
+                {form.imgPrinter && (
+                <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src={form.imgPrinter} 
+                      alt="sau printer Preview" 
+                      className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
+                      onClick={() => openImagePreview(form.imgPrinter!, "Hình ảnh sau printer")} 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => openImagePreview(form.imgPrinter!, "Hình ảnh sau printer")}
+                      className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+                    >
+                      <IoEyeSharp size={20} />
+                      <span className="text-sm font-medium">Xem ảnh</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+      </div>
+
+      <div className="min-w-0 mb-3 mt-2">
+           <label className="block text-xs font-medium mb-1">Hình ảnh cleaning printer tự động</label>
+                <div className="">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload('imgPrinterClean', e)}
+                    className="border border-gray-300 rounded px-3 py-2 w-full"
+                  />
+                </div>
+                      <div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(e) => handleImageUpload('imgPrinterClean', e)}
+                        className="hidden"
+                        id="camera-capture-printer-clean"
+                      />
+                      <label
+                      htmlFor="camera-capture-printer-clean"
+                      className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
+                    >
+                      {/* Thêm display: inline-block hoặc inline-flex */}
+                        <div className="inline-flex items-center">
+                          <FaCamera size={15} />
+                        </div>
+                        <div className="inline-flex items-center mx-2">
+                          Chụp ảnh cleaning printer
+                        </div>
+                    </label>
+                    </div>
+                
+                {/* Preview Section */}
+                {form.imgPrinterClean && (
+                <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src={form.imgPrinterClean} 
+                      alt="cleaning printer tự động Preview" 
+                      className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
+                      onClick={() => openImagePreview(form.imgPrinterClean!, "Hình ảnh cleaning printer tự động")} 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => openImagePreview(form.imgPrinterClean!, "Hình ảnh cleaning printer tự động")}
+                      className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+                    >
+                      <IoEyeSharp size={20} />
+                      <span className="text-sm font-medium">Xem ảnh</span>
+                    </button>
+                  </div>
+                </div>
+              )}
       </div>
     </section>
 
@@ -1220,6 +1527,63 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
             Kiểm tra 1 tấm ở mặt dưới có NG hay bể linh kiện không ?
           </label>
         </div>
+      </div>
+
+       <div className="min-w-0 mb-3 mt-2">
+           <label className="block text-xs font-medium mb-1">Hình ảnh sau mounter</label>
+                <div className="">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload('imgMounter', e)}
+                    className="border border-gray-300 rounded px-3 py-2 w-full"
+                  />
+                </div>
+                      <div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(e) => handleImageUpload('imgMounter', e)}
+                        className="hidden"
+                        id="camera-capture-mounter-after"
+                      />
+                      <label
+                      htmlFor="camera-capture-mounter-after"
+                      className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
+                    >
+                      {/* Thêm display: inline-block hoặc inline-flex */}
+                        <div className="inline-flex items-center">
+                          <FaCamera size={15} />
+                        </div>
+                        <div className="inline-flex items-center mx-2">
+                          Chụp ảnh sau mounter
+                        </div>
+                    </label>
+                    </div>
+                
+                {/* Preview Section */}
+                {form.imgMounter && (
+                <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src={form.imgMounter} 
+                      alt="cleaning printer tự động Preview" 
+                      className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
+                      onClick={() => openImagePreview(form.imgMounter!, "Hình ảnh cleaning printer tự động")} 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => openImagePreview(form.imgMounter!, "Hình ảnh cleaning printer tự động")}
+                      className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+                    >
+                      <IoEyeSharp size={20} />
+                      <span className="text-sm font-medium">Xem ảnh</span>
+                    </button>
+                  </div>
+                </div>
+              )}
       </div>
     </section>
 
@@ -1470,6 +1834,79 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
           />
         </div>
       </div>
+    </section>
+
+    {/* Ghi chú vấn đề phát sinh */}
+    <section>
+      <h4 className="text-sm font-semibold mb-3 text-gray-700">Vấn đề phát sinh</h4>
+
+      <div className="grid grid-cols-1 gap-3 mb-3">
+        <div className="min-w-0">
+          <label className="text-xs block mb-1">Ghi chú vấn đề phát sinh</label>
+          <input
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            value={form.note}
+            onChange={(e) => set("note", e.target.value.toUpperCase())}
+          />
+        </div>
+
+          <div className="min-w-0 mb-3 mt-2">
+           <label className="block text-xs font-medium mb-1">Hình ảnh vấn đề phát sinh</label>
+                <div className="">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload('imgIssue', e)}
+                    className="border border-gray-300 rounded px-3 py-2 w-full"
+                  />
+                </div>
+                      <div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(e) => handleImageUpload('imgIssue', e)}
+                        className="hidden"
+                        id="camera-capture-issue-image"
+                      />
+                      <label
+                      htmlFor="camera-capture-issue-image"
+                      className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
+                    >
+                      {/* Thêm display: inline-block hoặc inline-flex */}
+                        <div className="inline-flex items-center">
+                          <FaCamera size={15} />
+                        </div>
+                        <div className="inline-flex items-center mx-2">
+                          Chụp ảnh vấn đề phát sinh
+                        </div>
+                    </label>
+                    </div>
+                
+                {/* Preview Section */}
+                {form.imgIssue && (
+                <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src={form.imgIssue} 
+                      alt="vấn đề phát sinh Preview" 
+                      className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
+                      onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh vấn đề phát sinh")} 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh vấn đề phát sinh")}
+                      className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+                    >
+                      <IoEyeSharp size={20} />
+                      <span className="text-sm font-medium">Xem ảnh</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+          </div>
+        </div>
     </section>
   </div>
 </Modal>

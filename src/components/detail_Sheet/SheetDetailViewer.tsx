@@ -386,74 +386,65 @@ const SheetDetailViewer = () => {
 
       {/* CSS để tương tác khi read-only */}
       {!isEditable && (
-  <style>{`
-    /* Force tất cả sáng rõ */
-    .pointer-events-none,
-    .pointer-events-none *,
-    .pointer-events-none > *,
-    .pointer-events-none input,
-    .pointer-events-none button,
-    .pointer-events-none div,
-    .pointer-events-none section {
-      opacity: 1 !important;
-    }
-    
-    /* TẤT CẢ BUTTON - Màu xám, không hoạt động */
-    .pointer-events-none button {
-      cursor: not-allowed !important;
-      background-color: #9ca3af !important;
-      color: #ffffff !important;
-      border-color: #6b7280 !important;
-      opacity: 1 !important;
-      pointer-events: none !important;
-    }
+        <style>{`
+          /* Force tất cả sáng rõ */
+          .pointer-events-none,
+          .pointer-events-none * {
+            opacity: 1 !important;
+          }
+          
+          /* TẤT CẢ BUTTON - Màu xám, không hoạt động */
+          .pointer-events-none button {
+            cursor: not-allowed !important;
+            background-color: #d1d5db !important; /* gray-300 */
+            color: #6b7280 !important; /* gray-500 */
+            border-color: #9ca3af !important;
+            opacity: 1 !important;
+            pointer-events: none !important;
+          }
 
-    /* BUTTON "XEM CHI TIẾT" FILES - Màu xanh và hoạt động */
-    .pointer-events-none button:not([data-close-modal]) {
-      cursor: pointer !important;
-      background-color: #3b82f6 !important;
-      color: #ffffff !important;
-      border-color: #2563eb !important;
-      pointer-events: auto !important;
-      opacity: 1 !important;
-    }
-    
-    .pointer-events-none button[data-view-detail="true"]:hover {
-      background-color: #2563eb !important;
-    }
+          /* BUTTON "XEM CHI TIẾT" FILES - Màu xanh và hoạt động */
+          .pointer-events-none button[data-view-detail="true"] {
+            cursor: pointer !important;
+            background-color: #3b82f6 !important;
+            color: #ffffff !important;
+            border-color: #2563eb !important;
+            pointer-events: auto !important;
+            opacity: 1 !important;
+          }
+          
+          .pointer-events-none button[data-view-detail="true"]:hover {
+            background-color: #2563eb !important;
+          }
 
-    /* BUTTON XEM HÌNH ẢNH (icon button) - Cho phép hoạt động */
-    .pointer-events-none button[data-view-image="true"] {
-      cursor: pointer !important;
-      background-color: transparent !important;
-      color: #3b82f6 !important;
-      border: none !important;
-      pointer-events: auto !important;
-      opacity: 1 !important;
-    }
-    
-    .pointer-events-none button[data-view-image="true"]:hover {
-      color: #2563eb !important;
-    }
+          /* BUTTON XEM HÌNH ẢNH (icon button) */
+          .pointer-events-none button[data-view-image="true"] {
+            cursor: pointer !important;
+            background-color: transparent !important;
+            color: #3b82f6 !important;
+            border: none !important;
+            pointer-events: auto !important;
+            opacity: 1 !important;
+          }
 
-    /* Cho phép modal hoạt động bình thường */
-    [data-close-modal="true"],
-    [data-close-modal="true"] * {
-      pointer-events: auto !important;
-      cursor: pointer !important;
-    }
+          /* Modal buttons */
+          [data-close-modal="true"],
+          [data-close-modal="true"] * {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+          }
 
-    /* Input/Textarea - trắng sáng */
-    .pointer-events-none input:not([type="checkbox"]):not([type="radio"]),
-    .pointer-events-none textarea,
-    .pointer-events-none select {
-      cursor: not-allowed !important;
-      background-color: #ffffff !important;
-      border: 1.5px solid #d1d5db !important;
-      color: #000000 !important;
-    }
-  `}</style>
-)}
+          /* Input - trắng sáng */
+          .pointer-events-none input:not([type="checkbox"]):not([type="radio"]),
+          .pointer-events-none textarea,
+          .pointer-events-none select {
+            cursor: not-allowed !important;
+            background-color: #ffffff !important;
+            border: 1.5px solid #d1d5db !important;
+            color: #000000 !important;
+          }
+        `}</style>
+      )}
 
     </div>
   );

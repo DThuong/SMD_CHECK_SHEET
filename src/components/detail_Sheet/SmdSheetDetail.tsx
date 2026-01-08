@@ -388,32 +388,31 @@ const SmdSheetDetail = () => {
       {/* CSS để disable tương tác khi read-only */}
       {!canEdit && (
         <style>{`
-          .pointer-events-none button,
-          .pointer-events-none input,
-          .pointer-events-none textarea,
-          .pointer-events-none select {
+          /* TẤT CẢ BUTTON - Màu xám theo mặc định */
+          .pointer-events-none button {
             cursor: not-allowed !important;
-            background-color: #f9fafb !important;
-            opacity: 1;
-          }
-          .pointer-events-none input:focus,
-          .pointer-events-none textarea:focus,
-          .pointer-events-none select:focus {
-            outline: none !important;
-            box-shadow: none !important;
+            background-color: #d1d5db !important; /* gray-300 */
+            color: #6b7280 !important; /* gray-500 */
+            border-color: #9ca3af !important;
+            opacity: 1 !important;
+            pointer-events: none !important;
           }
 
           /* BUTTON "XEM CHI TIẾT" FILES - Màu xanh và hoạt động */
-          .pointer-events-none button:not([data-close-modal]) {
+          .pointer-events-none button[data-view-detail="true"] {
             cursor: pointer !important;
-            background-color: #3b82f6 !important;
+            background-color: #3b82f6 !important; /* blue-500 */
             color: #ffffff !important;
             border-color: #2563eb !important;
             pointer-events: auto !important;
             opacity: 1 !important;
           }
 
-          /* BUTTON XEM HÌNH ẢNH (icon button) - Cho phép hoạt động */
+          .pointer-events-none button[data-view-detail="true"]:hover {
+            background-color: #2563eb !important; /* blue-600 */
+          }
+
+          /* BUTTON XEM HÌNH ẢNH (icon button) */
           .pointer-events-none button[data-view-image="true"] {
             cursor: pointer !important;
             background-color: transparent !important;
@@ -423,11 +422,20 @@ const SmdSheetDetail = () => {
             opacity: 1 !important;
           }
 
-          /* Cho phép modal hoạt động bình thường */
+          /* Modal buttons */
           [data-close-modal="true"],
           [data-close-modal="true"] * {
             pointer-events: auto !important;
             cursor: pointer !important;
+          }
+
+          /* Input/Textarea */
+          .pointer-events-none input,
+          .pointer-events-none textarea,
+          .pointer-events-none select {
+            cursor: not-allowed !important;
+            background-color: #f9fafb !important;
+            opacity: 1;
           }
         `}</style>
       )}

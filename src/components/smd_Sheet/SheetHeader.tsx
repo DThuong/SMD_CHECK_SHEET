@@ -280,6 +280,7 @@ const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !=
             <ViewDetailButton 
               onOpen={handleViewFiles}
               disabled={false}
+              data-view-detail="true"
             >
               <div className="flex gap-2 items-center justify-center">
                 <div><IoEyeSharp size={20} /></div> <div>{t2('button.viewDetail')}</div>
@@ -287,7 +288,7 @@ const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !=
             </ViewDetailButton>
           )}
           
-          <ViewDetailButton onOpen={handleOpenModal} disabled={!canEdit}>
+          <ViewDetailButton onOpen={handleOpenModal} disabled={!canEdit} {...(!canEdit ? {} : { 'data-edit-button': 'true' })}>
             {t2('button.edit')}
           </ViewDetailButton>
         </div>

@@ -3,6 +3,7 @@ import logo from '../../assets/image/brand_image_3.webp';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logoutUser } from '../../redux/slices/authSlice';
+import { FaKey } from 'react-icons/fa6';
 // import { FaUser } from "react-icons/fa";
 import { TbLogout } from "react-icons/tb";
 const Header = () => {
@@ -38,6 +39,8 @@ const Header = () => {
       document.removeEventListener('click', handleClickOutside);
     };
   }, [isDropdownOpen]);
+
+  const handleChangePassword = () => {}
 
   const handleLogout = async () => {
     try {
@@ -103,15 +106,7 @@ const Header = () => {
                   {/* Dropdown menu */}
                   {isDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
-                      
-                      {/* <Link
-                        to="/profile"
-                        onClick={() => setIsDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-decoration-none text-sm text-gray-700 hover:bg-gray-100 text-decoration"
-                      >
-                        <FaUser />
-                        Profile
-                      </Link> */}
+                
 
                       <button
                         onClick={handleLogout}
@@ -189,6 +184,15 @@ const Header = () => {
               {user ? (
                 // Menu khi đã login
                 <>
+
+                <button
+                  disabled={loading}
+                    onClick={handleChangePassword}
+                    className="w-full flex items-center gap-3 px-3 py-3 mb-3 rounded-lg font-medium bg-gray-500 hover:bg-gray-600 text-white transition"
+                  >
+                   <FaKey />
+                    Đổi mật khẩu
+                  </button>
 
                   <button
                   disabled={loading}

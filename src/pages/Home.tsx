@@ -281,7 +281,7 @@ const Home = () => {
     }
   }, []); // CHỈ CHẠY 1 LẦN KHI MOUNT
 
-  // ✅ PATTERN TỪ LOGS: EFFECT 2 - Auto save filter state
+  // EFFECT 2 - Auto save filter state
   useEffect(() => {
     if (filteredSheets && filteredSheets.length > 0 && activeTab === 'list') {
       saveHomeFilterState(filter, currentPage, activeTab);
@@ -290,14 +290,22 @@ const Home = () => {
 
   // Load sheets khi chuyển sang tab list
   useEffect(() => {
-    if (activeTab === 'list') {
-      const savedState = getHomeFilterState();
-      if (!savedState.filter) {
-        resetFilter();
-        loadSheets();
-      }
+  if (activeTab === 'list') {
+    const savedState = getHomeFilterState();
+    
+    // Luôn load lại sheets với filter hiện tại hoặc savedState
+    if (savedState.filter) {
+      // Restore filter và load
+      setFilter(savedState.filter);
+      setTimeout(() => {
+        loadSheetsWithFilter(savedState.filter);
+      }, 0);
+    } else {
+      // Load tất cả sheets
+      loadSheets();
     }
-  }, [activeTab]);
+  }
+}, [activeTab]);
 
   // Load sheets
   const loadSheets = async () => {
@@ -700,6 +708,7 @@ const Home = () => {
                     <option value="all">Tất cả</option>
                     <option value="pending">Pending</option>
                     <option value="PQCDone">PQC đã ký</option>
+                    <option value="PQCLeaderDone">PQC Leader đã ký</option>
                     <option value="ENGDone">Engineer đã ký</option>
                     <option value="SupervisiorDone">Supervisor đã ký</option>
                     <option value="ManagerDone">Manager đã ký</option>

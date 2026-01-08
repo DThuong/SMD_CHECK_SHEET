@@ -19,5 +19,10 @@
   },
   "msg_success": "Đăng nhập thành công!",
   "user": "Người dùng",
-  "role": "Vai trò"
+  "role": "Vai trò",
+  "issueNote": "Ghi chú vấn đề phát sinh",
+  "issueImg": "Hình ảnh vấn đề phát sinh",
+  "printerAfterImage": "Hình ảnh sau printer",
+  "mounterAfterImage": "Hình ảnh sau mounter",
+  "autoCleaningPrinter": "Hình ảnh cleaning printer tự động"
 }

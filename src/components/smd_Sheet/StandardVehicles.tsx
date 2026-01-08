@@ -400,13 +400,13 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
             </tr>
             {/** row 20.2: thêm hình ảnh sau printer */}
             <tr>
-              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">Hình ảnh sau printer</th>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">{t2('printerAfterImage')}</th>
               <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">
                 <div className="flex items-center justify-center">
                   <div className="flex items-center justify-center gap-2">
                     <ImageViewIcon 
                       imageUrl={form.imgPrinter} 
-                      title="Hình ảnh sau printer"
+                      title={t2('printerAfterImage')}
                       onView={openImagePreview}
                     />
                   </div>
@@ -416,13 +416,13 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 
             {/** row 20.3: thêm hình ảnh cleaning printer */}
             <tr>
-              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">Hình ảnh cleaning printer tự động</th>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">{t2('autoCleaningPrinter')}</th>
               <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">
                 <div className="flex items-center justify-center">
                   <div className="flex items-center justify-center gap-2">
                     <ImageViewIcon 
                       imageUrl={form.imgPrinterClean} 
-                      title="Hình ảnh cleaning printer tự động"
+                      title={t2('autoCleaningPrinter')}
                       onView={openImagePreview}
                     />
                   </div>
@@ -532,13 +532,13 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 
             {/** row 23.3: hình ảnh sau mounter */}
             <tr>
-              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">Hình ảnh sau mounter</th>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">{t2('mounterAfterImage')}</th>
               <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">
                 <div className="flex items-center justify-center">
                   <div className="flex items-center justify-center gap-2">
                     <ImageViewIcon 
                       imageUrl={form.imgMounter} 
-                      title="Hình ảnh sau mounter"
+                      title={t2('mounterAfterImage')}
                       onView={openImagePreview}
                     />
                   </div>
@@ -715,12 +715,12 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 
              {/** row 31: Ghi chú vấn đề phát sinh */}
             <tr>
-              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Ghi chú vấn đề phát sinh</th>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t2('issueNote')}</th>
               <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs">{form.note || ""}</td>
             </tr>
             {/** row 32: hình ảnh vấn đề phát sinh */}
             <tr>
-              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Hình ảnh vấn đề phát sinh</th>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t2('issueImg')}</th>
               <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs">
                 <div className="flex items-center justify-center">
                   <div className="flex items-center justify-center gap-2">
@@ -834,22 +834,22 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 
       {/** Hình ảnh sau printer */}
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh sau printer</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t2('printerAfterImage')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
           <ImageViewIcon 
             imageUrl={form.imgPrinter} 
-            title="Hình ảnh sau printer"
+            title={t2('printerAfterImage')}
             onView={openImagePreview}
           />
         </div>
       </div>
       {/** Hình ảnh cleaning printer */}
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh cleaning printer</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t2('autoCleaningPrinter')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
           <ImageViewIcon 
             imageUrl={form.imgPrinterClean} 
-            title="Hình ảnh cleaning printer"
+            title={t2('autoCleaningPrinter')}
             onView={openImagePreview}
           />
         </div>
@@ -931,11 +931,11 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
       </div>
 
       <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh sau mounter</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t2('mounterAfterImage')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
           <ImageViewIcon 
             imageUrl={form.imgMounter} 
-            title="Hình ảnh sau mounter"
+            title={t2('mounterAfterImage')}
             onView={openImagePreview}
           />
         </div>
@@ -1100,7 +1100,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
       <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Vấn đề phát sinh</h3>
       <div className="mb-4">
           <div className="min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Ghi chú vấn đề phát sinh</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueNote')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
               {form.note|| "—"}
             </div>
@@ -1109,7 +1109,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 
       <div>
          <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh vấn đề phát sinh</div>
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueImg')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
           <ImageViewIcon 
             imageUrl={form.imgIssue} 
@@ -1125,8 +1125,9 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 
   {/* Buttons */}
   <div className="flex flex-row justify-end w-full gap-2 mt-3">
-    <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>{t2('button.edit')}</ViewDetailButton>
-    {/* <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton> */}
+    <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit} {...(!canEdit ? {} : { 'data-edit-button': 'true' })}>
+      {t2('button.edit')}
+    </ViewDetailButton>
   </div>
 
    {/* Modal */}

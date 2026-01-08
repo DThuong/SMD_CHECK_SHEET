@@ -19,5 +19,10 @@
   },
   "msg_success": "Login successful!",
   "user": "User",
-  "role": "Role"
+  "role": "Role",
+  "issueNote": "Issue Note",
+  "issueImg": "Issue Image",
+  "printerAfterImage": "Printer After Image",
+  "mounterAfterImage": "Mounter After Image",
+  "autoCleaningPrinter": "Auto Cleaning Printer"
 }

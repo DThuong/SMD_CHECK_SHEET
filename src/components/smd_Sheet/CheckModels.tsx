@@ -237,12 +237,12 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
             </tr>
 
             <tr>
-              <th className="border px-2 py-2 text-xs text-left bg-gray-100">Ghi chú Vấn đề phát sinh</th>
+              <th className="border px-2 py-2 text-xs text-left bg-gray-100">{t2('issueNote')}</th>
               <td colSpan={13} className="border px-2 py-2 text-xs">{form.note || ""}</td>
             </tr>
 
             <tr>
-              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Hình ảnh Vấn đề phát sinh</th>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t2('issueImg')}</th>
               <td colSpan={13} className="border border-gray-600 px-2 py-2 text-xs">
                 <div className="flex items-center justify-center">
                   <div className="flex items-center justify-center gap-2">
@@ -357,13 +357,13 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
           </div>
 
           <div className="min-w-0 mb-2">
-              <div className="text-xs font-semibold text-gray-600 mb-1">Ghi chú vấn đề phát sinh</div>
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueNote')}</div>
               <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
                 {form.note || "—"}
               </div>
           </div>
           <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh vấn đề phát sinh</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueImage')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
               <ImageViewIcon 
                 imageUrl={form.imgIssue} 
@@ -371,13 +371,13 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
                 onView={openImagePreview}
               />
           </div>
-      </div>
+          </div>
         </div>
       </div>
 
       {/* Buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
-        <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>
+        <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit} {...(!canEdit ? {} : { 'data-edit-button': 'true' })}>
           {t2('button.edit')}
         </ViewDetailButton>
       </div>

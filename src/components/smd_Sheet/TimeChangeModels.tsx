@@ -216,13 +216,13 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
 
             {/*** Row 16 - Note */}
             <tr>
-              <th className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Ghi chú vấn đề phát sinh</th>
+              <th className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">{t2('issueNote')}</th>
               <td colSpan={13} className="border border-gray-600 px-2 py-2 text-xs">{form.note || ""}</td>
             </tr>
 
             {/** Row 17 - Hình ảnh vấn đề phát sinh */}
             <tr>
-              <th className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Hình ảnh vấn đề phát sinh</th>
+              <th className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">{t2('issueImg')}</th>
               <td colSpan={13} className="border border-gray-600 px-2 py-2 text-xs">
                 <div className="flex items-center justify-center">
                   <div className="flex items-center justify-center gap-2">
@@ -294,7 +294,7 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
 
           {/** Note */}
           <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Ghi chú vấn đề phát sinh</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueNote')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 whitespace-pre-wrap wrap-break-word">
               {form.note || "—"}
             </div>
@@ -302,7 +302,7 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
 
           {/** Hình ảnh Vấn đề phát sinh */}
           <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh vấn đề phát sinh</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueImg')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
               <ImageViewIcon 
                 imageUrl={form.imgIssue} 
@@ -317,8 +317,9 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
 
       {/* Buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3">
-        <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit}>{t2('button.edit')}</ViewDetailButton>
-        {/* <ViewDetailButton color="green" onOpen={() => {}}>Lưu</ViewDetailButton> */}
+        <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit} {...(!canEdit ? {} : { 'data-edit-button': 'true' })}>
+          {t2('button.edit')}
+        </ViewDetailButton>
       </div>
 
       {/* Modal */}

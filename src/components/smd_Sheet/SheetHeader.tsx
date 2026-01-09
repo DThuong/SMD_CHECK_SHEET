@@ -147,7 +147,7 @@ const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !=
         onClose={hideNotification}
       />
 
-      <div className="p-0 w-full">
+      <div className="p-0 w-full no-print">
         {/* CHỈ HIỂN THỊ KHI CẢ 2 ĐIỀU KIỆN ĐỀU ĐÚNG */}
           {bothFilesUploaded && (
           <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -275,7 +275,7 @@ const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !=
         </div>
 
         {/* Buttons */}
-        <div className="flex flex-row justify-end w-full gap-2 mt-3">
+        <div className="flex flex-row justify-end w-full gap-2 mt-3 no-print">
           {bothFilesUploaded && (
             <ViewDetailButton 
               onOpen={handleViewFiles}

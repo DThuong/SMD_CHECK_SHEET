@@ -70,7 +70,7 @@ const Dashboard = () => {
 
     const colors: Record<string, string> = {
       'PQC': '#3b82f6',
-      'PQCLeader': '#3b82f3', // thêm
+      'PQCLeader': '#2563eb', // thêm
       'ENG': '#10b981',
       'Supervisior': '#f59e0b',
       'Manager': '#ef4444',
@@ -94,7 +94,7 @@ const Dashboard = () => {
     const statusColors: Record<string, string> = {
       'Pending': '#94a3b8',
       'PQCDone': '#3b82f6',
-      'PQCLeaderDone': '#3b82f3', // thêm
+      'PQCLeaderDone': '#2563eb', // thêm
       'ENGDone': '#10b981',
       'SupervisiorDone': '#f59e0b',
       'ManagerDone': '#ef4444',
@@ -290,7 +290,7 @@ const Dashboard = () => {
       icon: '',
       isUserCard: false
     },
-    { 
+    {
       status: 'PQCLeaderDone', 
       label: t('roleBasedDashboard.statusCards.needEng'),
       description: t('roleBasedDashboard.statusCards.descEng'),

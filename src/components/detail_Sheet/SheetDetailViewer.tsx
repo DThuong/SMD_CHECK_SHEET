@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
@@ -33,6 +34,9 @@ import { useNotification } from '../../redux/hooks';
 import Notification from '../general/Notification';
 import { REQUIRED_FIELDS_CONFIG, hasAllRequiredData, getMissingFields } from '../../utils/requiredFieldsConfig';
 import { useTranslation } from 'react-i18next';
+import html2canvas from 'html2canvas-pro';
+import { jsPDF } from 'jspdf';
+
 
 const SheetDetailViewer = () => {
   const { id } = useParams<{ id: string }>();
@@ -48,6 +52,9 @@ const SheetDetailViewer = () => {
   const { notification, showNotification, hideNotification } = useNotification();
   const [confirming, setConfirming] = useState(false);
   const {t} = useTranslation('sheetDetail');
+
+  const contentRef = useRef<HTMLDivElement>(null);
+  
 
   // PHÂN QUYỀN CHÍNH XÁC
   const canEdit = () => {
@@ -286,6 +293,222 @@ const SheetDetailViewer = () => {
   const isEditable = canEdit();
   const isConfirmable = canConfirm();
 
+  // EXPORT PDF với html2canvas-pro
+  const handleExportPDF = async () => {
+    if (!contentRef.current) {
+      showNotification('error', "Lỗi", "Không tìm thấy nội dung để export");
+      return;
+    }
+
+    try {
+      showNotification('info', "Đang tạo PDF", "Đang xử lý từng section...");
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: false
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const contentWidth = pdfWidth - (margin * 2);
+      
+      let currentY = margin;
+      let isFirstSection = true;
+      
+      const sections = Array.from(contentRef.current.querySelectorAll('.pdf-section'));
+      
+      if (sections.length === 0) {
+        showNotification('error', "Lỗi", "Không tìm thấy sections để export");
+        return;
+      }
+      
+      const FONT_SCALE = 1.5;
+      
+      for (let i = 0; i < sections.length; i++) {
+        const section = sections[i] as HTMLElement;
+        
+        showNotification('info', "Đang tạo PDF", `Đang xử lý phần ${i + 1}/${sections.length}...`);
+        
+        const sectionClone = section.cloneNode(true) as HTMLElement;
+        sectionClone.querySelectorAll('.no-print').forEach(el => el.remove());
+        
+        // ⭐ XỬ LÝ BORDERS CHO HEADER (div containers)
+        const headerContainers = sectionClone.querySelectorAll('.border, .border-gray-300, [class*="border"]');
+        headerContainers.forEach((container: any) => {
+          // Chỉ xử lý div containers, không phải table
+          if (container.tagName === 'DIV') {
+            container.style.cssText = `
+              ${container.style.cssText}
+              border: 2px solid #000000 !important;
+              box-sizing: border-box !important;
+            `;
+          }
+        });
+        
+        // ⭐ CHUẨN HÓA BORDERS CHO TABLES
+        const allTables = sectionClone.querySelectorAll('table');
+        allTables.forEach((table: any) => {
+          table.style.cssText = `
+            opacity: 1 !important;
+            border-collapse: collapse !important;
+            border-spacing: 0 !important;
+            border: 2px solid #000000 !important;
+            width: 100%;
+          `;
+        });
+        
+        // ⭐ TẤT CẢ CELLS (th và td)
+        const allCells = sectionClone.querySelectorAll('td, th');
+        allCells.forEach((cell: any) => {
+          const computedStyle = window.getComputedStyle(cell);
+          const currentPaddingTop = parseFloat(computedStyle.paddingTop) || 4;
+          const currentPaddingRight = parseFloat(computedStyle.paddingRight) || 8;
+          
+          cell.style.cssText = `
+            opacity: 1 !important;
+            border: 1.5px solid #000000 !important;
+            box-sizing: border-box !important;
+            padding: ${currentPaddingTop * FONT_SCALE}px ${currentPaddingRight * FONT_SCALE}px !important;
+            color: #000000 !important;
+            background-color: #ffffff !important;
+            font-weight: 500 !important;
+          `;
+        });
+        
+        // Force styling cho tất cả elements
+        const allElements = sectionClone.querySelectorAll('*');
+        allElements.forEach((el: any) => {
+          el.style.opacity = '1';
+          
+          const computedStyle = window.getComputedStyle(el);
+          
+          // Background
+          const bgColor = computedStyle.backgroundColor;
+          if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+            el.style.backgroundColor = '#ffffff';
+          }
+          
+          // Text color
+          if (el.tagName !== 'TABLE' && el.tagName !== 'TD' && el.tagName !== 'TH') {
+            el.style.color = '#000000';
+          }
+          
+          // Font size scaling (trừ table cells đã được xử lý)
+          if (el.tagName !== 'TD' && el.tagName !== 'TH') {
+            const currentSize = parseFloat(computedStyle.fontSize);
+            if (currentSize) {
+              el.style.fontSize = `${currentSize * FONT_SCALE}px`;
+            }
+          }
+        });
+        
+        sectionClone.style.backgroundColor = '#ffffff';
+        sectionClone.style.color = '#000000';
+        
+        sectionClone.style.position = 'absolute';
+        sectionClone.style.left = '-9999px';
+        sectionClone.style.top = '0';
+        sectionClone.style.width = section.offsetWidth + 'px';
+        document.body.appendChild(sectionClone);
+        
+        try {
+          const sectionCanvas = await html2canvas(sectionClone, {
+            scale: 3.5,
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+            imageTimeout: 0,
+            removeContainer: false
+          });
+          
+          if (!sectionCanvas || sectionCanvas.width === 0 || sectionCanvas.height === 0) {
+            console.warn(`Section ${i} produced invalid canvas, skipping...`);
+            document.body.removeChild(sectionClone);
+            continue;
+          }
+          
+          // ⭐ Xử lý canvas để tăng độ sắc nét của borders
+          const ctx = sectionCanvas.getContext('2d');
+          if (ctx) {
+            const imageData = ctx.getImageData(0, 0, sectionCanvas.width, sectionCanvas.height);
+            const data = imageData.data;
+            
+            for (let j = 0; j < data.length; j += 4) {
+              const r = data[j];
+              const g = data[j + 1];
+              const b = data[j + 2];
+              const avg = (r + g + b) / 3;
+              
+              if (avg > 230) {
+                data[j] = data[j + 1] = data[j + 2] = 255;
+              }
+              else if (avg < 100) {
+                data[j] = data[j + 1] = data[j + 2] = 0;
+              }
+              else {
+                const newVal = avg < 180 ? 0 : 255;
+                data[j] = data[j + 1] = data[j + 2] = newVal;
+              }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+          }
+          
+          const imgData = sectionCanvas.toDataURL('image/png', 1.0);
+          
+          if (!imgData || imgData === 'data:,' || !imgData.startsWith('data:image')) {
+            console.warn(`Section ${i} produced invalid image data, skipping...`);
+            document.body.removeChild(sectionClone);
+            continue;
+          }
+          
+          const imgProps = pdf.getImageProperties(imgData);
+          const imgHeight = (imgProps.height * contentWidth) / imgProps.width;
+          
+          if (currentY + imgHeight > pdfHeight - margin && !isFirstSection) {
+            pdf.addPage();
+            currentY = margin;
+          }
+          
+          pdf.addImage(
+            imgData,
+            'PNG',
+            margin,
+            currentY,
+            contentWidth,
+            imgHeight,
+            undefined,
+            'FAST'
+          );
+          
+          currentY += imgHeight + 5;
+          isFirstSection = false;
+          
+        } catch (sectionError: any) {
+          console.error(`Error processing section ${i}:`, sectionError);
+        } finally {
+          if (document.body.contains(sectionClone)) {
+            document.body.removeChild(sectionClone);
+          }
+        }
+      }
+      
+      const fileName = `Sheet_${currentSheet.id}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      
+      showNotification('success', "Thành công", `Đã tạo file ${fileName} thành công!`);
+      
+    } catch (error: any) {
+      console.error('❌ Export PDF Error:', error);
+      showNotification('error', "Lỗi", `Không thể tạo PDF: ${error.message || 'Unknown error'}`);
+    }
+  };
   return (
     <div className="max-w-8xl mx-auto my-4">
       {/** notification */}
@@ -296,7 +519,10 @@ const SheetDetailViewer = () => {
         message={notification.message}
         onClose={hideNotification}
       />
-      {/* Header */}
+
+      <div ref={contentRef}>
+      <div className="pdf-section">
+        {/* Header */}
       <div className="mb-4 p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
           <div>
@@ -320,7 +546,7 @@ const SheetDetailViewer = () => {
       </div>
 
       {/* Banner phân quyền */}
-      <div className={`mb-4 p-3 rounded-lg border ${
+      <div className={`mb-4 p-3 rounded-lg border no-print ${
         isEditable 
           ? 'bg-green-50 border-green-200' 
           : 'bg-blue-50 border-blue-200'
@@ -349,19 +575,37 @@ const SheetDetailViewer = () => {
           )}
         </p>
       </div>
+      </div>
 
       {/* Hiển thị các component */}
       <div className={!isEditable ? 'pointer-events-none' : ''}>
-        <SheetHeader canEdit={isEditable} returnPath={returnPath} />
-        <CheckModels canEdit={isEditable} />
-        <StandardProductionSection canEdit={isEditable} />
-        <TimeChangeModels canEdit={isEditable} />
-        <StandardVehicles canEdit={isEditable} />
-        <PQCChecks canEdit={isEditable} />
+        <div className="pdf-section">
+          <SheetHeader canEdit={isEditable} returnPath={returnPath} />
+        </div>
+        
+        <div className="pdf-section">
+          <CheckModels canEdit={isEditable} />
+        </div>
+        
+        <div className="pdf-section">
+          <StandardProductionSection canEdit={isEditable} />
+        </div>
+        
+        <div className="pdf-section">
+          <TimeChangeModels canEdit={isEditable} />
+        </div>
+        
+        <div className="pdf-section page-break-before">
+          <StandardVehicles canEdit={isEditable} />
+        </div>
+        
+        <div className="pdf-section">
+          <PQCChecks canEdit={isEditable} />
+        </div>
       </div>
 
       {/* Buttons */}
-      <div className="w-full sticky bottom-0 bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-4 flex items-center justify-center gap-3 shadow-lg mt-4 z-10">
+      <div className="no-print w-full sticky bottom-0 bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-4 flex items-center justify-center gap-3 shadow-lg mt-4 z-10">
         <button
           onClick={handleBack}
           className="px-4 py-3 bg-gray-600 text-white text-sm font-semibold hover:bg-gray-700 transition-colors"
@@ -386,6 +630,16 @@ const SheetDetailViewer = () => {
               : `🔒 ${t('mode.cannotSign')}`}
           </div>
         )}
+
+        <button
+          onClick={handleExportPDF}
+          className="px-4 py-3 bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+          Export PDF
+        </button>
       </div>
 
       {/* CSS để tương tác khi read-only */}
@@ -447,8 +701,60 @@ const SheetDetailViewer = () => {
             border: 1.5px solid #d1d5db !important;
             color: #000000 !important;
           }
+
+           /* PDF Section styling */
+          .pdf-section {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            margin-bottom: 10px;
+          }
+          
+          .page-break-before {
+            page-break-before: always;
+            break-before: page;
+          }
+          
+          .page-break-after {
+            page-break-after: always;
+            break-after: page;
+          }
+          
+          /* PDF Section styling */
+          .pdf-section {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            margin-bottom: 10px;
+          }
+          
+          /* Thêm spacing giữa sections khi print/export */
+          @media print {
+            .no-print {
+              display: none !important;
+            }
+            
+            .pdf-section {
+              page-break-inside: avoid;
+            }
+            
+            /* Tạo khoảng cách lớn giữa AOI và Output */
+            .pdf-section-aoi + .pdf-section-output {
+              margin-top: 40mm !important; /* Hoặc page-break-before: always; */
+            }
+            
+            /* Tạo khoảng cách lớn giữa Reflow và AOI */
+            .pdf-section-reflow + .pdf-section-aoi {
+              margin-top: 30mm !important;
+            }
+            
+            body {
+              print-color-adjust: exact;
+              -webkit-print-color-adjust: exact;
+            }
+          }
         `}</style>
       )}
+
+      </div>
 
     </div>
   );

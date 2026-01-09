@@ -223,7 +223,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
       />
        {/* Status indicator */}
       {pqcCheckId && (
-        <div className={`mb-2 text-xs p-2 rounded flex items-center gap-2 ${
+        <div className={`mb-2 text-xs p-2 rounded flex items-center gap-2 no-print ${
           isSaved ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-50 text-gray-600 border border-gray-200'
         }`}>
           {isSaved && <span className="text-green-600">✓</span>}
@@ -432,7 +432,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
       </div>
 
       {/* Buttons */}
-      <div className="flex flex-row justify-end w-full gap-2 mt-3">
+      <div className="flex flex-row justify-end w-full gap-2 mt-3 no-print">
         <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit} {...(!canEdit ? {} : { 'data-edit-button': 'true' })}>
           {t2('button.edit')}
         </ViewDetailButton>

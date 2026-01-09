@@ -340,7 +340,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
       />
         {/* Status indicator */}
       {standardVehicleId && (
-        <div className={`mb-2 text-xs p-2 rounded flex items-center gap-2 ${
+        <div className={`mb-2 text-xs p-2 rounded flex items-center gap-2 no-print ${
           isSaved ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-50 text-gray-600 border border-gray-200'
         }`}>
           {isSaved && <span className="text-green-600">✓</span>}
@@ -360,9 +360,9 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
             </tr>
 
             
-
+      {/** printer section */}
             {/** Row 17 */}
-            <tr>
+            <tr className="pdf-section-printer">
               <th rowSpan={7} className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Printer</th>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('printer.pressureValue')}</th>
               <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('printer.pressureSpec')}</th>
@@ -447,8 +447,9 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
               </td>
             </tr>
 
+            {/** SPI Section */}
             {/** Row 21 */}
-            <tr>
+            <tr className="pdf-section-spi">
               <th colSpan={1} rowSpan={5} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">SPI</th>
               <th colSpan={8} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('spi.checkItems')}</th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
@@ -502,9 +503,9 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
             </tr>
 
 
-
+            {/** Mount Section */}
             {/** Row 23 */}
-            <tr>
+            <tr className="pdf-section-mount">
               <th colSpan={1} rowSpan={5} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Mount</th>
               <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">{t('mount.checkFirst3Boards')}</th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
@@ -564,7 +565,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
             </tr>
 
             {/** Row 25 */}
-            <tr>
+            <tr className="pdf-section-reflow">
               <th colSpan={1} rowSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Reflow</th>
               <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">{t('reflow.conveyorWidth')}</th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
@@ -603,7 +604,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
             </tr>
 
             {/** Row 27 - HÀNG ĐẦU TIÊN */}
-            <tr>
+            <tr className="pdf-section-aoi">
               <th colSpan={1} rowSpan={6} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">
                 AOI
               </th>
@@ -677,7 +678,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
             </tr>
 
             {/** Row 27.1 - HÀNG THỨ HAI (độc lập) */}
-            <tr>
+            <tr className="pdf-section-output pdf-spacing-before">
               <th rowSpan={2} className="border px-2 py-2 text-xs bg-gray-100">OUTPUT</th>
 
               <th colSpan={8} className="border px-2 py-2 text-left text-xs bg-gray-100">
@@ -716,7 +717,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
             </tr>
 
             {/** Row 28 */}
-            <tr>
+            <tr className="pdf-section-worker">
               <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('worker.title')}</th>
               <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('worker.name')}</th>
               <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('worker.note')}</th>
@@ -1169,7 +1170,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
   </div>
 
   {/* Buttons */}
-  <div className="flex flex-row justify-end w-full gap-2 mt-3">
+  <div className="flex flex-row justify-end w-full gap-2 mt-3 no-print">
     <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit} {...(!canEdit ? {} : { 'data-edit-button': 'true' })}>
       {t2('button.edit')}
     </ViewDetailButton>

@@ -6,6 +6,7 @@ import { fetchStandardVehicle, updateStandardVehicle,uploadAOIImage, uploadSPIIm
 import ImagePreviewModal from "../files/ImagePreviewModal";
 import ImageViewIcon from "../files/ImageViewIcon";
 import type { StandardVehicleData } from "../../redux/slices/subTableSlice";
+import { uploadXRayImage } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import { FaCamera } from "react-icons/fa";
@@ -67,6 +68,7 @@ const initialStandardVehiclesState: StandardVehicleData = {
   imgMounter: "",
   imgPrinter: "",
   imgPrinterClean: "",
+  imgXray: "",
 };
 
 const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
@@ -158,7 +160,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 
 
   // FIXED: Upload handler với flag protection cho CÁ 2 trường imgSPI và imgAOI
-  const handleImageUpload = async (field: 'imgSPI' | 'imgAOI' | 'imgMounter' | 'imgPrinter' | 'imgPrinterClean' | 'imgIssue', event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (field: 'imgSPI' | 'imgAOI' | 'imgMounter' | 'imgPrinter' | 'imgPrinterClean' | 'imgIssue' | 'imgXray', event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -261,6 +263,21 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
         }
         
         showNotification('success', 'Thành công', 'Upload hình ảnh sau printer thành công');
+      } else if (field === 'imgXray') {
+        const result = await dispatch(uploadXRayImage({ 
+          StandardVehicleId: Number(standardVehicleId), 
+          file 
+        })).unwrap();
+        
+        // Chỉ cập nhật field, KHÔNG trigger re-sync toàn bộ form
+        if (result?.imageUrl) {
+          setForm(prev => ({
+            ...prev,
+            imgXray: result.imageUrl
+          }));
+        }
+        
+        showNotification('success', 'Thành công', 'Upload hình ảnh x-ray thành công');
       }
 
     } catch (error) {
@@ -587,7 +604,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 
             {/** Row 27 - HÀNG ĐẦU TIÊN */}
             <tr>
-              <th colSpan={1} rowSpan={5} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">
+              <th colSpan={1} rowSpan={6} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">
                 AOI
               </th>
               <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">
@@ -607,6 +624,22 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
                 {t('aoi.checker')}: {form.aoiCheck || ""}
               </td>
 
+            </tr>
+
+            {/** row 27.0: hình ảnh image xray */}
+            <tr>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">Hình ảnh xray</th>
+              <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <ImageViewIcon 
+                      imageUrl={form.imgXray} 
+                      title="Hình ảnh xray"
+                      onView={openImagePreview}
+                    />
+                  </div>
+                </div>
+              </td>
             </tr>
 
             {/** Row 27.0.1: mAoi program */}
@@ -993,6 +1026,18 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
         <div className="text-xs font-semibold text-gray-600 mb-1">{t('aoi.xray3Boards')}</div>
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
           {form.aoiQ1 ? "✓ OK" : "—"}
+        </div>
+      </div>
+
+      {/** Hình ảnh Xray */}
+      <div className="mb-3">
+        <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh Xray</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
+          <ImageViewIcon 
+            imageUrl={form.imgXray} 
+            title="Hình ảnh Xray"
+            onView={openImagePreview}
+          />
         </div>
       </div>
 
@@ -1665,6 +1710,63 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
       Xray 3 board đầu tiên có OK hay không ?
     </label>
   </div>
+              {/** Hình ảnh xray */}
+    <div className="min-w-0 mb-3 mt-2">
+           <label className="block text-xs font-medium mb-1">Hình ảnh Xray</label>
+                <div className="">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload('imgXray', e)}
+                    className="border border-gray-300 rounded px-3 py-2 w-full"
+                  />
+                </div>
+                      <div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(e) => handleImageUpload('imgXray', e)}
+                        className="hidden"
+                        id="camera-capture-xray-image"
+                      />
+                      <label
+                      htmlFor="camera-capture-xray-image"
+                      className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
+                    >
+                      {/* Thêm display: inline-block hoặc inline-flex */}
+                        <div className="inline-flex items-center">
+                          <FaCamera size={15} />
+                        </div>
+                        <div className="inline-flex items-center mx-2">
+                          Chụp ảnh Xray
+                        </div>
+                    </label>
+                    </div>
+                
+                {/* Preview Section */}
+                {form.imgXray && (
+                <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src={form.imgXray} 
+                      alt="xray Preview" 
+                      className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
+                      onClick={() => openImagePreview(form.imgXray!, "Hình ảnh xray")} 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => openImagePreview(form.imgXray!, "Hình ảnh xray")}
+                      className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+                    >
+                      <IoEyeSharp size={20} />
+                      <span className="text-sm font-medium">Xem ảnh</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+      </div>
   {/** maoi program */}
   <div className="min-w-0 mb-3">
     <label className="text-xs block mb-1">Chương trình mAoi</label>

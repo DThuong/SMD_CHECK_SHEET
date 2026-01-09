@@ -76,7 +76,8 @@
   },
   "statusDescriptions": {
     "pending": "Chờ PQC xác nhận",
-    "pqcDone": "Chờ ENG xác nhận",
+    "pqcDone": "Chờ PQC Leader xác nhận",
+    "pqcLeaderDone": "Chờ ENG xác nhận", 
     "engDone": "Chờ Supervisor xác nhận",
     "supervisorDone": "Chờ Manager xác nhận",
     "managerDone": "Chờ Korea Manager xác nhận",

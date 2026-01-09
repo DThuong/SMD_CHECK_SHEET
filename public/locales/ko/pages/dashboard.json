@@ -76,8 +76,9 @@
   },
   "statusDescriptions": {
     "pending": "PQC 확인 대기 중",
-    "pqcDone": "ENG 확인 대기 중",
-    "engDone": "감독자 확인 대기 중",
+    "pqcDone": "PQC LEADER 확인 대기 중",
+    "pqcLeaderDone": "ENG 확인 대기 중",
+    "engDone": "SUPERVISOR 확인 대기 중",
     "supervisorDone": "관리자 확인 대기 중",
     "managerDone": "한국 관리자 확인 대기 중",
     "koreaManagerDone": "완료됨"

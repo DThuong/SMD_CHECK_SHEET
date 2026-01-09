@@ -21,6 +21,8 @@ import { useNotification } from '../../redux/hooks';
 import Notification from '../../components/general/Notification';
 import { MdFavoriteBorder } from "react-icons/md";
 import { useSearchParams } from 'react-router-dom';
+import { deleteSheetById } from '../../redux/slices/changeModelSlice';
+import { ConfirmModal } from '../../components/general/ConfirmModal';
 
 import { 
   saveFilterState, 
@@ -94,6 +96,14 @@ const Logs = () => {
   const {t: t2} = useTranslation('sheetDetail');
 
   const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
+  const [deletingSheetId, setDeletingSheetId] = useState<number | null>(null);
+  const [confirmDeleteModal, setConfirmDeleteModal] = useState<{
+    open: boolean;
+    sheet: ChangeModelResponse | null;
+  }>({
+    open: false,
+    sheet: null
+  });
 
   // Filter state
   const [filter, setFilter] = useState<SheetFilter>({
@@ -130,8 +140,6 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
       if (hasId) {
         filterParams.id = filterToUse.id;
       }
-
-      console.log('📊 Fetching with filter:', filterParams);
       await dispatch(getSheetByFilter(filterParams)).unwrap();
       return;
     }
@@ -148,8 +156,13 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
 
     // EFFECT 1: Load initial data hoặc restore saved state
   useEffect(() => {
+  console.group(' Logs useEffect - Initial Load');
   const savedState = getFilterState();
   const savedSheetId = getSelectedSheetId();
+  
+  console.log('statusFromUrl:', statusFromUrl);
+  console.log('savedState:', savedState);
+  console.log('savedSheetId:', savedSheetId);
   
   // Restore highlight nếu có
   if (savedSheetId) {
@@ -157,12 +170,18 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
   }
   
   if (statusFromUrl) {
-    // Priority 1: Load from URL params
-    setFilter(prev => ({ ...prev, status: statusFromUrl }));
+    // ✅ Priority 1: Load from URL params
+    const newFilter = { ...filter, status: statusFromUrl };
+    console.log('Setting filter from URL:', newFilter);
+    setFilter(newFilter);
+    
     setTimeout(() => {
       dispatch(getSheetByFilter({ status: statusFromUrl }))
         .unwrap()
         .then(() => {
+          console.log('✅ Sheets loaded, saving filter state');
+          saveFilterState(newFilter, 0); // ← SAVE NGAY SAU KHI LOAD THÀNH CÔNG
+          
           if (savedSheetId) {
             setTimeout(() => {
               const row = document.getElementById(`sheet-row-${savedSheetId}`);
@@ -178,11 +197,11 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
         });
     }, 100);
   } else if (savedState.filter) {
-    // Priority 2: Restore from saved state
-    setFilter(savedState.filter); //SET FILTER
-    setCurrentPage(savedState.currentPage); // SET PAGE
+    // ✅ Priority 2: Restore from saved state
+    console.log('📦 Restoring from saved state:', savedState.filter);
+    setFilter(savedState.filter);
+    setCurrentPage(savedState.currentPage);
     
-    // GỌI loadSheets() SAU KHI setFilter
     setTimeout(() => {
       loadSheetsWithFilter(savedState.filter); 
       
@@ -197,6 +216,7 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
     }, 100);
   } else {
     // Priority 3: Load all sheets
+    console.log('📋 No filter, loading all sheets');
     loadSheets();
     
     if (savedSheetId) {
@@ -215,10 +235,11 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
       setSelectedSheetId(null);
       clearSelectedSheetId();
     }, 2000);
-
     return () => clearTimeout(timer);
   }
-}, []);// CHỈ CHẠY 1 LẦN KHI MOUNT
+  
+  console.groupEnd();
+}, []); // CHỈ CHẠY 1 LẦN KHI MOUNT// CHỈ CHẠY 1 LẦN KHI MOUNT
 
   // EFFECT 2: Auto save filter state
   useEffect(() => {
@@ -305,13 +326,6 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
     setShowDetail(false);
     setSelectedSheet(null);
     dispatch(clearStatusHistory());
-    
-    // Restore filter state (không cần reload)
-    // const savedState = getFilterState();
-    // if (savedState.filter) {
-    //   setFilter(savedState.filter);
-    //   setCurrentPage(savedState.currentPage);
-    // }
   };
 
   // ==================== CONFIRMATION LOGIC ====================
@@ -430,6 +444,61 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
   return false;
 };
 
+const canDelete = (sheet: ChangeModelResponse): boolean => {
+  if (!user) return false;
+  // Chỉ PQCLeader mới có quyền xóa
+  if (user.role !== ROLES.PQCLEADER) return false;
+  const status = sheet.status?.toLowerCase();
+  // Chỉ được xóa khi status là PQCDone (PQC đã ký xong, nhưng PQCLeader chưa ký)
+  return status === STATUS.PQC_DONE.toLowerCase();
+};
+
+const handleDeleteSheet = async () => {
+  if (!confirmDeleteModal.sheet) return;
+  
+  const sheetId = confirmDeleteModal.sheet.id;
+  
+  try {
+    setDeletingSheetId(sheetId); // Set loading state
+    
+    await dispatch(deleteSheetById(sheetId)).unwrap();
+    
+    showNotification('success', t('success.deleteSheet'));
+    
+    // Đóng modal
+    setConfirmDeleteModal({ open: false, sheet: null });
+    
+    // Reload lại danh sách sau khi xóa
+    await loadSheets();
+    
+    // Reset về trang đầu nếu trang hiện tại không còn items
+    const remainingItems = sortedSheets.length - 1;
+    const newPageCount = Math.ceil(remainingItems / itemsPerPage);
+    if (currentPage >= newPageCount && newPageCount > 0) {
+      setCurrentPage(newPageCount - 1);
+    }
+
+  } catch (error: any) {
+    console.error('❌ Lỗi khi xóa sheet:', error);
+    showNotification('error', t('error.title'), error || t('error.deleteSheetFailed'));
+  } finally {
+    setDeletingSheetId(null); // Clear loading state
+  }
+};
+
+// Handler mở modal xác nhận
+const openDeleteConfirm = (sheet: ChangeModelResponse) => {
+  setConfirmDeleteModal({
+    open: true,
+    sheet: sheet
+  });
+};
+
+// Handler đóng modal
+const closeDeleteConfirm = () => {
+  setConfirmDeleteModal({ open: false, sheet: null });
+};
+
   const getStatusBadge = (sheet: ChangeModelResponse) => {
     const status = sheet.status?.toLowerCase();
     
@@ -484,7 +553,8 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
   // ==================== DETAIL VIEW ====================
   if (showDetail && selectedSheet) {
     const getSignerInfo = (role: string) => {
-    const historyItem = statusHistory?.find((item) => {
+    const history = Array.isArray(statusHistory) ? statusHistory : [];
+    const historyItem = history?.find((item) => {
       const status = item.status?.toLowerCase();
       switch (role) {
         case ROLES.PQC:
@@ -622,10 +692,12 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
               <button
               onClick={() => {
                 const currentPath = window.location.pathname;
+                const currentSearch = window.location.search;
                 const roleLower = user?.role?.toLowerCase();
+                saveFilterState(filter, currentPage);
                 saveSelectedSheetId(selectedSheet.id); 
                 navigate(`/${roleLower}/sheet-detail/${selectedSheet.id}`, {
-                  state: { from: 'logs', returnPath: currentPath } // Truyền state để biết đường về
+                  state: { from: 'logs', returnPath: currentPath, returnSearch: currentSearch } // Truyền state để biết đường về
                 });
               }}
               className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
@@ -740,7 +812,7 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
                   <option value="all">{t('status.all')}</option>
                   <option value={STATUS.PENDING}>{t('status.pending')}</option>
                   <option value={STATUS.PQC_DONE}>{t('status.pqcDone')}</option>
-                  <option value={STATUS.PQCLEADER_DONE}>PQC Leader Done</option>
+                  <option value={STATUS.PQCLEADER_DONE}>PQC Leader đã hoàn thành</option>
                   <option value={STATUS.ENG_DONE}>{t('status.engDone')}</option>
                   <option value={STATUS.SUPERVISOR_DONE}>{t('status.supervisorDone')}</option>
                   <option value={STATUS.MANAGER_DONE}>{t('status.managerDone')}</option>
@@ -906,16 +978,28 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
                               <button
                                 onClick={() => {
                                   const currentPath = window.location.pathname;
+                                  const currentSearch = window.location.search;
                                   const roleLower = user?.role?.toLowerCase();
                                   saveSelectedSheetId(sheet.id);
                                   navigate(`/${roleLower}/sheet-detail/${sheet.id}`, {
-                                    state: { from: 'logs', returnPath: currentPath },
+                                    state: { from: 'logs', returnPath: currentPath, returnSearch: currentSearch },
                                   });
                                 }}
                                 className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium whitespace-nowrap"
                               >
                                 <AiOutlineEdit className="w-4 h-4" />
                                 <span>{t('button.edit')}</span>
+                              </button>
+                            )}
+
+                            {canDelete(sheet) && (
+                              <button
+                                onClick={() => openDeleteConfirm(sheet)}
+                                className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs font-medium whitespace-nowrap"
+                                title="Xóa Sheet"
+                              >
+                                <AiOutlineClose className="w-3 h-3" />
+                                <span>Xóa Sheet</span>
                               </button>
                             )}
                           </div>
@@ -981,16 +1065,28 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
                         <button
                           onClick={() => {
                             const currentPath = window.location.pathname;
+                            const currentSearch = window.location.search;
                             const roleLower = user?.role?.toLowerCase();
                             saveSelectedSheetId(sheet.id);
                             navigate(`/${roleLower}/sheet-detail/${sheet.id}`, {
-                              state: { from: 'logs', returnPath: currentPath } // Truyền state
+                              state: { from: 'logs', returnPath: currentPath, returnSearch: currentSearch } // Truyền state
                             });
                           }}
                           className="inline-flex items-center justify-center gap-1 px-2 py-3 bg-green-600 text-white hover:bg-green-700 transition-colors text-xs font-medium whitespace-nowrap"
                         >
                           <AiOutlineEdit className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span>{t('button.edit')}</span>
+                        </button>
+                      )}
+
+                      {canDelete(sheet) && (
+                        <button
+                          onClick={() => openDeleteConfirm(sheet)}
+                          className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-3 bg-red-600 text-white hover:bg-red-700 transition-colors text-xs font-medium whitespace-nowrap"
+                          title="Xóa Sheet"
+                        >
+                          <AiOutlineClose className="w-4 h-4" />
+                          <span>Xóa Sheet</span>
                         </button>
                       )}
                     </div>
@@ -1029,6 +1125,23 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
           )}
         </div>
       </div>
+
+    <ConfirmModal
+      open={confirmDeleteModal.open}
+      title="Xác nhận xóa Sheet"
+      message={
+        confirmDeleteModal.sheet 
+          ? `Bạn có chắc muốn xóa Sheet #${confirmDeleteModal.sheet.id}?\n\n` +
+            `WorkOrder: ${confirmDeleteModal.sheet.checkModel?.workOrder || 'N/A'}\n` +
+            `hành động này sẽ không thể hoàn tác !!!`
+          : ''
+      }
+      confirmText={deletingSheetId ? "Đang Xóa" : "Xóa"}
+      cancelText="Hủy"
+      onConfirm={handleDeleteSheet}
+      onCancel={closeDeleteConfirm}
+      type="danger"
+    />
     </div>
   );
 };

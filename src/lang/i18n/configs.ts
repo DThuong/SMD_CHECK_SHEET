@@ -20,6 +20,11 @@ i18n
 
     backend: {
       loadPath: '/locales/{{lng}}/pages/{{ns}}.json',
+      queryStringParams: { v: Date.now() }
+    },
+
+    cache: {
+      enabled: false
     },
 
     detection: {

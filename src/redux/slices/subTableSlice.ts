@@ -107,6 +107,7 @@ export interface StandardVehicleData {
   imgMounter?: string; // thêm
   imgPrinter?: string; // thêm
   imgPrinterClean?: string; // thêm
+  imgXray?: string; // thêm
 }
 
 // PQCCheck
@@ -518,6 +519,25 @@ export const uploadPQCCheckIssueImage = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Không thể tải PQCCheckIssue');
+    }
+  }
+)
+
+// Upload image-xray StandardVehicle
+export const uploadXRayImage = createAsyncThunk(
+  'subTable/uploadXRayImage',
+  async ({ StandardVehicleId, file }: { StandardVehicleId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await smdApi.put(`StandardVehicle/image-xray/${StandardVehicleId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải XRay');
     }
   }
 )
@@ -992,6 +1012,24 @@ const subTableSlice = createSlice({
           }
         })
         .addCase(uploadPQCCheckImage.rejected, (state, action) => {
+          state.loading = false;
+          state.error = action.payload as string;
+        });
+
+        // upload image-xray StandardVehicle
+        builder
+        .addCase(uploadXRayImage.pending, (state) => {
+          state.loading = true;
+          state.error = null;
+        })
+        .addCase(uploadXRayImage.fulfilled, (state, action) => {
+          state.loading = false;
+          // Cập nhật URL hình ảnh nếu backend trả về
+          if (state.standardVehicle && action.payload?.imageUrl) {
+            state.standardVehicle.imgXray = action.payload.imageUrl;
+          }
+        })
+        .addCase(uploadXRayImage.rejected, (state, action) => {
           state.loading = false;
           state.error = action.payload as string;
         });

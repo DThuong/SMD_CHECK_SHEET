@@ -76,7 +76,8 @@
   },
   "statusDescriptions": {
     "pending": "Waiting for PQC confirmation",
-    "pqcDone": "Waiting for ENG confirmation",
+    "pqcDone": "Waiting for PQC LEADER confirmation",
+    "pqcLeaderDone": "Waiting for ENG confirmation",
     "engDone": "Waiting for Supervisor confirmation",
     "supervisorDone": "Waiting for Manager confirmation",
     "managerDone": "Waiting for Korea Manager confirmation",

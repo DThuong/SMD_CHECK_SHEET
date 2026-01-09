@@ -40,6 +40,7 @@ const SheetDetailViewer = () => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const returnPath = (location.state as any)?.returnPath;
+  const returnSearch = (location.state as any)?.returnSearch;
   
   // Lấy data từ Redux store
   const { currentSheet, loading, error } = useAppSelector((state) => state.changeModel);
@@ -93,7 +94,10 @@ const SheetDetailViewer = () => {
    const handleBack = () => {
     if (returnPath) {
       // Priority 1: Navigate về exact path đã lưu
-      navigate(returnPath);
+      const fullPath = returnSearch 
+        ? `${returnPath}${returnSearch}` 
+        : returnPath;
+      navigate(fullPath);
     } else {
       // Priority 2: Fallback navigate(-1)
       navigate(-1);

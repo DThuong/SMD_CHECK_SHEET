@@ -493,12 +493,21 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
             <label className="text-xs">
               Work Order
               <input 
-                value={form.workOrder ?? ""} 
+                placeholder="PD2026XXXXXXXX"
+                value={form.workOrder ?? "PD2026"} 
                 onChange={(e) => {
-                  set("workOrder", e.target.value.toUpperCase());
-                }}
+                const value = e.target.value.toUpperCase();
+                if(value.length > 14) {
+                  showNotification("error", "Work Order đã vượt qua 14 ký tự", "Vui lòng kiểm tra lại");
+                  return;
+                }
+                if (value.startsWith("PD2026")) {
+                  set("workOrder", value);
+                } else if (value.length < "PD2026".length) {
+                  set("workOrder", "PD2026");
+                } 
+              }} 
                 className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
-                placeholder=""
               />
             </label>
           </div>

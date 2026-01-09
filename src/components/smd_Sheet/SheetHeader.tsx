@@ -58,6 +58,11 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
       return;
     }
 
+    if(currentSheet?.checkModel?.workOrder == "" || currentSheet?.checkModel?.workOrder == null) {
+      showNotification('warning', 'Thiếu Work Order', 'Làm ơn nhập Work Order trước khi upload file !!!');
+      return;
+    }
+
     try {
       await dispatch(uploadBothFiles({
         changeModelId: currentSheet.id,

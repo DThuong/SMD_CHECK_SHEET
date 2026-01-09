@@ -231,8 +231,12 @@ const Home = () => {
     }
   };
 
-  // ✅ PATTERN TỪ LOGS: EFFECT 1 - Load initial data hoặc restore saved state
+  // EFFECT 1 - Load initial data hoặc restore saved state
   useEffect(() => {
+    if (sheetIdFromUrl && initialTab === 'create') {
+    // Nếu có sheetId trong URL và tab=create, không restore savedState
+    return;
+    }
     const savedState = getHomeFilterState();
     const savedSheetId = getSelectedSheetId();
     
@@ -491,7 +495,7 @@ const Home = () => {
   const handleConfirmCreateSheet = async () => {
     try {
       setConfirmCreateModal(false);
-      
+      sessionStorage.removeItem('homeFilterState');
       dispatch(clearSheet());
       dispatch(clearAllSubTableData());
       setActiveTab('create');

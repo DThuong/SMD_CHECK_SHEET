@@ -15,7 +15,7 @@ import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import { formatDateTime } from "../../utils/formatTime";
 import { useTranslation } from "react-i18next";
-
+import { fetchCheckModel } from "../../redux/slices/subTableSlice";
 const initialFormState: CheckModelData = {
   lineChange: "",
   model: "",
@@ -160,6 +160,10 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
         id: checkModelId,
         data: apiData
       })).unwrap();
+
+      if (currentSheet?.id) {
+        await dispatch(fetchCheckModel(currentSheet.id)).unwrap();
+      }
 
       setOpen(false);
       

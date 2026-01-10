@@ -1159,7 +1159,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
           <ImageViewIcon 
             imageUrl={form.imgIssue} 
-            title="Hình ảnh StandardProduction: Vấn đề phát sinh"
+            title="Hình ảnh StandardVehicle: Vấn đề phát sinh"
             onView={openImagePreview}
           />
         </div>

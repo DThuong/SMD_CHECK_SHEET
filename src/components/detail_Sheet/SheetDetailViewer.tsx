@@ -194,6 +194,13 @@ const SheetDetailViewer = () => {
     };
   }, [id, dispatch]);
 
+  const checkRequiredFiles = (sheet: ChangeModelResponse): {hasLCR: boolean, hasReflow: boolean} => {
+    return {
+      hasLCR: !!(sheet.excelFileUrl && sheet.excelFileUrl.trim() !== ""),
+      hasReflow: !!(sheet.pdfFileUrl && sheet.pdfFileUrl.trim() !== "")
+    }
+  }
+
   // XỬ LÝ KÝ XÁC NHẬN
   const handleConfirm = async () => {
     if (!canConfirm()) {
@@ -202,6 +209,23 @@ const SheetDetailViewer = () => {
     }
 
     if (!user || !currentSheet) return;
+
+    if (user.role === 'PQCLeader') {
+    const { hasLCR, hasReflow } = checkRequiredFiles(currentSheet);
+    
+    if (!hasLCR || !hasReflow) {
+      const missingFiles = [];
+      if (!hasLCR) missingFiles.push('LCR File');
+      if (!hasReflow) missingFiles.push('Reflow File');
+      
+      showNotification(
+        'warning', 
+        'Thiếu File Bắt Buộc',
+        `Vui lòng upload đầy đủ các file: ${missingFiles.join(', ')} trước khi ký xác nhận.`
+      );
+      return;
+    }
+  }
     try {
       setConfirming(true);
       await dispatch(updateSheetStatus({
@@ -580,7 +604,7 @@ const SheetDetailViewer = () => {
       {/* Hiển thị các component */}
       <div className={!isEditable ? 'pointer-events-none' : ''}>
         <div className="pdf-section">
-          <SheetHeader canEdit={isEditable} returnPath={returnPath} />
+          <SheetHeader canEdit={isEditable} returnPath={returnPath || window.location.pathname} />
         </div>
         
         <div className="pdf-section">

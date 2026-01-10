@@ -160,9 +160,6 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
   const savedState = getFilterState();
   const savedSheetId = getSelectedSheetId();
   
-  console.log('statusFromUrl:', statusFromUrl);
-  console.log('savedState:', savedState);
-  console.log('savedSheetId:', savedSheetId);
   
   // Restore highlight nếu có
   if (savedSheetId) {
@@ -172,14 +169,12 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
   if (statusFromUrl) {
     // ✅ Priority 1: Load from URL params
     const newFilter = { ...filter, status: statusFromUrl };
-    console.log('Setting filter from URL:', newFilter);
     setFilter(newFilter);
     
     setTimeout(() => {
       dispatch(getSheetByFilter({ status: statusFromUrl }))
         .unwrap()
         .then(() => {
-          console.log('✅ Sheets loaded, saving filter state');
           saveFilterState(newFilter, 0); // ← SAVE NGAY SAU KHI LOAD THÀNH CÔNG
           
           if (savedSheetId) {
@@ -198,7 +193,6 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
     }, 100);
   } else if (savedState.filter) {
     // ✅ Priority 2: Restore from saved state
-    console.log('📦 Restoring from saved state:', savedState.filter);
     setFilter(savedState.filter);
     setCurrentPage(savedState.currentPage);
     
@@ -216,7 +210,6 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
     }, 100);
   } else {
     // Priority 3: Load all sheets
-    console.log('📋 No filter, loading all sheets');
     loadSheets();
     
     if (savedSheetId) {
@@ -351,6 +344,13 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
     }
   };
 
+  const checkRequiredFiles = (sheet: ChangeModelResponse): {hasLCR: boolean, hasReflow: boolean} => {
+    return {
+      hasLCR: !!(sheet.excelFileUrl && sheet.excelFileUrl.trim() !== ""),
+      hasReflow: !!(sheet.pdfFileUrl && sheet.pdfFileUrl.trim() !== "")
+    }
+  }
+
   const handleConfirmStep = async (
     sheetId: number, 
     role: typeof ROLES.PQC | typeof ROLES.PQCLEADER | typeof ROLES.ENG | typeof ROLES.SUPERVISOR | typeof ROLES.MANAGER | typeof ROLES.KOREA_MANAGER
@@ -367,6 +367,19 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
       if (!canConfirmAtStep(sheet, role)) {
         showNotification('error', t('error.noPermission'));
         return;
+      }
+
+      if (role === ROLES.PQCLEADER) {
+        const {hasLCR, hasReflow} = checkRequiredFiles(sheet);
+        
+        if (!hasLCR || !hasReflow) {
+          showNotification(
+            'warning', 
+            'Thiếu File Bắt Buộc',
+            `Vui lòng upload đầy đủ các file: lcr file, reflow file trước khi ký xác nhận.`
+          );
+          return; // ❌ DỪNG LẠI, KHÔNG CHO KÝ
+        }
       }
 
       await dispatch(updateSheetStatus({
@@ -558,7 +571,7 @@ const closeDeleteConfirm = () => {
       const status = item.status?.toLowerCase();
       switch (role) {
         case ROLES.PQC:
-        return status === STATUS.PQC_DONE.toLowerCase();
+          return status === STATUS.PQC_DONE.toLowerCase();
         case ROLES.PQCLEADER:
           return status === STATUS.PQCLEADER_DONE.toLowerCase();
         case ROLES.ENG:
@@ -586,8 +599,17 @@ const closeDeleteConfirm = () => {
     { key: ROLES.KOREA_MANAGER, label: 'Korea Manager' },
 
   ];
+  {/** DETAIL VIEW */}
     return (
       <div className="min-h-screen bg-gray-50">
+      <Notification
+        show={notification.show}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={hideNotification}
+      />
+    
       <div className="max-w-8xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-4">
           <div className="flex flex-col items-center mb-4 gap-2">

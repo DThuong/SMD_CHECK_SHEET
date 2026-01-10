@@ -32,6 +32,18 @@ const FileDetailViewer = () => {
 
   const { t } = useTranslation('fileDetail');
 
+  // Thêm useEffect để log state khi component mount
+// useEffect(() => {
+//   console.group('📂 FileDetailViewer - State Debug');
+//   console.log('🆔 Sheet ID:', id);
+//   console.log('📍 Current Path:', location.pathname);
+//   console.log('📦 Location State:', location.state);
+//   console.log('🔙 from:', from);
+//   console.log('🔙 returnPath:', returnPath);
+//   console.log('🔙 originalReturnPath:', originalReturnPath);
+//   console.groupEnd();
+// }, [id, from, returnPath, originalReturnPath, location]);
+
   // Load files
   useEffect(() => {
     if (id) {
@@ -60,7 +72,16 @@ const FileDetailViewer = () => {
   };
 
     const handleGoBack = () => {
+      // console.group('🔙 FileDetailViewer - handleGoBack');
+      // console.log('returnPath:', returnPath);
+      // console.log('originalReturnPath:', originalReturnPath);
+      // console.log('from:', from);
     if (returnPath) {
+    //   console.log('✅ Using returnPath:', returnPath);
+    // console.log('📦 Passing state:', {
+    //   from: 'logs',
+    //   returnPath: originalReturnPath
+    // });
       // Priority 1: Navigate về SheetDetailViewer VÀ truyền lại originalReturnPath
       navigate(returnPath, {
         state: { 
@@ -72,9 +93,14 @@ const FileDetailViewer = () => {
       // Priority 2: Build path từ role và id
       const roleLower = user?.role?.toLowerCase();
       navigate(`/${roleLower}/sheet-detail/${id}`);
+      const targetPath = `/${roleLower}/sheet-detail/${id}`;
+    // console.log('✅ Using from === sheetDetail, navigating to:', targetPath);
+    navigate(targetPath);
     } else {
       // Priority 3: Fallback về home
-      navigate(`/?tab=create&sheetId=${id}`, { replace: true });
+       const fallbackPath = `/?tab=create&sheetId=${id}`;
+      // console.log('✅ Using fallback:', fallbackPath);
+      navigate(fallbackPath, { replace: true });
     }
   };
 

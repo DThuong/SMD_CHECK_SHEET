@@ -4,7 +4,7 @@ import { useState, memo, useEffect } from "react";
 import Modal from "../general/Modal";
 import ViewDetailButton from "../general/ViewDetailButton";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { getSheetWithFullObject, uploadBothFiles, updateNoteFile } from "../../redux/slices/changeModelSlice";
+import { getSheetWithFullObject,uploadBothFiles, updateNoteFile } from "../../redux/slices/changeModelSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import { useNavigate } from "react-router-dom";
@@ -26,7 +26,7 @@ interface SheetHeaderProps {
 const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
   const dispatch = useAppDispatch();
   const { currentSheet, error, uploadLoading } = useAppSelector((state) => state.changeModel);
-  
+  const {checkModel} = useAppSelector(state => state.subTable);
   const [open, setOpen] = useState(false);
   const [tempFileState, setTempFileState] = useState<FileUploadState>({});
   
@@ -58,11 +58,10 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
       return;
     }
 
-    if(currentSheet?.checkModel?.workOrder == "" || currentSheet?.checkModel?.workOrder == null) {
+    if(!checkModel?.workOrder || checkModel.workOrder.trim() === "") {
       showNotification('warning', 'Thiếu Work Order', 'Làm ơn nhập Work Order trước khi upload file !!!');
       return;
     }
-
     try {
       await dispatch(uploadBothFiles({
         changeModelId: currentSheet.id,
@@ -76,7 +75,8 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
         noteFile: tempNoteFile
       })).unwrap();
     }
-      await dispatch(getSheetWithFullObject(currentSheet.id)).unwrap(); // fetch lại sheet để update tên file
+
+      await dispatch(getSheetWithFullObject(currentSheet.id)).unwrap();
 
       showNotification('success', 'Upload thành công!', t('success_msg'));
       setTempFileState({});
@@ -98,19 +98,21 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
 
   const handleViewFiles = () => {
     if (!currentSheet?.id) return;
-    
+      
     let basePath = '/pqc-files';
     if (user?.role === 'Admin') {
       basePath = '/admin/files';
-    } else if (user?.role && ['ENG', 'Supervisior', 'Manager', 'KoreaManager'].includes(user.role)) {
+    } else if (user?.role && ['ENG', 'Supervisior', 'Manager', 'KoreaManager', 'PQCLeader'].includes(user.role)) {
       basePath = `/${user.role.toLowerCase()}/files`;
     }
+
+    const currentDetailPath = window.location.pathname;
     
     navigate(`${basePath}/${currentSheet.id}/reflow`, {
       state: { 
         from: 'sheetDetail',
-        returnPath: window.location.pathname, // Current sheet detail path
-        originalReturnPath: returnPath || '/?tab=list' // Sử dụng returnPath từ props
+        returnPath: currentDetailPath, // Current sheet detail path
+        originalReturnPath: returnPath // Sử dụng returnPath từ props
       }
     });
   };

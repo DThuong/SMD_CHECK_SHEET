@@ -52,7 +52,10 @@
       "view": "Xem",
       "edit": "Chỉnh sửa",
       "back": "Quay lại",
-      "viewFullSheet": "Xem toàn bộ sheet"
+      "viewFullSheet": "Xem toàn bộ sheet",
+      "sign": "Ký ngay",
+      "signConfirm": "Ký xác nhận",
+      "signFailed": "Không thể ký"
     },
     "detail": {
       "title": "Chi tiết SMD Sheet",

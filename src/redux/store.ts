@@ -16,6 +16,7 @@ import authReducer from "./slices/authSlice";
 import subTableReducer from "./slices/subTableSlice";
 import changeModelReducer from "./slices/changeModelSlice";
 import FileSliceReducer from "./slices/FileSlice";
+import NotificationReducer from "./slices/notificationSlice";
 
 import smdApi from "./services/smdApi";
 import { setupApiInterceptor } from "./setupApiInterceptor";
@@ -34,6 +35,7 @@ const rootReducer = combineReducers({
   subTable: subTableReducer, 
   changeModel: changeModelReducer,
   fileSlice: FileSliceReducer,
+  notification: NotificationReducer
 });
 
 // Tạo store

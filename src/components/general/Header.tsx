@@ -40,7 +40,17 @@ const Header = () => {
     };
   }, [isDropdownOpen]);
 
-  const handleChangePassword = () => {}
+  const handleChangePassword = () => {
+  setIsDropdownOpen(false);
+  setIsMenuOpen(false);
+  // Navigate đến trang đổi mật khẩu
+  if (user?.role === 'PQC') {
+    navigate('/change-password');
+  } else {
+    const roleLower = user?.role?.toLowerCase();
+    navigate(`/${roleLower}/change-password`);
+  }
+}
 
   const handleLogout = async () => {
     try {
@@ -106,7 +116,14 @@ const Header = () => {
                   {/* Dropdown menu */}
                   {isDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
-                
+                      <button
+                        onClick={handleChangePassword}
+                        disabled={loading}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                      >
+                        <FaKey />
+                        Đổi mật khẩu
+                      </button>
 
                       <button
                         onClick={handleLogout}
@@ -184,7 +201,6 @@ const Header = () => {
               {user ? (
                 // Menu khi đã login
                 <>
-
                 <button
                   disabled={loading}
                     onClick={handleChangePassword}

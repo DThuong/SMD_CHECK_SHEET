@@ -22,7 +22,6 @@ const Login = () => {
       if (currentPath === '/login') {
         // Lưu device ID trước khi clear
         const deviceId = localStorage.getItem('smd_device_id');
-        
         localStorage.clear();
         sessionStorage.clear();
         

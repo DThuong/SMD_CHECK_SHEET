@@ -52,7 +52,10 @@
       "view": "보기",
       "edit": "편집",
       "back": "뒤로",
-      "viewFullSheet": "전체 시트 보기"
+      "viewFullSheet": "전체 시트 보기",
+      "sign": "서명",
+      "signConfirm": "서명 확인",
+      "signFailed": "서명 불가능"
     },
     "detail": {
       "title": "SMD 시트 상세",

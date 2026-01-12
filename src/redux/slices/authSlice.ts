@@ -54,6 +54,11 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+export interface ChangePasswordUserRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 interface AuthState {
   user: AuthUser | null;
   token: string | null;
@@ -198,6 +203,33 @@ export const deleteUser = createAsyncThunk(
       return { userId, ...response.data };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Failed to delete user');
+    }
+  }
+);
+
+// API thay đổi mật khẩu người dùng (dùng cho user)
+export const changePasswordUser = createAsyncThunk(
+  'auth/changePasswordUser',
+  async (passwordData: ChangePasswordUserRequest, { rejectWithValue }) => {
+    try {
+      const response = await smdApi.put('/Account/change-password', passwordData);
+      
+      // Server trả về plain text "Đổi mật khẩu thành công"
+      // Nên ta cần return một object
+      return { 
+        message: typeof response.data === 'string' ? response.data : response.data.message || 'Success'
+      };
+    } catch (error: any) {
+      // Xử lý error message từ API
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        const errorMessage = typeof errorData === 'string' 
+          ? errorData 
+          : errorData.title || errorData.message || 'Đổi mật khẩu thất bại';
+        
+        return rejectWithValue(errorMessage);
+      }
+      return rejectWithValue(error.message || 'Đổi mật khẩu thất bại');
     }
   }
 );
@@ -431,6 +463,20 @@ const authSlice = createSlice({
       .addCase(changePasswordByAdmin.rejected, (state, action) => {
         state.usersLoading = false;
         state.usersError = action.payload as string || 'Failed to change password';
+      })
+
+      // Change Password User (tự đổi mật khẩu)
+      .addCase(changePasswordUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(changePasswordUser.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(changePasswordUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string || 'Failed to change password';
       });
   },
 });

@@ -52,7 +52,10 @@
     "view": "View",
     "edit": "Edit",
     "back": "Back",
-    "viewFullSheet": "View Full Sheet"
+    "viewFullSheet": "View Full Sheet",
+    "sign": "Sign",
+    "signConfirm": "Sign Confirmation",
+    "signFailed": "Cannot sign"
   },
   "detail": {
     "title": "SMD Sheet Details",

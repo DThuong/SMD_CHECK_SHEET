@@ -23,7 +23,6 @@ import { MdFavoriteBorder } from "react-icons/md";
 import { useSearchParams } from 'react-router-dom';
 import { deleteSheetById } from '../../redux/slices/changeModelSlice';
 import { ConfirmModal } from '../../components/general/ConfirmModal';
-
 import { 
   saveFilterState, 
   getFilterState, 
@@ -959,7 +958,7 @@ const canUserSignSheet = (sheet: ChangeModelResponse): boolean => {
                         {t('table.status')}
                       </th>
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">
-                        Ký xác nhận
+                        {t('button.signConfirm')}
                       </th>
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">
                         {t('table.action')}
@@ -1008,10 +1007,10 @@ const canUserSignSheet = (sheet: ChangeModelResponse): boolean => {
                               title="Ký xác nhận sheet này"
                             >
                               <AiOutlineCheckCircle className="w-4 h-4" />
-                              <span>Ký ngay</span>
+                              <span>{t('button.sign')}</span>
                             </button>
                           ) : (
-                            <span className="text-xs text-gray-400">Không thể ký</span>
+                            <span className="text-xs text-gray-400">{t('button.signFailed')}</span>
                           )}
                         </td>
                         <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center">
@@ -1120,7 +1119,7 @@ const canUserSignSheet = (sheet: ChangeModelResponse): boolean => {
                                 className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-semibold shadow-md"
                               >
                                 <AiOutlineCheckCircle className="w-4 h-4" />
-                                <span>Ký ngay</span>
+                                <span>{t('button.sign')}</span>
                               </button>
                             )}
                       {canEdit(sheet) && (

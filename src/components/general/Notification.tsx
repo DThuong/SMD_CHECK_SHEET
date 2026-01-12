@@ -65,7 +65,7 @@ const Notification: React.FC<NotificationProps> = ({
   const style = styles[type];
 
   return (
-    <div className="slide-noti w-full max-w-[900px] left-1/2 -translate-x-1/2">
+    <div className="slide-noti w-full max-w-[900px] left-1/2 z-99999 -translate-x-1/2" style={{ zIndex: 99999 }}>
       <div className={`noti-inner ${style.bg} border-l-4 ${style.border} p-3 rounded shadow`}>
         <p className={`font-bold ${style.titleColor} mb-0`}>
           {style.icon} {title}

@@ -23,6 +23,7 @@ import SmdSheetDetail from '../components/detail_Sheet/SmdSheetDetail';
 import AuthInitializer from '../components/auth/AuthInitializer';
 import SheetDetailViewer from '../components/detail_Sheet/SheetDetailViewer';
 import FileDetailViewer from '../pages/FileDetailViewer';
+import ChangePassword from '../pages/ChangePassword';
 
 // ========================================
 // Component bảo vệ route cho PQC
@@ -117,6 +118,21 @@ const LoginRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Tạo component bảo vệ cho ChangePassword route
+const ChangePasswordRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isAuthenticated, loading } = useAppSelector((state) => state.auth);
+  
+  if (loading) return <LoadingSpinner />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  
+  // Admin không được vào trang này (đã có trang User)
+  if (user?.role === 'Admin') {
+    return <Navigate to="/admin/user" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 // ========================================
 // MAIN APP ROUTES
 // ========================================
@@ -128,6 +144,7 @@ const App = () => {
         <Route element={<UserLayout />}>
           <Route path="/" element={<PQCRoute><Home /></PQCRoute>} />
           <Route path="/login" element={<LoginRoute><Login /></LoginRoute>} />
+          <Route path="/change-password" element={<ChangePasswordRoute><ChangePassword /></ChangePasswordRoute>} />
           <Route path="/pqc-sheet-detail/:id" element={<PQCRoute><SmdSheetDetail /></PQCRoute>} />
           <Route path="/pqc-files/:id/:fileType" element={<PQCRoute><FileDetailViewer /></PQCRoute>} />
           <Route path="*" element={<ErrorPage />} />
@@ -150,6 +167,7 @@ const App = () => {
           <Route path="/:role/smd-sheet-logs" element={<Logs />} />
           <Route path="/:role/dashboard" element={<Dashboard />} />
           <Route path="/:role/settings" element={<Settings />} />
+          <Route path="/:role/change-password" element={<ChangePassword />} />
           <Route path="/:role/sheet-detail/:id" element={<SheetDetailViewer />} />
           <Route path="/:role/files/:id/:fileType" element={<FileDetailViewer />} />
           <Route path="/:role" element={<RoleDynamicRedirect />} />

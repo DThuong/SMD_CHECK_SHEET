@@ -1,8 +1,9 @@
 /* eslint-disable no-empty */
 // src/router/layout/RoleBasedLayout.tsx
 import { useState, useEffect } from "react";
-import { Link, NavLink, Outlet, useParams, Navigate, } from "react-router-dom";
+import { Link, NavLink, Outlet, useParams, Navigate, useNavigate } from "react-router-dom";
 import { HiMenu, HiX, HiLogout, HiUser } from "react-icons/hi";
+import { FaKey } from "react-icons/fa";
 import logo from "../../assets/image/brand_image_3.webp";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { logoutUser } from "../../redux/slices/authSlice";
@@ -20,6 +21,7 @@ const RoleBasedLayout = () => {
     }
   });
   const { t } = useTranslation('common');
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!showNoti) return;
@@ -63,6 +65,12 @@ const RoleBasedLayout = () => {
   const handleLogout = () => {
     dispatch(logoutUser());
     setUserMenuOpen(false);
+  };
+
+  const handleChangePassword = () => {
+    setUserMenuOpen(false);
+    setSidebarOpen(false);
+    navigate(`/${role}/change-password`);
   };
 
   // Đóng cả sidebar và user menu khi click overlay
@@ -147,11 +155,19 @@ const RoleBasedLayout = () => {
             {userMenuOpen && (
               <div className="hidden md:block absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                 <button
+                  onClick={handleChangePassword}
+                  disabled={loading}
+                  className="flex items-center gap-2 w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                >
+                  <FaKey className="w-4 h-4" />
+                  Đổi mật khẩu
+                </button>
+                <button
                   onClick={handleLogout}
                   disabled={loading}
-                  className="flex items-center w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                  className="flex items-center gap-2 w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 disabled:opacity-50"
                 >
-                  <HiLogout className="w-4 h-4 mr-2" />
+                  <HiLogout className="w-4 h-4" />
                   {t('logout')}
                 </button>
               </div>
@@ -242,10 +258,10 @@ const RoleBasedLayout = () => {
             {/* ✅ OVERLAY MÀU XÁM - 30% còn lại - Z-INDEX THẤP HƠN */}
             <div
               className={`fixed inset-0 bg-black z-40 md:hidden transition-opacity duration-300 ease-in-out ${
-  sidebarOpen
-    ? "bg-opacity-50 pointer-events-auto"
-    : "bg-opacity-0 pointer-events-none"
-}`}
+                sidebarOpen
+                  ? "bg-opacity-50 pointer-events-auto"
+                  : "bg-opacity-0 pointer-events-none"
+              }`}
               style={{ top: "0px" }}
               onClick={closeAllMenus}
               aria-label="Close sidebar"
@@ -271,13 +287,23 @@ const RoleBasedLayout = () => {
                 </button>
               </div>
 
+              {/* User menu items */}
+              <div className="flex-1 px-4 space-y-3">
+                {/* Change Password button */}
+                <button
+                  onClick={handleChangePassword}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-green-600 text-white border rounded-xl hover:bg-green-700 transition-colors text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FaKey className="w-6 h-6" />
+                  Đổi mật khẩu
+                </button>
 
-              {/* Logout button */}
-              <div className="flex-1 px-4">
+                {/* Logout button */}
                 <button
                   onClick={handleLogout}
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-gray-500 text-white border rounded-xl! hover:bg-red-600 transition-colors text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-gray-500 text-white border rounded-xl hover:bg-red-600 transition-colors text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <HiLogout className="w-6 h-6" />
                   {t('logout')}

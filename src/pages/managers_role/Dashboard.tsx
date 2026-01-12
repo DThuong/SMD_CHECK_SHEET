@@ -13,9 +13,10 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAppSelector((state) => state.auth);
   const { users, usersLoading } = useAppSelector((state) => state.auth);
-  const { sheets, loadingList } = useAppSelector((state) => state.changeModel);
+  const { sheets, filteredSheets ,loadingList } = useAppSelector((state) => state.changeModel);
   const [fontSize, setFontSize] = useState(12);
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'all'>('week');
+  const displaySheets = filteredSheets && filteredSheets.length > 0 ? filteredSheets : sheets;
 
   const {t} = useTranslation('dashboard');
 
@@ -59,7 +60,6 @@ const Dashboard = () => {
 
    // ==================== ADMIN DASHBOARD (GIỮ NGUYÊN CODE CŨ) ====================
 
-  // ... (giữ nguyên toàn bộ code tính toán dữ liệu cho Admin)
   const roleStats = React.useMemo(() => {
     const roleCounts: Record<string, number> = {};
     users.forEach(user => {
@@ -86,13 +86,13 @@ const Dashboard = () => {
 
   const statusStats = React.useMemo(() => {
     const statusCounts: Record<string, number> = {};
-    sheets?.forEach(sheet => {
-      const status = sheet.status || 'Pending';
+    displaySheets?.forEach(sheet => {
+      const status = sheet.status || 'pending';
       statusCounts[status] = (statusCounts[status] || 0) + 1;
     });
 
     const statusColors: Record<string, string> = {
-      'Pending': '#94a3b8',
+      'pending': '#94a3b8',
       'PQCDone': '#3b82f6',
       'PQCLeaderDone': '#2563eb', // thêm
       'ENGDone': '#10b981',
@@ -106,41 +106,52 @@ const Dashboard = () => {
       value: count,
       color: statusColors[status] || '#6b7280'
     }));
-  }, [sheets]);
+  }, [displaySheets]);
 
   const timelineStats = React.useMemo(() => {
-    if (!sheets || sheets.length === 0) return [];
+  if (!displaySheets || displaySheets.length === 0) return [];
 
-    const now = new Date();
-    const cutoffDate = new Date();
-    
-    if (timeRange === 'week') {
-      cutoffDate.setDate(now.getDate() - 7);
-    } else if (timeRange === 'month') {
-      cutoffDate.setMonth(now.getMonth() - 1);
-    } else {
-      cutoffDate.setFullYear(now.getFullYear() - 1);
-    }
+  const now = new Date();
+  let cutoffDate: Date | null = null;
+  
+  if (timeRange === 'week') {
+    cutoffDate = new Date();
+    cutoffDate.setDate(now.getDate() - 7);
+    cutoffDate.setHours(0, 0, 0, 0);
+  } else if (timeRange === 'month') {
+    cutoffDate = new Date();
+    cutoffDate.setMonth(now.getMonth() - 1);
+    cutoffDate.setHours(0, 0, 0, 0);
+  }
 
-    const dailyCounts: Record<string, number> = {};
-    
-    sheets.forEach(sheet => {
-      if (sheet.createAt) {
-        const date = new Date(sheet.createAt);
-        if (date >= cutoffDate) {
-          const dateStr = date.toISOString().split('T')[0];
-          dailyCounts[dateStr] = (dailyCounts[dateStr] || 0) + 1;
-        }
+  const dailyCounts: Record<string, number> = {};
+  
+  displaySheets.forEach(sheet => {
+    if (sheet.createAt) {
+      const date = new Date(sheet.createAt);
+      
+      if (!cutoffDate || date >= cutoffDate) {
+        // Dùng local date
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        
+        dailyCounts[dateStr] = (dailyCounts[dateStr] || 0) + 1;
       }
-    });
+    }
+  });
 
-    return Object.entries(dailyCounts)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, count]) => ({
-        date: new Date(date).toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' }),
-        count
-      }));
-  }, [sheets, timeRange]);
+  return Object.entries(dailyCounts)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({
+      date: new Date(date).toLocaleDateString('vi-VN', { 
+        month: 'short', 
+        day: 'numeric' 
+      }),
+      count
+    }));
+}, [displaySheets, timeRange]);
 
   const completionRate = React.useMemo(() => {
     if (!sheets || sheets.length === 0) return 0;

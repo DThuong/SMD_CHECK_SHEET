@@ -476,7 +476,7 @@ const handleDeleteSheet = async () => {
     
     await dispatch(deleteSheetById(sheetId)).unwrap();
     
-    showNotification('success', t('success.deleteSheet'));
+    showNotification('success', `Bạn đã xóa sheet: ${sheetId}`);
     
     // Đóng modal
     setConfirmDeleteModal({ open: false, sheet: null });
@@ -512,7 +512,7 @@ const closeDeleteConfirm = () => {
   setConfirmDeleteModal({ open: false, sheet: null });
 };
 
-  const getStatusBadge = (sheet: ChangeModelResponse) => {
+const getStatusBadge = (sheet: ChangeModelResponse) => {
     const status = sheet.status?.toLowerCase();
     
     const statusConfig: Record<string, { bg: string; text: string; label: string; icon: string }> = {
@@ -538,7 +538,13 @@ const closeDeleteConfirm = () => {
         <span>{config.label}</span>
       </div>
     );
-  };
+};
+
+const canUserSignSheet = (sheet: ChangeModelResponse): boolean => {
+  if (!user || !user.role) return false;
+  return canConfirmAtStep(sheet, user.role);
+};
+
 
   // ==================== PAGINATION ====================
   const sortedSheets = [...(filteredSheets || [])].sort((a, b) => {
@@ -953,6 +959,9 @@ const closeDeleteConfirm = () => {
                         {t('table.status')}
                       </th>
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">
+                        Ký xác nhận
+                      </th>
+                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">
                         {t('table.action')}
                       </th>
                     </tr>
@@ -986,6 +995,24 @@ const closeDeleteConfirm = () => {
                         </td>
                         <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center">
                           {getStatusBadge(sheet)}
+                        </td>
+                        <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center">
+                          {canUserSignSheet(sheet) ? (
+                            <button
+                              onClick={() => {
+                                if (user?.role) {
+                                  handleConfirmStep(sheet.id, user.role as any);
+                                }
+                              }}
+                              className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-orange-400 text-white rounded hover:bg-orange-300 transition-colors text-xs font-semibold whitespace-nowrap shadow-md hover:shadow-lg"
+                              title="Ký xác nhận sheet này"
+                            >
+                              <AiOutlineCheckCircle className="w-4 h-4" />
+                              <span>Ký ngay</span>
+                            </button>
+                          ) : (
+                            <span className="text-xs text-gray-400">Không thể ký</span>
+                          )}
                         </td>
                         <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center">
                           <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 justify-center">
@@ -1083,6 +1110,19 @@ const closeDeleteConfirm = () => {
                         <AiOutlineEye className="w-4 h-4" />
                         <span>{t('button.view')}</span>
                       </button>
+                            {canUserSignSheet(sheet) && (
+                              <button
+                                onClick={() => {
+                                  if (user?.role) {
+                                    handleConfirmStep(sheet.id, user.role as any);
+                                  }
+                                }}
+                                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-semibold shadow-md"
+                              >
+                                <AiOutlineCheckCircle className="w-4 h-4" />
+                                <span>Ký ngay</span>
+                              </button>
+                            )}
                       {canEdit(sheet) && (
                         <button
                           onClick={() => {

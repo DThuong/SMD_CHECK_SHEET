@@ -5,10 +5,11 @@ type ModalProps = {
   title?: string;
   onClose: () => void;
   onSave?: () => void;
+  disabledSave?: boolean;
   children?: React.ReactNode;
 };
 
-export default function Modal({ open, title, onClose, onSave, children }: ModalProps) {
+export default function Modal({ open, title, onClose, onSave, disabledSave, children }: ModalProps) {
   useEffect(() => {
     if (open) {
     // Khi mở modal, ngăn scroll trang
@@ -37,7 +38,7 @@ export default function Modal({ open, title, onClose, onSave, children }: ModalP
         </div>
 
         <div className="mt-4 flex gap-2 mb-4">
-          <button type="button" onClick={onSave} className="flex-1 px-3 py-2 bg-blue-600 text-white rounded">Lưu</button>
+          <button type="button" onClick={onSave} className="flex-1 px-3 py-2 bg-blue-600 text-white rounded" disabled={disabledSave}>Lưu</button>
           <button type="button" onClick={onClose} className="flex-1 px-3 py-2 border rounded">Hủy</button>
         </div>
       </div>

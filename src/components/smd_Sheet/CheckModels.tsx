@@ -136,6 +136,17 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
       return;
     }
 
+    const workOrder = form.workOrder?.replace(/\s/g, '') ?? '';
+
+    if (workOrder.length !== 14) {
+      showNotification(
+        'error',
+        'Sai format Work Order',
+        'Work Order phải đủ đúng 14 ký tự (VD: PD2026XXXXXXXX)'
+      );
+      return; // KHÔNG cho dispatch
+    }
+
     try {
       const apiData: CheckModelData = {
         lineChange: form.lineChange,
@@ -155,11 +166,13 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
         imgIssue: form.imgIssue
       };
 
+
+
       // dispatch redux action
       await dispatch(updateCheckModel({
-        id: checkModelId,
-        data: apiData
-      })).unwrap();
+          id: checkModelId,
+          data: apiData
+        })).unwrap();
 
       if (currentSheet?.id) {
         await dispatch(fetchCheckModel(currentSheet.id)).unwrap();
@@ -394,6 +407,7 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
           setOpen(false);
         }}
         onSave={submit}
+        // disabledSave={form.workOrder?.replace(/\s/g, '').length !== 14}
       >
         <div className="grid gap-3 max-h-[60vh] overflow-y-auto scrollbar-hide">
           {/* Line đổi */}

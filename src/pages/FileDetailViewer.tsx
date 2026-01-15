@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -31,18 +32,6 @@ const FileDetailViewer = () => {
   );
 
   const { t } = useTranslation('fileDetail');
-
-  // Thêm useEffect để log state khi component mount
-// useEffect(() => {
-//   console.group('📂 FileDetailViewer - State Debug');
-//   console.log('🆔 Sheet ID:', id);
-//   console.log('📍 Current Path:', location.pathname);
-//   console.log('📦 Location State:', location.state);
-//   console.log('🔙 from:', from);
-//   console.log('🔙 returnPath:', returnPath);
-//   console.log('🔙 originalReturnPath:', originalReturnPath);
-//   console.groupEnd();
-// }, [id, from, returnPath, originalReturnPath, location]);
 
   // Load files
   useEffect(() => {
@@ -177,65 +166,111 @@ const FileDetailViewer = () => {
       </div>
 
       {/* Tabs */}
-      <div className="mb-4 border-b border-gray-300">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex gap-4">
-            <button
-              onClick={() => handleChangeTab('lcr')}
-              disabled={!hasLcrData}
-              className={`px-6 py-3 font-semibold transition inline-flex items-center gap-2 ${
-                fileType === 'lcr'
-                  ? 'text-green-600 border-b-2 border-green-600'
-                  : 'text-gray-600 hover:text-green-600'
-              } ${!hasLcrData ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              LCR Data
-              {hasLcrData && lcrFileData && (
-                <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
-                  {lcrFileData.count}
-                </span>
-              )}
-            </button>
-            
-            <button
-              onClick={() => handleChangeTab('reflow')}
-              disabled={!hasReflowFile}
-              className={`px-6 py-3 font-semibold transition inline-flex items-center gap-2 ${
-                fileType === 'reflow'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-blue-600'
-              } ${!hasReflowFile ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-              Reflow PDF
-            </button>
-          </div>
+<div className="mb-4 relative">
+  <div className="flex items-end justify-between gap-4">
+    {/* Left side - Tabs */}
+    <div className="flex gap-4">
+      <button
+        onClick={() => handleChangeTab('lcr')}
+        disabled={!hasLcrData}
+        className={`px-6 py-3 font-semibold transition inline-flex items-center gap-2 ${
+          fileType === 'lcr'
+            ? 'text-green-600 border-b-2 border-green-600'
+            : 'text-gray-600 hover:text-green-600'
+        } ${!hasLcrData ? 'opacity-50 cursor-not-allowed' : ''}`}
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        LCR Data
+        {hasLcrData && lcrFileData && (
+          <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
+            {lcrFileData.count}
+          </span>
+        )}
+      </button>
+      
+      <button
+        onClick={() => handleChangeTab('reflow')}
+        disabled={!hasReflowFile}
+        className={`px-6 py-3 font-semibold transition inline-flex items-center gap-2 ${
+          fileType === 'reflow'
+            ? 'text-blue-600 border-b-2 border-blue-600'
+            : 'text-gray-600 hover:text-blue-600'
+        } ${!hasReflowFile ? 'opacity-50 cursor-not-allowed' : ''}`}
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        Reflow PDF
+      </button>
+    </div>
 
-          {/* View Mode Toggle (only show for LCR tab) */}
-          {fileType === 'lcr' && hasLcrData && (
-            <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
-              <button
-                onClick={() => setLcrViewMode('full')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition inline-flex items-center gap-2 ${
-                  lcrViewMode === 'full'
-                    ? 'bg-white text-green-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                Full Table (27 cols)
-              </button>
-            </div>
-          )}
-        </div>
+    {/* View Mode Toggle - chỉ hiện khi LCR tab */}
+    {fileType === 'lcr' && hasLcrData && (
+      <div className="flex gap-2 bg-gray-100 p-1 rounded-lg mb-0.5">
+        <button
+          onClick={() => setLcrViewMode('full')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition inline-flex items-center gap-2 ${
+            lcrViewMode === 'full'
+              ? 'bg-white text-green-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          Full Table (27 cols)
+        </button>
       </div>
+    )}
+  </div>
+
+  {/* Reference Table - Position absolute, chỉ hiện khi Reflow tab */}
+  {fileType === 'reflow' && (
+    <div className="absolute right-0 bottom-0 z-10">
+      <div className="bg-white border border-b-0 border-gray-300 shadow-sm">
+        <table className="text-xs">
+          <tbody>
+            <tr>
+              <td className="border-r! text-center border-gray-300 px-3 py-1.5 font-semibold text-gray-700 bg-gray-50">
+                Max'C
+              </td>
+              <td className="border-r! text-center border-gray-300 px-3 py-1.5 font-semibold text-gray-700 bg-gray-50">
+                T4-s, Ov-220
+              </td>
+              <td className="text-center px-3 py-1.5 font-semibold text-gray-700 bg-gray-50">
+                T2-s
+              </td>
+            </tr>
+            <tr>
+              <td className="border-r! border-t! border-gray-300 px-3 py-1.5 whitespace-nowrap">
+                <span className="font-medium text-blue-600">PIP:</span> 240-250°C
+              </td>
+              <td className="border-r! border-t! border-gray-300 px-3 py-1.5 whitespace-nowrap">
+                <span className="font-medium text-blue-600">PIP:</span> 50-70 sec
+              </td>
+              <td className="border-t! border-gray-300 px-3 py-1.5 whitespace-nowrap" rowSpan={2}>
+                <div className="flex flex-col gap-2">
+                  <div><span className="font-medium text-orange-600">Preheating:</span> 150-180°C</div>
+                  <div><span className="font-medium text-orange-600">Time:</span> 70-110 sec</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td className="border-r! border-t! border-gray-300 px-3 py-1.5 whitespace-nowrap">
+                <span className="font-medium text-green-600">None PIP:</span> 235-245°C
+              </td>
+              <td className="border-t! border-r! border-gray-300 px-3 py-1.5 whitespace-nowrap">
+                <span className="font-medium text-green-600">None PIP:</span> 40-60 sec
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )}
+</div>
 
       {/* Content */}
       <div className="bg-white rounded-lg">
@@ -276,6 +311,7 @@ const FileDetailViewer = () => {
             )}
           </>
         )}
+
       </div>
     </div>
   );

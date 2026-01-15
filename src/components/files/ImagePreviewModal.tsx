@@ -1,5 +1,5 @@
 import { IoClose } from "react-icons/io5";
-import { MdZoomIn, MdZoomOut, MdRefresh } from "react-icons/md";
+import { MdZoomIn, MdZoomOut, MdRefresh, MdRotateLeft, MdRotateRight } from "react-icons/md";
 import { normalizeImageUrl } from "../../utils/imageUrl";
 import { useState, useRef } from "react";
 
@@ -14,12 +14,23 @@ const ImagePreviewModal = ({ isOpen, imageUrl, onClose, title }: ImagePreviewMod
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [rotation, setRotation] = useState(0);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const imageRef = useRef<HTMLImageElement>(null);
 
   if (!isOpen) return null;
 
   const finalImageUrl = normalizeImageUrl(imageUrl);
+
+  // rotate
+  const handleRotateLeft = () => {
+    setRotation(prev => prev - 90);
+  };
+
+  const handleRotateRight = () => {
+    setRotation(prev => prev + 90);
+  };
+
 
   // Zoom functions
   const handleZoomIn = () => {
@@ -33,6 +44,7 @@ const ImagePreviewModal = ({ isOpen, imageUrl, onClose, title }: ImagePreviewMod
   const handleReset = () => {
     setScale(1);
     setPosition({ x: 0, y: 0 });
+    setRotation(0);
   };
 
   // Mouse wheel zoom
@@ -147,6 +159,21 @@ const ImagePreviewModal = ({ isOpen, imageUrl, onClose, title }: ImagePreviewMod
           >
             <MdRefresh size={24} />
           </button>
+          <div className="border-t border-gray-600 my-1"></div>
+          <button
+            onClick={handleRotateLeft}
+            className="text-white hover:text-gray-300 transition-colors p-2 hover:bg-white hover:bg-opacity-20 rounded"
+            title="Rotate Left"
+          >
+            <MdRotateLeft size={24} />
+          </button>
+          <button
+            onClick={handleRotateRight}
+            className="text-white hover:text-gray-300 transition-colors p-2 hover:bg-white hover:bg-opacity-20 rounded"
+            title="Rotate Right"
+          >
+            <MdRotateRight size={24} />
+          </button>
         </div>
 
         {/* Zoom level indicator */}
@@ -175,7 +202,7 @@ const ImagePreviewModal = ({ isOpen, imageUrl, onClose, title }: ImagePreviewMod
             alt="Preview"
             className="max-w-full max-h-full object-contain rounded-lg shadow-2xl select-none"
             style={{
-              transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
+              transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px) rotate(${rotation}deg)`,
               transition: isDragging ? 'none' : 'transform 0.2s ease-out',
               pointerEvents: 'auto'
             }}

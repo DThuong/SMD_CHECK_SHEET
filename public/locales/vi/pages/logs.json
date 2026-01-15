@@ -35,6 +35,7 @@
       "all": "Tất cả trạng thái",
       "pending": "Đang chờ",
       "pqcDone": "PQC đã hoàn thành",
+      "pqcLeaderDone": "PQC Leader đã hoàn thành",
       "engDone": "Engineering đã hoàn thành",
       "supervisorDone": "Supervisor đã hoàn thành",
       "managerDone": "Manager đã hoàn thành",

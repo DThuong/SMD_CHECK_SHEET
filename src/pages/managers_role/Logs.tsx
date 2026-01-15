@@ -839,7 +839,7 @@ const canUserSignSheet = (sheet: ChangeModelResponse): boolean => {
                   <option value="all">{t('status.all')}</option>
                   <option value={STATUS.PENDING}>{t('status.pending')}</option>
                   <option value={STATUS.PQC_DONE}>{t('status.pqcDone')}</option>
-                  <option value={STATUS.PQCLEADER_DONE}>PQC Leader đã hoàn thành</option>
+                  <option value={STATUS.PQCLEADER_DONE}>{t('status.pqcLeaderDone')}</option>
                   <option value={STATUS.ENG_DONE}>{t('status.engDone')}</option>
                   <option value={STATUS.SUPERVISOR_DONE}>{t('status.supervisorDone')}</option>
                   <option value={STATUS.MANAGER_DONE}>{t('status.managerDone')}</option>

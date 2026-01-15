@@ -35,6 +35,7 @@
     "all": "All Status",
     "pending": "Pending",
     "pqcDone": "PQC Completed",
+    "pqcLeaderDone": "PQC Leader Completed",
     "engDone": "Engineering Completed",
     "supervisorDone": "Supervisor Completed",
     "managerDone": "Manager Completed",

@@ -35,6 +35,7 @@
       "all": "모든 상태",
       "pending": "대기 중",
       "pqcDone": "PQC 완료",
+      "pqcLeaderDone": "PQC Leader 완료",
       "engDone": "Engineering 완료",
       "supervisorDone": "Supervisor 완료",
       "managerDone": "Manager 완료",

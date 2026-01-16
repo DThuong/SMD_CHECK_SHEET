@@ -361,6 +361,10 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
             value={form.startTime || ""}
             onChange={(e) => set("startTime", e.target.value || undefined)}
             className="block w-full border rounded px-3 py-2 text-sm"
+            style={{ 
+              WebkitAppearance: 'none',
+              minHeight: '44px'
+            }}
           />
         </div>
 
@@ -371,6 +375,10 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
             value={form.endTime || ""}
             onChange={(e) => set("endTime", e.target.value || undefined)}
             className="block w-full border rounded px-3 py-2 text-sm"
+            style={{ 
+              WebkitAppearance: 'none',
+              minHeight: '44px'
+            }}
           />
         </div>
       </div>

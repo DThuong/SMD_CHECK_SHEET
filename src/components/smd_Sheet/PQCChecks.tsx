@@ -447,6 +447,10 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
               value={form.icPlan ?? ""}
               onChange={(e) => set("icPlan", e.target.value.toUpperCase())}
               className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+              style={{ 
+                fontSize: '16px',
+                touchAction: 'manipulation'
+              }}
             />
           </label>
 
@@ -456,6 +460,10 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
               value={form.checksumReal ?? ""}
               onChange={(e) => set("checksumReal", e.target.value.toUpperCase())}
               className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+              style={{ 
+                fontSize: '16px',
+                touchAction: 'manipulation'
+              }}
             />
           </label>
 
@@ -465,6 +473,10 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
               value={form.checksumConfirm ?? ""}
               onChange={(e) => set("checksumConfirm", e.target.value.toUpperCase())}
               className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+              style={{ 
+                fontSize: '16px',
+                touchAction: 'manipulation'
+              }}
             />
           </label>
 
@@ -475,6 +487,10 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
                 value={form.turner ?? ""}
                 onChange={(e) => set("turner", e.target.value.toUpperCase())}
                 className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+                style={{ 
+                  fontSize: '16px',
+                  touchAction: 'manipulation'
+                }}
               />
             </label>
 
@@ -488,6 +504,10 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
           value={form.startLCR ?? ""}
           onChange={(e) => set("startLCR", e.target.value)}
           className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+          style={{ 
+            WebkitAppearance: 'none',  // Remove iOS default styling
+            minHeight: '44px'  // iOS minimum touch target
+          }}
         />
       </label>
 
@@ -498,6 +518,10 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
           value={form.endLCR ?? ""}
           onChange={(e) => set("endLCR", e.target.value)}
           className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+          style={{ 
+            WebkitAppearance: 'none',  // Remove iOS default styling
+            minHeight: '44px'  // iOS minimum touch target
+          }}
         />
       </label>
     </div>
@@ -508,6 +532,10 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
               value={form.nameCheck ?? ""}
               onChange={(e) => set("nameCheck", e.target.value.toUpperCase())}
               className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+              style={{ 
+                fontSize: '16px',
+                touchAction: 'manipulation'
+              }}
             />
           </label>
 
@@ -580,6 +608,10 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
         onChange={(e) => set("note", e.target.value.toUpperCase())} 
         className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
         placeholder=""
+        style={{ 
+          fontSize: '16px',
+          touchAction: 'manipulation'
+        }}
       />
     </label>
 

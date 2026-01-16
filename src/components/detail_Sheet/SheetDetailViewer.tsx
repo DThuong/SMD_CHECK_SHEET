@@ -59,7 +59,6 @@ const SheetDetailViewer = () => {
   // PHÂN QUYỀN CHÍNH XÁC
   const canEdit = () => {
     if (!user || !currentSheet) return false;
-    
   const userRole = user.role;
   const status = currentSheet.status?.toLowerCase();
   // PQCLeader chỉ edit khi PQCDone
@@ -67,7 +66,7 @@ const SheetDetailViewer = () => {
   
   // ENG chỉ edit khi PQCLeaderDone
   if (userRole === 'ENG' && status === 'pqcleaderdone') return true;
-  
+
   // SUPERVISOR chỉ edit khi ENGDone
   if (userRole === 'Supervisior' && status === 'engdone') return true;
     
@@ -96,7 +95,6 @@ const SheetDetailViewer = () => {
         return false;
     }
   };
-
 
    const handleBack = () => {
     if (returnPath) {
@@ -361,7 +359,7 @@ const SheetDetailViewer = () => {
         const sectionClone = section.cloneNode(true) as HTMLElement;
         sectionClone.querySelectorAll('.no-print').forEach(el => el.remove());
         
-        // ⭐ XỬ LÝ BORDERS CHO HEADER (div containers)
+        // XỬ LÝ BORDERS CHO HEADER (div containers)
         const headerContainers = sectionClone.querySelectorAll('.border, .border-gray-300, [class*="border"]');
         headerContainers.forEach((container: any) => {
           // Chỉ xử lý div containers, không phải table
@@ -374,7 +372,7 @@ const SheetDetailViewer = () => {
           }
         });
         
-        // ⭐ CHUẨN HÓA BORDERS CHO TABLES
+        // CHUẨN HÓA BORDERS CHO TABLES
         const allTables = sectionClone.querySelectorAll('table');
         allTables.forEach((table: any) => {
           table.style.cssText = `
@@ -386,7 +384,7 @@ const SheetDetailViewer = () => {
           `;
         });
         
-        // ⭐ TẤT CẢ CELLS (th và td)
+        // TẤT CẢ CELLS (th và td)
         const allCells = sectionClone.querySelectorAll('td, th');
         allCells.forEach((cell: any) => {
           const computedStyle = window.getComputedStyle(cell);
@@ -457,7 +455,7 @@ const SheetDetailViewer = () => {
             continue;
           }
           
-          // ⭐ Xử lý canvas để tăng độ sắc nét của borders
+          // Xử lý canvas để tăng độ sắc nét của borders
           const ctx = sectionCanvas.getContext('2d');
           if (ctx) {
             const imageData = ctx.getImageData(0, 0, sectionCanvas.width, sectionCanvas.height);

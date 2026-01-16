@@ -661,6 +661,8 @@ const Home = () => {
                     <MdFavoriteBorder /> <span>Id</span>
                   </div>
                   <input
+                    type="number"
+                    inputMode="numeric" 
                     value={filter.id || ""}
                     onChange={(e) => setFilter((s) => ({ ...s, id: Number(e.target.value) || 0}))}
                     onKeyDown={(e) => e.key === 'Enter' && applyFilter()}
@@ -708,6 +710,7 @@ const Home = () => {
                     onChange={(e) => setFilter((s) => ({ ...s, status: e.target.value }))}
                     onKeyDown={(e) => e.key === 'Enter' && applyFilter()}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    style={{ WebkitAppearance: 'none' }}
                   >
                     <option value="all">Tất cả</option>
                     <option value="pending">Pending</option>
@@ -732,6 +735,10 @@ const Home = () => {
                     onKeyDown={(e) => e.key === 'Enter' && applyFilter()}
                     onChange={(e) => setFilter((s) => ({ ...s, fromDate: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    style={{ 
+                      WebkitAppearance: 'none',  // Remove iOS default styling
+                      minHeight: '44px'  // iOS minimum touch target
+                    }}
                   />
                 </div>
 
@@ -747,6 +754,10 @@ const Home = () => {
                     onKeyDown={(e) => e.key === 'Enter' && applyFilter()}
                     onChange={(e) => setFilter((s) => ({ ...s, toDate: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    style={{ 
+                      WebkitAppearance: 'none',  // Remove iOS default styling
+                      minHeight: '44px'  // iOS minimum touch target
+                    }}
                   />
                 </div>
               </div>

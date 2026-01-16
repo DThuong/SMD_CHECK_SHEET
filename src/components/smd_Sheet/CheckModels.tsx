@@ -296,6 +296,12 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
               {form.fCode || "—"}
             </div>
           </div>
+          <div className="min-w-0 mb-2">
+            <div className="text-xs font-semibold text-gray-600 mb-1">Model/Side</div>
+            <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+              {form.model || "—"}
+            </div>
+          </div>
 
           {/* Mobile fields */}
           <div className="grid grid-cols-2 gap-4 mb-3">
@@ -380,7 +386,7 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
               </div>
           </div>
           <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueImage')}</div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueImg')}</div>
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
               <ImageViewIcon 
                 imageUrl={form.imgIssue} 
@@ -420,6 +426,10 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
               }}
               className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
               placeholder=""
+              style={{ 
+                fontSize: '16px',
+                touchAction: 'manipulation'
+              }}
             />
           </label>
 
@@ -433,6 +443,10 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
               }}
               className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
               placeholder=""
+              style={{ 
+                fontSize: '16px',
+                touchAction: 'manipulation'
+              }}
             />
           </label>
 
@@ -444,6 +458,10 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
               onChange={(e) => set("fCode", e.target.value.toUpperCase())} 
               className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
               placeholder=""
+              style={{ 
+                fontSize: '16px',
+                touchAction: 'manipulation'
+              }}
             />
           </label>
 
@@ -456,6 +474,10 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
                 onChange={(e) => set("revS15", e.target.value.toUpperCase())} 
                 className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
                 placeholder=""
+                style={{ 
+                  fontSize: '16px',
+                  touchAction: 'manipulation'
+                }}
               />
             </label>
 
@@ -467,6 +489,10 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
                 onChange={(e) => set("revMounter", e.target.value.toUpperCase())} 
                 className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
                 placeholder=""
+                style={{ 
+                  fontSize: '16px',
+                  touchAction: 'manipulation'
+                }}
               />
             </label>
           </div>
@@ -480,6 +506,10 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
                 value={form.feederCheck ?? ""} 
                 onChange={(e) => set("feederCheck", e.target.value)} 
                 className="mt-1 block w-full border rounded px-3 py-2 text-base"
+                style={{ 
+                  WebkitAppearance: 'none',
+                  minHeight: '44px'
+                }}
               />
             </label>
 
@@ -491,6 +521,10 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
                 value={form.opAccept ?? ""} 
                 onChange={(e) => set("opAccept", e.target.value)} 
                 className="mt-1 block w-full border rounded px-3 py-2 text-base"
+                style={{ 
+                  WebkitAppearance: 'none',
+                  minHeight: '44px'
+                }}
               />
             </label>
           </div>
@@ -504,6 +538,10 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
                 onChange={(e) => set("pcBver", e.target.value.toUpperCase())} 
                 className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
                 placeholder=""
+                style={{ 
+                  fontSize: '16px',
+                  touchAction: 'manipulation'
+                }}
               />
             </label>
 
@@ -543,6 +581,10 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
               }}
               className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
               min="0"
+              style={{ 
+                fontSize: '16px',
+                touchAction: 'manipulation'
+              }}
             />
           </label>
           
@@ -563,6 +605,10 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
               
               className="mt-1 block w-full border rounded px-3 py-2 text-base min-h-[60px] resize-y uppercase"
               placeholder=""
+              style={{ 
+                fontSize: '16px',
+                touchAction: 'manipulation'
+              }}
             />
           </label>
 
@@ -627,6 +673,10 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
               
               className="mt-1 block w-full border rounded px-3 py-2 text-base min-h-[60px] resize-y uppercase"
               placeholder=""
+              style={{ 
+                fontSize: '16px',
+                touchAction: 'manipulation'
+              }}
             />
           </label>
             {/** imgIssue */}

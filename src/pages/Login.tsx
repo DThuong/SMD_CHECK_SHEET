@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { loginUser, clearError } from '../redux/slices/authSlice';
 import { getDeviceInfo } from '../utils/deviceInfo';
 import { useTranslation } from 'react-i18next';
+import Footer from '../components/general/Footer';
 
 const inputClass = "w-full px-4 py-3 border rounded-lg outline-none transition focus:border-blue-500 focus:shadow";
 
@@ -83,6 +84,7 @@ const Login = () => {
   };
 
   return (
+    <>
     <div className="min-h-[50vh] flex items-center justify-center bg-linear-to-br from-gray-50 to-gray-100 p-4">
       <form onSubmit={handleSubmit} className="w-full max-w-md bg-white rounded-2xl shadow my-4 p-4">
         <div className="text-center">
@@ -154,6 +156,8 @@ const Login = () => {
         )}
       </form>
     </div>
+    <Footer />
+    </>
   );
 };
 

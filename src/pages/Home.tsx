@@ -7,7 +7,7 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { AiOutlineSearch, AiOutlineClose } from 'react-icons/ai';
 import { MdFavoriteBorder } from "react-icons/md";
 import { BsCalendarDate } from "react-icons/bs";
-import { FaRegClock } from "react-icons/fa";
+import { FaRegClock, FaRegUserCircle } from "react-icons/fa";
 import { Link } from 'react-router-dom';
 import ReactPaginate from 'react-paginate';
 import { getSheetWithFullObject, getSheetByFilter } from '../redux/slices/changeModelSlice';
@@ -36,6 +36,7 @@ type SheetFilter = {
   fcode: string;
   status: string;
   id:number;
+  createrName: string;
 };
 
 const Home = () => {
@@ -81,7 +82,8 @@ const Home = () => {
     fcode: '',
     toDate: '',
     id: 0,
-    status: 'all'
+    status: 'all',
+    createrName: ''
   });
 
   useEffect(() => {
@@ -192,7 +194,35 @@ const Home = () => {
     }
   }, [sheetError, dispatch]);
 
-  // ✅ PATTERN TỪ LOGS: Load sheets với filter được truyền vào
+  const formatDateTimeForAPI = (datetimeLocal: string): string => {
+  if (!datetimeLocal) return '';
+  
+  const date = new Date(datetimeLocal);
+  
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  
+  return `${month}-${day}-${year} ${hours}:${minutes}`;
+};
+
+/**
+ * Get max datetime for datetime-local input (current datetime)
+ */
+const getCurrentDateTimeLocal = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+  // PATTERN TỪ LOGS: Load sheets với filter được truyền vào
   const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
     try {
       const hasWorkOrder = filterToUse.workOrder.trim() !== '';
@@ -200,14 +230,16 @@ const Home = () => {
       const hasStatus = filterToUse.status !== '' && filterToUse.status !== 'all';
       const hasFcode = filterToUse.fcode.trim() !== '';
       const hasId = filterToUse.id && filterToUse.id > 0;
+      const hasCreaterName = filterToUse.createrName.trim() !== ''; 
 
-      if (hasWorkOrder || hasDateRange || hasStatus || hasFcode || hasId) {
+      if (hasWorkOrder || hasDateRange || hasStatus || hasFcode || hasId || hasCreaterName) {
         const filterParams: any = {
           workOrder: hasWorkOrder ? filterToUse.workOrder.trim() : undefined,
-          fromDate: hasDateRange ? filterToUse.fromDate : undefined,
-          toDate: hasDateRange ? filterToUse.toDate : undefined,
+          fromDate: hasDateRange ? formatDateTimeForAPI(filterToUse.fromDate) : undefined, 
+          toDate: hasDateRange ? formatDateTimeForAPI(filterToUse.toDate) : undefined,      
           status: hasStatus ? filterToUse.status : undefined,
           fcode: hasFcode ? filterToUse.fcode.trim() : undefined,
+          createrName: hasCreaterName ? filterToUse.createrName.trim() : undefined,
         };
 
         if (hasId) {
@@ -350,7 +382,8 @@ const Home = () => {
       fcode: '',
       id: 0,
       toDate: '',
-      status: 'all'
+      status: 'all',
+      createrName: ''
     });
     
     try {
@@ -729,8 +762,8 @@ const Home = () => {
                     <BsCalendarDate /> <span>Từ ngày</span>
                   </div>
                   <input
-                    type="date"
-                    max={new Date().toISOString().slice(0, 10)}
+                    type="datetime-local"
+                    max={getCurrentDateTimeLocal()}
                     value={filter.fromDate}
                     onKeyDown={(e) => e.key === 'Enter' && applyFilter()}
                     onChange={(e) => setFilter((s) => ({ ...s, fromDate: e.target.value }))}
@@ -748,8 +781,8 @@ const Home = () => {
                     <BsCalendarDate /> <span>Đến ngày</span>
                   </div>
                   <input
-                    type="date"
-                    max={new Date().toISOString().slice(0, 10)}
+                    type="datetime-local"
+                    max={getCurrentDateTimeLocal()}
                     value={filter.toDate}
                     onKeyDown={(e) => e.key === 'Enter' && applyFilter()}
                     onChange={(e) => setFilter((s) => ({ ...s, toDate: e.target.value }))}
@@ -758,6 +791,21 @@ const Home = () => {
                       WebkitAppearance: 'none',  // Remove iOS default styling
                       minHeight: '44px'  // iOS minimum touch target
                     }}
+                  />
+                </div>
+                  {/* Creater-name */}
+                <div>
+                  <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+                    <FaRegUserCircle />
+                    <span>Người Tạo</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={filter.createrName}
+                    onChange={(e) => setFilter(s => ({ ...s, createrName: e.target.value }))}
+                    onKeyDown={(e) => e.key === 'Enter' && applyFilter()}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder='Nhập tên người tạo...'
                   />
                 </div>
               </div>

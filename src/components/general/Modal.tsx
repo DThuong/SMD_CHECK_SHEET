@@ -13,36 +13,33 @@ export default function Modal({ open, title, onClose, onSave, disabledSave, chil
   const contentRef = useRef<HTMLDivElement>(null);
   const savedScrollY = useRef(0);
   
+  // Body scroll lock khi modal mở
   useEffect(() => {
     if (open) {
-      // Save scroll position
       savedScrollY.current = window.scrollY;
       
-      // Lock body
       document.body.style.position = 'fixed';
       document.body.style.top = `-${savedScrollY.current}px`;
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       
-      console.log('🔒 Modal opened, body locked at:', savedScrollY.current);
-      
       return () => {
-        // Restore scroll
         const scrollY = savedScrollY.current;
         document.body.style.position = '';
         document.body.style.top = '';
         document.body.style.width = '';
         document.body.style.overflow = '';
         window.scrollTo(0, scrollY);
-        
-        console.log('🔓 Modal closed, scroll restored to:', scrollY);
       };
     }
   }, [open]);
 
-  // iOS Input Focus Handler với logging
+  // iOS Input Focus Handler - ĐƠN GIẢN HÓA
   useEffect(() => {
     if (!open || !contentRef.current) return;
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (!isIOS) return; // ✅ Chỉ chạy trên iOS
 
     const handleFocus = (e: FocusEvent) => {
       const target = e.target as HTMLInputElement;
@@ -53,34 +50,24 @@ export default function Modal({ open, title, onClose, onSave, disabledSave, chil
         target.tagName === 'SELECT'
       ) {
         // Skip checkbox/radio
-        if (target.type === 'checkbox' || target.type === 'radio') {
-          console.log('⏭️ Skipping checkbox/radio focus handler');
-          return;
-        }
+        if (target.type === 'checkbox' || target.type === 'radio') return;
         
-        console.log('📍 Modal input focused:', target.type, target.name || target.placeholder);
-        
-        // Delay for iOS keyboard animation
+        // ✅ CHỈ scroll 1 lần, KHÔNG re-focus
         setTimeout(() => {
-          try {
-            target.scrollIntoView({
-              behavior: 'smooth',
-              block: 'center',
-              inline: 'nearest'
-            });
-            console.log('✅ Input scrolled into view');
-          } catch (error) {
-            console.error('❌ Scroll error:', error);
-          }
-        }, 300);
+          target.scrollIntoView({
+            behavior: 'auto', // ✅ Không dùng smooth
+            block: 'center',
+            inline: 'nearest'
+          });
+        }, 150); // ✅ Giảm delay
       }
     };
 
     const content = contentRef.current;
-    content.addEventListener('focusin', handleFocus, true);
+    content.addEventListener('focusin', handleFocus, { passive: true }); // ✅ Passive listener
 
     return () => {
-      content.removeEventListener('focusin', handleFocus, true);
+      content.removeEventListener('focusin', handleFocus);
     };
   }, [open]);
 
@@ -89,10 +76,6 @@ export default function Modal({ open, title, onClose, onSave, disabledSave, chil
   return (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center py-4"
-      style={{
-        transform: 'translateZ(0)',
-        WebkitTransform: 'translateZ(0)',
-      }}
     >
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       
@@ -102,8 +85,6 @@ export default function Modal({ open, title, onClose, onSave, disabledSave, chil
           maxHeight: '85vh',
           display: 'flex',
           flexDirection: 'column',
-          transform: 'translateZ(0)',
-          WebkitTransform: 'translateZ(0)',
         }}
       >
         <div className="flex items-center justify-between mb-3">
@@ -111,7 +92,6 @@ export default function Modal({ open, title, onClose, onSave, disabledSave, chil
           <button 
             onClick={onClose} 
             aria-label="close"
-            data-close-modal="true"
             style={{
               minWidth: '44px',
               minHeight: '44px',
@@ -126,9 +106,6 @@ export default function Modal({ open, title, onClose, onSave, disabledSave, chil
           className="overflow-auto flex-1"
           style={{
             WebkitOverflowScrolling: 'touch',
-            overflowY: 'auto',
-            transform: 'translateZ(0)',
-            WebkitTransform: 'translateZ(0)',
           }}
         >
           {children}
@@ -148,7 +125,6 @@ export default function Modal({ open, title, onClose, onSave, disabledSave, chil
             type="button" 
             onClick={onClose} 
             className="flex-1 px-3 py-2 border rounded"
-            data-close-modal="true"
             style={{ minHeight: '44px' }}
           >
             Hủy

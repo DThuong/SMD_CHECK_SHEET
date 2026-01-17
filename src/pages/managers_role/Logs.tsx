@@ -130,8 +130,8 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
     if (hasWorkOrder || hasDateRange || hasStatus || hasFcode || hasId) {
       const filterParams: any = {
         workOrder: hasWorkOrder ? filterToUse.workOrder.trim() : undefined,
-        fromDate: hasDateRange ? filterToUse.fromDate : undefined,
-        toDate: hasDateRange ? filterToUse.toDate : undefined,
+        fromDate: hasDateRange ? formatDateTimeForAPI(filterToUse.fromDate) : undefined, 
+        toDate: hasDateRange ? formatDateTimeForAPI(filterToUse.toDate) : undefined, 
         status: hasStatus ? filterToUse.status : undefined,
         fcode: hasFcode ? filterToUse.fcode.trim() : undefined,
       };
@@ -427,6 +427,34 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
       minute: '2-digit'
     });
   };
+
+  const formatDateTimeForAPI = (datetimeLocal: string): string => {
+  if (!datetimeLocal) return '';
+  
+  const date = new Date(datetimeLocal);
+  
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  
+  return `${month}-${day}-${year} ${hours}:${minutes}`;
+};
+
+/**
+ * Get max datetime for datetime-local input (current datetime)
+ */
+const getCurrentDateTimeLocal = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
 
   const canEdit = (sheet: ChangeModelResponse): boolean => {
   if (!user) return false;
@@ -853,9 +881,9 @@ const canUserSignSheet = (sheet: ChangeModelResponse): boolean => {
                   <FaCalendarAlt /><span>{t('search.fromDate')}</span>
                 </div>
                 <input
-                  type="date"
+                  type="datetime-local"
                   value={filter.fromDate}
-                  max={new Date().toISOString().slice(0, 10)}
+                  max={getCurrentDateTimeLocal()}
                   onKeyPress={handleKeyPress}
                   onChange={(e) => setFilter(s => ({ ...s, fromDate: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -868,9 +896,9 @@ const canUserSignSheet = (sheet: ChangeModelResponse): boolean => {
                   <FaCalendarAlt /><span>{t('search.toDate')}</span>
                 </div>
                 <input
-                  type="date"
+                  type="datetime-local"
                   value={filter.toDate}
-                  max={new Date().toISOString().slice(0, 10)}
+                  max={getCurrentDateTimeLocal()}
                   onKeyPress={handleKeyPress}
                   onChange={(e) => setFilter(s => ({ ...s, toDate: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"

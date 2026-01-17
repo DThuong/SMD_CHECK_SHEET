@@ -221,16 +221,14 @@ body {
 @supports (-webkit-touch-callout: none) {
   /* iOS Safari only */
   
-  /* Force all text inputs to 16px - NO ZOOM */
+  /* ✅ RULE 1: Force 16px font để tránh auto-zoom */
   input:not([type="checkbox"]):not([type="radio"]),
   textarea,
   select {
     font-size: 16px !important;
-    -webkit-text-size-adjust: 100% !important;
-    touch-action: manipulation !important;
   }
   
-  /* Remove iOS default styling for specific types */
+  /* ✅ RULE 2: Remove iOS default styling */
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -239,76 +237,45 @@ body {
   input[type="url"],
   input[type="search"],
   textarea {
-    -webkit-appearance: none !important;
-    appearance: none !important;
+    -webkit-appearance: none;
+    appearance: none;
   }
   
-  /* Date/Time inputs */
+  /* ✅ RULE 3: Date/Time inputs */
   input[type="date"],
   input[type="datetime-local"],
   input[type="time"] {
-    -webkit-appearance: none !important;
-    appearance: none !important;
-    min-height: 44px !important;
+    -webkit-appearance: none;
+    appearance: none;
+    min-height: 44px;
   }
   
-  /* Select */
+  /* ✅ RULE 4: Select */
   select {
-    -webkit-appearance: none !important;
-    appearance: none !important;
+    -webkit-appearance: none;
+    appearance: none;
   }
   
-  /* Keep native appearance for checkbox & radio */
+  /* ✅ RULE 5: Keep native appearance for checkbox & radio */
   input[type="checkbox"],
   input[type="radio"] {
-    -webkit-appearance: checkbox !important;
-    appearance: auto !important;
-    width: auto !important;
-    height: auto !important;
-    min-height: auto !important;
-    font-size: inherit !important;
-    touch-action: auto !important;
-    pointer-events: auto !important;
+    -webkit-appearance: checkbox;
+    appearance: auto;
+    width: auto;
+    height: auto;
+    min-height: auto;
+    font-size: inherit;
   }
   
   input[type="radio"] {
-    -webkit-appearance: radio !important;
-  }
-  
-  /* Lock body when input focused */
-  body.input-focused {
-    position: fixed !important;
-    width: 100% !important;
-    overflow: hidden !important;
-  }
-  
-  /* Prevent scroll jump on focus */
-  input:not([type="checkbox"]):not([type="radio"]):focus,
-  textarea:focus,
-  select:focus {
-    position: relative !important;
-    z-index: 1001 !important;
-    transform: translateZ(0) !important;
-    -webkit-transform: translateZ(0) !important;
-  }
-  
-  /* Modal inputs */
-  .fixed input:not([type="checkbox"]):not([type="radio"]):focus,
-  .fixed textarea:focus,
-  .fixed select:focus {
-    transform: translateZ(0) !important;
-    -webkit-transform: translateZ(0) !important;
+    -webkit-appearance: radio;
   }
 }
 
 /* ========================================
-   Force Hardware Acceleration
+   SMOOTH SCROLLING FOR MODAL
    ======================================== */
    
-input,
-textarea,
-select {
-  will-change: transform !important;
-  backface-visibility: hidden !important;
-  -webkit-backface-visibility: hidden !important;
+.overflow-auto {
+  -webkit-overflow-scrolling: touch;
 }

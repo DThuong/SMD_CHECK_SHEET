@@ -470,7 +470,7 @@ export const getSheetbyWorkorder = createAsyncThunk(
  */
 export const getSheetByFilter = createAsyncThunk(
   'changeModel/getByFilter',
-  async (params: { status?: string; workOrder?: string; fromDate?: string; toDate?: string; fcode?: string; id?: number }, { rejectWithValue }) => {
+  async (params: { status?: string; workOrder?: string; fromDate?: string; toDate?: string; fcode?: string; id?: number, createrName?: string }, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('token');
       
@@ -497,6 +497,9 @@ export const getSheetByFilter = createAsyncThunk(
         }
         if(params.id) {
           queryParams.Id = params.id.toString();
+        }
+        if(params.createrName && params.createrName.trim() !== '') {
+          queryParams.CreaterName = params.createrName.trim();
         }
       const response = await smdApi.get('ChangeModel/filterAll', { params: queryParams });
 

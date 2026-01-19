@@ -265,7 +265,7 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
                   <div className="flex items-center justify-center gap-2">
                     <ImageViewIcon 
                       imageUrl={form.imgIssue} 
-                      title="Hình ảnh CheckModel: Vấn đề phát sinh"
+                      title="Hình ảnh Vấn đề phát sinh"
                       onView={openImagePreview}
                     />
                   </div>
@@ -390,7 +390,7 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
               <ImageViewIcon 
                 imageUrl={form.imgIssue} 
-                title="Hình ảnh CheckModel: Vấn đề phát sinh"
+                title="Hình ảnh Vấn đề phát sinh"
                 onView={openImagePreview}
               />
           </div>
@@ -680,7 +680,7 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
             />
           </label>
             {/** imgIssue */}
-              <label className="block text-sm font-medium mb-1">Hình ảnh Standard Production</label>
+              <label className="block text-sm font-medium mb-1">Hình ảnh Vấn Đề Phát Sinh</label>
                   <div className="">
                     <input
                       type="file"
@@ -719,13 +719,13 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
                     <div className="flex items-center gap-3">
                       <img 
                         src={form.imgIssue} 
-                        alt="CheckModel: Vân đề phát sinh Preview" 
+                        alt="Hình ảnh Vấn Đề Phát Sinh" 
                         className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-                        onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh CheckModel: Vấn đề phát sinh")} 
+                        onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Vấn đề phát sinh")} 
                       />
                       <button
                         type="button"
-                        onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh CheckModel: Vấn đề phát sinh")}
+                        onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Vấn đề phát sinh")}
                         className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
                       >
                         <IoEyeSharp size={20} />

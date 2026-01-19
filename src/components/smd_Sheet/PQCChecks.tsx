@@ -303,7 +303,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
               <div className="flex items-center justify-center gap-2">
                 <ImageViewIcon 
                   imageUrl={form.imgIC || "" } 
-                  title="Hình ảnh Standard Production"
+                  title="Hình ảnh IC"
                   onView={openImagePreview}
                 />
               </div>
@@ -423,7 +423,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
             <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
               <ImageViewIcon 
                 imageUrl={form.imgIssue} 
-                title="Hình ảnh StandardProduction: Vấn đề phát sinh"
+                title="Hình ảnh Vấn đề phát sinh"
                 onView={openImagePreview}
               />
             </div>
@@ -562,10 +562,10 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
                         capture="environment"
                         onChange={(e) => handleImageUpload('imgIC', e)}
                         className="hidden"
-                        id="camera-capture-standard-production"
+                        id="camera-capture-ic"
                       />
                       <label
-                      htmlFor="camera-capture-standard-production"
+                      htmlFor="camera-capture-ic"
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
                     >
                       {/* Thêm display: inline-block hoặc inline-flex */}
@@ -585,13 +585,13 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
                   <div className="flex items-center gap-3">
                     <img 
                       src={form.imgIC} 
-                      alt="Standard Production Preview" 
+                      alt="Hình ảnh IC" 
                       className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-                      onClick={() => openImagePreview(form.imgIC!, "Hình ảnh Standard Production")} 
+                      onClick={() => openImagePreview(form.imgIC!, "Hình ảnh IC")} 
                     />
                     <button
                       type="button"
-                      onClick={() => openImagePreview(form.imgIC!, "Hình ảnh Standard Production")}
+                      onClick={() => openImagePreview(form.imgIC!, "Hình ảnh IC")}
                       className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
                     >
                       <IoEyeSharp size={20} />
@@ -633,10 +633,10 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
               capture="environment"
               onChange={(e) => handleImageUpload('imgIssue', e)}
               className="hidden"
-              id="camera-capture-issue-standard"
+              id="camera-capture-issue-pqc-check"
             />
             <label
-            htmlFor="camera-capture-issue-standard"
+            htmlFor="camera-capture-issue-pqc-check"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
           >
             {/* Thêm display: inline-block hoặc inline-flex */}
@@ -658,11 +658,11 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
             src={form.imgIssue} 
             alt="Standard Production Preview" 
             className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-            onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Standard Production: Vấn đề phát sinh")} 
+            onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Vấn đề phát sinh")} 
           />
           <button
             type="button"
-            onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Standard Production: Vấn đề phát sinh")}
+            onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Vấn đề phát sinh")}
             className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
           >
             <IoEyeSharp size={20} />

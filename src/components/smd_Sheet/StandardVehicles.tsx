@@ -68,7 +68,7 @@ const initialStandardVehiclesState: StandardVehicleData = {
   imgMounter: "",
   imgPrinter: "",
   imgPrinterClean: "",
-  imgXray: "",
+  imgXray: [],
 };
 
 const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
@@ -97,20 +97,23 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
     // Xử lý upload hình ảnh preview modal
     const [imagePreview, setImagePreview] = useState<{
     isOpen: boolean;
-    imageUrl: string;
+    imageUrl: string | string[];
     title: string;
+    initialIndex?: number;
   }>({
     isOpen: false,
     imageUrl: "",
-    title: ""
+    title: "",
+    initialIndex: 0
   });
 
     // Hàm mở preview
-  const openImagePreview = (imageUrl: string, title: string) => {
+  const openImagePreview = (imageUrl: string | string[], title: string, initialIndex = 0) => {
     setImagePreview({
       isOpen: true,
       imageUrl,
-      title
+      title,
+      initialIndex
     });
   };
 
@@ -119,9 +122,11 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
     setImagePreview({
       isOpen: false,
       imageUrl: "",
-      title: ""
+      title: "",
+      initialIndex: 0
     });
   };
+
 
 
   // fetch data khi standardVehicle thay đổi
@@ -273,7 +278,10 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
         if (result?.imageUrl) {
           setForm(prev => ({
             ...prev,
-            imgXray: result.imageUrl
+            imgXray: [
+            ...(prev.imgXray || []), // Giữ lại ảnh cũ
+            result.imageUrl          // Thêm ảnh mới
+          ]
           }));
         }
         
@@ -629,16 +637,24 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 
             {/** row 27.0: hình ảnh image xray */}
             <tr>
-              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">Hình ảnh xray</th>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">
+                Hình ảnh xray
+              </th>
               <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">
-                <div className="flex items-center justify-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <ImageViewIcon 
-                      imageUrl={form.imgXray} 
-                      title="Hình ảnh xray"
-                      onView={openImagePreview}
-                    />
-                  </div>
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  {/* Map qua array */}
+                  {form.imgXray && form.imgXray.length > 0 ? (
+                    form.imgXray.map((imageUrl, index) => (
+                      <ImageViewIcon 
+                        key={index}
+                        imageUrl={imageUrl} 
+                        title={`Hình ảnh xray ${index + 1}`}
+                        onView={openImagePreview}
+                      />
+                    ))
+                  ) : (
+                    <span className="text-gray-400 text-xs">Chưa có hình ảnh</span>
+                  )}
                 </div>
               </td>
             </tr>
@@ -1033,12 +1049,21 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
       {/** Hình ảnh Xray */}
       <div className="mb-3">
         <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh Xray</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
-          <ImageViewIcon 
-            imageUrl={form.imgXray} 
-            title="Hình ảnh Xray"
-            onView={openImagePreview}
-          />
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            {form.imgXray && form.imgXray.length > 0 ? (
+              form.imgXray.map((imageUrl, index) => (
+                <ImageViewIcon 
+                  key={index}
+                  imageUrl={imageUrl} 
+                  title={`Hình ảnh xray ${index + 1}`}
+                  onView={openImagePreview}
+                />
+              ))
+            ) : (
+              <span className="text-gray-400 text-xs">Chưa có hình ảnh</span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1353,7 +1378,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
                   <div className="flex items-center gap-3">
                     <img 
                       src={form.imgPrinter} 
-                      alt="sau printer Preview" 
+                      alt="Hình ảnh sau printer" 
                       className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
                       onClick={() => openImagePreview(form.imgPrinter!, "Hình ảnh sau printer")} 
                     />
@@ -1410,7 +1435,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
                   <div className="flex items-center gap-3">
                     <img 
                       src={form.imgPrinterClean} 
-                      alt="cleaning printer tự động Preview" 
+                      alt="Hình ảnh Cleaning Printer tự động" 
                       className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
                       onClick={() => openImagePreview(form.imgPrinterClean!, "Hình ảnh cleaning printer tự động")} 
                     />
@@ -1507,7 +1532,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
         <div className="flex items-center gap-3">
           <img 
             src={normalizeImageUrl(form.imgSPI)} 
-            alt="SPI Preview" 
+            alt="Hình ảnh SPI" 
             className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
             onClick={() => openImagePreview(normalizeImageUrl(form.imgSPI!), "Hình ảnh SPI")} 
           />
@@ -1616,7 +1641,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
                   <div className="flex items-center gap-3">
                     <img 
                       src={form.imgMounter} 
-                      alt="cleaning printer tự động Preview" 
+                      alt="Hình ảnh cleaning printer tự động" 
                       className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
                       onClick={() => openImagePreview(form.imgMounter!, "Hình ảnh cleaning printer tự động")} 
                     />
@@ -1712,62 +1737,104 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
     </label>
   </div>
               {/** Hình ảnh xray */}
-    <div className="min-w-0 mb-3 mt-2">
-           <label className="block text-xs font-medium mb-1">Hình ảnh Xray</label>
-                <div className="">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload('imgXray', e)}
-                    className="border border-gray-300 rounded px-3 py-2 w-full"
-                  />
-                </div>
-                      <div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={(e) => handleImageUpload('imgXray', e)}
-                        className="hidden"
-                        id="camera-capture-xray-image"
-                      />
-                      <label
-                      htmlFor="camera-capture-xray-image"
-                      className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
-                    >
-                      {/* Thêm display: inline-block hoặc inline-flex */}
-                        <div className="inline-flex items-center">
-                          <FaCamera size={15} />
-                        </div>
-                        <div className="inline-flex items-center mx-2">
-                          Chụp ảnh Xray
-                        </div>
-                    </label>
-                    </div>
-                
-                {/* Preview Section */}
-                {form.imgXray && (
-                <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
-                  <div className="flex items-center gap-3">
-                    <img 
-                      src={form.imgXray} 
-                      alt="xray Preview" 
-                      className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-                      onClick={() => openImagePreview(form.imgXray!, "Hình ảnh xray")} 
-                    />
-                    <button
-                      type="button"
-                      onClick={() => openImagePreview(form.imgXray!, "Hình ảnh xray")}
-                      className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
-                    >
-                      <IoEyeSharp size={20} />
-                      <span className="text-sm font-medium">Xem ảnh</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+  <div className="min-w-0 mb-3 mt-2">
+  <label className="block text-xs font-medium mb-1">Hình ảnh Xray</label>
+  
+  {/* Upload Input */}
+  <div className="">
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(e) => handleImageUpload('imgXray', e)}
+      className="border border-gray-300 rounded px-3 py-2 w-full"
+    />
+  </div>
+  
+  {/* Camera Capture */}
+  <div>
+    <input
+      type="file"
+      accept="image/*"
+      capture="environment"
+      onChange={(e) => handleImageUpload('imgXray', e)}
+      className="hidden"
+      id="camera-capture-xray-image"
+    />
+    <label
+      htmlFor="camera-capture-xray-image"
+      className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
+    >
+      <div className="inline-flex items-center">
+        <FaCamera size={15} />
       </div>
+      <div className="inline-flex items-center mx-2">
+        Chụp ảnh Xray
+      </div>
+    </label>
+  </div>
+  
+  {/* Preview Gallery - Hiển thị tất cả ảnh */}
+  {form.imgXray && form.imgXray.length > 0 && (
+    <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+      <p className="text-xs text-gray-600 mb-2">
+        Đã có {form.imgXray.length} ảnh:
+      </p>
+      
+      {/* Grid layout cho nhiều ảnh */}
+      <div className="grid grid-cols-2 gap-3">
+        {form.imgXray.map((imageUrl, index) => (
+          <div key={index} className="relative">
+            <img 
+              src={imageUrl} 
+              alt={`Hình ảnh xray ${index + 1}`} 
+              className="w-full h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
+              onClick={() => openImagePreview(imageUrl, `Hình ảnh xray ${index + 1}`)} 
+            />
+            
+            {/* Nút xóa từng ảnh */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Xóa ảnh khỏi array
+                setForm(prev => ({
+                  ...prev,
+                  imgXray: prev.imgXray?.filter((_, i) => i !== index) || []
+                }));
+                showNotification('success', 'Đã xóa', `Đã xóa ảnh xray ${index + 1}`);
+              }}
+              className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            {/* Label số thứ tự */}
+            <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded">
+              #{index + 1}
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Nút xem tất cả */}
+      <button
+        type="button"
+        onClick={() => {
+          if (form.imgXray && form.imgXray.length > 0) {
+            // Truyền toàn bộ array vào
+            openImagePreview(form.imgXray, 'Hình ảnh xray', 0);
+          }
+        }}
+        className="mt-3 w-full text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+      >
+        <IoEyeSharp size={20} />
+        <span className="text-sm font-medium">Xem tất cả {form.imgXray.length} ảnh</span>
+      </button>
+    </div>
+  )}
+</div>
   {/** maoi program */}
   <div className="min-w-0 mb-3">
     <label className="text-xs block mb-1">Chương trình mAoi</label>
@@ -1851,7 +1918,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
         <div className="flex items-center gap-3">
           <img 
             src={normalizeImageUrl(form.imgAOI)} 
-            alt="AOI Preview" 
+            alt="Hình ảnh AOI" 
             className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
             onClick={() => openImagePreview(normalizeImageUrl(form.imgAOI!), "Hình ảnh AOI")} 
           />
@@ -1994,7 +2061,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
                   <div className="flex items-center gap-3">
                     <img 
                       src={form.imgIssue} 
-                      alt="vấn đề phát sinh Preview" 
+                      alt="Hình ảnh vấn đề phát sinh" 
                       className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
                       onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh vấn đề phát sinh")} 
                     />
@@ -2019,6 +2086,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
     isOpen={imagePreview.isOpen}
     imageUrl={imagePreview.imageUrl}
     title={imagePreview.title}
+    initialIndex={imagePreview.initialIndex}
     onClose={closeImagePreview}
   />
     </div>

@@ -295,7 +295,7 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
                   <div className="flex items-center justify-center gap-2">
                     <ImageViewIcon 
                       imageUrl={form.imgStandard} 
-                      title="Hình ảnh Standard Production"
+                      title="Hình ảnh Tiêu Chuẩn Sản Xuất"
                       onView={openImagePreview}
                     />
                   </div>
@@ -399,7 +399,7 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
           <ImageViewIcon 
             imageUrl={form.imgStandard} 
-            title="Hình ảnh Standard Production"
+            title="Hình ảnh Tiêu Chuẩn Sản Xuất"
             onView={openImagePreview}
           />
         </div>
@@ -419,7 +419,7 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
         <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
           <ImageViewIcon 
             imageUrl={form.imgIssue} 
-            title="Hình ảnh StandardProduction: Vấn đề phát sinh"
+            title="Hình ảnh Vấn đề phát sinh"
             onView={openImagePreview}
           />
         </div>
@@ -531,7 +531,7 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
       </div>
     </div>
 
-    <label className="block text-sm font-medium mb-1">Hình ảnh Standard Production</label>
+    <label className="block text-sm font-medium mb-1">Hình ảnh Tiêu Chuẩn Sản Xuất</label>
       <div className="">
         <input
           type="file"
@@ -572,13 +572,13 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
         <div className="flex items-center gap-3">
           <img 
             src={form.imgStandard} 
-            alt="Standard Production Preview" 
+            alt="Hình ảnh Tiêu Chuẩn Sản Xuất" 
             className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-            onClick={() => openImagePreview(form.imgStandard!, "Hình ảnh Standard Production")} 
+            onClick={() => openImagePreview(form.imgStandard!, "Hình ảnh Tiêu Chuẩn Sản Xuất")} 
           />
           <button
             type="button"
-            onClick={() => openImagePreview(form.imgStandard!, "Hình ảnh Standard Production")}
+            onClick={() => openImagePreview(form.imgStandard!, "Hình ảnh Tiêu Chuẩn Sản Xuất")}
             className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
           >
             <IoEyeSharp size={20} />
@@ -639,13 +639,13 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
         <div className="flex items-center gap-3">
           <img 
             src={form.imgIssue} 
-            alt="Standard Production Preview" 
+            alt="Hình ảnh Vấn đề phát sinh" 
             className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-            onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Standard Production: Vấn đề phát sinh")} 
+            onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Vấn đề phát sinh")} 
           />
           <button
             type="button"
-            onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Standard Production: Vấn đề phát sinh")}
+            onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Vấn đề phát sinh")}
             className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
           >
             <IoEyeSharp size={20} />

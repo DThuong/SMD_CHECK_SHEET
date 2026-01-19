@@ -361,10 +361,10 @@ const SmdSheetDetail = () => {
       </div>
 
       {/* Buttons */}
-      <div className="w-full sticky bottom-0 bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-4 flex items-center justify-center gap-3 shadow-lg mt-4 z-10">
+      <div className="w-full sticky bottom-0 bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-4 flex flex-col md:flex-row lg:flex-row items-stretch gap-3 shadow-lg mt-4 z-10">
         <button
           onClick={handleGoBack}
-          className="px-4 lg:py-3 md:py-3 py-3 bg-gray-600 text-white rounded-lg! font-semibold hover:bg-gray-700 transition-colors"
+          className="w-full px-4 py-3 bg-gray-600 text-white font-semibold hover:bg-gray-700 transition-colors"
         >
           Quay lại
         </button>
@@ -372,14 +372,14 @@ const SmdSheetDetail = () => {
         {canEdit && (
           <button
             onClick={handleOpenConfirmModal}
-            className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-md"
+            className="w-full px-4 py-3 bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors shadow-md"
           >
             Ký xác nhận
           </button>
         )}
         
         {!canEdit && (
-          <div className="flex-1 px-4 py-3 bg-gray-300 text-gray-600 font-semibold text-center cursor-not-allowed">
+          <div className="w-full px-4 py-3 bg-gray-300 text-gray-600 font-semibold text-center cursor-not-allowed">
             🔒 Không thể chỉnh sửa
           </div>
         )}

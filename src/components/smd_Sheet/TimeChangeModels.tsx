@@ -457,13 +457,13 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
               <div className="flex items-center gap-3">
                 <img 
                   src={form.imgIssue} 
-                  alt="Standard Production Preview" 
+                  alt="Hình ảnh vấn đề phát sinh" 
                   className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-                  onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh TimeChangeModel: vấn đề phát sinh")} 
+                  onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh vấn đề phát sinh")} 
                 />
                 <button
                   type="button"
-                  onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh TimeChangeModel: vấn đề phát sinh")}
+                  onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh vấn đề phát sinh")}
                   className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
                 >
                   <IoEyeSharp size={20} />

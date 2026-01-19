@@ -107,7 +107,7 @@ export interface StandardVehicleData {
   imgMounter?: string; // thêm
   imgPrinter?: string; // thêm
   imgPrinterClean?: string; // thêm
-  imgXray?: string; // thêm
+  imgXray?: string[]; // thêm
 }
 
 // PQCCheck
@@ -1026,7 +1026,15 @@ const subTableSlice = createSlice({
           state.loading = false;
           // Cập nhật URL hình ảnh nếu backend trả về
           if (state.standardVehicle && action.payload?.imageUrl) {
-            state.standardVehicle.imgXray = action.payload.imageUrl;
+            // Nếu imgXray chưa tồn tại hoặc không phải array, khởi tạo mảng mới
+            if (!Array.isArray(state.standardVehicle.imgXray)) {
+              state.standardVehicle.imgXray = [];
+            }
+            
+            // Thêm URL mới vào array (không trùng lặp)
+            if (!state.standardVehicle.imgXray.includes(action.payload.imageUrl)) {
+              state.standardVehicle.imgXray.push(action.payload.imageUrl);
+            }
           }
         })
         .addCase(uploadXRayImage.rejected, (state, action) => {

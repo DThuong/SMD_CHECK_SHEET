@@ -43,32 +43,34 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
 
       const isUploadingRef = useRef(false);
 
-       // xử lý upload hình ảnh + preview modal
       const [imagePreview, setImagePreview] = useState<{
         isOpen: boolean;
-        imageUrl: string;
+        imageUrl: string | string[]; // ← Hỗ trợ cả string và array
         title: string;
+        initialIndex?: number; // ← Thêm initialIndex
       }>({
         isOpen: false,
         imageUrl: "",
-        title: ""
+        title: "",
+        initialIndex: 0
       });
 
-      // hàm mở preview
-      const openImagePreview = (imageUrl: string, title: string) => {
+      // Hàm mở preview cũng cần cập nhật
+      const openImagePreview = (imageUrl: string | string[], title: string, initialIndex = 0) => {
         setImagePreview({
           isOpen: true,
           imageUrl,
-          title
+          title,
+          initialIndex
         });
       };
 
-      // hàm đóng preview
       const closeImagePreview = () => {
         setImagePreview({
           isOpen: false,
           imageUrl: "",
-          title: ""
+          title: "",
+          initialIndex: 0
         });
       };
 
@@ -145,11 +147,12 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
         try {
           // Dispatch action để update
           await dispatch(updateTimeChangeModel({
-            id: smdSheetId,
+            id: timeChangeModelId,
             data: form
           })).unwrap();
           
           setOpen(false);
+          showNotification('success', 'Thành công', 'Cập nhật Time Change Model thành công');
         } catch (error) {
           console.error('Failed to update timeChangeModel:', error);
           showNotification('error', 'Lỗi lưu Time Change Model', 'Có lỗi xảy ra khi cập nhật timeChangeModel');
@@ -476,11 +479,12 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
   </div>
 </Modal>
 <ImagePreviewModal
-    isOpen={imagePreview.isOpen}
-    imageUrl={imagePreview.imageUrl}
-    title={imagePreview.title}
-    onClose={closeImagePreview}
-  />
+  isOpen={imagePreview.isOpen}
+  imageUrl={imagePreview.imageUrl}
+  title={imagePreview.title}
+  initialIndex={imagePreview.initialIndex} 
+  onClose={closeImagePreview}
+/>
     </div>
   );
 });

@@ -50,35 +50,35 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
   const {t} = useTranslation('checkModel');
   const {t: t2} = useTranslation('common');
 
-  // xử lý upload hình ảnh + preview modal
-  const [imagePreview, setImagePreview] = useState<{
-    isOpen: boolean;
-    imageUrl: string;
-    title: string;
-  }>({
+const [imagePreview, setImagePreview] = useState<{
+  isOpen: boolean;
+  imageUrl: string | string[]; 
+  title: string;
+  initialIndex?: number; 
+}>({
+  isOpen: false,
+  imageUrl: "",
+  title: "",
+  initialIndex: 0
+});
+
+const openImagePreview = (imageUrl: string | string[], title: string, initialIndex = 0) => {
+  setImagePreview({
+    isOpen: true,
+    imageUrl,
+    title,
+    initialIndex
+  });
+};
+
+const closeImagePreview = () => {
+  setImagePreview({
     isOpen: false,
     imageUrl: "",
-    title: ""
+    title: "",
+    initialIndex: 0
   });
-
-  // hàm mở preview
-  const openImagePreview = (imageUrl: string, title: string) => {
-    setImagePreview({
-      isOpen: true,
-      imageUrl,
-      title
-    });
-  };
-
-  // hàm đóng preview
-  const closeImagePreview = () => {
-    setImagePreview({
-      isOpen: false,
-      imageUrl: "",
-      title: ""
-    });
-  };
-
+};
     // xử lý upload hình ảnh với flag
     const handleImageUpload = async (field: 'imgIssue', event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
@@ -175,7 +175,7 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
         })).unwrap();
 
       if (currentSheet?.id) {
-        await dispatch(fetchCheckModel(currentSheet.id)).unwrap();
+        await dispatch(fetchCheckModel(checkModelId)).unwrap();
       }
 
       setOpen(false);
@@ -741,6 +741,7 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
         isOpen={imagePreview.isOpen}
         imageUrl={imagePreview.imageUrl}
         title={imagePreview.title}
+        initialIndex={imagePreview.initialIndex} // ← Thêm prop này
         onClose={closeImagePreview}
       />
     </div>

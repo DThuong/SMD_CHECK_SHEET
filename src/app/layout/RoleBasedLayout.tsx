@@ -177,7 +177,7 @@ const RoleBasedLayout = () => {
       </header>
 
       {/* Main container */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden z-50">
         {/* SIDEBAR - DESKTOP (Relative positioning) */}
         <aside className="hidden md:flex md:flex-col md:w-64 lg:w-96 bg-white shadow-lg">
           <nav className="flex-1 my-3 overflow-y-auto px-3 py-2">

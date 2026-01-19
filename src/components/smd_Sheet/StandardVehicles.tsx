@@ -127,8 +127,6 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
     });
   };
 
-
-
   // fetch data khi standardVehicle thay đổi
   useEffect(() => {
     if (standardVehicleId) {
@@ -317,7 +315,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
     try {
       // Dispatch action để update
       await dispatch(updateStandardVehicle({
-        id: smdSheetId,
+        id: standardVehicleId,
         data: form
       })).unwrap();
       

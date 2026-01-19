@@ -49,34 +49,37 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
       const {t} = useTranslation('pqcCheck');
       const {t: t2} = useTranslation('common');
 
-         // xử lý upload hình ảnh + preview modal
-  const [imagePreview, setImagePreview] = useState<{
-    isOpen: boolean;
-    imageUrl: string;
-    title: string;
-  }>({
-    isOpen: false,
-    imageUrl: "",
-    title: ""
-  });
-
-  // hàm mở preview
-  const openImagePreview = (imageUrl: string, title: string) => {
-    setImagePreview({
-      isOpen: true,
-      imageUrl,
-      title
-    });
-  };
-
-  // hàm đóng preview
-  const closeImagePreview = () => {
-    setImagePreview({
+      // xử lý upload hình ảnh + preview modal
+    const [imagePreview, setImagePreview] = useState<{
+      isOpen: boolean;
+      imageUrl: string | string[]; // ← Hỗ trợ cả string và array
+      title: string;
+      initialIndex?: number; // ← Thêm initialIndex
+    }>({
       isOpen: false,
       imageUrl: "",
-      title: ""
+      title: "",
+      initialIndex: 0
     });
-  };
+
+    // Hàm mở preview cũng cần cập nhật
+    const openImagePreview = (imageUrl: string | string[], title: string, initialIndex = 0) => {
+      setImagePreview({
+        isOpen: true,
+        imageUrl,
+        title,
+        initialIndex
+      });
+    };
+
+    const closeImagePreview = () => {
+      setImagePreview({
+        isOpen: false,
+        imageUrl: "",
+        title: "",
+        initialIndex: 0
+      });
+    };
 
 
   //  FIXED: Upload handler với flag protection
@@ -191,7 +194,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
     try {
       // Dispatch action để update
       await dispatch(updatePQCCheck({
-        id: smdSheetId,
+        id: pqcCheckId,
         data: form
       })).unwrap();
       
@@ -678,6 +681,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
         isOpen={imagePreview.isOpen}
         imageUrl={imagePreview.imageUrl}
         title={imagePreview.title}
+        initialIndex={imagePreview.initialIndex} // ← Thêm prop này
         onClose={closeImagePreview}
       />
     </div>

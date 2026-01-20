@@ -104,6 +104,7 @@ const ImagePreviewModal = ({
       className="fixed inset-0 z-9999 flex items-center justify-center bg-black/90"
       onClick={handleClose}
       style={{ isolation: 'isolate' }}
+      data-close-modal="true"
     >
       <div 
         className="relative w-[95vw] h-[95vh] flex items-center justify-center overflow-hidden z-9999!"

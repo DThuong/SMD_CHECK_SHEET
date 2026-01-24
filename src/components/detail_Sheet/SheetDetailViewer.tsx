@@ -661,7 +661,7 @@ const SheetDetailViewer = () => {
           ? 'bg-green-50 border-green-200' 
           : 'bg-blue-50 border-blue-200'
       }`}>
-        <p className="text-sm font-semibold mb-0 text-center">
+        <div className="text-sm font-semibold mb-0 text-center">
           {isEditable ? (
             <div className="flex items-center justify-center">
               <span className="flex items-center gap-2 text-green-800">
@@ -683,7 +683,7 @@ const SheetDetailViewer = () => {
                 : ''}
             </div>
           )}
-        </p>
+        </div>
       </div>
       </div>
 

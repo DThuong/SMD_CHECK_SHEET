@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { 
-  getAllNotes, 
+  getNotesBySheet, 
   createNote, 
   updateNote, 
   deleteNote, 
@@ -45,7 +45,7 @@ const NoteModal = ({ sheetId, isOpen, onClose }: NoteModalProps) => {
 
   useEffect(() => {
     if (isOpen) {
-      dispatch(getAllNotes());
+      dispatch(getNotesBySheet(sheetId));
       
       // Set activeTab theo role của user
       if (user?.role && ['ENG', 'Supervisior', 'Manager'].includes(user.role)) {
@@ -69,7 +69,7 @@ const NoteModal = ({ sheetId, isOpen, onClose }: NoteModalProps) => {
       const notificationSheetId = notification.changeModel?.id || notification.changeModelId;
 
       if (notificationSheetId === sheetIdRef.current && isOpenRef.current) {
-        dispatch(getAllNotes());
+        dispatch(getNotesBySheet(sheetIdRef.current));
       }
     } catch (error) {
       console.error('❌ [NoteModal] Error parsing notification:', error);
@@ -135,7 +135,7 @@ const NoteModal = ({ sheetId, isOpen, onClose }: NoteModalProps) => {
       setEditingNoteId(null);
       
       // Reload notes for current sheet only
-      dispatch(getAllNotes());
+      dispatch(getNotesBySheet(sheetId));
     } catch (error: any) {
       console.error('❌ [NoteModal] Submit error:', error);
       const errorMessage = error?.message || error || 'Không thể lưu ghi chú';

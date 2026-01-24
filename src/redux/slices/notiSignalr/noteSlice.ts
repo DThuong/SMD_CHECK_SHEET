@@ -2,7 +2,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import smdApi from '../../services/smdApi';
 
-// ✅ Interface phải match với API response
+// Interface phải match với API response
 export interface Note {
   id: number;
   accountId: number;
@@ -82,10 +82,10 @@ export const getAllNotes = createAsyncThunk('note/getAllNotes', async (_, { reje
 // Get notes by sheetId
 export const getNotesBySheet = createAsyncThunk(
   'note/getNotesBySheet',
-  async (id: number, { rejectWithValue }) => {
+  async (sheetId: number, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await smdApi.get(`/Note/${id}`, {
+      const response = await smdApi.get(`/Note/changemodelid/${sheetId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const mapNote = response.data.map((note: any) => mapNoteData(note));

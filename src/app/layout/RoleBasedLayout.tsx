@@ -8,6 +8,7 @@ import logo from "../../assets/image/brand_image_3.webp";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { logoutUser } from "../../redux/slices/authSlice";
 import { useTranslation } from "react-i18next";
+import NotificationBell from "../../components/general/NotificationBell";
 
 const RoleBasedLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -138,6 +139,8 @@ const RoleBasedLayout = () => {
           <div className={`relative ml-auto ${
             sidebarOpen ? "hidden md:block" : "block"
           }`}>
+            <div className="flex lg:flex-row">
+              <NotificationBell />
             <button
               className="flex items-center justify-center px-3 py-2 rounded hover:bg-gray-100"
               onClick={() => {
@@ -145,11 +148,13 @@ const RoleBasedLayout = () => {
                 setSidebarOpen(false);
               }}
             >
+              
               <HiUser className="w-5 h-5 text-gray-700 mx-1" />
               <span className="hidden sm:inline text-gray-700 ml-2 truncate max-w-[150px]">
                 {t('hello')}, {user?.username}
               </span>
             </button>
+            </div>
 
             {/* USER MENU DROPDOWN - DESKTOP */}
             {userMenuOpen && (
@@ -177,7 +182,7 @@ const RoleBasedLayout = () => {
       </header>
 
       {/* Main container */}
-      <div className="flex flex-1 overflow-hidden z-50">
+      <div className="flex flex-1 overflow-hidden">
         {/* SIDEBAR - DESKTOP (Relative positioning) */}
         <aside className="hidden md:flex md:flex-col md:w-64 lg:w-96 bg-white shadow-lg">
           <nav className="flex-1 my-3 overflow-y-auto px-3 py-2">

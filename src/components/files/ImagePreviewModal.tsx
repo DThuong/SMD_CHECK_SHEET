@@ -135,13 +135,13 @@ const ImagePreviewModal = ({
           <>
             <button
               onClick={(e) => { e.stopPropagation(); handlePrevious(); }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-white bg-black/50 rounded-full p-3 hover:bg-opacity-70"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white bg-black/50 rounded-full p-3 hover:bg-opacity-70 z-9999!"
             >
               <IoChevronBack size={32} />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); handleNext(); }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-white bg-black/50 rounded-full p-3 hover:bg-opacity-70"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white bg-black/50 rounded-full p-3 hover:bg-opacity-70 z-9999!"
             >
               <IoChevronForward size={32} />
             </button>
@@ -160,7 +160,7 @@ const ImagePreviewModal = ({
 
         {/* Thumbnails */}
         {totalImages > 1 && (
-          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex gap-2 bg-black/50 rounded-lg p-2 max-w-[90vw] overflow-x-auto">
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex gap-2 bg-black/50 rounded-lg p-2 max-w-[90vw] overflow-x-auto z-9999!">
             {images.map((img, index) => (
               <button
                 key={index}

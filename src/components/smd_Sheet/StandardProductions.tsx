@@ -1,16 +1,17 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import ViewDetailButton from "../general/ViewDetailButton";
 import { useEffect, useRef, useState, memo } from "react";
 import Modal from "../general/Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { fetchStandardProduction, updateStandardProduction, uploadStandardProductionFile, uploadStandardProductionIssueImage } from "../../redux/slices/subTableSlice";
+import { fetchStandardProduction, updateStandardProduction, uploadStandardProductionImage, uploadStandardProductionIssueImage } from "../../redux/slices/subTableSlice";
 import type { StandardProductionData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import ImageViewIcon from "../files/ImageViewIcon";
-import { IoEyeSharp } from "react-icons/io5";
-import { FaCamera } from "react-icons/fa6";
+
 import ImagePreviewModal from "../files/ImagePreviewModal";
 import { useTranslation } from "react-i18next";
+import MultiImageUpload from "../files/MultiImageUpload";
 
 
 const initialStandardProductState: StandardProductionData = {
@@ -22,9 +23,9 @@ const initialStandardProductState: StandardProductionData = {
     mlS3Closed: "",
     useOnly: "",
     labelProgram: "",
-    imgStandard: "",
+    imgStandard: [],
     note: "",
-    imgIssue: "",
+    imgIssue: [],
 };
 
 // Standard Production Section
@@ -33,9 +34,7 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
   const dispatch = useAppDispatch();
     // khai báo loading để xử lý loading state trong modal
   const { completedTables } = useAppSelector(state => state.subTable);
-    // lấy checkModel data từ redux store
   const {standardProduction} = useAppSelector(state => state.subTable);
-    // lấy checkModel id từ currentSheet trong changeModel Slice
   const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
   const smdSheetId = currentSheet?.id;
   const standardProductionId = currentSheet?.standardProductionId || standardProduction?.id;
@@ -54,9 +53,9 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
 
 const [imagePreview, setImagePreview] = useState<{
   isOpen: boolean;
-  imageUrl: string | string[]; // ← Hỗ trợ cả string và array
+  imageUrl: string | string[]; 
   title: string;
-  initialIndex?: number; // ← Thêm initialIndex
+  initialIndex?: number;
 }>({
   isOpen: false,
   imageUrl: "",
@@ -90,26 +89,27 @@ const closeImagePreview = () => {
       }
     }, [standardProductionId, dispatch]);
 
-    // THÊM: Sync form khi data từ Redux về (lần đầu load)
+    // Sync form khi data từ Redux về (lần đầu load)
     useEffect(() => {
       if (standardProduction && !hasUserEditedRef.current && !isUploadingRef.current) {
         setForm(standardProduction);
       }
-    }, [standardProduction]); // ← Listen standardProduction
+    }, [standardProduction]);
 
     // GIỮ NGUYÊN: Sync khi mở modal
     useEffect(() => {
       if (open && standardProduction && !hasUserEditedRef.current && !isUploadingRef.current) {
         setForm(standardProduction);
       }
-    }, [open]);
-
-    // Reset flags khi đóng modal
-    useEffect(() => {
       if (!open) {
         hasUserEditedRef.current = false;
         isUploadingRef.current = false;
       }
+    }, [open]);
+
+    // Reset flags khi đóng modal
+    useEffect(() => {
+      
     }, [open]);
     if (!standardProductionId) {
     return (
@@ -120,7 +120,7 @@ const closeImagePreview = () => {
   }
 
   // xử lý upload hình ảnh với flag
-  const handleImageUpload = async (field: 'imgStandard' | 'imgIssue', event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (field: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
   
@@ -132,42 +132,38 @@ const closeImagePreview = () => {
     try {
       // Set flag TRƯỚC KHI upload
       isUploadingRef.current = true;
-      
-      if (field === 'imgStandard') {
-        const result = await dispatch(uploadStandardProductionFile({ 
-          standardProductionId: Number(standardProductionId), 
-          file 
-        })).unwrap();
-      
-        // Chỉ cập nhật field imgStandard, KHÔNG trigger re-sync toàn bộ form
-        if (result?.imageUrl) {
-          setForm(prev => ({
-            ...prev,
-            imgStandard: result.imageUrl
-          }));
-        }
-        
-        showNotification('success', 'Thành công', 'Upload hình ảnh Standard Production thành công');
-      }
 
-      if (field === 'imgIssue') {
-        const result = await dispatch(uploadStandardProductionIssueImage({ 
-          StandardProductionId: Number(standardProductionId), 
-          file 
-        })).unwrap();
+      let result;
+      let successMessage = '';
       
-        // Chỉ cập nhật field imgStandard, KHÔNG trigger re-sync toàn bộ form
-        if (result?.imageUrl) {
-          setForm(prev => ({
-            ...prev,
-            imgIssue: result.imageUrl
-          }));
-        }
+      switch (field) {
+        case 'imgStandard':
+          result = await dispatch(uploadStandardProductionImage({ 
+                standardProductionId: Number(standardProductionId), 
+                file 
+              })).unwrap();
+              successMessage = 'Upload hình ảnh Tiêu Chuẩn Sản Xuất thành công';
+              break;
+            
+        case 'imgIssue':
+          result = await dispatch(uploadStandardProductionIssueImage({ 
+            StandardProductionId: Number(standardProductionId), 
+            file 
+          })).unwrap();
+          successMessage = 'Upload hình ảnh vấn đề phát sinh thành công';
+          break;
+          }
+      
+          // Thêm ảnh mới vào array
+          if (result?.imageUrl) {
+              const fetchData = await dispatch(fetchStandardProduction(standardProductionId)).unwrap();
+              setForm(fetchData);
+          }
         
-        showNotification('success', 'Thành công', 'Upload hình ảnh Standard Production: Vấn đề phát sinh thành công');
+        showNotification('success', 'Thành công', successMessage);
       }
   
-    } catch (error) {
+    catch (error) {
       console.error('Failed to upload image:', error);
       showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
     } finally {
@@ -175,6 +171,15 @@ const closeImagePreview = () => {
       isUploadingRef.current = false;
     }
   };
+
+    const handleRemoveImage = (field: 'imgStandard' | 'imgIssue', index: number) => {
+      hasUserEditedRef.current = true; // Đánh dấu user đã edit
+      setForm(prev => ({
+        ...prev,
+        [field]: (prev[field] as string[])?.filter((_, i) => i !== index) || []
+      }));
+      showNotification('success', 'Đã xóa', `Đã xóa ảnh ${field === 'imgStandard' ? 'Tiêu Chuẩn Sản Xuất' : 'vấn đề phát sinh'}`);
+    };
   
 
   // Wrapper cho set() để đánh dấu user đã edit
@@ -202,9 +207,7 @@ const closeImagePreview = () => {
       })).unwrap();
       
       //Fetch lại data SAU KHI lưu thành công
-      if (standardProductionId) {
-        await dispatch(fetchStandardProduction(standardProductionId)).unwrap();
-      }
+      await dispatch(fetchStandardProduction(standardProductionId)).unwrap();
       
       // Reset flags
       hasUserEditedRef.current = false;
@@ -533,62 +536,15 @@ const closeImagePreview = () => {
       </div>
     </div>
 
-    <label className="block text-sm font-medium mb-1">Hình ảnh Tiêu Chuẩn Sản Xuất</label>
-      <div className="">
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleImageUpload('imgStandard', e)}
-          className="border border-gray-300 rounded px-3 py-2 w-full"
-        />
-      </div>
-
-      
-            <div>
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => handleImageUpload('imgStandard', e)}
-              className="hidden"
-              id="camera-capture-standard-production"
-            />
-            <label
-            htmlFor="camera-capture-standard-production"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
-          >
-            {/* Thêm display: inline-block hoặc inline-flex */}
-              <div className="inline-flex items-center">
-                <FaCamera size={15} />
-              </div>
-              <div className="inline-flex items-center mx-2">
-                Chụp ảnh Standard Production
-              </div>
-          </label>
-          </div>
-      
-      {/* Preview Section */}
-      {form.imgStandard && (
-      <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
-        <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
-        <div className="flex items-center gap-3">
-          <img 
-            src={form.imgStandard} 
-            alt="Hình ảnh Tiêu Chuẩn Sản Xuất" 
-            className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-            onClick={() => openImagePreview(form.imgStandard!, "Hình ảnh Tiêu Chuẩn Sản Xuất")} 
-          />
-          <button
-            type="button"
-            onClick={() => openImagePreview(form.imgStandard!, "Hình ảnh Tiêu Chuẩn Sản Xuất")}
-            className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
-          >
-            <IoEyeSharp size={20} />
-            <span className="text-sm font-medium">Xem ảnh</span>
-          </button>
-        </div>
-      </div>
-    )}
+    <MultiImageUpload
+      label="Hình ảnh Tiêu Chuẩn Sản Xuất"
+      images={form.imgStandard}
+      fieldName="imgStandard"
+      onUpload={handleImageUpload}
+      onRemove={(index) => handleRemoveImage('imgStandard', index)}
+      onViewAll={() => openImagePreview(form.imgStandard || [], 'Hình ảnh Tiêu Chuẩn Sản Xuất', 0)}
+      onViewSingle={(url, title) => openImagePreview(url, title)}
+    />
 
     <label className="text-xs">
       Ghi chú vấn đề phát sinh
@@ -600,62 +556,15 @@ const closeImagePreview = () => {
       />
     </label>
 
-      <label className="block text-sm font-medium mb-1">Hình ảnh Vấn đề phát sinh</label>
-      <div className="">
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleImageUpload('imgIssue', e)}
-          className="border border-gray-300 rounded px-3 py-2 w-full"
-        />
-      </div>
-
-      
-            <div>
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => handleImageUpload('imgIssue', e)}
-              className="hidden"
-              id="camera-capture-issue-standard"
-            />
-            <label
-            htmlFor="camera-capture-issue-standard"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
-          >
-            {/* Thêm display: inline-block hoặc inline-flex */}
-              <div className="inline-flex items-center">
-                <FaCamera size={15} />
-              </div>
-              <div className="inline-flex items-center mx-2">
-                Chụp ảnh vấn đề phát sinh
-              </div>
-          </label>
-          </div>
-      
-      {/* Preview Section */}
-      {form.imgIssue && (
-      <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
-        <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
-        <div className="flex items-center gap-3">
-          <img 
-            src={form.imgIssue} 
-            alt="Hình ảnh Vấn đề phát sinh" 
-            className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-            onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Vấn đề phát sinh")} 
-          />
-          <button
-            type="button"
-            onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Vấn đề phát sinh")}
-            className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
-          >
-            <IoEyeSharp size={20} />
-            <span className="text-sm font-medium">Xem ảnh</span>
-          </button>
-        </div>
-      </div>
-    )}
+     <MultiImageUpload
+      label="Hình ảnh Vấn đề phát sinh"
+      images={form.imgIssue}
+      fieldName="imgIssue"
+      onUpload={handleImageUpload}
+      onRemove={(index) => handleRemoveImage('imgIssue', index)}
+      onViewAll={() => openImagePreview(form.imgIssue || [], 'Hình ảnh Vấn đề phát sinh', 0)}
+      onViewSingle={(url, title) => openImagePreview(url, title)}
+    />
 
   </div>
 </Modal>

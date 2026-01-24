@@ -1,35 +1,53 @@
-import { IoEyeSharp } from "react-icons/io5";
-import { FaEyeSlash } from "react-icons/fa";
-import { normalizeImageUrl } from "../../utils/imageUrl";
+import React from 'react';
+import { IoEyeSharp } from 'react-icons/io5';
 
-// Component để hiển thị icon xem hình
+interface ImageViewIconProps {
+  imageUrl: string | string[] | undefined;
+  title: string;
+  onView: (imageUrl: string | string[], title: string, initialIndex?: number) => void;
+  showCount?: boolean; // Option để hiển thị số lượng ảnh
+}
 
-const ImageViewIcon = ({ 
+const ImageViewIcon: React.FC<ImageViewIconProps> = ({ 
   imageUrl, 
   title, 
   onView,
-}: { 
-  imageUrl: string | undefined; 
-  title: string; 
-  onView: (url: string, title: string) => void;
+  showCount = true 
 }) => {
-  if (!imageUrl) {
-    return <FaEyeSlash className="text-gray-400" size={20} title="Chưa có hình ảnh" />;
+  // Xử lý trường hợp không có ảnh
+  if (!imageUrl || (Array.isArray(imageUrl) && imageUrl.length === 0)) {
+    return (
+      <span className="text-gray-400 text-xs">Chưa có hình ảnh</span>
+    );
   }
-  const finalUrl = normalizeImageUrl(imageUrl);
 
+  // Xử lý array
+  if (Array.isArray(imageUrl)) {
+    const imageCount = imageUrl.length;
+    
+    return (
+      <button
+        type="button"
+        onClick={() => onView(imageUrl, title, 0)}
+        className="flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-lg transition-colors"
+      >
+        <IoEyeSharp size={20} className="text-blue-600" />
+        <span className="text-sm font-medium text-blue-700">
+          {showCount ? `Xem ${imageCount} ảnh` : 'Xem ảnh'}
+        </span>
+      </button>
+    );
+  }
+
+  // Xử lý single image (string)
   return (
     <button
       type="button"
-      onClick={(e) => {
-        e.stopPropagation();
-        onView(finalUrl, title);
-      }}
-      className="text-blue-600 hover:text-blue-800 transition-colors"
-      data-view-image="true"
-      title="Xem hình ảnh"
+      onClick={() => onView(imageUrl, title)}
+      className="flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-lg transition-colors"
     >
-      <IoEyeSharp size={20} />
+      <IoEyeSharp size={20} className="text-blue-600" />
+      <span className="text-sm font-medium text-blue-700">Xem ảnh</span>
     </button>
   );
 };

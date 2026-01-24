@@ -7,6 +7,7 @@ import { fetchUsers } from '../../redux/slices/authSlice';
 import { fetchChangeModel } from '../../redux/slices/changeModelSlice';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { clearFilterState } from '../../utils/navigationState';
 
 const Dashboard = () => {
   const dispatch = useAppDispatch();
@@ -454,6 +455,7 @@ const Dashboard = () => {
     // Handler khi click vào card
     const handleCardClick = (status: string) => {
       const roleLower = user?.role?.toLowerCase();
+      clearFilterState();
       // Navigate với query parameter
       navigate(`/${roleLower}/smd-sheet-logs?status=${status}`);
     };

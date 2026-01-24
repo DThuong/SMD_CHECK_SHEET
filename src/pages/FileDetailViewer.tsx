@@ -10,6 +10,7 @@ import LoadingSpinner from '../components/general/LoadingSpinner';
 import { getSheetWithFullObject } from '../redux/slices/changeModelSlice';
 import { useTranslation } from 'react-i18next';
 import { getLcrFileData, getReflowFile, clearLcrFile, clearReflowFile } from '../redux/slices/FileSlice';
+import { getFilterState } from '../utils/navigationState';
 
 type FileType = 'lcr' | 'reflow';
 type LcrViewMode = 'expandable' | 'full';
@@ -24,6 +25,7 @@ const FileDetailViewer = () => {
   const from = (location.state as any)?.from;
   const returnPath = (location.state as any)?.returnPath;
   const originalReturnPath = (location.state as any)?.originalReturnPath;
+  const originalReturnSearch = (location.state as any)?.originalReturnSearch;
   const user = useAppSelector((state) => state.auth.user);
   
   const { currentSheet, loading: sheetLoading } = useAppSelector((state) => state.changeModel);
@@ -52,43 +54,37 @@ const FileDetailViewer = () => {
   }, [id, dispatch]);
   
   const handleChangeTab = (tab: FileType) => {
-    if (!id) return;
-    const newPath = location.pathname.replace(/(lcr|reflow)$/, tab);  
-    navigate(newPath, { 
-      replace: true,
-      state: { from, returnPath, originalReturnPath } // Giữ lại state khi đổi tab
-    });
-  };
+  if (!id) return;
+  const newPath = location.pathname.replace(/(lcr|reflow)$/, tab);  
+  navigate(newPath, { 
+    replace: true,
+    state: { 
+      from, 
+      returnPath, 
+      originalReturnPath,
+      originalReturnSearch,
+    }
+  });
+};
 
     const handleGoBack = () => {
-      // console.group('🔙 FileDetailViewer - handleGoBack');
-      // console.log('returnPath:', returnPath);
-      // console.log('originalReturnPath:', originalReturnPath);
-      // console.log('from:', from);
+      const savedState = getFilterState();
     if (returnPath) {
-    //   console.log('✅ Using returnPath:', returnPath);
-    // console.log('📦 Passing state:', {
-    //   from: 'logs',
-    //   returnPath: originalReturnPath
-    // });
-      // Priority 1: Navigate về SheetDetailViewer VÀ truyền lại originalReturnPath
-      navigate(returnPath, {
-        state: { 
-          from: 'logs',
-          returnPath: originalReturnPath // Truyền lại path của Logs
-        }
-      });
-    } else if (from === 'sheetDetail') {
-      // Priority 2: Build path từ role và id
+    navigate(returnPath, {
+      state: { 
+        from: 'fileDetail',
+        returnPath: originalReturnPath,
+        returnSearch: originalReturnSearch,
+        savedFilter: savedState.filter,
+        savedPage: savedState.currentPage
+      }
+    });
+  } else if (from === 'sheetDetail') {
       const roleLower = user?.role?.toLowerCase();
-      navigate(`/${roleLower}/sheet-detail/${id}`);
       const targetPath = `/${roleLower}/sheet-detail/${id}`;
-    // console.log('✅ Using from === sheetDetail, navigating to:', targetPath);
-    navigate(targetPath);
+      navigate(targetPath);
     } else {
-      // Priority 3: Fallback về home
-       const fallbackPath = `/?tab=create&sheetId=${id}`;
-      // console.log('✅ Using fallback:', fallbackPath);
+      const fallbackPath = `/?tab=create&sheetId=${id}`;
       navigate(fallbackPath, { replace: true });
     }
   };

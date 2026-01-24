@@ -16,7 +16,7 @@ interface LCRFullTableProps {
 const LCRFullTable = ({ lcrData }: LCRFullTableProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterDecide, setFilterDecide] = useState<'ALL' | 'OK' | 'NG' | 'SKIP'>('ALL');
+  const [filterDecide, setFilterDecide] = useState<'ALL' | 'OK' | 'NG' | 'SKIP' | 'NOT_MEASURED'>('ALL');
   const itemsPerPage = 20;
 
   const { currentSheet } = useAppSelector((state) => state.changeModel);
@@ -29,10 +29,16 @@ const LCRFullTable = ({ lcrData }: LCRFullTableProps) => {
 
     filtered = filtered.filter(item => {
       const range = item.range?.trim() || '';
-      return range !== '' && range !== '0.0~0.0';
+      const lcrSkip = item.lcrSkip?.trim().toLowerCase() || '';
+      return range !== '' && range !== '0.0~0.0' && lcrSkip !== 'skip';
     });
 
-    if (filterDecide !== 'ALL') {
+    if (filterDecide === 'NOT_MEASURED') {
+      filtered = filtered.filter(item => {
+        const measure = item.measure?.trim() || '';
+        return measure === '';
+      });
+    } else if (filterDecide !== 'ALL') {
       filtered = filtered.filter(item => item.decide === filterDecide);
     }
 
@@ -59,13 +65,18 @@ const LCRFullTable = ({ lcrData }: LCRFullTableProps) => {
     const validData = useMemo(() => {
     return lcrData.data.filter(item => {
       const range = item.range?.trim() || '';
-      return range !== '' && range !== '0.0~0.0';
+      const lcrSkip = item.lcrSkip?.trim().toLowerCase() || '';
+      return range !== '' && range !== '0.0~0.0' && lcrSkip !== 'skip';
     });
   }, [lcrData.data]);
 
   const okCount = validData.filter(item => item.decide === 'OK').length;
   const ngCount = validData.filter(item => item.decide === 'NG').length;
   const skipCount = validData.filter(item => item.decide === 'SKIP').length;
+  const notMeasuredCount = validData.filter(item => {
+    const measure = item.measure?.trim() || '';
+    return measure === '';
+  }).length;
   const validCount = validData.length;
 
   // Download handler
@@ -138,6 +149,11 @@ const LCRFullTable = ({ lcrData }: LCRFullTableProps) => {
                 {validCount > 0 ? ((ngCount / validCount) * 100).toFixed(1) : '0.0'}%
               </p>
             </div>
+            {/** Chưa đo */}
+            <div className="px-4 py-2 bg-purple-100 rounded-lg">
+              <p className="text-xs text-gray-600">Not Measured</p>
+              <p className="text-lg font-bold text-purple-600">{notMeasuredCount}</p>
+          </div>
           </div>
         </div>
       </div>
@@ -159,7 +175,7 @@ const LCRFullTable = ({ lcrData }: LCRFullTableProps) => {
           </div>
 
           <div className="flex gap-2">
-            {(['ALL', 'OK', 'SKIP', 'NG'] as const).map((status) => (
+            {(['ALL', 'OK', 'SKIP', 'NG', 'NOT_MEASURED'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => {
@@ -172,11 +188,15 @@ const LCRFullTable = ({ lcrData }: LCRFullTableProps) => {
                       ? 'bg-green-600 text-white'
                       : status === 'NG'
                       ? 'bg-red-600 text-white'
+                      : status === 'SKIP'
+                      ? 'bg-orange-600 text-white'
+                      : status === 'NOT_MEASURED'
+                      ? 'bg-purple-600 text-white'
                       : 'bg-blue-600 text-white'
                     : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                {status}
+                {status === 'NOT_MEASURED' ? 'Not Measured' : status}
               </button>
             ))}
           </div>

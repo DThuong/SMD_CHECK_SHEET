@@ -4,8 +4,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logoutUser } from '../../redux/slices/authSlice';
 import { FaKey } from 'react-icons/fa6';
-// import { FaUser } from "react-icons/fa";
 import { TbLogout } from "react-icons/tb";
+import NotificationBell from './NotificationBell';
+import { signalRService } from '../../redux/services/signalrService';
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -13,6 +15,16 @@ const Header = () => {
   const { user, isAuthenticated, loading } = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+
+  // Initialize SignalR when user logs in
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      console.log('User authenticated, starting SignalR connection');
+      signalRService.start().catch(err => {
+        console.error('Failed to start SignalR:', err);
+      });
+    }
+  }, [isAuthenticated, user]);
 
   // Disable body scroll when menu open
   useEffect(() => {
@@ -26,44 +38,47 @@ const Header = () => {
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (!target.closest('.user-dropdown')) {
+      const dropdownContainer = document.querySelector('.user-dropdown');
+      
+      if (dropdownContainer && !dropdownContainer.contains(target)) {
         setIsDropdownOpen(false);
       }
     };
 
     if (isDropdownOpen) {
-      document.addEventListener('click', handleClickOutside);
+      setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+      }, 0);
     }
 
     return () => {
-      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isDropdownOpen]);
 
   const handleChangePassword = () => {
-  setIsDropdownOpen(false);
-  setIsMenuOpen(false);
-  // Navigate đến trang đổi mật khẩu
-  if (user?.role === 'PQC') {
-    navigate('/change-password');
-  } else {
-    const roleLower = user?.role?.toLowerCase();
-    navigate(`/${roleLower}/change-password`);
+    setIsDropdownOpen(false);
+    setIsMenuOpen(false);
+    if (user?.role === 'PQC') {
+      navigate('/change-password');
+    } else {
+      const roleLower = user?.role?.toLowerCase();
+      navigate(`/${roleLower}/change-password`);
+    }
   }
-}
 
   const handleLogout = async () => {
     try {
-      // Gọi API logout
       await dispatch(logoutUser()).unwrap();
       
-      // Đóng menu và navigate
+      // Stop SignalR connection
+      await signalRService.stop();
+      
       setIsMenuOpen(false);
       setIsDropdownOpen(false);
       navigate('/login');
     } catch (error) {
       console.error('Logout failed:', error);
-      // Vẫn navigate về login dù API failed
       setIsMenuOpen(false);
       setIsDropdownOpen(false);
       navigate('/login');
@@ -86,57 +101,70 @@ const Header = () => {
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-4">
             {user && isAuthenticated ? (
-              // Hiển thị khi đã login
-              <div className="flex items-center gap-1">
-                {/* Welcome message */}
-                <span className="text-gray-700 font-medium">
-                  Welcome, <span className="text-blue-600 font-semibold">{user.fullName}</span>
-                  
-                </span>
+              <>
+                {/* NOTIFICATION BELL */}
+                <NotificationBell />
+                
+                <div className="flex items-center gap-1">
+                  {/* Welcome message */}
+                  <span className="text-gray-700 font-medium">
+                    Welcome, <span className="text-blue-600 font-semibold">{user.fullName}</span>
+                  </span>
 
-                {/* User dropdown */}
-                <div className="relative user-dropdown">
-                  <button
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition"
-                  >
-                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                      {user?.username?.charAt(0).toUpperCase() }
-                    </div>
-                    <svg 
-                      className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
+                  {/* User dropdown */}
+                  <div className="relative user-dropdown">
+                    {isDropdownOpen && (
+                      <div 
+                        className="fixed inset-0 z-9998" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsDropdownOpen(false);
+                        }}
+                        style={{ background: 'transparent' }}
+                      />
+                    )}
+                    <button
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition relative z-9999"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-
-                  {/* Dropdown menu */}
-                  {isDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
-                      <button
-                        onClick={handleChangePassword}
-                        disabled={loading}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                        {user?.username?.charAt(0).toUpperCase() }
+                      </div>
+                      <svg 
+                        className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
                       >
-                        <FaKey />
-                        Đổi mật khẩu
-                      </button>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
 
-                      <button
-                        onClick={handleLogout}
-                        disabled={loading}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                      >
-                       <TbLogout />
-                        Logout
-                      </button>
-                    </div>
-                  )}
+                    {/* Dropdown menu */}
+                    {isDropdownOpen && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-9999">
+                        <button
+                          onClick={handleChangePassword}
+                          disabled={loading}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                        >
+                          <FaKey />
+                          Đổi mật khẩu
+                        </button>
+
+                        <button
+                          onClick={handleLogout}
+                          disabled={loading}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                         <TbLogout />
+                          Logout
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </>
             ) : (
               // Hiển thị khi chưa login
               <Link to="/login" className="text-gray-700! no-underline font-semibold hover:opacity-75 text-decoration-none">

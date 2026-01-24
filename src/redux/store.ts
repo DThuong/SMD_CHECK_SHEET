@@ -16,7 +16,9 @@ import authReducer from "./slices/authSlice";
 import subTableReducer from "./slices/subTableSlice";
 import changeModelReducer from "./slices/changeModelSlice";
 import FileSliceReducer from "./slices/FileSlice";
-import NotificationReducer from "./slices/notificationSlice";
+import NotificationReducer from "./slices/notificationSlice"; // thông báo của UI
+import noteReducer from "./slices/notiSignalr/noteSlice"; // của signalr
+import notificationSlice from "./slices/notiSignalr/notificationSlice"; // của signalr
 
 import smdApi from "./services/smdApi";
 import { setupApiInterceptor } from "./setupApiInterceptor";
@@ -35,7 +37,9 @@ const rootReducer = combineReducers({
   subTable: subTableReducer, 
   changeModel: changeModelReducer,
   fileSlice: FileSliceReducer,
-  notification: NotificationReducer
+  notification: NotificationReducer,
+  note: noteReducer,
+  notiSignalr: notificationSlice,
 });
 
 // Tạo store
@@ -52,7 +56,7 @@ export const store = configureStore({
 // Tạo persistor
 export const persistor = persistStore(store);
 
-// ✅ Setup 401 interceptor SAU KHI store đã tạo xong
+// Setup 401 interceptor SAU KHI store đã tạo xong
 setupApiInterceptor(smdApi, store);
 
 export type RootState = ReturnType<typeof store.getState>;

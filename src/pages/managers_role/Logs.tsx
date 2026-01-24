@@ -16,7 +16,7 @@ import { FaCalendarAlt, FaRegUserCircle } from "react-icons/fa";
 import { MdSignalWifiStatusbar2Bar } from "react-icons/md";
 import { useAppSelector, useAppDispatch } from '../../redux/hooks';
 import ReactPaginate from 'react-paginate';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useNotification } from '../../redux/hooks';
 import Notification from '../../components/general/Notification';
 import { MdFavoriteBorder } from "react-icons/md";
@@ -28,7 +28,8 @@ import {
   getFilterState, 
   saveSelectedSheetId, 
   getSelectedSheetId,  
-  clearSelectedSheetId  
+  clearSelectedSheetId,  
+  clearFilterState
 } from '../../utils/navigationState';
 
 // Redux actions
@@ -41,6 +42,7 @@ import {
 } from '../../redux/slices/changeModelSlice';
 import type { ChangeModelResponse } from '../../redux/slices/changeModelSlice';
 import { useTranslation } from 'react-i18next';
+import { getLcrFileData, clearLcrFile } from '../../redux/slices/FileSlice';
 
 // ==================== CONSTANTS ====================
 const ROLES = {
@@ -75,6 +77,7 @@ type SheetFilter = {
 const Logs = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAppSelector(state => state.auth);
   const { 
     filteredSheets, 
@@ -90,9 +93,10 @@ const Logs = () => {
   const resultsRef = useRef<HTMLDivElement>(null);
   const { notification, showNotification, hideNotification } = useNotification();
   const [searchParams] = useSearchParams();
-  const statusFromUrl = searchParams.get('status');
+  // const statusFromUrl = searchParams.get('status');
   const {t} = useTranslation('logs');
   const {t: t2} = useTranslation('sheetDetail');
+  const { lcrValidation } = useAppSelector(state => state.fileSlice);
 
   const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
   const [deletingSheetId, setDeletingSheetId] = useState<number | null>(null);
@@ -153,28 +157,43 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
   }
 };
 
-    // EFFECT 1: Load initial data hoặc restore saved state
-  useEffect(() => {
-  console.group(' Logs useEffect - Initial Load');
+  // EFFECT 1: Load initial data hoặc restore saved state
+useEffect(() => {
   const savedState = getFilterState();
   const savedSheetId = getSelectedSheetId();
-  
   
   // Restore highlight nếu có
   if (savedSheetId) {
     setSelectedSheetId(savedSheetId);
   }
   
-  if (statusFromUrl) {
-    // ✅ Priority 1: Load from URL params
-    const newFilter = { ...filter, status: statusFromUrl };
+  // Kiểm tra xem có status từ URL không
+  const statusFromUrl = searchParams.get('status');
+  
+  // CHECK navigation state
+  const navigationState = (location.state as any) || {};
+  const comingFromSheetDetail = navigationState?.from === 'sheetDetail';
+  
+  // Priority 1: URL params (từ Dashboard)
+  if (statusFromUrl && !comingFromSheetDetail) {
+    const newFilter = { 
+      ...filter, 
+      status: statusFromUrl,
+      workOrder: '',
+      fromDate: '',
+      toDate: '',
+      fcode: '',
+      id: 0
+    };
+    
     setFilter(newFilter);
+    setCurrentPage(0);
     
     setTimeout(() => {
       dispatch(getSheetByFilter({ status: statusFromUrl }))
         .unwrap()
         .then(() => {
-          saveFilterState(newFilter, 0); // ← SAVE NGAY SAU KHI LOAD THÀNH CÔNG
+          saveFilterState(newFilter, 0);
           
           if (savedSheetId) {
             setTimeout(() => {
@@ -190,13 +209,45 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
           showNotification('error', 'Lỗi', error.message || t('error.cannotLoadSheets'));
         });
     }, 100);
-  } else if (savedState.filter) {
-    // ✅ Priority 2: Restore from saved state
+    
+    return;
+  }
+  
+  // Priority 2: Back từ SheetDetail (QUAN TRỌNG)
+  if (comingFromSheetDetail && savedState.filter) {
+    console.log('🔄 Restoring from SheetDetail:', savedState);
+    
     setFilter(savedState.filter);
     setCurrentPage(savedState.currentPage);
     
     setTimeout(() => {
-      loadSheetsWithFilter(savedState.filter); 
+      loadSheetsWithFilter(savedState.filter);
+      
+      // Highlight và scroll đến sheet
+      if (savedSheetId) {
+        setTimeout(() => {
+          const row = document.getElementById(`sheet-row-${savedSheetId}`);
+          if (row) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 500);
+      }
+    }, 100);
+    
+    return;
+  }
+  
+  // Priority 3: Reload trang (F5)
+  const hasSavedState = savedState.filter && Object.keys(savedState.filter).length > 0;
+  
+  if (hasSavedState) {
+    console.log('🔄 Restoring from reload:', savedState);
+    
+    setFilter(savedState.filter);
+    setCurrentPage(savedState.currentPage);
+    
+    setTimeout(() => {
+      loadSheetsWithFilter(savedState.filter);
       
       if (savedSheetId) {
         setTimeout(() => {
@@ -207,18 +258,21 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
         }, 500);
       }
     }, 100);
-  } else {
-    // Priority 3: Load all sheets
-    loadSheets();
     
-    if (savedSheetId) {
-      setTimeout(() => {
-        const row = document.getElementById(`sheet-row-${savedSheetId}`);
-        if (row) {
-          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 500);
-    }
+    return;
+  }
+  
+  // Priority 4: Load all sheets (default)
+  console.log('📋 Loading all sheets (default)');
+  loadSheets();
+  
+  if (savedSheetId) {
+    setTimeout(() => {
+      const row = document.getElementById(`sheet-row-${savedSheetId}`);
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 500);
   }
 
   // Clear highlight sau 2 giây
@@ -230,15 +284,34 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
     return () => clearTimeout(timer);
   }
   
-  console.groupEnd();
-}, []); // CHỈ CHẠY 1 LẦN KHI MOUNT// CHỈ CHẠY 1 LẦN KHI MOUNT
+}, []);
+// clear state khi reload hoặc close tab
+useEffect(() => {
+  const handleBeforeUnload = () => {
+    clearFilterState();
+    clearSelectedSheetId();
+  };
+  window.addEventListener('beforeunload', handleBeforeUnload);
+  return () => {
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+  };
+}, []);
 
-  // EFFECT 2: Auto save filter state
-  useEffect(() => {
-    if (filteredSheets && filteredSheets.length > 0) {
-      saveFilterState(filter, currentPage);
+// Clear state khi unmount (chuyển tab khác)
+useEffect(() => {
+  return () => {
+    // Chỉ giữ lại nếu đang navigate đến SheetDetail hoặc Files
+    const keepStateRoutes = ['/sheet-detail', '/files'];
+    const shouldKeepState = keepStateRoutes.some(route => 
+      window.location.pathname.includes(route)
+    );
+    
+    if (!shouldKeepState) {
+      clearFilterState();
+      clearSelectedSheetId();
     }
-  }, [filter, currentPage, filteredSheets]);
+  };
+}, []);
 
   // ==================== LOAD SHEETS ====================
   const loadSheets = async () => {
@@ -300,24 +373,29 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
   // ==================== VIEW HANDLERS ====================
   // Cập nhật handleViewDetail để save navigation
   const handleViewDetail = async (sheet: ChangeModelResponse) => {
-    // Save current state
+    // Save current state TRƯỚC KHI navigate
     saveFilterState(filter, currentPage);
     saveSelectedSheetId(sheet.id);
+    
     setSelectedSheet(sheet);
     setShowDetail(true);
     
     try {
       await dispatch(getSheetStatusHistory(sheet.id)).unwrap();
+      if (sheet.excelFileUrl && sheet.excelFileUrl.trim() !== '') {
+        await dispatch(getLcrFileData(sheet.id)).unwrap();
+      }
     } catch (error) {
       console.error('❌ Lỗi khi tải history:', error);
     }
-  };
+};
 
   // Cập nhật handleCloseDetail
   const handleCloseDetail = () => {
     setShowDetail(false);
     setSelectedSheet(null);
     dispatch(clearStatusHistory());
+    dispatch(clearLcrFile());
   };
 
   // ==================== CONFIRMATION LOGIC ====================
@@ -378,6 +456,21 @@ const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
             `Vui lòng upload đầy đủ các file: lcr file, reflow file trước khi ký xác nhận.`
           );
           return; // ❌ DỪNG LẠI, KHÔNG CHO KÝ
+        }
+        // CHECK LCR FILE VALIDITY
+        if (!lcrValidation || !lcrValidation.isValid) {
+          let errorDetail = '';
+          
+          if (lcrValidation?.stats) {
+            errorDetail = `\n\nChi tiết: OK=${lcrValidation.stats.ok}, NG=${lcrValidation.stats.ng}, SKIP=${lcrValidation.stats.skip}`;
+          }
+          
+          showNotification(
+            'error',
+            'LCR File Không Hợp Lệ',
+            `${lcrValidation?.errorMessage || 'File LCR phải có 100% kết quả OK'}${errorDetail}\n\nVui lòng xem chi tiết và upload lại file.`
+          );
+          return;
         }
       }
 
@@ -752,7 +845,11 @@ const canUserSignSheet = (sheet: ChangeModelResponse): boolean => {
                 saveFilterState(filter, currentPage);
                 saveSelectedSheetId(selectedSheet.id); 
                 navigate(`/${roleLower}/sheet-detail/${selectedSheet.id}`, {
-                  state: { from: 'logs', returnPath: currentPath, returnSearch: currentSearch } // Truyền state để biết đường về
+                  state: { 
+                    from: 'logs', 
+                    returnPath: currentPath, 
+                    returnSearch: currentSearch,
+                  }
                 });
               }}
               className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
@@ -1056,9 +1153,15 @@ const canUserSignSheet = (sheet: ChangeModelResponse): boolean => {
                                   const currentPath = window.location.pathname;
                                   const currentSearch = window.location.search;
                                   const roleLower = user?.role?.toLowerCase();
+                                  // Save state TRƯỚC KHI navigate
+                                  saveFilterState(filter, currentPage);
                                   saveSelectedSheetId(sheet.id);
                                   navigate(`/${roleLower}/sheet-detail/${sheet.id}`, {
-                                    state: { from: 'logs', returnPath: currentPath, returnSearch: currentSearch },
+                                    state: { 
+                                      from: 'logs', 
+                                      returnPath: currentPath, 
+                                      returnSearch: currentSearch,
+                                    }
                                   });
                                 }}
                                 className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium whitespace-nowrap"

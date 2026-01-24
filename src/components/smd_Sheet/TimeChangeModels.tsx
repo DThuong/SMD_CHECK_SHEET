@@ -10,9 +10,8 @@ import Notification from "../general/Notification";
 import { formatDateTime } from "../../utils/formatTime";
 import { useTranslation } from "react-i18next";
 import ImageViewIcon from "../files/ImageViewIcon";
-import { FaCamera } from "react-icons/fa";
-import { IoEyeSharp } from "react-icons/io5";
 import ImagePreviewModal from "../files/ImagePreviewModal";
+import MultiImageUpload from "../files/MultiImageUpload";
 
 const initialTimeChangeState: TimeChangeModelData = {
     qc: "",
@@ -22,7 +21,7 @@ const initialTimeChangeState: TimeChangeModelData = {
     countTime: undefined,
     history: "",
     note: "",
-    imgIssue: "",
+    imgIssue: [],
 };
 
 const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
@@ -42,6 +41,7 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
       const {t: t2} = useTranslation('common');
 
       const isUploadingRef = useRef(false);
+      const hasUserEditedRef = useRef(false);
 
       const [imagePreview, setImagePreview] = useState<{
         isOpen: boolean;
@@ -74,8 +74,28 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
         });
       };
 
+      // fetch data khi timeChangeModel thay đổi
+      useEffect(() => {
+        if (timeChangeModelId) {
+          dispatch(fetchTimeChangeModel(timeChangeModelId));
+        }
+      }, [timeChangeModelId, dispatch]);
+      // sync form với redux store thay vì sử dụng context
+      useEffect(() => {
+        if (timeChangeModel && !hasUserEditedRef.current && !isUploadingRef.current) {
+          setForm(timeChangeModel);
+        }
+      }, [timeChangeModel]);
+
+      useEffect(() => {
+        if (!open) {
+          hasUserEditedRef.current = false;
+          isUploadingRef.current = false;
+        }
+      }, [open]);
+
         // xử lý upload hình ảnh với flag
-        const handleImageUpload = async (field: 'imgIssue', event: React.ChangeEvent<HTMLInputElement>) => {
+        const handleImageUpload = async (field: string, event: React.ChangeEvent<HTMLInputElement>) => {
           const file = event.target.files?.[0];
           if (!file) return;
         
@@ -94,15 +114,13 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
                 file 
               })).unwrap();
             
-              // Chỉ cập nhật field, KHÔNG trigger re-sync toàn bộ form
-              if (result?.imageUrl) {
-                setForm(prev => ({
-                  ...prev,
-                  imgIssue: result.imageUrl
-                }));
-              }
+              // Thêm ảnh mới vào array
+               if (result?.imageUrl) {
+                  const fetchData = await dispatch(fetchTimeChangeModel(timeChangeModelId)).unwrap();
+                  setForm(fetchData);
+                }
               
-              showNotification('success', 'Thành công', 'Upload hình ảnh time change model: Vấn đề phát sinh thành công');
+              showNotification('success', 'Thành công', 'Upload hình ảnh Vấn đề phát sinh thành công');
             }
         
           } catch (error) {
@@ -114,23 +132,18 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
           }
         };
         
-
+          const handleRemoveImage = (index: number) => {
+            setForm(prev => ({
+              ...prev,
+              imgIssue: prev.imgIssue?.filter((_, i) => i !== index) || []
+            }));
+            showNotification('success', 'Đã xóa', 'Đã xóa ảnh thành công');
+          };
   
-      // fetch data khi timeChangeModel thay đổi
-      useEffect(() => {
-        if (timeChangeModelId) {
-          dispatch(fetchTimeChangeModel(timeChangeModelId));
-        }
-      }, [timeChangeModelId, dispatch]);
-      // sync form với redux store thay vì sử dụng context
-      useEffect(() => {
-        if (timeChangeModel) {
-          setForm(timeChangeModel);
-        }
-      }, [timeChangeModel]);
-  
-      const set = <K extends keyof TimeChangeModelData>(k: K, v: TimeChangeModelData[K]) =>
+       const set = <K extends keyof TimeChangeModelData>(k: K, v: TimeChangeModelData[K]) => {
+        hasUserEditedRef.current = true;
         setForm((s) => ({ ...s, [k]: v }));
+      };
   
       const submit = async () => {
         // kiểm tra program Check id
@@ -419,62 +432,15 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
       </div>
 
       {/** Hình ảnh vấn đề phát sinh */}
-        <label className="block text-xs font-medium mb-1 mt-2">Hình ảnh vấn đề phát sinh</label>
-            <div className="">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageUpload('imgIssue', e)}
-                className="border border-gray-300 rounded px-3 py-2 w-full"
-              />
-            </div>
-      
-            
-                  <div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={(e) => handleImageUpload('imgIssue', e)}
-                    className="hidden"
-                    id="camera-capture-issue-timeChangeModel"
-                  />
-                  <label
-                  htmlFor="camera-capture-issue-timeChangeModel"
-                  className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
-                >
-                  {/* Thêm display: inline-block hoặc inline-flex */}
-                    <div className="inline-flex items-center">
-                      <FaCamera size={15} />
-                    </div>
-                    <div className="inline-flex items-center mx-2">
-                      Chụp ảnh vấn đề phát sinh
-                    </div>
-                </label>
-                </div>
-            
-            {/* Preview Section */}
-            {form.imgIssue && (
-            <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
-              <div className="flex items-center gap-3">
-                <img 
-                  src={form.imgIssue} 
-                  alt="Hình ảnh vấn đề phát sinh" 
-                  className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-                  onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh vấn đề phát sinh")} 
-                />
-                <button
-                  type="button"
-                  onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh vấn đề phát sinh")}
-                  className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
-                >
-                  <IoEyeSharp size={20} />
-                  <span className="text-sm font-medium">Xem ảnh</span>
-                </button>
-              </div>
-            </div>
-          )}
+      <MultiImageUpload
+        label="Hình ảnh Vấn đề phát sinh"
+        images={form.imgIssue}
+        fieldName="imgIssue"
+        onUpload={handleImageUpload}
+        onRemove={handleRemoveImage}
+        onViewAll={() => openImagePreview(form.imgIssue || [], 'Hình ảnh Vấn đề phát sinh', 0)}
+        onViewSingle={(url, title) => openImagePreview(url, title)}
+      />
     </div>
   </div>
 </Modal>

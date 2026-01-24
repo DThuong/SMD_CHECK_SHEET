@@ -7,8 +7,6 @@ import { useAppDispatch, useAppSelector  } from "../../redux/hooks";
 import { updateCheckModel } from "../../redux/slices/subTableSlice";
 import ImagePreviewModal from "../files/ImagePreviewModal";
 import ImageViewIcon from "../files/ImageViewIcon";
-import { FaCamera } from "react-icons/fa";
-import { IoEyeSharp } from "react-icons/io5";
 import type { CheckModelData } from "../../redux/slices/subTableSlice";
 import { uploadCheckModelIssueImage } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
@@ -16,6 +14,7 @@ import Notification from "../general/Notification";
 import { formatDateTime } from "../../utils/formatTime";
 import { useTranslation } from "react-i18next";
 import { fetchCheckModel } from "../../redux/slices/subTableSlice";
+import MultiImageUpload from "../files/MultiImageUpload";
 const initialFormState: CheckModelData = {
   lineChange: "",
   model: "",
@@ -31,7 +30,7 @@ const initialFormState: CheckModelData = {
   jig: undefined,
   codePCB: "",
   note: "",
-  imgIssue: "",
+  imgIssue: [],
 };
 
 
@@ -45,7 +44,7 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<CheckModelData>(initialFormState);
   const isUploadingRef = useRef(false);
-
+  const hasUserEditedRef = useRef(false);
   const isSaved = completedTables.includes('CheckModel');
   const {t} = useTranslation('checkModel');
   const {t: t2} = useTranslation('common');
@@ -80,7 +79,7 @@ const closeImagePreview = () => {
   });
 };
     // xử lý upload hình ảnh với flag
-    const handleImageUpload = async (field: 'imgIssue', event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (field: string, event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file) return;
     
@@ -99,15 +98,18 @@ const closeImagePreview = () => {
             file 
           })).unwrap();
         
-          // Chỉ cập nhật field imgStandard, KHÔNG trigger re-sync toàn bộ form
+          // Thêm ảnh mới vào array
           if (result?.imageUrl) {
             setForm(prev => ({
               ...prev,
-              imgIssue: result.imageUrl
+              imgIssue: [
+                ...(Array.isArray(prev.imgIssue) ? prev.imgIssue : []),
+                result.imageUrl
+              ]
             }));
           }
           
-          showNotification('success', 'Thành công', 'Upload hình ảnh Check Model Issue thành công');
+          showNotification('success', 'Thành công', 'Upload hình ảnh Vấn đề phát sinh thành công');
         }
     
       } catch (error) {
@@ -119,15 +121,24 @@ const closeImagePreview = () => {
       }
     };
 
+  const handleRemoveImage = (index: number) => {
+    setForm(prev => ({
+      ...prev,
+      imgIssue: prev.imgIssue?.filter((_, i) => i !== index) || []
+    }));
+    showNotification('success', 'Đã xóa', 'Đã xóa ảnh thành công');
+  };
 
   useEffect(() => {
-      if (checkModel) {
-        setForm(checkModel);
-      }
-    }, [checkModel]);
+  if (checkModel && !hasUserEditedRef.current && !isUploadingRef.current) {
+    setForm(checkModel);
+  }
+}, [checkModel]);
 
-  const set = <K extends keyof CheckModelData>(k: K, v: CheckModelData[K]) =>
-    setForm((s) => ({ ...s, [k]: v }));
+ const set = <K extends keyof CheckModelData>(k: K, v: CheckModelData[K]) => {
+  hasUserEditedRef.current = true;
+  setForm((s) => ({ ...s, [k]: v }));
+};
 
   // SUBMIT WITHOUT VALIDATION
   const submit = async () => {
@@ -166,8 +177,6 @@ const closeImagePreview = () => {
         imgIssue: form.imgIssue
       };
 
-
-
       // dispatch redux action
       await dispatch(updateCheckModel({
           id: checkModelId,
@@ -178,8 +187,10 @@ const closeImagePreview = () => {
         await dispatch(fetchCheckModel(checkModelId)).unwrap();
       }
 
+      hasUserEditedRef.current = false;
+      isUploadingRef.current = false;
+
       setOpen(false);
-      
     } catch (error: any) {
       console.error('❌ Lỗi:', error);
       showNotification('error', 'Lỗi', error || 'Không thể cập nhật');
@@ -679,61 +690,16 @@ const closeImagePreview = () => {
               }}
             />
           </label>
-            {/** imgIssue */}
-              <label className="block text-sm font-medium mb-1">Hình ảnh Vấn Đề Phát Sinh</label>
-                  <div className="">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleImageUpload('imgIssue', e)}
-                      className="border border-gray-300 rounded px-3 py-2 w-full"
-                    />
-                  </div>
-                        <div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          onChange={(e) => handleImageUpload('imgIssue', e)}
-                          className="hidden"
-                          id="camera-capture-checkmodel-issue-image"
-                        />
-                        <label
-                        htmlFor="camera-capture-checkmodel-issue-image"
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
-                      >
-                        {/* Thêm display: inline-block hoặc inline-flex */}
-                          <div className="inline-flex items-center">
-                            <FaCamera size={15} />
-                          </div>
-                          <div className="inline-flex items-center mx-2">
-                            Chụp ảnh Vấn đề phát sinh
-                          </div>
-                      </label>
-                      </div>
-                  
-                  {/* Preview Section */}
-                  {form.imgIssue && (
-                  <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
-                    <div className="flex items-center gap-3">
-                      <img 
-                        src={form.imgIssue} 
-                        alt="Hình ảnh Vấn Đề Phát Sinh" 
-                        className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-                        onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Vấn đề phát sinh")} 
-                      />
-                      <button
-                        type="button"
-                        onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Vấn đề phát sinh")}
-                        className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
-                      >
-                        <IoEyeSharp size={20} />
-                        <span className="text-sm font-medium">Xem ảnh</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
+          {/** imgIssue */}
+          <MultiImageUpload
+            label="Hình ảnh Vấn đề phát sinh"
+            images={form.imgIssue}
+            fieldName="imgIssue"
+            onUpload={handleImageUpload}
+            onRemove={handleRemoveImage}
+            onViewAll={() => openImagePreview(form.imgIssue || [], 'Hình ảnh Vấn đề phát sinh', 0)}
+            onViewSingle={(url, title) => openImagePreview(url, title)}
+          />
           </div>
         </div>
       </Modal>

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { validateLcrFile, type LcrValidationResult } from "../../utils/lcrValidation";
 import smdApi from "../services/smdApi";
 
 // Interface cho LCR data item
@@ -46,6 +47,7 @@ interface FileState {
   lcrFileUrl: string | null; 
   lcrFileBlob: string | null;
   lcrFileData: LcrFileData | null; // Thêm field mới để lưu JSON data    
+  lcrValidation: LcrValidationResult | null;
   reflowFileUrl: string | null;   
   reflowFileBlob: string | null;
   loading: boolean;
@@ -55,7 +57,8 @@ interface FileState {
 const initialState: FileState = {
   lcrFileUrl: null,
   lcrFileBlob: null,
-  lcrFileData: null, // ✅ Thêm field mới
+  lcrFileData: null, // Thêm field mới
+  lcrValidation: null,
   reflowFileUrl: null,
   reflowFileBlob: null,
   loading: false,
@@ -68,7 +71,6 @@ export const getLcrFileData = createAsyncThunk(
   async (id: number, { rejectWithValue }) => {
     try {
       const response = await smdApi.get<LcrFileData>(`/ChangeModel/file/${id}/ReadExcelFile`);
-      console.log('✅ LCR Data API response:', response.data);
       return response.data;
     } catch (error: any) {
       console.error('❌ Error fetching LCR data:', error);
@@ -166,7 +168,8 @@ const FileSlice = createSlice({
         URL.revokeObjectURL(state.lcrFileUrl);
       }
       state.lcrFileUrl = null;
-      state.lcrFileData = null; // Clear data luôn
+      state.lcrFileData = null;
+      state.lcrValidation = null; 
     },
     clearReflowFile: (state) => {
       if (state.reflowFileUrl) {
@@ -185,10 +188,12 @@ const FileSlice = createSlice({
       .addCase(getLcrFileData.fulfilled, (state, action) => {
         state.loading = false;
         state.lcrFileData = action.payload;
+        state.lcrValidation = validateLcrFile(action.payload);
       })
       .addCase(getLcrFileData.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        state.lcrValidation = null;
       })
       
       // LCR File (Blob)

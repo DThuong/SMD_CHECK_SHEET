@@ -33,11 +33,11 @@ export interface ChangeModelResponse {
   excelFileUrl?: string;
   pdfFileUrl?: string;
   createAt?: string;
-  noteFile?: string; // thêm
+  noteFile?: string;
+  workerFile?: string;
 
   // object 
   checkModel?: CheckModelData;
-  // programCheck?: ProgramCheckData;
   standardProduction?: StandardProductionData;
   timeChangeModel?: TimeChangeModelData;
   standardVehicle?: StandardVehicleData;
@@ -143,9 +143,9 @@ export const uploadBothFiles = createAsyncThunk(
 // update note file
 export const updateNoteFile = createAsyncThunk(
   'changeModel/updateNoteFile',
-  async ({ changeModelId, noteFile }: { changeModelId: number; noteFile: string }, { rejectWithValue }) => {
+  async ({ changeModelId, noteFile, workerFile }: { changeModelId: number; noteFile: string; workerFile: string }, { rejectWithValue }) => {
     try {
-      const response = await smdApi.put(`ChangeModel/update-note-file/${changeModelId}`, { noteFile });
+      const response = await smdApi.put(`ChangeModel/update-note-file/${changeModelId}`, { noteFile, workerFile });
       return response.data as ChangeModelResponse;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Update note file failed');

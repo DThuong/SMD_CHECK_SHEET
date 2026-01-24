@@ -21,7 +21,7 @@ export interface CheckModelData {
     jig?: boolean,
     codePCB?: string,
     note?: string, // thêm
-    imgIssue?: string // thêm
+    imgIssue?: string[]; // thêm
 }
 
 // StandardProduction
@@ -34,9 +34,9 @@ export interface StandardProductionData {
   mlS3Closed?: string;
   useOnly?: string;
   labelProgram?: string;
-  imgStandard?: string;
+  imgStandard?: string[];
   note?: string; // thêm
-  imgIssue?: string; // thêm
+  imgIssue?: string[]; // thêm
 }
 
 // TimeChangeModel
@@ -49,7 +49,7 @@ export interface TimeChangeModelData {
   history?: string;
   id?: number;
   note?: string; // thêm
-  imgIssue?: string; // thêm
+  imgIssue?: string[] // thêm
 }
 
 // StandardVehicle
@@ -97,16 +97,16 @@ export interface StandardVehicleData {
   reflowSpeed?: string;
   rev?: string;
 
-  imgSPI?: string;
-  imgAOI?: string;
+  imgSPI?: string[];
+  imgAOI?: string[];
 
   id?: number;
 
   note?: string; // thêm
-  imgIssue?: string; // thêm
-  imgMounter?: string; // thêm
-  imgPrinter?: string; // thêm
-  imgPrinterClean?: string; // thêm
+  imgIssue?: string[]; // thêm
+  imgMounter?: string[]; // thêm
+  imgPrinter?: string[]; // thêm
+  imgPrinterClean?: string[]; // thêm
   imgXray?: string[]; // thêm
 }
 
@@ -121,9 +121,9 @@ export interface PQCCheckData {
   endLCR?: string;
   nameCheck?: string;
   resultLCR?: boolean;
-  imgIC?: string;
+  imgIC?: string[];
   note?: string; // thêm
-  imgIssue?: string; // thêm
+  imgIssue?: string[]; // thêm
 }
 
 // ==================== STATE ====================
@@ -296,7 +296,7 @@ export const fetchTimeChangeModel = createAsyncThunk(
 
 // ----------------------------------UPLOAD IMAGE ----------------------------------------
 // upload standard product image
-export const uploadStandardProductionFile = createAsyncThunk(
+export const uploadStandardProductionImage = createAsyncThunk(
   'subTable/uploadStandardProductionImage',
   async ({ standardProductionId, file }: { standardProductionId: number; file: File }, { rejectWithValue }) => {
     try {
@@ -810,9 +810,13 @@ const subTableSlice = createSlice({
       })
       .addCase(uploadCheckModelIssueImage.fulfilled, (state, action) => {
         state.loading = false;
-        // Cập nhật URL hình ảnh nếu backend trả về
-        if (state.standardVehicle && action.payload?.imageUrl) {
-          state.standardVehicle.imgIssue = action.payload.imageUrl;
+        if (state.checkModel && action.payload?.imageUrl) {
+          if (!Array.isArray(state.checkModel.imgIssue)) {
+            state.checkModel.imgIssue = [];
+          }
+          if (!state.checkModel.imgIssue.includes(action.payload.imageUrl)) {
+            state.checkModel.imgIssue.push(action.payload.imageUrl);
+          }
         }
       })
       .addCase(uploadCheckModelIssueImage.rejected, (state, action) => {
@@ -827,9 +831,13 @@ const subTableSlice = createSlice({
       })
       .addCase(uploadStandardProductionIssueImage.fulfilled, (state, action) => {
         state.loading = false;
-        // Cập nhật URL hình ảnh nếu backend trả về
-        if (state.standardVehicle && action.payload?.imageUrl) {
-          state.standardVehicle.imgIssue = action.payload.imageUrl;
+        if (state.standardProduction && action.payload?.imageUrl) {
+          if (!Array.isArray(state.standardProduction.imgIssue)) {
+            state.standardProduction.imgIssue = [];
+          }
+          if (!state.standardProduction.imgIssue.includes(action.payload.imageUrl)) {
+            state.standardProduction.imgIssue.push(action.payload.imageUrl);
+          }
         }
       })
       .addCase(uploadStandardProductionIssueImage.rejected, (state, action) => {
@@ -844,9 +852,13 @@ const subTableSlice = createSlice({
       })
       .addCase(uploadStandardVehicleIssueImage.fulfilled, (state, action) => {
         state.loading = false;
-        // Cập nhật URL hình ảnh nếu backend trả về
         if (state.standardVehicle && action.payload?.imageUrl) {
-          state.standardVehicle.imgIssue = action.payload.imageUrl;
+          if (!Array.isArray(state.standardVehicle.imgIssue)) {
+            state.standardVehicle.imgIssue = [];
+          }
+          if (!state.standardVehicle.imgIssue.includes(action.payload.imageUrl)) {
+            state.standardVehicle.imgIssue.push(action.payload.imageUrl);
+          }
         }
       })
       .addCase(uploadStandardVehicleIssueImage.rejected, (state, action) => {
@@ -862,9 +874,13 @@ const subTableSlice = createSlice({
       })
       .addCase(uploadPrinterImage.fulfilled, (state, action) => {
         state.loading = false;
-        // Cập nhật URL hình ảnh nếu backend trả về
         if (state.standardVehicle && action.payload?.imageUrl) {
-          state.standardVehicle.imgPrinter = action.payload.imageUrl;
+          if (!Array.isArray(state.standardVehicle.imgPrinter)) {
+            state.standardVehicle.imgPrinter = [];
+          }
+          if (!state.standardVehicle.imgPrinter.includes(action.payload.imageUrl)) {
+            state.standardVehicle.imgPrinter.push(action.payload.imageUrl);
+          }
         }
       })
       .addCase(uploadPrinterImage.rejected, (state, action) => {
@@ -880,9 +896,13 @@ const subTableSlice = createSlice({
       })
       .addCase(uploadMounterImage.fulfilled, (state, action) => {
         state.loading = false;
-        // Cập nhật URL hình ảnh nếu backend trả về
         if (state.standardVehicle && action.payload?.imageUrl) {
-          state.standardVehicle.imgMounter = action.payload.imageUrl;
+          if (!Array.isArray(state.standardVehicle.imgMounter)) {
+            state.standardVehicle.imgMounter = [];
+          }
+          if (!state.standardVehicle.imgMounter.includes(action.payload.imageUrl)) {
+            state.standardVehicle.imgMounter.push(action.payload.imageUrl);
+          }
         }
       })
       .addCase(uploadMounterImage.rejected, (state, action) => {
@@ -898,9 +918,13 @@ const subTableSlice = createSlice({
       })
       .addCase(uploadPrinterCleanImage.fulfilled, (state, action) => {
         state.loading = false;
-        // Cập nhật URL hình ảnh nếu backend trả về
         if (state.standardVehicle && action.payload?.imageUrl) {
-          state.standardVehicle.imgPrinterClean = action.payload.imageUrl;
+          if (!Array.isArray(state.standardVehicle.imgPrinterClean)) {
+            state.standardVehicle.imgPrinterClean = [];
+          }
+          if (!state.standardVehicle.imgPrinterClean.includes(action.payload.imageUrl)) {
+            state.standardVehicle.imgPrinterClean.push(action.payload.imageUrl);
+          }
         }
       })
       .addCase(uploadPrinterCleanImage.rejected, (state, action) => {
@@ -916,9 +940,13 @@ const subTableSlice = createSlice({
       })
       .addCase(uploadTimeChangeModelIssueImage.fulfilled, (state, action) => {
         state.loading = false;
-        // Cập nhật URL hình ảnh nếu backend trả về
-        if (state.standardVehicle && action.payload?.imageUrl) {
-          state.standardVehicle.imgIssue = action.payload.imageUrl;
+        if (state.timeChangeModel && action.payload?.imageUrl) {
+          if (!Array.isArray(state.timeChangeModel.imgIssue)) {
+            state.timeChangeModel.imgIssue = [];
+          }
+          if (!state.timeChangeModel.imgIssue.includes(action.payload.imageUrl)) {
+            state.timeChangeModel.imgIssue.push(action.payload.imageUrl);
+          }
         }
       })
       .addCase(uploadTimeChangeModelIssueImage.rejected, (state, action) => {
@@ -934,9 +962,13 @@ const subTableSlice = createSlice({
       })
       .addCase(uploadPQCCheckIssueImage.fulfilled, (state, action) => {
         state.loading = false;
-        // Cập nhật URL hình ảnh nếu backend trả về
-        if (state.standardVehicle && action.payload?.imageUrl) {
-          state.standardVehicle.imgIssue = action.payload.imageUrl;
+        if (state.pqcCheck && action.payload?.imageUrl) {
+          if (!Array.isArray(state.pqcCheck.imgIssue)) {
+            state.pqcCheck.imgIssue = [];
+          }
+          if (!state.pqcCheck.imgIssue.includes(action.payload.imageUrl)) {
+            state.pqcCheck.imgIssue.push(action.payload.imageUrl);
+          }
         }
       })
       .addCase(uploadPQCCheckIssueImage.rejected, (state, action) => {
@@ -952,9 +984,13 @@ const subTableSlice = createSlice({
       })
       .addCase(uploadSPIImage.fulfilled, (state, action) => {
         state.loading = false;
-        // Cập nhật URL hình ảnh nếu backend trả về
         if (state.standardVehicle && action.payload?.imageUrl) {
-          state.standardVehicle.imgSPI = action.payload.imageUrl;
+          if (!Array.isArray(state.standardVehicle.imgSPI)) {
+            state.standardVehicle.imgSPI = [];
+          }
+          if (!state.standardVehicle.imgSPI.includes(action.payload.imageUrl)) {
+            state.standardVehicle.imgSPI.push(action.payload.imageUrl);
+          }
         }
       })
       .addCase(uploadSPIImage.rejected, (state, action) => {
@@ -970,9 +1006,13 @@ const subTableSlice = createSlice({
       })
       .addCase(uploadAOIImage.fulfilled, (state, action) => {
         state.loading = false;
-        // Cập nhật URL hình ảnh nếu backend trả về
         if (state.standardVehicle && action.payload?.imageUrl) {
-          state.standardVehicle.imgAOI = action.payload.imageUrl;
+          if (!Array.isArray(state.standardVehicle.imgAOI)) {
+            state.standardVehicle.imgAOI = [];
+          }
+          if (!state.standardVehicle.imgAOI.includes(action.payload.imageUrl)) {
+            state.standardVehicle.imgAOI.push(action.payload.imageUrl);
+          }
         }
       })
       .addCase(uploadAOIImage.rejected, (state, action) => {
@@ -982,18 +1022,22 @@ const subTableSlice = createSlice({
 
       // upload Standard Production Image
       builder
-        .addCase(uploadStandardProductionFile.pending, (state) => {
+        .addCase(uploadStandardProductionImage.pending, (state) => {
           state.loading = true;
           state.error = null;
         })
-        .addCase(uploadStandardProductionFile.fulfilled, (state, action) => {
+        .addCase(uploadStandardProductionImage.fulfilled, (state, action) => {
           state.loading = false;
-          // Cập nhật URL hình ảnh nếu backend trả về
           if (state.standardProduction && action.payload?.imageUrl) {
-            state.standardProduction.imgStandard = action.payload.imageUrl;
+            if (!Array.isArray(state.standardProduction.imgStandard)) {
+              state.standardProduction.imgStandard = [];
+            }
+            if (!state.standardProduction.imgStandard.includes(action.payload.imageUrl)) {
+              state.standardProduction.imgStandard.push(action.payload.imageUrl);
+            }
           }
         })
-        .addCase(uploadStandardProductionFile.rejected, (state, action) => {
+        .addCase(uploadStandardProductionImage.rejected, (state, action) => {
           state.loading = false;
           state.error = action.payload as string;
         });
@@ -1006,9 +1050,13 @@ const subTableSlice = createSlice({
         })
         .addCase(uploadPQCCheckImage.fulfilled, (state, action) => {
           state.loading = false;
-          // Cập nhật URL hình ảnh nếu backend trả về
           if (state.pqcCheck && action.payload?.imageUrl) {
-            state.pqcCheck.imgIC = action.payload.imageUrl;
+            if (!Array.isArray(state.pqcCheck.imgIC)) {
+              state.pqcCheck.imgIC = [];
+            }
+            if (!state.pqcCheck.imgIC.includes(action.payload.imageUrl)) {
+              state.pqcCheck.imgIC.push(action.payload.imageUrl);
+            }
           }
         })
         .addCase(uploadPQCCheckImage.rejected, (state, action) => {

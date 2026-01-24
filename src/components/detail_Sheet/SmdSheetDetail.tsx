@@ -181,12 +181,6 @@ const SmdSheetDetail = () => {
       }else{
         showNotification('error', 'Lỗi', 'Không thể ký');
       }
-      // if(currentSheet?.pdfFileUrl !== "" && currentSheet?.excelFileUrl !== "") {
-        
-      // }else{
-      //   showNotification('warning', 'Thiếu file', 'Làm ơn upload cả 2 file: REFLOW và LCR.');
-      // }
-      
       
     } catch (error) {
       console.error('updateSheetStatus failed', error);

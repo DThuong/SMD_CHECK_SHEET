@@ -8,10 +8,9 @@ import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import { formatDateTime } from "../../utils/formatTime";
 import ImageViewIcon from "../files/ImageViewIcon";
-import { FaCamera } from "react-icons/fa6";
-import { IoEyeSharp } from "react-icons/io5";
 import ImagePreviewModal from "../files/ImagePreviewModal";
 import { useTranslation } from "react-i18next";
+import MultiImageUpload from "../files/MultiImageUpload";
 
 const initialPQCChecksState: PQCCheckData = {
   id: undefined,
@@ -23,9 +22,9 @@ const initialPQCChecksState: PQCCheckData = {
   endLCR: "",
   nameCheck: "",
   resultLCR: false,
-  imgIC: "",
+  imgIC: [],
   note: "",
-  imgIssue: ""
+  imgIssue: []
 };
 
 const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
@@ -83,7 +82,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
 
 
   //  FIXED: Upload handler với flag protection
-  const handleImageUpload = async (field: 'imgIC' | 'imgIssue', event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (field: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
   
@@ -92,45 +91,47 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
       return;
     }
   
-    try {
-      //  Set flag TRƯỚC KHI upload
-      isUploadingRef.current = true;
-      
-      if (field === 'imgIC') {
-        const result = await dispatch(uploadPQCCheckImage({ 
-          pqcCheckId: Number(pqcCheckId), 
-          file 
-        })).unwrap();
-        
-        //  Chỉ cập nhật field imgIC, KHÔNG trigger re-sync toàn bộ form
-        if (result?.imageUrl) {
-          setForm(prev => ({
-            ...prev,
-            imgIC: result.imageUrl
-          }));
-        }
-        
-        showNotification('success', 'Thành công', 'Upload hình ảnh IC thành công');
-      }
+   try {
+    isUploadingRef.current = true;
+    
+    let result;
+    let successMessage = '';
 
-      if (field === 'imgIssue') {
-        const result = await dispatch(uploadPQCCheckIssueImage({ 
+    switch (field) {
+      case 'imgIC':
+        result = await dispatch(uploadPQCCheckImage({ 
           pqcCheckId: Number(pqcCheckId), 
           file 
         })).unwrap();
-        
-        //  Chỉ cập nhật field, KHÔNG trigger re-sync toàn bộ form
-        if (result?.imageUrl) {
-          setForm(prev => ({
-            ...prev,
-            imgIssue: result.imageUrl
-          }));
-        }
-        
-        showNotification('success', 'Thành công', 'Upload hình ảnh pqcCheck: Vấn đề phát sinh thành công');
-      }
-  
-    } catch (error) {
+        successMessage = 'Upload hình ảnh IC thành công';
+        break;
+      
+      case 'imgIssue':
+        result = await dispatch(uploadPQCCheckIssueImage({ 
+          pqcCheckId: Number(pqcCheckId), 
+          file 
+        })).unwrap();
+        successMessage = 'Upload hình ảnh vấn đề phát sinh thành công';
+        break;
+    }
+
+    // Thêm ảnh mới vào array
+    if (result?.imageUrl) {
+      setForm(prev => {
+        const currentValue = prev[field as keyof PQCCheckData];
+        return {
+          ...prev,
+          [field]: [
+            ...(Array.isArray(currentValue) ? currentValue : []),
+            result.imageUrl
+          ]
+        };
+      });
+    }
+    
+    showNotification('success', 'Thành công', successMessage);
+    
+  } catch (error) {
       console.error('Failed to upload image:', error);
       showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
     } finally {
@@ -138,6 +139,14 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
       isUploadingRef.current = false;
     }
   };
+
+  const handleRemoveImage = (field: 'imgIC' | 'imgIssue', index: number) => {
+  setForm(prev => ({
+    ...prev,
+    [field]: (prev[field] as string[])?.filter((_, i) => i !== index) || []
+  }));
+  showNotification('success', 'Đã xóa', `Đã xóa ảnh ${field === 'imgIC' ? 'IC' : 'vấn đề phát sinh'}`);
+};
   
   // fetch data khi pqcCheck thay đổi
   useEffect(() => {
@@ -547,62 +556,15 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
             <input type="checkbox" checked={form.resultLCR} onChange={(e) => set("resultLCR", e.target.checked)} />
           </div>
 
-             <label className="block text-sm font-medium mb-1">Hình ảnh IC Image</label>
-                <div className="">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload('imgIC', e)}
-                    className="border border-gray-300 rounded px-3 py-2 w-full"
-                  />
-                </div>
-          
-                
-                      <div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={(e) => handleImageUpload('imgIC', e)}
-                        className="hidden"
-                        id="camera-capture-ic"
-                      />
-                      <label
-                      htmlFor="camera-capture-ic"
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
-                    >
-                      {/* Thêm display: inline-block hoặc inline-flex */}
-                        <div className="inline-flex items-center">
-                          <FaCamera size={15} />
-                        </div>
-                        <div className="inline-flex items-center mx-2">
-                          Chụp ảnh IC Image
-                        </div>
-                    </label>
-                    </div>
-                
-                {/* Preview Section */}
-                {form.imgIC && (
-                <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
-                  <div className="flex items-center gap-3">
-                    <img 
-                      src={form.imgIC} 
-                      alt="Hình ảnh IC" 
-                      className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-                      onClick={() => openImagePreview(form.imgIC!, "Hình ảnh IC")} 
-                    />
-                    <button
-                      type="button"
-                      onClick={() => openImagePreview(form.imgIC!, "Hình ảnh IC")}
-                      className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
-                    >
-                      <IoEyeSharp size={20} />
-                      <span className="text-sm font-medium">Xem ảnh</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+        <MultiImageUpload
+          label="Hình ảnh IC"
+          images={form.imgIC}
+          fieldName="imgIC"
+          onUpload={handleImageUpload}
+          onRemove={(index) => handleRemoveImage('imgIC', index)}
+          onViewAll={() => openImagePreview(form.imgIC || [], 'Hình ảnh IC', 0)}
+          onViewSingle={(url, title) => openImagePreview(url, title)}
+        />
 
     <label className="text-xs">
       Ghi chú vấn đề phát sinh
@@ -618,62 +580,15 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
       />
     </label>
 
-      <label className="block text-sm font-medium mb-1">Hình ảnh Vấn đề phát sinh</label>
-      <div className="">
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleImageUpload('imgIssue', e)}
-          className="border border-gray-300 rounded px-3 py-2 w-full"
-        />
-      </div>
-
-      
-            <div>
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => handleImageUpload('imgIssue', e)}
-              className="hidden"
-              id="camera-capture-issue-pqc-check"
-            />
-            <label
-            htmlFor="camera-capture-issue-pqc-check"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
-          >
-            {/* Thêm display: inline-block hoặc inline-flex */}
-              <div className="inline-flex items-center">
-                <FaCamera size={15} />
-              </div>
-              <div className="inline-flex items-center mx-2">
-                Chụp ảnh vấn đề phát sinh
-              </div>
-          </label>
-          </div>
-      
-      {/* Preview Section */}
-      {form.imgIssue && (
-      <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
-        <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
-        <div className="flex items-center gap-3">
-          <img 
-            src={form.imgIssue} 
-            alt="Standard Production Preview" 
-            className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-            onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Vấn đề phát sinh")} 
-          />
-          <button
-            type="button"
-            onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh Vấn đề phát sinh")}
-            className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
-          >
-            <IoEyeSharp size={20} />
-            <span className="text-sm font-medium">Xem ảnh</span>
-          </button>
-        </div>
-      </div>
-    )}
+    <MultiImageUpload
+      label="Hình ảnh Vấn đề phát sinh"
+      images={form.imgIssue}
+      fieldName="imgIssue"
+      onUpload={handleImageUpload}
+      onRemove={(index) => handleRemoveImage('imgIssue', index)}
+      onViewAll={() => openImagePreview(form.imgIssue || [], 'Hình ảnh Vấn đề phát sinh', 0)}
+      onViewSingle={(url, title) => openImagePreview(url, title)}
+    />
 
         </div>
       </Modal>

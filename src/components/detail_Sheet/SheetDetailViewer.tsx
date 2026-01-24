@@ -21,6 +21,7 @@ import {
   clearError, 
   type ChangeModelResponse
 } from '../../redux/slices/changeModelSlice';
+import { getFilterState, getSelectedSheetId } from '../../utils/navigationState';
 
 // Import các sub-components
 import CheckModels from "../smd_Sheet/CheckModels";
@@ -36,16 +37,21 @@ import { REQUIRED_FIELDS_CONFIG, hasAllRequiredData, getMissingFields } from '..
 import { useTranslation } from 'react-i18next';
 import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
+import { clearLcrFile, getLcrFileData } from '../../redux/slices/FileSlice';
+import { saveFilterState } from '../../utils/navigationState';
+import NoteModal from '../general/NoteModal';
+import { MdStickyNote2 } from 'react-icons/md';
 
 
 const SheetDetailViewer = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const id = Number(useParams().id);
   const dispatch = useAppDispatch();
   const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Lấy saved state từ location
   const returnPath = (location.state as any)?.returnPath;
   const returnSearch = (location.state as any)?.returnSearch;
-  
   // Lấy data từ Redux store
   const { currentSheet, loading, error } = useAppSelector((state) => state.changeModel);
   const { user } = useAppSelector((state) => state.auth);
@@ -54,6 +60,21 @@ const SheetDetailViewer = () => {
   const {t} = useTranslation('sheetDetail');
 
   const contentRef = useRef<HTMLDivElement>(null);
+  const { lcrValidation } = useAppSelector(state => state.fileSlice);
+  const [noteModalOpen, setNoteModalOpen] = useState(false);
+
+  const checkLcrFileValidity = (): boolean => {
+  if (!currentSheet?.excelFileUrl || currentSheet.excelFileUrl.trim() === "") {
+    return false; // Chưa có file
+  }
+  
+  // Sử dụng validation result từ Redux store
+  if (!lcrValidation) {
+    return false; // Chưa validate được
+  }
+
+  return lcrValidation.isValid;
+};
   
 
   // PHÂN QUYỀN CHÍNH XÁC
@@ -79,6 +100,18 @@ const SheetDetailViewer = () => {
     
     const userRole = user.role;
     const status = currentSheet.status?.toLowerCase();
+
+    // PQCLeader phải check thêm LCR file validity
+    if (userRole === 'PQCLeader') {
+      if (status !== 'pqcdone') return false;
+      
+      // CHECK LCR FILE - Phải 100% OK
+      if (!checkLcrFileValidity()) {
+        return false;
+      }
+      
+      return true;
+    }
     
     switch (userRole) {
       case 'PQCLeader':
@@ -96,18 +129,29 @@ const SheetDetailViewer = () => {
     }
   };
 
-   const handleBack = () => {
-    if (returnPath) {
-      // Priority 1: Navigate về exact path đã lưu
-      const fullPath = returnSearch 
-        ? `${returnPath}${returnSearch}` 
-        : returnPath;
-      navigate(fullPath);
-    } else {
-      // Priority 2: Fallback navigate(-1)
-      navigate(-1);
-    }
-  };
+  const handleBack = () => {
+  const savedState = getFilterState();
+  const savedSheetId = getSelectedSheetId();
+  
+  console.log('🔙 Navigating back with state:', { savedState, savedSheetId });
+  
+  if (returnPath) {
+    const fullPath = returnSearch 
+      ? `${returnPath}${returnSearch}` 
+      : returnPath;
+    
+    navigate(fullPath, {
+      state: {
+        from: 'sheetDetail',  // ← Đánh dấu rõ ràng
+        savedFilter: savedState.filter,
+        savedPage: savedState.currentPage,
+        highlightSheetId: savedSheetId
+      }
+    });
+  } else {
+    navigate(-1);
+  }
+};
 
   // Load dữ liệu sheet từ Redux action
   useEffect(() => {
@@ -177,7 +221,14 @@ const SheetDetailViewer = () => {
                     console.log(missing);
                   }
                 }
-                
+
+                if (result.excelFileUrl && result.excelFileUrl.trim() !== "") {
+                  try {
+                    await dispatch(getLcrFileData(Number(id))).unwrap();
+                  } catch (error) {
+                    console.error('❌ Lỗi khi load LCR data:', error);
+                  }
+                }
         
       } catch (error: any) {
         console.error('❌ Error loading sheet:', error);
@@ -189,6 +240,7 @@ const SheetDetailViewer = () => {
     return () => {
       dispatch(clearAllSubTableData());
       dispatch(clearError());
+      dispatch(clearLcrFile());
     };
   }, [id, dispatch]);
 
@@ -201,14 +253,32 @@ const SheetDetailViewer = () => {
 
   // XỬ LÝ KÝ XÁC NHẬN
   const handleConfirm = async () => {
-    if (!canConfirm()) {
-      showNotification('error', `${t('error.confirmError')}`);
+  if (!canConfirm()) {
+    // Thông báo cụ thể cho PQCLeader về LCR file
+    if (user?.role === 'PQCLeader' && !checkLcrFileValidity()) {
+      const validation = lcrValidation;
+      let errorDetail = '';
+      
+      if (validation?.stats) {
+        errorDetail = `Total: ${validation.stats.total}\n- OK: ${validation.stats.ok}\n- NG: ${validation.stats.ng}\n- SKIP: ${validation.stats.skip}`;
+      }
+      
+      showNotification(
+        'error', 
+        'Không thể ký xác nhận',
+        `File LCR không hợp lệ!\n\n${validation?.errorMessage || 'Tất cả kết quả phải là OK'}`
+      );
       return;
     }
+    
+    showNotification('error', `${t('error.confirmError')}`);
+    return;
+  }
 
-    if (!user || !currentSheet) return;
+  if (!user || !currentSheet) return;
 
-    if (user.role === 'PQCLeader') {
+  // Check required files cho PQCLeader (giữ nguyên logic cũ)
+  if (user.role === 'PQCLeader') {
     const { hasLCR, hasReflow } = checkRequiredFiles(currentSheet);
     
     if (!hasLCR || !hasReflow) {
@@ -224,32 +294,33 @@ const SheetDetailViewer = () => {
       return;
     }
   }
-    try {
-      setConfirming(true);
-      await dispatch(updateSheetStatus({
-        sheetId: currentSheet.id!,
-        currentStatus: currentSheet.status!,
-        userRole: user.role as string
-      })).unwrap();
-      
-      showNotification('success', `${t('success.confirmSuccess')} ${user.role}!`);
-      
-      setTimeout(() => {
-        navigate(0);
-      }, 1000);
-      
-    } catch (error: any) {
-      console.error('❌ Lỗi khi xác nhận:', error);
-      showNotification('error', t('error.confirmFailed'), error || t('error.confirmError'));
-    } finally {
-      setConfirming(false);
-    }
-  };
+
+  try {
+    setConfirming(true);
+    await dispatch(updateSheetStatus({
+      sheetId: currentSheet.id!,
+      currentStatus: currentSheet.status!,
+      userRole: user.role as string
+    })).unwrap();
+    
+    showNotification('success', `${t('success.confirmSuccess')} ${user.role}!`);
+    
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+    
+  } catch (error: any) {
+    console.error('❌ Lỗi khi xác nhận:', error);
+    showNotification('error', t('error.confirmFailed'), error || t('error.confirmError'));
+  } finally {
+    setConfirming(false);
+  }
+};
 
   // Loading state
   if (loading) {
     return (
-      <div className="max-w-8xl mx-auto p-8">
+      <div className="max-w-8xl mx-auto p-4">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-1/3"></div>
           <div className="h-20 bg-gray-200 rounded"></div>
@@ -269,7 +340,7 @@ const SheetDetailViewer = () => {
           <p className="text-red-600 mb-4">{error || 'Không tìm thấy dữ liệu'}</p>
           <button
             onClick={() => navigate(-1)}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             {t('button.back')}
           </button>
@@ -563,7 +634,24 @@ const SheetDetailViewer = () => {
               </p>
             )}
           </div>
-          <div className='text-center flex items-center justify-start py-2'>{getStatusBadge(currentSheet)}</div>
+          {/* Status Badge + Note Button */}
+              <div className="flex items-center gap-3">
+                {/* NOTE BUTTON - CHỈ HIỆN CHO QUẢN LÝ */}
+                {(user?.role === 'ENG' || user?.role === 'Supervisior' || user?.role === 'Manager') && (
+                  <button
+                    onClick={() => setNoteModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-95 font-semibold text-sm"
+                  >
+                    <MdStickyNote2 size={20} />
+                    Ghi chú quản lý
+                  </button>
+                )}
+                <div className='text-center flex items-center justify-start py-2'>
+                  {getStatusBadge(currentSheet)}
+                </div>
+
+                
+              </div>
         </div>
       </div>
 
@@ -600,7 +688,7 @@ const SheetDetailViewer = () => {
       </div>
 
       {/* Hiển thị các component */}
-      <div className={!isEditable ? 'pointer-events-none' : ''}>
+      <div className={!isEditable ? '' : ''}>
         <div className="pdf-section">
           <SheetHeader canEdit={isEditable} returnPath={returnPath || window.location.pathname} />
         </div>
@@ -627,7 +715,8 @@ const SheetDetailViewer = () => {
       </div>
 
       {/* Buttons */}
-      <div className="no-print w-full sticky bottom-0 bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-4 flex flex-col md:flex-row lg:flex-row items-stretch gap-3 shadow-lg mt-4 z-10">
+      <div className="no-print w-full sticky bottom-0 bg-white border-t-2 border-l-2 border-r-2 border-gray-300 p-4 flex flex-col md:flex-row lg:flex-row items-stretch gap-3 shadow-lg mt-4 "
+      style={{ zIndex: 10 }}>
         <button
           onClick={handleBack}
           className="w-full px-4 py-3 bg-gray-600 text-white text-sm font-semibold hover:bg-gray-700 transition-colors"
@@ -666,109 +755,137 @@ const SheetDetailViewer = () => {
 
       {/* CSS để tương tác khi read-only */}
       {!isEditable && (
-      <style>{`
-        /* Force tất cả sáng rõ */
-        .pointer-events-none,
-        .pointer-events-none * {
-          opacity: 1 !important;
-        }
-        
-        /* TẤT CẢ BUTTON - Màu xám, không hoạt động */
-        /* NHƯNG LOẠI TRỪ BUTTON TRONG MODAL */
-        .pointer-events-none button:not([data-close-modal]):not([data-view-detail]):not([data-view-image]) {
-          cursor: not-allowed !important;
-          color: #6b7280 !important;
-          border-color: #9ca3af !important;
-          opacity: 0.7 !important; /* ← Mờ mặc định */
-          transition: opacity 0.25s ease-in-out !important;
-          pointer-events: none !important;
-        }
+        <style>{`
+          /* Force tất cả sáng rõ */
+          .pointer-events-none,
+          .pointer-events-none * {
+            opacity: 1 !important;
+          }
 
-        .pointer-events-none button:not([data-close-modal]):not([data-view-detail]):not([data-view-image]):hover {
-          opacity: 0.95 !important; /* ← Sáng lên khi hover */
-          transform: scale(1.01) !important; /* ← Optional: phóng to nhẹ */
-        }
+          header,
+          header *,
+          nav,
+          nav *,
+          .user-dropdown,
+          .user-dropdown *,
+          .user-dropdown button {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            opacity: 1 !important;
+          }
 
-        /* BUTTON "XEM CHI TIẾT" FILES - Màu xanh và hoạt động */
-        .pointer-events-none button[data-view-detail="true"] {
-          cursor: pointer !important;
-          background-color: #3b82f6 !important;
-          color: #ffffff !important;
-          border-color: #2563eb !important;
-          pointer-events: auto !important;
-          opacity: 1 !important;
-        }
-        
-        .pointer-events-none button[data-view-detail="true"]:hover {
-          background-color: #2563eb !important;
-        }
+          /* ========================================
+            ✅ CRITICAL FIX: Override tất cả blocking layers
+            ======================================== */
+          
+          /* Force image viewing elements lên trên mọi overlay */
+          .pointer-events-none img[data-view-image="true"],
+          .pointer-events-none button[data-view-image="true"] {
+            position: relative !important;
+            z-index: 9999 !important; /* ✅ Cao hơn mọi overlay */
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            opacity: 1 !important;
+          }
 
-        /* BUTTON XEM HÌNH ẢNH (icon button) */
-        .pointer-events-none button[data-view-image="true"] {
-          cursor: pointer !important;
-          background-color: transparent !important;
-          color: #3b82f6 !important;
-          border: none !important;
-          pointer-events: auto !important;
-          opacity: 1 !important;
-        }
+          .pointer-events-none button[data-view-image="true"] {
+            background-color: transparent !important;
+            color: #3b82f6 !important;
+            border: 1px solid #93c5fd !important;
+          }
 
-        /* Cho phép tất cả button trong Modal hoạt động */
-        .pointer-events-none [data-close-modal="true"],
-        .pointer-events-none [data-close-modal="true"] button,
-        .pointer-events-none [data-close-modal="true"] * {
-          pointer-events: auto !important;
-          cursor: pointer !important;
-        }
+          .pointer-events-none button[data-view-image="true"]:hover {
+            background-color: #dbeafe !important;
+            border-color: #3b82f6 !important;
+          }
 
-        /* Input - trắng sáng */
-        .pointer-events-none input:not([type="checkbox"]):not([type="radio"]),
-        .pointer-events-none textarea,
-        .pointer-events-none select {
-          cursor: not-allowed !important;
-          background-color: #ffffff !important;
-          border: 1.5px solid #d1d5db !important;
-          color: #000000 !important;
-        }
+          /* Modal buttons */
+          .pointer-events-none [data-close-modal="true"],
+          .pointer-events-none [data-close-modal="true"] button,
+          .pointer-events-none [data-close-modal="true"] * {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            opacity: 1 !important;
+            z-index: 9999 !important; /* ✅ Thêm z-index */
+          }
 
-        /* PDF Section styling */
-        .pdf-section {
-          page-break-inside: avoid;
-          break-inside: avoid;
-          margin-bottom: 10px;
-        }
-        
-        .page-break-before {
-          page-break-before: always;
-          break-before: page;
-        }
-        
-        @media print {
-          .no-print {
-            display: none !important;
+          /* File view detail buttons */
+          .pointer-events-none button[data-view-detail="true"] {
+            cursor: pointer !important;
+            background-color: #3b82f6 !important;
+            color: #ffffff !important;
+            border-color: #2563eb !important;
+            pointer-events: auto !important;
+            opacity: 1 !important;
+            z-index: 9999 !important; /* ✅ Thêm z-index */
           }
           
+          .pointer-events-none button[data-view-detail="true"]:hover {
+            background-color: #2563eb !important;
+          }
+
+          /* ========================================
+            ❌ BLOCKING RULES
+            ======================================== */
+          
+          .pointer-events-none button:not([data-close-modal]):not([data-view-detail]):not([data-view-image]) {
+            cursor: not-allowed !important;
+            color: #6b7280 !important;
+            border-color: #9ca3af !important;
+            opacity: 0.7 !important;
+            transition: opacity 0.25s ease-in-out !important;
+            pointer-events: none !important;
+          }
+
+          .pointer-events-none button:not([data-close-modal]):not([data-view-detail]):not([data-view-image]):hover {
+            opacity: 0.95 !important;
+            transform: scale(1.01) !important;
+          }
+
+          /* Input */
+          .pointer-events-none input:not([type="checkbox"]):not([type="radio"]),
+          .pointer-events-none textarea,
+          .pointer-events-none select {
+            cursor: not-allowed !important;
+            background-color: #ffffff !important;
+            border: 1.5px solid #d1d5db !important;
+            color: #000000 !important;
+          }
+
+          /* PDF Section styling */
           .pdf-section {
             page-break-inside: avoid;
+            break-inside: avoid;
+            margin-bottom: 10px;
           }
           
-          .pdf-section-aoi + .pdf-section-output {
-            margin-top: 40mm !important;
+          .page-break-before {
+            page-break-before: always;
+            break-before: page;
           }
           
-          .pdf-section-reflow + .pdf-section-aoi {
-            margin-top: 30mm !important;
+          @media print {
+            .no-print {
+              display: none !important;
+            }
+            
+            .pdf-section {
+              page-break-inside: avoid;
+            }
+            
+            body {
+              print-color-adjust: exact;
+              -webkit-print-color-adjust: exact;
+            }
           }
-          
-          body {
-            print-color-adjust: exact;
-            -webkit-print-color-adjust: exact;
-          }
-        }
-      `}</style>
-)}
+        `}</style>
+        )}
       </div>
-
+      <NoteModal
+        sheetId={Number(id)}
+        isOpen={noteModalOpen}
+        onClose={() => setNoteModalOpen(false)}
+      />
     </div>
   );
 };

@@ -9,10 +9,8 @@ import type { StandardVehicleData } from "../../redux/slices/subTableSlice";
 import { uploadXRayImage } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
-import { FaCamera } from "react-icons/fa";
-import { IoEyeSharp } from "react-icons/io5";
-import { normalizeImageUrl } from "../../utils/imageUrl";
 import { useTranslation } from "react-i18next";
+import MultiImageUpload from "../files/MultiImageUpload";
 
 const initialStandardVehiclesState: StandardVehicleData = {
   printerSpecGTAL: "",
@@ -58,16 +56,16 @@ const initialStandardVehiclesState: StandardVehicleData = {
   reflowSpeed: "",
   rev: "",
 
-  imgSPI: "",
-  imgAOI: "",
+  imgSPI: [],
+  imgAOI: [],
 
   id: 0,
 
   note: "",
-  imgIssue: "",
-  imgMounter: "",
-  imgPrinter: "",
-  imgPrinterClean: "",
+  imgIssue: [],
+  imgMounter: [],
+  imgPrinter: [],
+  imgPrinterClean: [],
   imgXray: [],
 };
 
@@ -163,137 +161,84 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 
 
   // FIXED: Upload handler với flag protection cho CÁ 2 trường imgSPI và imgAOI
-  const handleImageUpload = async (field: 'imgSPI' | 'imgAOI' | 'imgMounter' | 'imgPrinter' | 'imgPrinterClean' | 'imgIssue' | 'imgXray', event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleImageUpload = async (
+  field: string, 
+  event: React.ChangeEvent<HTMLInputElement>
+) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
 
-    if (!standardVehicleId) {
-      showNotification('error', 'Lỗi upload', 'Không tìm thấy StandardVehicle ID');
-      return;
+  if (!standardVehicleId) {
+    showNotification('error', 'Lỗi upload', 'Không tìm thấy StandardVehicle ID');
+    return;
+  }
+
+  try {
+    isUploadingRef.current = true;
+
+    let result;
+    let successMessage = '';
+
+    switch (field) {
+      case 'imgSPI':
+        result = await dispatch(uploadSPIImage({ id: Number(standardVehicleId), file })).unwrap();
+        successMessage = 'Upload hình ảnh SPI thành công';
+        break;
+      case 'imgAOI':
+        result = await dispatch(uploadAOIImage({ id: Number(standardVehicleId), file })).unwrap();
+        successMessage = 'Upload hình ảnh AOI thành công';
+        break;
+      case 'imgMounter':
+        result = await dispatch(uploadMounterImage({ StandardVehicleId: Number(standardVehicleId), file })).unwrap();
+        successMessage = 'Upload hình ảnh sau mounter thành công';
+        break;
+      case 'imgPrinter':
+        result = await dispatch(uploadPrinterImage({ StandardVehicleId: Number(standardVehicleId), file })).unwrap();
+        successMessage = 'Upload hình ảnh sau printer thành công';
+        break;
+      case 'imgPrinterClean':
+        result = await dispatch(uploadPrinterCleanImage({ StandardVehicleId: Number(standardVehicleId), file })).unwrap();
+        successMessage = 'Upload hình ảnh cleaning printer thành công';
+        break;
+      case 'imgIssue':
+        result = await dispatch(uploadStandardVehicleIssueImage({ StandardVehicleId: Number(standardVehicleId), file })).unwrap();
+        successMessage = 'Upload hình ảnh vấn đề phát sinh thành công';
+        break;
+      case 'imgXray':
+        result = await dispatch(uploadXRayImage({ StandardVehicleId: Number(standardVehicleId), file })).unwrap();
+        successMessage = 'Upload hình ảnh X-ray thành công';
+        break;
     }
 
-    try {
-      // Set flag TRƯỚC KHI upload
-      isUploadingRef.current = true;
-
-      if (field === 'imgSPI') {
-        const result = await dispatch(uploadSPIImage({ 
-          id: Number(standardVehicleId), 
-          file 
-        })).unwrap();
-        
-        // Chỉ cập nhật field imgSPI, KHÔNG trigger re-sync toàn bộ form
-        if (result?.imageUrl) {
-          setForm(prev => ({
-            ...prev,
-            imgSPI: result.imageUrl
-          }));
-        }
-        
-        showNotification('success', 'Thành công', 'Upload hình ảnh SPI thành công');
-      } else if (field === 'imgAOI') {
-        const result = await dispatch(uploadAOIImage({ 
-          id: Number(standardVehicleId), 
-          file 
-        })).unwrap();
-        
-        // Chỉ cập nhật field imgAOI, KHÔNG trigger re-sync toàn bộ form
-        if (result?.imageUrl) {
-          setForm(prev => ({
-            ...prev,
-            imgAOI: result.imageUrl
-          }));
-        }
-        
-        showNotification('success', 'Thành công', 'Upload hình ảnh AOI thành công');
-      } else if (field === 'imgMounter') {
-        const result = await dispatch(uploadMounterImage({ 
-          StandardVehicleId: Number(standardVehicleId), 
-          file 
-        })).unwrap();
-        
-        // Chỉ cập nhật field, KHÔNG trigger re-sync toàn bộ form
-        if (result?.imageUrl) {
-          setForm(prev => ({
-            ...prev,
-            imgMounter: result.imageUrl
-          }));
-        }
-        
-        showNotification('success', 'Thành công', 'Upload hình ảnh sau mounter thành công');
-      } else if (field === 'imgPrinter') {
-        const result = await dispatch(uploadPrinterImage({ 
-          StandardVehicleId: Number(standardVehicleId), 
-          file 
-        })).unwrap();
-        
-        // Chỉ cập nhật field, KHÔNG trigger re-sync toàn bộ form
-        if (result?.imageUrl) {
-          setForm(prev => ({
-            ...prev,
-            imgPrinter: result.imageUrl
-          }));
-        }
-        
-        showNotification('success', 'Thành công', 'Upload hình ảnh sau printer thành công');
-      } else if (field === 'imgIssue') {
-        const result = await dispatch(uploadStandardVehicleIssueImage({ 
-          StandardVehicleId: Number(standardVehicleId), 
-          file 
-        })).unwrap();
-        
-        // Chỉ cập nhật field, KHÔNG trigger re-sync toàn bộ form
-        if (result?.imageUrl) {
-          setForm(prev => ({
-            ...prev,
-            imgIssue: result.imageUrl
-          }));
-        }
-        
-        showNotification('success', 'Thành công', 'Upload hình ảnh StandardVehicle: vấn đề phát sinh thành công');
-      }else if (field === 'imgPrinterClean') {
-        const result = await dispatch(uploadPrinterCleanImage({ 
-          StandardVehicleId: Number(standardVehicleId), 
-          file 
-        })).unwrap();
-        
-        // Chỉ cập nhật field, KHÔNG trigger re-sync toàn bộ form
-        if (result?.imageUrl) {
-          setForm(prev => ({
-            ...prev,
-            imgPrinterClean: result.imageUrl
-          }));
-        }
-        
-        showNotification('success', 'Thành công', 'Upload hình ảnh sau printer thành công');
-      } else if (field === 'imgXray') {
-        const result = await dispatch(uploadXRayImage({ 
-          StandardVehicleId: Number(standardVehicleId), 
-          file 
-        })).unwrap();
-        
-        // Chỉ cập nhật field, KHÔNG trigger re-sync toàn bộ form
-        if (result?.imageUrl) {
-          setForm(prev => ({
-            ...prev,
-            imgXray: [
-            ...(prev.imgXray || []), // Giữ lại ảnh cũ
-            result.imageUrl          // Thêm ảnh mới
-          ]
-          }));
-        }
-        
-        showNotification('success', 'Thành công', 'Upload hình ảnh x-ray thành công');
-      }
-
-    } catch (error) {
-      console.error('Failed to upload image:', error);
-      showNotification('error', 'Lỗi upload', `Không thể upload hình ảnh ${field === 'imgSPI' ? 'SPI' : 'AOI'}`);
-    } finally {
-      // Reset flag SAU KHI upload xong (thành công hay thất bại)
-      isUploadingRef.current = false;
+    // Thêm ảnh mới vào array (backend trả về single URL)
+     if (result?.imageUrl) {
+      setForm(prev => ({
+        ...prev,
+        [field]: [
+          ...(Array.isArray(prev[field as keyof StandardVehicleData]) ? prev[field as keyof StandardVehicleData] as string[] : []),
+          result.imageUrl
+        ]
+      }));
     }
-  };
+    
+    showNotification('success', 'Thành công', successMessage);
+    
+  } catch (error) {
+    console.error('Failed to upload image:', error);
+    showNotification('error', 'Lỗi upload', `Không thể upload hình ảnh ${field}`);
+  } finally {
+    isUploadingRef.current = false;
+  }
+};
+
+// Handler để xóa ảnh
+const handleRemoveImage = (field: keyof StandardVehicleData, index: number) => {
+  setForm(prev => ({
+    ...prev,
+    [field]: (prev[field] as string[])?.filter((_, i) => i !== index) || []
+  }));
+  showNotification('success', 'Đã xóa', `Đã xóa ảnh ${field}`);
+};
 
   // Wrapper cho set() để đánh dấu user đã edit
   const set = <K extends keyof StandardVehicleData>(k: K, v: StandardVehicleData[K]) => {
@@ -635,24 +580,16 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 
             {/** row 27.0: hình ảnh image xray */}
             <tr>
-              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">
-                Hình ảnh xray
-              </th>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">Hình ảnh X-ray</th>
               <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">
-                <div className="flex items-center justify-center gap-2 flex-wrap">
-                  {/* Map qua array */}
-                  {form.imgXray && form.imgXray.length > 0 ? (
-                    form.imgXray.map((imageUrl, index) => (
-                      <ImageViewIcon 
-                        key={index}
-                        imageUrl={imageUrl} 
-                        title={`Hình ảnh xray ${index + 1}`}
-                        onView={openImagePreview}
-                      />
-                    ))
-                  ) : (
-                    <span className="text-gray-400 text-xs">Chưa có hình ảnh</span>
-                  )}
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <ImageViewIcon 
+                      imageUrl={form.imgXray} 
+                      title='Hình ảnh X-ray'
+                      onView={openImagePreview}
+                    />
+                  </div>
                 </div>
               </td>
             </tr>
@@ -1336,119 +1273,25 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
         </label>
       </div>
 
-      <div className="min-w-0 mb-3 mt-2">
-           <label className="block text-xs font-medium mb-1">Hình ảnh sau printer</label>
-                <div className="">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload('imgPrinter', e)}
-                    className="border border-gray-300 rounded px-3 py-2 w-full"
-                  />
-                </div>
-                      <div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={(e) => handleImageUpload('imgPrinter', e)}
-                        className="hidden"
-                        id="camera-capture-printer-after"
-                      />
-                      <label
-                      htmlFor="camera-capture-printer-after"
-                      className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
-                    >
-                      {/* Thêm display: inline-block hoặc inline-flex */}
-                        <div className="inline-flex items-center">
-                          <FaCamera size={15} />
-                        </div>
-                        <div className="inline-flex items-center mx-2">
-                          Chụp ảnh sau printer
-                        </div>
-                    </label>
-                    </div>
-                
-                {/* Preview Section */}
-                {form.imgPrinter && (
-                <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
-                  <div className="flex items-center gap-3">
-                    <img 
-                      src={form.imgPrinter} 
-                      alt="Hình ảnh sau printer" 
-                      className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-                      onClick={() => openImagePreview(form.imgPrinter!, "Hình ảnh sau printer")} 
-                    />
-                    <button
-                      type="button"
-                      onClick={() => openImagePreview(form.imgPrinter!, "Hình ảnh sau printer")}
-                      className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
-                    >
-                      <IoEyeSharp size={20} />
-                      <span className="text-sm font-medium">Xem ảnh</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-      </div>
+      <MultiImageUpload
+        label="Hình ảnh sau printer"
+        images={form.imgPrinter}
+        fieldName="imgPrinter" 
+        onUpload={handleImageUpload}
+        onRemove={(index) => handleRemoveImage('imgPrinter', index)}
+        onViewAll={() => openImagePreview(form.imgPrinter || [], 'Hình ảnh sau printer', 0)}
+        onViewSingle={(url, title) => openImagePreview(url, title)}
+      />
 
-      <div className="min-w-0 mb-3 mt-2">
-           <label className="block text-xs font-medium mb-1">Hình ảnh cleaning printer tự động</label>
-                <div className="">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload('imgPrinterClean', e)}
-                    className="border border-gray-300 rounded px-3 py-2 w-full"
-                  />
-                </div>
-                      <div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={(e) => handleImageUpload('imgPrinterClean', e)}
-                        className="hidden"
-                        id="camera-capture-printer-clean"
-                      />
-                      <label
-                      htmlFor="camera-capture-printer-clean"
-                      className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
-                    >
-                      {/* Thêm display: inline-block hoặc inline-flex */}
-                        <div className="inline-flex items-center">
-                          <FaCamera size={15} />
-                        </div>
-                        <div className="inline-flex items-center mx-2">
-                          Chụp ảnh cleaning printer
-                        </div>
-                    </label>
-                    </div>
-                
-                {/* Preview Section */}
-                {form.imgPrinterClean && (
-                <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
-                  <div className="flex items-center gap-3">
-                    <img 
-                      src={form.imgPrinterClean} 
-                      alt="Hình ảnh Cleaning Printer tự động" 
-                      className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-                      onClick={() => openImagePreview(form.imgPrinterClean!, "Hình ảnh cleaning printer tự động")} 
-                    />
-                    <button
-                      type="button"
-                      onClick={() => openImagePreview(form.imgPrinterClean!, "Hình ảnh cleaning printer tự động")}
-                      className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
-                    >
-                      <IoEyeSharp size={20} />
-                      <span className="text-sm font-medium">Xem ảnh</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-      </div>
+      <MultiImageUpload
+        label="Hình ảnh cleaning printer tự động"
+        images={form.imgPrinterClean}
+        fieldName="imgPrinterClean"
+        onUpload={handleImageUpload}
+        onRemove={(index) => handleRemoveImage('imgPrinterClean', index)}
+        onViewAll={() => openImagePreview(form.imgPrinterClean || [], 'Hình ảnh cleaning printer', 0)}
+        onViewSingle={(url, title) => openImagePreview(url, title)}
+      />
     </section>
 
     {/* SPI */}
@@ -1489,62 +1332,16 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
           </label>
         </div>
       </div>
-      <label className="block text-sm font-medium mb-1">Hình ảnh SPI</label>
-      <div className="my-2">
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleImageUpload('imgSPI', e)}
-          className="border border-gray-300 rounded px-3 py-2 w-full text-sm!"
-        />
-      </div>
-
-      <div>
-      <label className="block text-xs text-gray-600 mb-1">📸 Hoặc chụp ảnh</label>
-      <input
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={(e) => handleImageUpload('imgSPI', e)}
-        className="hidden"
-        id="camera-capture-spi"
+      <MultiImageUpload
+        label="Hình ảnh SPI"
+        images={form.imgSPI}
+        fieldName="imgSPI"
+        onUpload={handleImageUpload}
+        onRemove={(index) => handleRemoveImage('imgSPI', index)}
+        onViewAll={() => openImagePreview(form.imgSPI || [], 'Hình ảnh SPI', 0)}
+        onViewSingle={(url, title) => openImagePreview(url, title)}
       />
-      <label
-        htmlFor="camera-capture-spi"
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
-      >
-        {/* Thêm display: inline-block hoặc inline-flex */}
-        <div className="inline-flex items-center">
-          <FaCamera size={15} />
-        </div>
-        <div className="inline-flex items-center mx-2">
-          Chụp ảnh SPI
-        </div>
-      </label>
-    </div>
       
-      {/* Preview Section */}
-      {form.imgSPI && (
-      <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-        <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
-        <div className="flex items-center gap-3">
-          <img 
-            src={normalizeImageUrl(form.imgSPI)} 
-            alt="Hình ảnh SPI" 
-            className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-            onClick={() => openImagePreview(normalizeImageUrl(form.imgSPI!), "Hình ảnh SPI")} 
-          />
-          <button
-            type="button"
-            onClick={() => openImagePreview(normalizeImageUrl(form.imgSPI!), "Hình ảnh SPI")}
-            className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
-          >
-            <IoEyeSharp size={20} />
-            <span className="text-sm font-medium">Xem ảnh</span>
-          </button>
-        </div>
-      </div>
-    )}
     </div>
 
     {/* Mount */}
@@ -1599,62 +1396,15 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
         </div>
       </div>
 
-       <div className="min-w-0 mb-3 mt-2">
-           <label className="block text-xs font-medium mb-1">Hình ảnh sau mounter</label>
-                <div className="">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload('imgMounter', e)}
-                    className="border border-gray-300 rounded px-3 py-2 w-full"
-                  />
-                </div>
-                      <div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={(e) => handleImageUpload('imgMounter', e)}
-                        className="hidden"
-                        id="camera-capture-mounter-after"
-                      />
-                      <label
-                      htmlFor="camera-capture-mounter-after"
-                      className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
-                    >
-                      {/* Thêm display: inline-block hoặc inline-flex */}
-                        <div className="inline-flex items-center">
-                          <FaCamera size={15} />
-                        </div>
-                        <div className="inline-flex items-center mx-2">
-                          Chụp ảnh sau mounter
-                        </div>
-                    </label>
-                    </div>
-                
-                {/* Preview Section */}
-                {form.imgMounter && (
-                <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
-                  <div className="flex items-center gap-3">
-                    <img 
-                      src={form.imgMounter} 
-                      alt="Hình ảnh cleaning printer tự động" 
-                      className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-                      onClick={() => openImagePreview(form.imgMounter!, "Hình ảnh cleaning printer tự động")} 
-                    />
-                    <button
-                      type="button"
-                      onClick={() => openImagePreview(form.imgMounter!, "Hình ảnh cleaning printer tự động")}
-                      className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
-                    >
-                      <IoEyeSharp size={20} />
-                      <span className="text-sm font-medium">Xem ảnh</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-      </div>
+      <MultiImageUpload
+        label="Hình ảnh sau Mounter"
+        images={form.imgMounter}
+        fieldName="imgMounter"
+        onUpload={handleImageUpload}
+        onRemove={(index) => handleRemoveImage('imgMounter', index)}
+        onViewAll={() => openImagePreview(form.imgMounter || [], 'Hình ảnh sau Mounter', 0)}
+        onViewSingle={(url, title) => openImagePreview(url, title)}
+      />
     </section>
 
     {/* Reflow */}
@@ -1734,105 +1484,16 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
       Xray 3 board đầu tiên có OK hay không ?
     </label>
   </div>
-              {/** Hình ảnh xray */}
-  <div className="min-w-0 mb-3 mt-2">
-  <label className="block text-xs font-medium mb-1">Hình ảnh Xray</label>
-  
-  {/* Upload Input */}
-  <div className="">
-    <input
-      type="file"
-      accept="image/*"
-      onChange={(e) => handleImageUpload('imgXray', e)}
-      className="border border-gray-300 rounded px-3 py-2 w-full"
-    />
-  </div>
-  
-  {/* Camera Capture */}
-  <div>
-    <input
-      type="file"
-      accept="image/*"
-      capture="environment"
-      onChange={(e) => handleImageUpload('imgXray', e)}
-      className="hidden"
-      id="camera-capture-xray-image"
-    />
-    <label
-      htmlFor="camera-capture-xray-image"
-      className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
-    >
-      <div className="inline-flex items-center">
-        <FaCamera size={15} />
-      </div>
-      <div className="inline-flex items-center mx-2">
-        Chụp ảnh Xray
-      </div>
-    </label>
-  </div>
-  
-  {/* Preview Gallery - Hiển thị tất cả ảnh */}
-  {form.imgXray && form.imgXray.length > 0 && (
-    <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-      <p className="text-xs text-gray-600 mb-2">
-        Đã có {form.imgXray.length} ảnh:
-      </p>
-      
-      {/* Grid layout cho nhiều ảnh */}
-      <div className="grid grid-cols-2 gap-3">
-        {form.imgXray.map((imageUrl, index) => (
-          <div key={index} className="relative">
-            <img 
-              src={imageUrl} 
-              alt={`Hình ảnh xray ${index + 1}`} 
-              className="w-full h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-              onClick={() => openImagePreview(imageUrl, `Hình ảnh xray ${index + 1}`)} 
-            />
-            
-            {/* Nút xóa từng ảnh */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                // Xóa ảnh khỏi array
-                setForm(prev => ({
-                  ...prev,
-                  imgXray: prev.imgXray?.filter((_, i) => i !== index) || []
-                }));
-                showNotification('success', 'Đã xóa', `Đã xóa ảnh xray ${index + 1}`);
-              }}
-              className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg"
-            >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            
-            {/* Label số thứ tự */}
-            <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded">
-              #{index + 1}
-            </div>
-          </div>
-        ))}
-      </div>
-      
-      {/* Nút xem tất cả */}
-      <button
-        type="button"
-        onClick={() => {
-          if (form.imgXray && form.imgXray.length > 0) {
-            // Truyền toàn bộ array vào
-            openImagePreview(form.imgXray, 'Hình ảnh xray', 0);
-          }
-        }}
-        className="mt-3 w-full text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
-      >
-        <IoEyeSharp size={20} />
-        <span className="text-sm font-medium">Xem tất cả {form.imgXray.length} ảnh</span>
-      </button>
-    </div>
-  )}
-</div>
+  {/** Hình ảnh xray */}
+  <MultiImageUpload
+        label="Hình ảnh Xray"
+        images={form.imgXray}
+        fieldName="imgXray"
+        onUpload={handleImageUpload}
+        onRemove={(index) => handleRemoveImage('imgXray', index)}
+        onViewAll={() => openImagePreview(form.imgXray || [], 'Hình ảnh Xray', 0)}
+        onViewSingle={(url, title) => openImagePreview(url, title)}
+  />
   {/** maoi program */}
   <div className="min-w-0 mb-3">
     <label className="text-xs block mb-1">Chương trình mAoi</label>
@@ -1873,64 +1534,15 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
       type="text"
     />
   </div>
-  <label className="block text-xs font-medium mb-1">Hình ảnh AOI</label>
-  <div className="flex flex-col gap-2">
-    <div>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => handleImageUpload('imgAOI', e)}
-        className="flex-1 border border-gray-300 rounded px-3 py-2 w-full text-sm!"
-      />
-    </div>
-
-    <div>
-      <label className="block text-xs text-gray-600 mb-1">📸 Hoặc chụp ảnh</label>
-      <input
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={(e) => handleImageUpload('imgAOI', e)}
-        className="hidden"
-        id="camera-capture-aoi"
-      />
-      <label
-        htmlFor="camera-capture-aoi"
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
-      >
-        {/* Thêm display: inline-block hoặc inline-flex */}
-                      <div className="inline-flex items-center">
-                        <FaCamera size={15} />
-                      </div>
-                      <div className="inline-flex items-center mx-2">
-                        Chụp ảnh AOI
-                      </div>
-      </label>
-    </div>
-  </div>
-  
-  {/* Preview Section */}
-  {form.imgAOI && (
-      <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-        <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
-        <div className="flex items-center gap-3">
-          <img 
-            src={normalizeImageUrl(form.imgAOI)} 
-            alt="Hình ảnh AOI" 
-            className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-            onClick={() => openImagePreview(normalizeImageUrl(form.imgAOI!), "Hình ảnh AOI")} 
-          />
-          <button
-            type="button"
-            onClick={() => openImagePreview(normalizeImageUrl(form.imgAOI!), "Hình ảnh AOI")}
-            className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
-          >
-            <IoEyeSharp size={20} />
-            <span className="text-sm font-medium">Xem ảnh</span>
-          </button>
-        </div>
-      </div>
-    )}
+  <MultiImageUpload
+    label="Hình ảnh AOI"
+    images={form.imgAOI}
+    fieldName="imgAOI"
+    onUpload={handleImageUpload}
+    onRemove={(index) => handleRemoveImage('imgAOI', index)}
+    onViewAll={() => openImagePreview(form.imgAOI || [], 'Hình ảnh AOI', 0)}
+    onViewSingle={(url, title) => openImagePreview(url, title)}
+  />
 </div>
     {/* Output */}
     <section className="pb-3 border-b border-gray-200">
@@ -2019,62 +1631,15 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
           />
         </div>
 
-          <div className="min-w-0 mb-3 mt-2">
-           <label className="block text-xs font-medium mb-1">Hình ảnh vấn đề phát sinh</label>
-                <div className="">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload('imgIssue', e)}
-                    className="border border-gray-300 rounded px-3 py-2 w-full"
-                  />
-                </div>
-                      <div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={(e) => handleImageUpload('imgIssue', e)}
-                        className="hidden"
-                        id="camera-capture-issue-image"
-                      />
-                      <label
-                      htmlFor="camera-capture-issue-image"
-                      className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
-                    >
-                      {/* Thêm display: inline-block hoặc inline-flex */}
-                        <div className="inline-flex items-center">
-                          <FaCamera size={15} />
-                        </div>
-                        <div className="inline-flex items-center mx-2">
-                          Chụp ảnh vấn đề phát sinh
-                        </div>
-                    </label>
-                    </div>
-                
-                {/* Preview Section */}
-                {form.imgIssue && (
-                <div className="mt-0 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-xs text-gray-600 mb-2">Ảnh đã chọn:</p>
-                  <div className="flex items-center gap-3">
-                    <img 
-                      src={form.imgIssue} 
-                      alt="Hình ảnh vấn đề phát sinh" 
-                      className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-                      onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh vấn đề phát sinh")} 
-                    />
-                    <button
-                      type="button"
-                      onClick={() => openImagePreview(form.imgIssue!, "Hình ảnh vấn đề phát sinh")}
-                      className="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 py-2 px-3 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
-                    >
-                      <IoEyeSharp size={20} />
-                      <span className="text-sm font-medium">Xem ảnh</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-          </div>
+      <MultiImageUpload
+        label="Hình ảnh Vấn đề phát sinh"
+        images={form.imgIssue}
+        fieldName="imgIssue"
+        onUpload={handleImageUpload}
+        onRemove={(index) => handleRemoveImage('imgIssue', index)}
+        onViewAll={() => openImagePreview(form.imgIssue || [], 'Hình ảnh Vấn đề phát sinh', 0)}
+        onViewSingle={(url, title) => openImagePreview(url, title)}
+      />
         </div>
     </section>
   </div>

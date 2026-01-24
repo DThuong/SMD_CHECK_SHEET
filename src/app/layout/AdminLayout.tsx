@@ -5,6 +5,7 @@ import { HiMenu, HiX, HiLogout, HiUser } from "react-icons/hi";
 import logo from "../../assets/image/brand_image_3.webp";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import {logoutUser} from "../../redux/slices/authSlice";
+import NotificationBell from "../../components/general/NotificationBell";
 
 const AdminLayout = () => {
   // State quản lý trạng thái mở/đóng sidebar trên mobile
@@ -92,6 +93,8 @@ const AdminLayout = () => {
 
           {/* User Menu - Bên phải header, ẩn khi sidebar mở trên mobile */}
           <div className={`relative ml-auto ${sidebarOpen ? 'hidden md:block' : 'block'}`}>
+            <div className="flex lg:flex-row">
+              <NotificationBell />
             <button
               className="flex items-center mx-2 px-3 py-2 rounded hover:bg-gray-100"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -99,6 +102,7 @@ const AdminLayout = () => {
               <HiUser className="w-5 h-5 text-gray-700" />
               <span className="hidden sm:inline text-gray-700">Welcome, {user?.username}</span>
             </button>
+            </div>
 
             {/* Dropdown menu */}
             {userMenuOpen && (

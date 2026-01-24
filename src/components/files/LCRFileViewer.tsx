@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector, useNotification } from '../../redux/hooks';
 import { downloadLCRExcelFile } from '../../redux/slices/FileSlice';

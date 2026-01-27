@@ -2,7 +2,7 @@ import ViewDetailButton from "../general/ViewDetailButton"
 import { useState, useEffect, useRef, memo } from "react"
 import Modal from "../general/Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { fetchPQCCheck, updatePQCCheck, uploadPQCCheckIssueImage } from "../../redux/slices/subTableSlice";
+import { fetchPQCCheck, updatePQCCheck, uploadPQCCheckIssueImage, deletePQCCheckImage, deletePQCCheckIssueImage } from "../../redux/slices/subTableSlice";
 import { uploadPQCCheckImage, type PQCCheckData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
@@ -47,6 +47,30 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
 
       const {t} = useTranslation('pqcCheck');
       const {t: t2} = useTranslation('common');
+      const deletingRef = useRef(false);
+
+      //  useEffect #1: Fetch data khi ID thay đổi
+      useEffect(() => {
+        if (pqcCheckId) {
+          dispatch(fetchPQCCheck(pqcCheckId));
+        }
+      }, [pqcCheckId, dispatch]);
+
+      //  useEffect #2: Sync form với Redux state 
+      useEffect(() => {
+        if (pqcCheck && !hasUserEditedRef.current && !isUploadingRef.current && !deletingRef.current) {
+          setForm(pqcCheck);
+        }
+      }, [pqcCheck]); 
+
+      //  useEffect #3: Reset flags khi đóng modal
+      useEffect(() => {
+        if (!open) {
+          hasUserEditedRef.current = false;
+          isUploadingRef.current = false;
+          deletingRef.current = false;
+        }
+      }, [open]);
 
       // xử lý upload hình ảnh + preview modal
     const [imagePreview, setImagePreview] = useState<{
@@ -135,44 +159,49 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
       console.error('Failed to upload image:', error);
       showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
     } finally {
-      //  Reset flag SAU KHI upload xong (thành công hay thất bại)
+      // Reset flag SAU KHI upload xong (thành công hay thất bại)
       isUploadingRef.current = false;
     }
   };
 
-  const handleRemoveImage = (field: 'imgIC' | 'imgIssue', index: number) => {
-  setForm(prev => ({
-    ...prev,
-    [field]: (prev[field] as string[])?.filter((_, i) => i !== index) || []
-  }));
-  showNotification('success', 'Đã xóa', `Đã xóa ảnh ${field === 'imgIC' ? 'IC' : 'vấn đề phát sinh'}`);
+  const handleRemoveImage = async (field: 'imgIC' | 'imgIssue', index: number) => {
+  if (!pqcCheckId) {
+    showNotification('error', 'Lỗi xóa', 'Không tìm thấy PQC Check ID');
+    return;
+  }
+
+  const imageUrl = form[field]?.[index];
+  if (!imageUrl) return;
+
+  try {
+    deletingRef.current = true;
+    // Gọi API delete tương ứng với field
+    if (field === 'imgIC') {
+      await dispatch(deletePQCCheckImage({ 
+        pqcCheckId: Number(pqcCheckId), 
+        imageUrl 
+      })).unwrap();
+    } else if (field === 'imgIssue') {
+      await dispatch(deletePQCCheckIssueImage({ 
+        pqcCheckId: Number(pqcCheckId), 
+        imageUrl 
+      })).unwrap();
+    }
+
+    // Cập nhật local state
+    setForm(prev => ({
+      ...prev,
+      [field]: (prev[field] as string[])?.filter((_, i) => i !== index) || []
+    }));
+
+    showNotification('success', 'Đã xóa', `Đã xóa ảnh ${field === 'imgIC' ? 'IC' : 'vấn đề phát sinh'}`);
+  } catch (error) {
+    console.error('Failed to delete image:', error);
+    showNotification('error', 'Lỗi xóa', 'Không thể xóa ảnh');
+  } finally {
+    deletingRef.current = false; // ← Reset flag
+  }
 };
-  
-  // fetch data khi pqcCheck thay đổi
-  useEffect(() => {
-    if (pqcCheckId) {
-      dispatch(fetchPQCCheck(pqcCheckId));
-    }
-  }, [pqcCheckId, dispatch]);
-
-    useEffect(() => {
-    if (pqcCheck && !hasUserEditedRef.current && !isUploadingRef.current) {
-      setForm(pqcCheck);
-    }
-  }, [pqcCheck]);
-
-  useEffect(() => {
-    if (open && pqcCheck && !hasUserEditedRef.current && !isUploadingRef.current) {
-      setForm(pqcCheck);
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) {
-      hasUserEditedRef.current = false;
-      isUploadingRef.current = false;
-    }
-  }, [open]);
   
   if (!pqcCheckId) {
     return (
@@ -452,7 +481,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
 
         {/* Modal chỉnh sửa — style & input */}
       <Modal open={open} title="Chi tiết PQC Check" onClose={() => setOpen(false)} onSave={submit}>
-        <div className="grid gap-3 max-h-[60vh] overflow-y-auto">
+        <div className="grid gap-3 max-h-[60vh] overflow-y-auto scrollbar-hide">
           <label className="text-xs">
             IC nạp kế hoạch
             <input
@@ -557,7 +586,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
           </div>
 
         <MultiImageUpload
-          label="Hình ảnh IC"
+          label="IC"
           images={form.imgIC}
           fieldName="imgIC"
           onUpload={handleImageUpload}
@@ -581,7 +610,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
     </label>
 
     <MultiImageUpload
-      label="Hình ảnh Vấn đề phát sinh"
+      label="Vấn đề phát sinh"
       images={form.imgIssue}
       fieldName="imgIssue"
       onUpload={handleImageUpload}
@@ -596,7 +625,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
         isOpen={imagePreview.isOpen}
         imageUrl={imagePreview.imageUrl}
         title={imagePreview.title}
-        initialIndex={imagePreview.initialIndex} // ← Thêm prop này
+        initialIndex={imagePreview.initialIndex}
         onClose={closeImagePreview}
       />
     </div>

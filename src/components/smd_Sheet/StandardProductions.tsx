@@ -3,7 +3,7 @@ import ViewDetailButton from "../general/ViewDetailButton";
 import { useEffect, useRef, useState, memo } from "react";
 import Modal from "../general/Modal";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { fetchStandardProduction, updateStandardProduction, uploadStandardProductionImage, uploadStandardProductionIssueImage } from "../../redux/slices/subTableSlice";
+import { fetchStandardProduction, updateStandardProduction, uploadStandardProductionImage, uploadStandardProductionIssueImage, deleteStandardProductionImage, deleteStandardProductionIssueImage } from "../../redux/slices/subTableSlice";
 import type { StandardProductionData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
@@ -51,66 +51,63 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
   const {t} = useTranslation('standardProduction');
   const {t: t2} = useTranslation('common');
 
-const [imagePreview, setImagePreview] = useState<{
-  isOpen: boolean;
-  imageUrl: string | string[]; 
-  title: string;
-  initialIndex?: number;
-}>({
-  isOpen: false,
-  imageUrl: "",
-  title: "",
-  initialIndex: 0
-});
+  const deletingRef = useRef(false);
 
-// Hàm mở preview cũng cần cập nhật
-const openImagePreview = (imageUrl: string | string[], title: string, initialIndex = 0) => {
-  setImagePreview({
-    isOpen: true,
-    imageUrl,
-    title,
-    initialIndex
-  });
-};
-
-const closeImagePreview = () => {
-  setImagePreview({
+  const [imagePreview, setImagePreview] = useState<{
+    isOpen: boolean;
+    imageUrl: string | string[]; 
+    title: string;
+    initialIndex?: number;
+  }>({
     isOpen: false,
     imageUrl: "",
     title: "",
     initialIndex: 0
   });
-};
 
-    // fetch data khi StandardProduction thay đổi
-    useEffect(() => {
-      if (standardProductionId) {
-        dispatch(fetchStandardProduction(standardProductionId));
-      }
-    }, [standardProductionId, dispatch]);
+  // Hàm mở preview cũng cần cập nhật
+  const openImagePreview = (imageUrl: string | string[], title: string, initialIndex = 0) => {
+    setImagePreview({
+      isOpen: true,
+      imageUrl,
+      title,
+      initialIndex
+    });
+  };
 
-    // Sync form khi data từ Redux về (lần đầu load)
-    useEffect(() => {
-      if (standardProduction && !hasUserEditedRef.current && !isUploadingRef.current) {
-        setForm(standardProduction);
-      }
-    }, [standardProduction]);
+  const closeImagePreview = () => {
+    setImagePreview({
+      isOpen: false,
+      imageUrl: "",
+      title: "",
+      initialIndex: 0
+    });
+  };
 
-    // GIỮ NGUYÊN: Sync khi mở modal
-    useEffect(() => {
-      if (open && standardProduction && !hasUserEditedRef.current && !isUploadingRef.current) {
-        setForm(standardProduction);
-      }
-      if (!open) {
-        hasUserEditedRef.current = false;
-        isUploadingRef.current = false;
-      }
-    }, [open]);
+  // useEffect #1: Fetch data khi ID thay đổi
+  useEffect(() => {
+    if (standardProductionId) {
+      dispatch(fetchStandardProduction(standardProductionId));
+    }
+  }, [standardProductionId, dispatch]);
 
-    // Reset flags khi đóng modal
-    useEffect(() => {
-      
-    }, [open]);
+  // useEffect #2: Sync form với Redux state
+  useEffect(() => {
+    if (standardProduction && !hasUserEditedRef.current && !isUploadingRef.current && !deletingRef.current) {
+      setForm(standardProduction);
+    }
+  }, [standardProduction]);
+
+  // useEffect #3: Reset flags khi đóng modal
+  useEffect(() => {
+    if (!open) {
+      hasUserEditedRef.current = false;
+      isUploadingRef.current = false;
+      deletingRef.current = false;
+    }
+  }, [open]);
+
+
     if (!standardProductionId) {
     return (
       <div className="p-4 bg-gray-50 rounded border border-gray-200">
@@ -172,15 +169,44 @@ const closeImagePreview = () => {
     }
   };
 
-    const handleRemoveImage = (field: 'imgStandard' | 'imgIssue', index: number) => {
-      hasUserEditedRef.current = true; // Đánh dấu user đã edit
-      setForm(prev => ({
-        ...prev,
-        [field]: (prev[field] as string[])?.filter((_, i) => i !== index) || []
-      }));
-      showNotification('success', 'Đã xóa', `Đã xóa ảnh ${field === 'imgStandard' ? 'Tiêu Chuẩn Sản Xuất' : 'vấn đề phát sinh'}`);
-    };
-  
+    const handleRemoveImage = async (field: 'imgStandard' | 'imgIssue', index: number) => {
+      if (!standardProductionId) {
+        showNotification('error', 'Lỗi xóa', 'Không tìm thấy StandardProduction ID');
+        return;
+      }
+
+      const imageUrl = form[field]?.[index];
+      if (!imageUrl) return;
+
+      try {
+        deletingRef.current = true;
+        // Gọi API delete tương ứng với field
+        if (field === 'imgStandard') {
+          await dispatch(deleteStandardProductionImage({ 
+            standardProductionId: Number(standardProductionId), 
+            imageUrl 
+          })).unwrap();
+        } else if (field === 'imgIssue') {
+          await dispatch(deleteStandardProductionIssueImage({ 
+            standardProductionId: Number(standardProductionId), 
+            imageUrl 
+          })).unwrap();
+        }
+
+        // Cập nhật local state
+        setForm(prev => ({
+          ...prev,
+          [field]: (prev[field] as string[])?.filter((_, i) => i !== index) || []
+        }));
+
+        showNotification('success', 'Đã xóa', `Đã xóa ảnh ${field === 'imgStandard' ? 'Tiêu Chuẩn Sản Xuất' : 'vấn đề phát sinh'}`);
+      } catch (error) {
+        console.error('Failed to delete image:', error);
+        showNotification('error', 'Lỗi xóa', 'Không thể xóa ảnh');
+      } finally {
+        deletingRef.current = false;
+      }
+};
 
   // Wrapper cho set() để đánh dấu user đã edit
   const set = <K extends keyof StandardProductionData>(k: K, v: StandardProductionData[K]) => {
@@ -537,7 +563,7 @@ const closeImagePreview = () => {
     </div>
 
     <MultiImageUpload
-      label="Hình ảnh Tiêu Chuẩn Sản Xuất"
+      label="Tiêu Chuẩn Sản Xuất"
       images={form.imgStandard}
       fieldName="imgStandard"
       onUpload={handleImageUpload}
@@ -557,7 +583,7 @@ const closeImagePreview = () => {
     </label>
 
      <MultiImageUpload
-      label="Hình ảnh Vấn đề phát sinh"
+      label="Vấn đề phát sinh"
       images={form.imgIssue}
       fieldName="imgIssue"
       onUpload={handleImageUpload}

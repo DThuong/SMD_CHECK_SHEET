@@ -2,7 +2,13 @@ import ViewDetailButton from "../general/ViewDetailButton"
 import Modal from "../general/Modal";
 import { useEffect, useState, useRef, memo } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { fetchStandardVehicle, updateStandardVehicle,uploadAOIImage, uploadSPIImage, uploadStandardVehicleIssueImage, uploadMounterImage, uploadPrinterImage, uploadPrinterCleanImage } from "../../redux/slices/subTableSlice";
+import { deleteSPIImage,
+  deleteAOIImage,
+  deleteStandardVehicleIssueImage,
+  deleteMounterImage,
+  deletePrinterImage,
+  deletePrinterCleanImage,
+  deleteXRayImage, fetchStandardVehicle, updateStandardVehicle,uploadAOIImage, uploadSPIImage, uploadStandardVehicleIssueImage, uploadMounterImage, uploadPrinterImage, uploadPrinterCleanImage } from "../../redux/slices/subTableSlice";
 import ImagePreviewModal from "../files/ImagePreviewModal";
 import ImageViewIcon from "../files/ImageViewIcon";
 import type { StandardVehicleData } from "../../redux/slices/subTableSlice";
@@ -91,6 +97,7 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 
     const {t} = useTranslation('standardVehicle');
     const {t: t2} = useTranslation('common');
+    const deletingRef = useRef(false);
 
     // Xử lý upload hình ảnh preview modal
     const [imagePreview, setImagePreview] = useState<{
@@ -124,30 +131,24 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
       initialIndex: 0
     });
   };
-
-  // fetch data khi standardVehicle thay đổi
-  useEffect(() => {
+  // fetch data khi id thay đổi
+   useEffect(() => {
     if (standardVehicleId) {
       dispatch(fetchStandardVehicle(standardVehicleId));
     }
   }, [standardVehicleId, dispatch]);
 
   useEffect(() => {
-    if (standardVehicle && !hasUserEditedRef.current && !isUploadingRef.current) {
+    if (standardVehicle && !hasUserEditedRef.current && !isUploadingRef.current && !deletingRef.current) {
       setForm(standardVehicle);
     }
   }, [standardVehicle]);
 
   useEffect(() => {
-    if (open && standardVehicle && !hasUserEditedRef.current && !isUploadingRef.current) {
-      setForm(standardVehicle);
-    }
-  }, [open]);
-
-  useEffect(() => {
     if (!open) {
       hasUserEditedRef.current = false;
       isUploadingRef.current = false;
+      deletingRef.current = false;
     }
   }, [open]);
   
@@ -232,12 +233,78 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
 };
 
 // Handler để xóa ảnh
-const handleRemoveImage = (field: keyof StandardVehicleData, index: number) => {
-  setForm(prev => ({
-    ...prev,
-    [field]: (prev[field] as string[])?.filter((_, i) => i !== index) || []
-  }));
-  showNotification('success', 'Đã xóa', `Đã xóa ảnh ${field}`);
+const handleRemoveImage = async (field: keyof StandardVehicleData, index: number) => {
+  if (!standardVehicleId) {
+    showNotification('error', 'Lỗi xóa', 'Không tìm thấy StandardVehicle ID');
+    return;
+  }
+
+  const imageUrl = (form[field] as string[])?.[index];
+  if (!imageUrl) return;
+
+  try {
+    deletingRef.current = true;
+    // Gọi API delete tương ứng với field
+    switch (field) {
+      case 'imgSPI':
+        await dispatch(deleteSPIImage({ 
+          standardVehicleId: Number(standardVehicleId), 
+          imageUrl 
+        })).unwrap();
+        break;
+      case 'imgAOI':
+        await dispatch(deleteAOIImage({ 
+          standardVehicleId: Number(standardVehicleId), 
+          imageUrl 
+        })).unwrap();
+        break;
+      case 'imgIssue':
+        await dispatch(deleteStandardVehicleIssueImage({ 
+          standardVehicleId: Number(standardVehicleId), 
+          imageUrl 
+        })).unwrap();
+        break;
+      case 'imgMounter':
+        await dispatch(deleteMounterImage({ 
+          standardVehicleId: Number(standardVehicleId), 
+          imageUrl 
+        })).unwrap();
+        break;
+      case 'imgPrinter':
+        await dispatch(deletePrinterImage({ 
+          standardVehicleId: Number(standardVehicleId), 
+          imageUrl 
+        })).unwrap();
+        break;
+      case 'imgPrinterClean':
+        await dispatch(deletePrinterCleanImage({ 
+          standardVehicleId: Number(standardVehicleId), 
+          imageUrl 
+        })).unwrap();
+        break;
+      case 'imgXray':
+        await dispatch(deleteXRayImage({ 
+          standardVehicleId: Number(standardVehicleId), 
+          imageUrl 
+        })).unwrap();
+        break;
+      default:
+        throw new Error(`Unsupported field: ${field}`);
+    }
+
+    // Cập nhật local state
+    setForm(prev => ({
+      ...prev,
+      [field]: (prev[field] as string[])?.filter((_, i) => i !== index) || []
+    }));
+
+    showNotification('success', 'Đã xóa', `Đã xóa ảnh ${field} thành công`);
+  } catch (error) {
+    console.error('Failed to delete image:', error);
+    showNotification('error', 'Lỗi xóa', `Không thể xóa ảnh ${field}`);
+  }  finally {
+      deletingRef.current = false; // ← Reset flag
+  }
 };
 
   // Wrapper cho set() để đánh dấu user đã edit
@@ -996,7 +1063,10 @@ const handleRemoveImage = (field: keyof StandardVehicleData, index: number) => {
                 />
               ))
             ) : (
-              <span className="text-gray-400 text-xs">Chưa có hình ảnh</span>
+              <span className="text-gray-400 text-xs" style={{ 
+                              fontSize: '16px',
+                              touchAction: 'manipulation'
+                            }}>Chưa có hình ảnh</span>
             )}
           </div>
         </div>
@@ -1138,9 +1208,9 @@ const handleRemoveImage = (field: keyof StandardVehicleData, index: number) => {
 
    {/* Modal */}
     <Modal open={open} title="Chi tiết Vehicle Check" onClose={() => setOpen(false)} onSave={submit}>
-  <div className="grid gap-4 max-h-[70vh] overflow-y-auto px-1 scrollbar-hide">
+  <div className="grid gap-4 max-h-[70vh] overflow-y-auto scrollbar-hide">
     {/* Printer */}
-    <section className="pb-3 border-b border-gray-200">
+    <section className="pb-3 border-b border-gray-200 scrollbar-hide">
       <h4 className="text-sm font-semibold mb-3 text-gray-700">Printer</h4>
 
       <div className="grid grid-cols-1 gap-3 mb-3">
@@ -1274,7 +1344,7 @@ const handleRemoveImage = (field: keyof StandardVehicleData, index: number) => {
       </div>
 
       <MultiImageUpload
-        label="Hình ảnh sau printer"
+        label="sau printer"
         images={form.imgPrinter}
         fieldName="imgPrinter" 
         onUpload={handleImageUpload}
@@ -1284,7 +1354,7 @@ const handleRemoveImage = (field: keyof StandardVehicleData, index: number) => {
       />
 
       <MultiImageUpload
-        label="Hình ảnh cleaning printer tự động"
+        label="cleaning printer"
         images={form.imgPrinterClean}
         fieldName="imgPrinterClean"
         onUpload={handleImageUpload}
@@ -1333,7 +1403,7 @@ const handleRemoveImage = (field: keyof StandardVehicleData, index: number) => {
         </div>
       </div>
       <MultiImageUpload
-        label="Hình ảnh SPI"
+        label="SPI"
         images={form.imgSPI}
         fieldName="imgSPI"
         onUpload={handleImageUpload}
@@ -1397,7 +1467,7 @@ const handleRemoveImage = (field: keyof StandardVehicleData, index: number) => {
       </div>
 
       <MultiImageUpload
-        label="Hình ảnh sau Mounter"
+        label="sau Mounter"
         images={form.imgMounter}
         fieldName="imgMounter"
         onUpload={handleImageUpload}
@@ -1486,7 +1556,7 @@ const handleRemoveImage = (field: keyof StandardVehicleData, index: number) => {
   </div>
   {/** Hình ảnh xray */}
   <MultiImageUpload
-        label="Hình ảnh Xray"
+        label="Xray"
         images={form.imgXray}
         fieldName="imgXray"
         onUpload={handleImageUpload}
@@ -1535,7 +1605,7 @@ const handleRemoveImage = (field: keyof StandardVehicleData, index: number) => {
     />
   </div>
   <MultiImageUpload
-    label="Hình ảnh AOI"
+    label="AOI"
     images={form.imgAOI}
     fieldName="imgAOI"
     onUpload={handleImageUpload}
@@ -1632,7 +1702,7 @@ const handleRemoveImage = (field: keyof StandardVehicleData, index: number) => {
         </div>
 
       <MultiImageUpload
-        label="Hình ảnh Vấn đề phát sinh"
+        label="Vấn đề phát sinh"
         images={form.imgIssue}
         fieldName="imgIssue"
         onUpload={handleImageUpload}

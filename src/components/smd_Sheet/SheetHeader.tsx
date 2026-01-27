@@ -528,7 +528,7 @@ const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !=
           onClose={handleCloseModal}
           onSave={submit}
         >
-          <div className="grid gap-4 max-h-[60vh] overflow-y-auto">
+          <div className="grid gap-4 max-h-[60vh] overflow-y-auto scrollbar-hide">
             {uploadLoading && (
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
                 <p className="text-sm text-blue-600 font-semibold">⏳ Đang tải...</p>

@@ -103,7 +103,7 @@ export default function Modal({ open, title, onClose, onSave, disabledSave, chil
 
         <div 
           ref={contentRef}
-          className="overflow-auto flex-1"
+          className="overflow-auto flex-1 scrollbar-hide"
           style={{
             WebkitOverflowScrolling: 'touch',
           }}

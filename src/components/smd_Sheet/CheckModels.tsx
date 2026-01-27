@@ -13,7 +13,7 @@ import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import { formatDateTime } from "../../utils/formatTime";
 import { useTranslation } from "react-i18next";
-import { fetchCheckModel } from "../../redux/slices/subTableSlice";
+import { fetchCheckModel, deleteCheckModelIssueImage } from "../../redux/slices/subTableSlice";
 import MultiImageUpload from "../files/MultiImageUpload";
 const initialFormState: CheckModelData = {
   lineChange: "",
@@ -48,6 +48,28 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
   const isSaved = completedTables.includes('CheckModel');
   const {t} = useTranslation('checkModel');
   const {t: t2} = useTranslation('common');
+  const deletingRef = useRef(false);
+
+  // fetch data khi id thay đổi
+  useEffect(() => {
+    if (checkModelId) {
+      dispatch(fetchCheckModel(checkModelId));
+    }
+  }, [checkModelId, dispatch]);
+
+  useEffect(() => {
+    if (checkModel && !hasUserEditedRef.current && !isUploadingRef.current && !deletingRef.current) {
+      setForm(checkModel);
+    }
+  }, [checkModel]);
+
+  useEffect(() => {
+    if (!open) {
+      hasUserEditedRef.current = false;
+      isUploadingRef.current = false;
+      deletingRef.current = false; // ← Reset khi đóng modal
+    }
+  }, [open]);
 
 const [imagePreview, setImagePreview] = useState<{
   isOpen: boolean;
@@ -121,19 +143,35 @@ const closeImagePreview = () => {
       }
     };
 
-  const handleRemoveImage = (index: number) => {
-    setForm(prev => ({
-      ...prev,
-      imgIssue: prev.imgIssue?.filter((_, i) => i !== index) || []
-    }));
-    showNotification('success', 'Đã xóa', 'Đã xóa ảnh thành công');
-  };
+  const handleRemoveImage = async (index: number) => {
+      if(!checkModelId) {
+        showNotification('error', 'Lỗi xóa', 'Không tìm thấy CheckModel ID');
+        return;
+      }
+      const imageUrl = form.imgIssue?.[index];
+      if (!imageUrl) return;
+      try {
+      deletingRef.current = true;
+      // Gọi API delete
+      await dispatch(deleteCheckModelIssueImage({ 
+        checkModelId: Number(checkModelId), 
+        imageUrl 
+      })).unwrap();
 
-  useEffect(() => {
-  if (checkModel && !hasUserEditedRef.current && !isUploadingRef.current) {
-    setForm(checkModel);
-  }
-}, [checkModel]);
+      // Cập nhật local state
+      setForm(prev => ({
+        ...prev,
+        imgIssue: prev.imgIssue?.filter((_, i) => i !== index) || []
+      }));
+
+      showNotification('success', 'Đã xóa', 'Đã xóa ảnh thành công');
+    } catch (error) {
+      console.error('Failed to delete image:', error);
+      showNotification('error', 'Lỗi xóa', 'Không thể xóa ảnh');
+    } finally {
+        deletingRef.current = false; // ← Reset flag SAU khi xong
+    }
+  };
 
  const set = <K extends keyof CheckModelData>(k: K, v: CheckModelData[K]) => {
   hasUserEditedRef.current = true;
@@ -404,7 +442,7 @@ const closeImagePreview = () => {
                 title="Hình ảnh Vấn đề phát sinh"
                 onView={openImagePreview}
               />
-          </div>
+            </div>
           </div>
         </div>
       </div>
@@ -424,7 +462,6 @@ const closeImagePreview = () => {
           setOpen(false);
         }}
         onSave={submit}
-        // disabledSave={form.workOrder?.replace(/\s/g, '').length !== 14}
       >
         <div className="grid gap-3 max-h-[60vh] overflow-y-auto scrollbar-hide">
           {/* Line đổi */}
@@ -692,7 +729,7 @@ const closeImagePreview = () => {
           </label>
           {/** imgIssue */}
           <MultiImageUpload
-            label="Hình ảnh Vấn đề phát sinh"
+            label="Vấn đề phát sinh"
             images={form.imgIssue}
             fieldName="imgIssue"
             onUpload={handleImageUpload}
@@ -707,7 +744,7 @@ const closeImagePreview = () => {
         isOpen={imagePreview.isOpen}
         imageUrl={imagePreview.imageUrl}
         title={imagePreview.title}
-        initialIndex={imagePreview.initialIndex} // ← Thêm prop này
+        initialIndex={imagePreview.initialIndex}
         onClose={closeImagePreview}
       />
     </div>

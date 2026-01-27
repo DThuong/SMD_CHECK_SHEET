@@ -3,7 +3,7 @@ import { useEffect, useState, memo, useRef } from "react";
 import Modal from "../general/Modal";
 import ViewDetailButton from "../general/ViewDetailButton";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { updateTimeChangeModel, fetchTimeChangeModel, uploadTimeChangeModelIssueImage } from "../../redux/slices/subTableSlice";
+import { updateTimeChangeModel, fetchTimeChangeModel, uploadTimeChangeModelIssueImage, deleteTimeChangeModelIssueImage } from "../../redux/slices/subTableSlice";
 import type { TimeChangeModelData } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
@@ -42,6 +42,7 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
 
       const isUploadingRef = useRef(false);
       const hasUserEditedRef = useRef(false);
+      const deletingRef = useRef(false);
 
       const [imagePreview, setImagePreview] = useState<{
         isOpen: boolean;
@@ -74,15 +75,15 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
         });
       };
 
-      // fetch data khi timeChangeModel thay đổi
+      // fetch data khi id thay đổi
       useEffect(() => {
         if (timeChangeModelId) {
           dispatch(fetchTimeChangeModel(timeChangeModelId));
         }
       }, [timeChangeModelId, dispatch]);
-      // sync form với redux store thay vì sử dụng context
+
       useEffect(() => {
-        if (timeChangeModel && !hasUserEditedRef.current && !isUploadingRef.current) {
+        if (timeChangeModel && !hasUserEditedRef.current && !isUploadingRef.current && !deletingRef.current) {
           setForm(timeChangeModel);
         }
       }, [timeChangeModel]);
@@ -91,6 +92,7 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
         if (!open) {
           hasUserEditedRef.current = false;
           isUploadingRef.current = false;
+          deletingRef.current = false;
         }
       }, [open]);
 
@@ -132,13 +134,37 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
           }
         };
         
-          const handleRemoveImage = (index: number) => {
-            setForm(prev => ({
-              ...prev,
-              imgIssue: prev.imgIssue?.filter((_, i) => i !== index) || []
-            }));
-            showNotification('success', 'Đã xóa', 'Đã xóa ảnh thành công');
-          };
+    const handleRemoveImage = async (index: number) => {
+      if (!timeChangeModelId) {
+        showNotification('error', 'Lỗi xóa', 'Không tìm thấy TimeChangeModel ID');
+        return;
+      }
+
+      const imageUrl = form.imgIssue?.[index];
+      if (!imageUrl) return;
+
+      try {
+        deletingRef.current = true;
+        // Gọi API delete từ backend
+        await dispatch(deleteTimeChangeModelIssueImage({ 
+          timeChangeModelId: Number(timeChangeModelId), 
+          imageUrl 
+        })).unwrap();
+
+        // Cập nhật local state
+        setForm(prev => ({
+          ...prev,
+          imgIssue: prev.imgIssue?.filter((_, i) => i !== index) || []
+        }));
+
+        showNotification('success', 'Đã xóa', 'Đã xóa ảnh thành công');
+      } catch (error) {
+        console.error('Failed to delete image:', error);
+        showNotification('error', 'Lỗi xóa', 'Không thể xóa ảnh');
+      } finally {
+        deletingRef.current = false;
+      }
+    };
   
        const set = <K extends keyof TimeChangeModelData>(k: K, v: TimeChangeModelData[K]) => {
         hasUserEditedRef.current = true;
@@ -345,7 +371,7 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
   onClose={() => setOpen(false)}
   onSave={submit}
 >
-  <div className="grid gap-3 max-h-[60vh] overflow-y-auto px-1">
+  <div className="grid gap-3 max-h-[60vh] overflow-y-auto scrollbar-hide">
     {/* Time change model Section */}
     <div className="pb-3 border-b border-gray-200">
       <div className="grid grid-cols-2 gap-3 mb-3">
@@ -433,7 +459,7 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
 
       {/** Hình ảnh vấn đề phát sinh */}
       <MultiImageUpload
-        label="Hình ảnh Vấn đề phát sinh"
+        label="Vấn đề phát sinh"
         images={form.imgIssue}
         fieldName="imgIssue"
         onUpload={handleImageUpload}

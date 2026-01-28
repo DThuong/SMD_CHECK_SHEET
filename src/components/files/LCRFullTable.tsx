@@ -98,7 +98,7 @@ const LCRFullTable = ({ lcrData }: LCRFullTableProps) => {
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Header với Statistics */}
       <div className="p-4 border-b border-gray-200 bg-linear-to-r from-green-50 to-white">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="flex flex-row items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-gray-800">LCR File Data - Full View</h2>
             <p className="text-sm text-gray-600 mt-1">
@@ -160,7 +160,7 @@ const LCRFullTable = ({ lcrData }: LCRFullTableProps) => {
 
       {/* Filters & Search */}
       <div className="p-4 border-b border-gray-200 bg-gray-50">
-        <div className="flex flex-col md:flex-row gap-3">
+        <div className="flex flex-row gap-3">
           <div className="flex-1">
             <input
               type="text"

@@ -87,17 +87,13 @@ const ReflowPDFViewer = ({ fileUrl, fileData }: ReflowPDFViewerProps) => {
       <div className="border-2 border-gray-400 rounded-lg overflow-hidden bg-gray-100 shadow-lg">
         <iframe
           src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
-          className="w-full h-[600px] md:h-[800px] border-none"
+          className="w-full h-[800px] border-none"
           title="Reflow PDF Viewer"
-          onError={(e) => {
-            console.error('iframe error:', e);
-            setError('Failed to load PDF in iframe. Try opening in new tab.');
-          }}
         />
       </div>
 
       {/* Action buttons */}
- <div className="flex flex-wrap gap-3 mt-3">
+ <div className="flex gap-3 mt-3">
   {/* Download */}
   <a
     href={pdfUrl}

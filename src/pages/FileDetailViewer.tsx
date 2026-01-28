@@ -21,6 +21,7 @@ const FileDetailViewer = () => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const [lcrViewMode, setLcrViewMode] = useState<LcrViewMode>('full');
+  const [isMobile, setIsMobile] = useState(false);
 
   const from = (location.state as any)?.from;
   const returnPath = (location.state as any)?.returnPath;
@@ -34,6 +35,33 @@ const FileDetailViewer = () => {
   );
 
   const { t } = useTranslation('fileDetail');
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+  // Disable viewport scaling để giữ nguyên desktop view
+  const viewport = document.querySelector('meta[name="viewport"]');
+  const originalContent = viewport?.getAttribute('content');
+  
+  if (viewport) {
+    viewport.setAttribute('content', 'width=1280, initial-scale=0.5, user-scalable=yes');
+  }
+  
+  return () => {
+    if (viewport && originalContent) {
+      viewport.setAttribute('content', originalContent);
+    }
+  };
+}, []);
 
   // Load files
   useEffect(() => {
@@ -140,9 +168,9 @@ const FileDetailViewer = () => {
   const reflowUrl = reflowFileUrl || currentSheet.pdfFileUrl;
 
   return (
-    <div className="container p-4 max-w-8xl mx-auto">
+    <div className={`container mx-auto ${isMobile ? 'p-2 max-w-full min-w-[1200px]' : 'p-4 max-w-8xl'}`}>
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-4">
         <button
           onClick={handleGoBack}
           className="mb-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition inline-flex items-center gap-2"
@@ -153,7 +181,7 @@ const FileDetailViewer = () => {
           {t('backButton')}
         </button>
         
-        <h1 className="text-2xl font-bold text-gray-800">
+        <h1 className={`font-bold text-gray-800 ${isMobile ? 'text-xl' : 'text-2xl'}`}>
           {t('title')}
         </h1>
         <p className="text-sm text-gray-600 mt-1">

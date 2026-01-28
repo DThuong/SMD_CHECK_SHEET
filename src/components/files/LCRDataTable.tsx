@@ -83,7 +83,7 @@ const LCRDataTable = ({ lcrData }: LCRDataTableProps) => {
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Header với Statistics */}
       <div className="p-4 border-b border-gray-200 bg-linear-to-r from-green-50 to-white">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="flex flex-row items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-gray-800">LCR File Data</h2>
             <p className="text-sm text-gray-600 mt-1">
@@ -113,7 +113,7 @@ const LCRDataTable = ({ lcrData }: LCRDataTableProps) => {
 
       {/* Filters & Search */}
       <div className="p-4 border-b border-gray-200 bg-gray-50">
-        <div className="flex flex-col md:flex-row gap-3">
+        <div className="flex flex-row gap-3">
           {/* Search */}
           <div className="flex-1">
             <input
@@ -239,7 +239,7 @@ const LCRDataTable = ({ lcrData }: LCRDataTableProps) => {
                   {isExpanded && (
                     <tr className="bg-blue-50 border-b border-blue-200">
                       <td colSpan={11} className="px-6 py-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                           {/* Column 1: Basic Info */}
                           <div className="space-y-2">
                             <h4 className="font-bold text-gray-700 text-sm mb-3 flex items-center gap-2">

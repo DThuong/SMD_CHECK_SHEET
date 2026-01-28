@@ -63,43 +63,43 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
     }
   }, [checkModel]);
 
-  useEffect(() => {
-    if (!open) {
-      hasUserEditedRef.current = false;
-      isUploadingRef.current = false;
-      deletingRef.current = false; // ← Reset khi đóng modal
-    }
-  }, [open]);
+    useEffect(() => {
+      if (!open) {
+        hasUserEditedRef.current = false;
+        isUploadingRef.current = false;
+        deletingRef.current = false; // ← Reset khi đóng modal
+      }
+    }, [open]);
 
-const [imagePreview, setImagePreview] = useState<{
-  isOpen: boolean;
-  imageUrl: string | string[]; 
-  title: string;
-  initialIndex?: number; 
-}>({
-  isOpen: false,
-  imageUrl: "",
-  title: "",
-  initialIndex: 0
-});
+    const [imagePreview, setImagePreview] = useState<{
+      isOpen: boolean;
+      imageUrl: string | string[]; 
+      title: string;
+      initialIndex?: number; 
+    }>({
+      isOpen: false,
+      imageUrl: "",
+      title: "",
+      initialIndex: 0
+    });
 
-const openImagePreview = (imageUrl: string | string[], title: string, initialIndex = 0) => {
-  setImagePreview({
-    isOpen: true,
-    imageUrl,
-    title,
-    initialIndex
-  });
-};
+    const openImagePreview = (imageUrl: string | string[], title: string, initialIndex = 0) => {
+      setImagePreview({
+        isOpen: true,
+        imageUrl,
+        title,
+        initialIndex
+      });
+    };
 
-const closeImagePreview = () => {
-  setImagePreview({
-    isOpen: false,
-    imageUrl: "",
-    title: "",
-    initialIndex: 0
-  });
-};
+    const closeImagePreview = () => {
+      setImagePreview({
+        isOpen: false,
+        imageUrl: "",
+        title: "",
+        initialIndex: 0
+      });
+    };
     // xử lý upload hình ảnh với flag
     const handleImageUpload = async (field: string, event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
@@ -327,121 +327,156 @@ const closeImagePreview = () => {
 
       {/* Mobile View */}
       <div className="lg:hidden">
-        <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm" onClick={() => setOpen(true)}>
-          <h3 className="text-base font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300 flex items-center gap-2">
-            Check Model
-            {isSaved && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">✓ Đã lưu</span>}
-          </h3>
-          {/* Mobile fields */}
-          <div className="min-w-0 mb-2">
-              <div className="text-xs font-semibold text-gray-600 mb-1">Line đổi</div>
+        <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm">
+          {/* Phần có thể click để mở modal */}
+          <div
+            onClick={() => canEdit && setOpen(true)}
+            className={`p-4 ${
+              canEdit ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : 'cursor-not-allowed opacity-90'
+            }`}
+            role="button"
+            tabIndex={canEdit ? 0 : -1}
+            onKeyDown={(e) => {
+              if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                setOpen(true);
+              }
+            }}
+            aria-disabled={!canEdit}
+          >
+            <h3 className="text-base font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300 flex items-center gap-2">
+              Check Model
+              {isSaved && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">✓ Đã lưu</span>}
+            </h3>
+
+            {/* Line đổi */}
+            <div className="min-w-0 mb-2">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('line')}</div>
               <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
                 {form.lineChange || "—"}
               </div>
-          </div>
-          <div className="min-w-0 mb-2">
-            <div className="text-xs font-semibold text-gray-600 mb-1">F Code 3in1</div>
-            <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-              {form.fCode || "—"}
             </div>
-          </div>
-          <div className="min-w-0 mb-2">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Model/Side</div>
-            <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-              {form.model || "—"}
-            </div>
-          </div>
 
-          {/* Mobile fields */}
-          <div className="grid grid-cols-2 gap-4 mb-3">
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-gray-600 mb-1">REV S15</div>
+            {/* F Code 3in1 */}
+            <div className="min-w-0 mb-2">
+              <div className="text-xs font-semibold text-gray-600 mb-1">F Code 3in1</div>
               <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-                {form.revS15 || "—"}
+                {form.fCode || "—"}
               </div>
             </div>
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-gray-600 mb-1">REV MOUNTER</div>
-              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-                {form.revMounter || "—"}
-              </div>
-            </div>
-          </div>
-          {/* Mobile fields */}
-          <div className="grid grid-cols-2 gap-4 mb-3">
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-gray-600 mb-1">Feeder Check</div>
-              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-                {formatDateTime(form.feederCheck) || "—"}
-              </div>
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-gray-600 mb-1">OP Accept</div>
-              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-                {formatDateTime(form.opAccept) || "—"}
-              </div>
-            </div>
-          </div>
-          {/* Mobile fields */}
-          <div className="grid grid-cols-2 gap-4 mb-3">
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-gray-600 mb-1">PCB ver</div>
-              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-                {form.pcBver || "—"}
-              </div>
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-gray-600 mb-1">Work Order</div>
-              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-                {form.workOrder || "—"}
-              </div>
-            </div>
-          </div>
-          {/* Mobile fields */}
-          <div className="grid grid-cols-2 gap-4 mb-3">
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-gray-600 mb-1">Qty</div>
-              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-                {form.qty || "—"}
-              </div>
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-gray-600 mb-1">Code PCB</div>
-              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-                {form.codePCB || "—"}
-              </div>
-            </div>
-          </div>
-          {/* Mobile fields */}
-          <div className="grid grid-cols-2 gap-4 mb-3">
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-gray-600 mb-1">Sử dụng CN card</div>
-              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-                {form.usedCNcard || "—"}
-              </div>
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-gray-600 mb-1">JIG</div>
-              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-                {form.jig || "—"}
-              </div>
-            </div>
-          </div>
 
-          <div className="min-w-0 mb-2">
+            {/* Model/Side */}
+            <div className="min-w-0 mb-2">
+              <div className="text-xs font-semibold text-gray-600 mb-1">Model/Side</div>
+              <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.model || "—"}
+              </div>
+            </div>
+
+            {/* REV S15 & REV MOUNTER */}
+            <div className="grid grid-cols-2 gap-4 mb-3">
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-gray-600 mb-1">REV S15</div>
+                <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                  {form.revS15 || "—"}
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-gray-600 mb-1">REV MOUNTER</div>
+                <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                  {form.revMounter || "—"}
+                </div>
+              </div>
+            </div>
+
+            {/* Feeder Check & OP Accept */}
+            <div className="grid grid-cols-2 gap-4 mb-3">
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-gray-600 mb-1">Feeder Check</div>
+                <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                  {formatDateTime(form.feederCheck) || "—"}
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-gray-600 mb-1">OP Accept</div>
+                <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                  {formatDateTime(form.opAccept) || "—"}
+                </div>
+              </div>
+            </div>
+
+            {/* PCB ver & Work Order */}
+            <div className="grid grid-cols-2 gap-4 mb-3">
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-gray-600 mb-1">PCB ver</div>
+                <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                  {form.pcBver || "—"}
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-gray-600 mb-1">Work Order</div>
+                <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                  {form.workOrder || "—"}
+                </div>
+              </div>
+            </div>
+
+            {/* Qty & Code PCB */}
+            <div className="grid grid-cols-2 gap-4 mb-3">
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-gray-600 mb-1">Qty</div>
+                <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                  {form.qty || "—"}
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-gray-600 mb-1">Code PCB</div>
+                <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                  {form.codePCB || "—"}
+                </div>
+              </div>
+            </div>
+
+            {/* Used CN card & JIG */}
+            <div className="grid grid-cols-2 gap-4 mb-3">
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-gray-600 mb-1">{t('useCNCard')}</div>
+                <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                  {form.usedCNcard !== undefined ? (form.usedCNcard ? "Yes" : "No") : "—"}
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-gray-600 mb-1">JIG</div>
+                <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                  {form.jig !== undefined ? (form.jig ? "Yes" : "No") : "—"}
+                </div>
+              </div>
+            </div>
+
+            {/* Note */}
+            <div className="min-w-0 mb-0">
               <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueNote')}</div>
               <div className="w-full text-base px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
                 {form.note || "—"}
               </div>
+            </div>
           </div>
-          <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueImg')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
-              <ImageViewIcon 
-                imageUrl={form.imgIssue} 
-                title="Hình ảnh Vấn đề phát sinh"
-                onView={openImagePreview}
-              />
+
+          {/* PHẦN HÌNH ẢNH - Không trigger modal */}
+          <div className="px-4 pb-4 pt-0">
+            {/* Hình ảnh vấn đề phát sinh */}
+            <div className="mb-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueImg')}</div>
+              <div 
+                className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ImageViewIcon 
+                  imageUrl={form.imgIssue} 
+                  title={t2('issueImg')}
+                  onView={openImagePreview}
+                />
+              </div>
             </div>
           </div>
         </div>

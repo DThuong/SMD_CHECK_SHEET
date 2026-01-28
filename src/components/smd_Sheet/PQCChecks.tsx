@@ -254,6 +254,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
   };
 
   return (
+    <>
     <div className="p-0 py-4 w-full">
       <Notification
         show={notification.show}
@@ -275,202 +276,231 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
       )}
       {/* Website View - Bảng ngang */}
       <div className="hidden lg:block w-full overflow-x-auto">
-  <table className="border border-gray-600 w-full text-center opacity-80">
-    <tbody>
-      {/** Row 31 */}
-      <tr>
-        <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('title')}</th>
-        <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
-      </tr>
+        <table className="border border-gray-600 w-full text-center opacity-80">
+          <tbody>
+            {/** Row 31 */}
+            <tr>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('title')}</th>
+              <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
+            </tr>
 
-      {/** Row 32 */}
-      <tr>
-        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.icPlan')}</th>
-        <td colSpan={8} className="border border-gray-600 px-2 py-2 text-xs">{form.icPlan || ""}</td>
-        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.checksumReal')}</th>
-        <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.checksumReal || ""}</td>
-        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.checksumConfirm')}</th>
-        <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">
-          <div className="flex items-center justify-center">
-            <input 
-              type="text"
-              value={form.checksumConfirm || ""}
-              onChange={(e) => set("checksumConfirm", e.target.value)}
-            />
-          </div>
-        </td>
-      </tr>
+            {/** Row 32 */}
+            <tr>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.icPlan')}</th>
+              <td colSpan={8} className="border border-gray-600 px-2 py-2 text-xs">{form.icPlan || ""}</td>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.checksumReal')}</th>
+              <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.checksumReal || ""}</td>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.checksumConfirm')}</th>
+              <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs">{form.checksumConfirm || ""}</td>
+            </tr>
 
-      {/** Row 33 */}
-      <tr>
-        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Tuner</th>
-        <td colSpan={8} className="border border-gray-600 px-2 py-2 text-xs">{form.turner || ""}</td>
-        <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
-        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
-        <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
-      </tr>
+            {/** Row 33 */}
+            <tr>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">Tuner</th>
+              <td colSpan={8} className="border border-gray-600 px-2 py-2 text-xs">{form.turner || ""}</td>
+              <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
+              <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
+              <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
+            </tr>
 
-      {/** Row 34 */}
-      <tr>
-        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.stage')}</th>
-        <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.startLCR')}</th>
-        <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.endLCR')}</th>
-        <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.nameCheck')}</th>
-        <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.resultLCR')}</th>
-      </tr>
+            {/** Row 34 */}
+            <tr>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.stage')}</th>
+              <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.startLCR')}</th>
+              <th colSpan={4} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.endLCR')}</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.nameCheck')}</th>
+              <th colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t('fields.resultLCR')}</th>
+            </tr>
 
-      {/** Row 35 */}
-      <tr>
-        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">PQC</th>
-        <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">{formatDateTime(form.startLCR) || ""}</td>
-        <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">{formatDateTime(form.endLCR) || ""}</td>
-        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.nameCheck || ""}</td>
-        <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">
-          <div className="flex items-center justify-center flex-row gap-2">
-            <label className="font-bold">OK</label>
-            <input 
-              type="checkbox"
-              checked={!!form.resultLCR}
-              onChange={(e) => set("resultLCR", e.target.checked)}
-            />
-          </div>
-        </td>
-      </tr>
-      {/** Row 36: pqc image */}
-      <tr>
-        <td colSpan={1} className="border border-gray-300 px-2 py-2 text-xs bg-gray-100 font-bold">{t('fields.imageIC')}</td>
-        <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs">
-            <div className="flex items-center justify-center">
-              <div className="flex items-center justify-center gap-2">
-                <ImageViewIcon 
-                  imageUrl={form.imgIC || "" } 
-                  title="Hình ảnh IC"
-                  onView={openImagePreview}
-                />
-              </div>
-            </div>
-        </td>
-      </tr>
+            {/** Row 35 */}
+            <tr>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">PQC</th>
+              <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">{formatDateTime(form.startLCR) || ""}</td>
+              <td colSpan={4} className="border border-gray-600 px-2 py-2 text-xs">{formatDateTime(form.endLCR) || ""}</td>
+              <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">{form.nameCheck || ""}</td>
+              <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs">
+                <div className="flex items-center justify-center flex-row gap-2">
+                  <label className="font-bold">OK</label>
+                  <span className="text-base font-bold">
+                    {form.resultLCR ? "✓" : ""}
+                  </span>
+                </div>
+              </td>
+            </tr>
+            {/** Row 36: pqc image */}
+            <tr>
+              <td colSpan={1} className="border border-gray-300 px-2 py-2 text-xs bg-gray-100 font-bold">{t('fields.imageIC')}</td>
+              <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs">
+                  <div className="flex items-center justify-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <ImageViewIcon 
+                        imageUrl={form.imgIC || "" } 
+                        title="Hình ảnh IC"
+                        onView={openImagePreview}
+                      />
+                    </div>
+                  </div>
+              </td>
+            </tr>
 
-      {/** Row 37: Note */}
-      <tr>
-        <td colSpan={1} className="border border-gray-300 px-2 py-2 text-xs bg-gray-100 font-bold">{t2('issueNote')}</td>
-        <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs">{form.note || ""}</td>
-      </tr>
+            {/** Row 37: Note */}
+            <tr>
+              <td colSpan={1} className="border border-gray-300 px-2 py-2 text-xs bg-gray-100 font-bold">{t2('issueNote')}</td>
+              <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs">{form.note || ""}</td>
+            </tr>
 
-      {/** Row 38: Hình ảnh vấn đề phát sinh */}
-      <tr>
-        <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t2('issueImg')}</th>
-          <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs">
-              <div className="flex items-center justify-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <ImageViewIcon 
-                      imageUrl={form.imgIssue} 
-                      title="Hình ảnh vấn đề phát sinh"
-                      onView={openImagePreview}
-                    />
-              </div>
-            </div>
-          </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+            {/** Row 38: Hình ảnh vấn đề phát sinh */}
+            <tr>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t2('issueImg')}</th>
+                <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs">
+                    <div className="flex items-center justify-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <ImageViewIcon 
+                            imageUrl={form.imgIssue} 
+                            title="Hình ảnh vấn đề phát sinh"
+                            onView={openImagePreview}
+                          />
+                    </div>
+                  </div>
+                </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-      {/* Mobile View - Card dọc (mỗi trường 1 dòng full-width) */}
-      <div className="lg:hidden">
-        <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm" onClick={() => setOpen(true)}>
-    <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">{t('title')}</h3>
-          {/* each field full width row */}
-          <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.icPlan')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
-              {form.icPlan || "—"}
-            </div>
-          </div>
-
-          <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.checksumReal')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
-              {form.checksumReal || "—"}
-            </div>
-          </div>
-
-          <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.checksumConfirm')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
-              {form.checksumConfirm || "—"}
-            </div>
-          </div>
-
-          <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">Tuner</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
-              {form.turner || "—"}
-            </div>
-          </div>
-
-          <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.startLCR')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
-              {formatDateTime(form.startLCR) || "—"}
-            </div>
-          </div>
-
-          <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.endLCR')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
-              {formatDateTime(form.endLCR) || "—"}
-            </div>
-          </div>
-
-          <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.pqcName')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 wrap-break-words wrap-break-words">
-              {form.nameCheck || "—"}
-            </div>
-          </div>
-
-          <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.resultLCR')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.resultLCR ? "OK" : "NG"}
-            </div>
-          </div>
-
-          {/** Hình ảnh image ic */}
-          <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.imageICLabel')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
-              <ImageViewIcon 
-                imageUrl={form.imgIC} 
-                title="Hình ảnh image IC"
-                onView={openImagePreview}
-              />
-            </div>
-          </div>
-
-          {/* ghi chú vấn đề phát sinh */}
-        <div className="mb-3">
-          <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueNote')}</div>
-          <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-            {form.note || "—"}
-          </div>
-        </div>
-
-        {/** hình ảnh vấn đề phát sinh */}
-        <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueImg')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
-              <ImageViewIcon 
-                imageUrl={form.imgIssue} 
-                title="Hình ảnh Vấn đề phát sinh"
-                onView={openImagePreview}
-              />
-            </div>
-          </div>
+      {/* Mobile View - Card dọc */}
+<div className="lg:hidden">
+  <div
+    className="w-full bg-white border border-gray-300 rounded-lg shadow-sm"
+  >
+    {/* Phần có thể click để mở modal */}
+    <div
+      onClick={() => canEdit && setOpen(true)}
+      className={`p-4 pb-0 ${
+        canEdit ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : 'cursor-not-allowed opacity-90'
+      }`}
+      role="button"
+      tabIndex={canEdit ? 0 : -1}
+      onKeyDown={(e) => {
+        if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          setOpen(true);
+        }
+      }}
+      aria-disabled={!canEdit}
+    >
+      <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">
+        {t('title')}
+        {isSaved && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded ml-2">✓ Đã lưu</span>}
+      </h3>
+      
+      {/* IC nạp kế hoạch */}
+      <div className="mb-3 min-w-0">
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.icPlan')}</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+          {form.icPlan || "—"}
         </div>
       </div>
+
+      {/* Checksum thực tế */}
+      <div className="mb-3 min-w-0">
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.checksumReal')}</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+          {form.checksumReal || "—"}
+        </div>
+      </div>
+
+      {/* Xác nhận Checksum */}
+      <div className="mb-3 min-w-0">
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.checksumConfirm')}</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+          {form.checksumConfirm || "—"}
+        </div>
+      </div>
+
+      {/* Tuner */}
+      <div className="mb-3 min-w-0">
+        <div className="text-xs font-semibold text-gray-600 mb-1">Tuner</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+          {form.turner || "—"}
+        </div>
+      </div>
+
+      {/* Thời gian bắt đầu LCR */}
+      <div className="mb-3 min-w-0">
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.startLCR')}</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+          {formatDateTime(form.startLCR) || "—"}
+        </div>
+      </div>
+
+      {/* Thời gian kết thúc LCR */}
+      <div className="mb-3 min-w-0">
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.endLCR')}</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+          {formatDateTime(form.endLCR) || "—"}
+        </div>
+      </div>
+
+      {/* Tên PQC */}
+      <div className="mb-3 min-w-0">
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.pqcName')}</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+          {form.nameCheck || "—"}
+        </div>
+      </div>
+
+      {/* Kết quả LCR */}
+      <div className="mb-3 min-w-0">
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.resultLCR')}</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
+          {form.resultLCR ? "OK" : "NG"}
+        </div>
+      </div>
+
+      {/* Ghi chú vấn đề phát sinh */}
+      <div className="mb-3">
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueNote')}</div>
+        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+          {form.note || "—"}
+        </div>
+      </div>
+    </div>
+
+    {/* PHẦN HÌNH ẢNH - Không trigger modal, nằm trong cùng container */}
+    <div className="px-4 pb-4 border-t-0 border-gray-200">
+      {/* Hình ảnh vấn đề phát sinh */}
+      <div className="mb-3">
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueImg')}</div>
+        <div 
+          className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ImageViewIcon 
+            imageUrl={form.imgIssue} 
+            title={t2('issueImg')}
+            onView={openImagePreview}
+          />
+        </div>
+      </div>
+
+      {/* Hình ảnh IC */}
+      <div className="mb-0">
+        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.imageICLabel')}</div>
+        <div 
+          className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center" 
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ImageViewIcon 
+            imageUrl={form.imgIC} 
+            title={t('fields.imageICLabel')}
+            onView={openImagePreview}
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
       {/* Buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3 no-print">
@@ -621,14 +651,16 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
 
         </div>
       </Modal>
-      <ImagePreviewModal
+      
+    </div>
+    <ImagePreviewModal
         isOpen={imagePreview.isOpen}
         imageUrl={imagePreview.imageUrl}
         title={imagePreview.title}
         initialIndex={imagePreview.initialIndex}
         onClose={closeImagePreview}
       />
-    </div>
+    </>
   )
 })
 

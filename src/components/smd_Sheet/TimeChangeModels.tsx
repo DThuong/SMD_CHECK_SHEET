@@ -283,78 +283,103 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
 
       {/* Mobile View - Card dọc */}
       <div className="lg:hidden">
-        <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
-          <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200">{t('title')}</h3>
+        <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm">
+          {/* Phần có thể click để mở modal */}
+          <div
+            onClick={() => canEdit && setOpen(true)}
+            className={`p-4 ${
+              canEdit ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : 'cursor-not-allowed opacity-90'
+            }`}
+            role="button"
+            tabIndex={canEdit ? 0 : -1}
+            onKeyDown={(e) => {
+              if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                setOpen(true);
+              }
+            }}
+            aria-disabled={!canEdit}
+          >
+            <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200">
+              {t('title')}
+              {isSaved && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded ml-2">✓ Đã lưu</span>}
+            </h3>
 
-          {/* tên QC */}
-          <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.nameQC')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.qc || "—"}
+            {/* Tên QC */}
+            <div className="mb-3">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.nameQC')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.qc || "—"}
+              </div>
+            </div>
+
+            {/* Tên Result */}
+            <div className="mb-3">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.nameResult')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.result || "—"}
+              </div>
+            </div>
+            
+            {/* Thời gian bắt đầu */}
+            <div className="mb-3">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.startTime')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {formatDateTime(form.startTime) || "—"}
+              </div>
+            </div>
+
+            {/* Thời gian kết thúc */}
+            <div className="mb-3">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.endTime')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {formatDateTime(form.endTime) || "—"}
+              </div>
+            </div>
+
+            {/* Số phút */}
+            <div className="mb-3">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.countTime')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.countTime ?? "—"}
+              </div>
+            </div>
+
+            {/* Lịch sử */}
+            <div className="mb-3 min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.history')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 whitespace-pre-wrap wrap-break-words">
+                {form.history || "—"}
+              </div>
+            </div>
+
+            {/* Note */}
+            <div className="mb-0 min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueNote')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 whitespace-pre-wrap wrap-break-words">
+                {form.note || "—"}
+              </div>
             </div>
           </div>
 
-          {/* Tên Result */}
-          <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.nameResult')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.result || "—"}
-            </div>
-          </div>
-          
-          {/* Thời gian bắt đầu */}
-          <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.startTime')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {formatDateTime(form.startTime) || "—"}
-            </div>
-          </div>
-
-          {/* Thời gian kết thúc */}
-          <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.endTime')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {formatDateTime(form.endTime) || "—"}
-            </div>
-          </div>
-
-          {/* Số phút */}
-          <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.countTime')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-              {form.countTime ?? "—"}
-            </div>
-          </div>
-
-          {/* Lịch sử */}
-          <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.history')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 whitespace-pre-wrap wrap-break-word">
-              {form.history || "—"}
-            </div>
-          </div>
-
-          {/** Note */}
-          <div className="mb-3 min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueNote')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 whitespace-pre-wrap wrap-break-word">
-              {form.note || "—"}
-            </div>
-          </div>
-
-          {/** Hình ảnh Vấn đề phát sinh */}
-          <div className="mb-3">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueImg')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
-              <ImageViewIcon 
-                imageUrl={form.imgIssue} 
-                title="Hình ảnh Vấn đề phát sinh"
-                onView={openImagePreview}
-              />
+          {/* PHẦN HÌNH ẢNH - Không trigger modal */}
+          <div className="px-4 pb-4 pt-0">
+            {/* Hình ảnh Vấn đề phát sinh */}
+            <div className="mb-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueImg')}</div>
+              <div 
+                className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ImageViewIcon 
+                  imageUrl={form.imgIssue} 
+                  title={t2('issueImg')}
+                  onView={openImagePreview}
+                />
+              </div>
             </div>
           </div>
         </div>
-
       </div>
 
       {/* Buttons */}

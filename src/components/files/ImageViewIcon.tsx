@@ -1,11 +1,12 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { IoEyeSharp } from 'react-icons/io5';
 
 interface ImageViewIconProps {
   imageUrl: string | string[] | undefined;
   title: string;
   onView: (imageUrl: string | string[], title: string, initialIndex?: number) => void;
-  showCount?: boolean; // Option để hiển thị số lượng ảnh
+  showCount?: boolean;
 }
 
 const ImageViewIcon: React.FC<ImageViewIconProps> = ({ 
@@ -14,42 +15,55 @@ const ImageViewIcon: React.FC<ImageViewIconProps> = ({
   onView,
   showCount = true 
 }) => {
-  // Xử lý trường hợp không có ảnh
+  const {t: t2} = useTranslation('common');
+  
+  // Handler với stopPropagation
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Ngăn event bubble lên parent
+    
+    if (Array.isArray(imageUrl)) {
+      onView(imageUrl, title, 0);
+    } else if (imageUrl) {
+      onView(imageUrl, title);
+    }
+  };
+
+  // Không có ảnh
   if (!imageUrl || (Array.isArray(imageUrl) && imageUrl.length === 0)) {
     return (
-      <span className="text-gray-400 text-xs" style={{ 
-                fontSize: '16px',
-                touchAction: 'manipulation'
-              }}
-    >Chưa có hình ảnh</span>
+      <span className="text-gray-400 text-sm min-h-5">
+        {t2('noImg')}
+      </span>
     );
   }
 
-  // Xử lý array
+  // Array images
   if (Array.isArray(imageUrl)) {
     const imageCount = imageUrl.length;
     
     return (
       <button
         type="button"
-        onClick={() => onView(imageUrl, title, 0)}
-        className="flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-lg transition-colors"
+        onClick={handleClick}
+        data-view-image="true"
+        className="flex items-center gap-2 px-3 rounded-lg transition-colors"
       >
         <IoEyeSharp size={20} className="text-blue-600" />
         <span className="text-sm font-medium text-blue-700">
-          {showCount ? `Xem ${imageCount} ảnh` : 'Xem ảnh'}
+          {showCount ? `${imageCount}` : 'Xem ảnh'}
         </span>
       </button>
     );
   }
 
-  // Xử lý single image (string)
+  // Single image
   return (
     <button
       type="button"
-      onClick={() => onView(imageUrl, title)}
-      className="flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-lg transition-colors"
-      >
+      onClick={handleClick}
+      data-view-image="true"
+      className="flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-lg transition-colors min-h-11"
+    >
       <IoEyeSharp size={20} className="text-blue-600" />
       <span className="text-sm font-medium text-blue-700">Xem ảnh</span>
     </button>

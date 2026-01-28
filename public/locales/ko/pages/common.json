@@ -20,9 +20,12 @@
   "msg_success": "로그인 성공!",
   "user": "사용자",
   "role": "역할",
+  "issueMsg": "발생한 문제",
+  "noImg": "이미지 없음",
   "issueNote": "발생한 문제 메모",
   "issueImg": "발생한 문제 이미지",
   "printerAfterImage": "프린터 후 이미지",
   "mounterAfterImage": "마운터 후 이미지",
-  "autoCleaningPrinter": "프린터 자동 클리닝 이미지"
+  "autoCleaningPrinter": "프린터 자동 클리닝 이미지",
+  "xrayImg": "X-Ray 이미지"
 }

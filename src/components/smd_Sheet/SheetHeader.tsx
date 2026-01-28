@@ -437,7 +437,14 @@ const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !=
 
         {/* Mobile View */}
         <div className="lg:hidden">
-          <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm" onClick={handleOpenModal}>
+            <button
+              type="button"
+              onClick={() => canEdit && setOpen(true)}
+              disabled={!canEdit}
+              className={`w-full bg-white border border-gray-300 rounded-lg p-4 shadow-sm text-left ${
+                canEdit ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : 'cursor-not-allowed opacity-90'
+              }`}
+            >
             <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">
               SMD Check Sheet Change Model
             </h3>
@@ -499,7 +506,7 @@ const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !=
                 </div>
               </div>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Buttons */}

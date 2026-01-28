@@ -20,9 +20,12 @@
   "msg_success": "Login successful!",
   "user": "User",
   "role": "Role",
+  "issueMsg": "Issue Message",
+  "noImg": "No Image",
   "issueNote": "Issue Note",
   "issueImg": "Issue Image",
   "printerAfterImage": "Printer After Image",
   "mounterAfterImage": "Mounter After Image",
-  "autoCleaningPrinter": "Auto Cleaning Printer"
+  "autoCleaningPrinter": "Auto Cleaning Printer",
+  "xrayImg": "X-Ray Image"
 }

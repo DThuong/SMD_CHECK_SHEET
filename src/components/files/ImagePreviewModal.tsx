@@ -105,17 +105,19 @@ const ImagePreviewModal = ({
       onClick={handleClose}
       style={{ isolation: 'isolate' }}
       data-close-modal="true"
+      data-image-modal="true"
     >
       <div 
         className="relative w-[95vw] h-[95vh] flex items-center justify-center overflow-hidden z-9999!"
         onClick={(e) => e.stopPropagation()}
-        style={{ isolation: 'isolate' }}
+        style={{ isolation: 'isolate', zIndex: 99999 }}
       >
         {/* Close button */}
         <button
           onClick={(e) => { e.stopPropagation(); handleClose(); }}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-300 transition-colors bg-black/50 rounded-full p-2 z-9999 pointer-events-auto"
           aria-label="Close"
+          data-modal-close-btn="true"
         >
           <IoClose size={32} />
         </button>

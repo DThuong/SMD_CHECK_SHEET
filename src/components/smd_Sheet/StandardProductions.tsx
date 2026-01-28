@@ -292,23 +292,17 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
                 <div className="flex flex-row justify-center items-center gap-3">
                   <div className="flex flex-row items-center justify-center gap-1">
-                    <input 
-                      type="checkbox" 
-                      className="w-4 h-4"
-                      checked={form.useOnly === "Duksan"}
-                      onChange={() => set("useOnly", form.useOnly === "Duksan" ? undefined : "Duksan")}
-                    />
+                    <span className="text-base font-bold">
+                      {form.useOnly === "Duksan" ? "✓" : ""}
+                    </span>
                     <label className="flex items-center justify-center gap-2 text-xs">
                       Duksan
                     </label>
                   </div>
                   <div className="flex flex-row items-center justify-center gap-1">
-                    <input 
-                      type="checkbox" 
-                      className="w-4 h-4"
-                      checked={form.useOnly === "Heesung"}
-                      onChange={() => set("useOnly", form.useOnly === "Heesung" ? undefined : "Heesung")}
-                    />
+                    <span className="text-base font-bold">
+                      {form.useOnly === "Heesung" ? "✓" : ""}
+                    </span>
                     <label className="flex items-center justify-center gap-2 text-xs">
                       Heesung
                     </label>
@@ -357,106 +351,135 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
         </table>
       </div>
         
-{/* Responsive for mobile */}
-{/* Mobile View - Card dọc */}
-<div className="lg:hidden">
-  <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm" onClick={() => setOpen(true)}>
-    <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">{t('title')}</h3>
-    {/* Row 1: Số quản lý trên Mask & Số đăng ký trên MES */}
-    <div className="grid grid-cols-2 gap-4 mb-3">
-      <div className="min-w-0">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.numMASK')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
-          {form.numMASK || "—"}
+      {/* Mobile View - Card dọc */}
+      <div className="lg:hidden">
+        <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm">
+          {/* Phần có thể click để mở modal */}
+          <div
+            onClick={() => canEdit && setOpen(true)}
+            className={`p-4 ${
+              canEdit ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : 'cursor-not-allowed opacity-90'
+            }`}
+            role="button"
+            tabIndex={canEdit ? 0 : -1}
+            onKeyDown={(e) => {
+              if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                setOpen(true);
+              }
+            }}
+            aria-disabled={!canEdit}
+          >
+            <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">
+              {t('title')}
+              {isSaved && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded ml-2">✓ Đã lưu</span>}
+            </h3>
+
+            {/* Row 1: Số quản lý trên Mask & Số đăng ký trên MES */}
+            <div className="grid grid-cols-2 gap-4 mb-3">
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.numMASK')}</div>
+                <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                  {form.numMASK || "—"}
+                </div>
+              </div>
+
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.numMES')}</div>
+                <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                  {form.numMES || "—"}
+                </div>
+              </div>
+            </div>
+
+            {/* Row 2: Số dao quét Printer */}
+            <div className="mb-3">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.numScanPrinter')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.numScanPrinter || "—"}
+              </div>
+            </div>
+
+            {/* Row 3: Số đăng ký dao quét trên MES */}
+            <div className="mb-3">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.numScanSignMES')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.numScanSignMES || "—"}
+              </div>
+            </div>
+
+            {/* Row 4: Liệu MSL3 mở đóng gói & Chương trình máy label */}
+            <div className="grid grid-cols-2 gap-4 mb-3">
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.mlS3Closed')}</div>
+                <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                  {form.mlS3Closed || "—"}
+                </div>
+              </div>
+
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.labelProgram')}</div>
+                <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                  {form.labelProgram || "—"}
+                </div>
+              </div>
+            </div>
+
+            {/* Row 5: Chỉ sử dụng (full width) */}
+            <div className="mb-3">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.useOnly')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.useOnly === "Duksan" 
+                  ? "Duksan" 
+                  : form.useOnly === "Heesung" 
+                  ? "Heesung" 
+                  : "—"}
+              </div>
+            </div>
+
+            {/* Ghi chú vấn đề phát sinh */}
+            <div className="mb-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueNote')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.note || "—"}
+              </div>
+            </div>
+          </div>
+
+          {/* PHẦN HÌNH ẢNH - Không trigger modal */}
+          <div className="px-4 pb-4 pt-0">
+            {/* Hình ảnh Standard production */}
+            <div className="mb-3">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.imageStandard')}</div>
+              <div 
+                className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ImageViewIcon 
+                  imageUrl={form.imgStandard} 
+                  title="Hình ảnh Tiêu Chuẩn Sản Xuất"
+                  onView={openImagePreview}
+                />
+              </div>
+            </div>
+
+            {/* Hình ảnh vấn đề phát sinh */}
+            <div className="mb-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueImg')}</div>
+              <div 
+                className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ImageViewIcon 
+                  imageUrl={form.imgIssue} 
+                  title="Hình ảnh Vấn đề phát sinh"
+                  onView={openImagePreview}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <div className="min-w-0">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.numMES')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
-          {form.numMES || "—"}
-        </div>
-      </div>
-    </div>
-
-    {/* Row 2: Số dao quét Printer */}
-        <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.numScanPrinter')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
-            {form.numScanPrinter || "—"}
-        </div>
-        </div>
-
-        {/* Row 3: Số đăng ký dao quét trên MES */}
-        <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.numScanSignMES')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
-            {form.numScanSignMES || "—"}
-        </div>
-        </div>
-
-    {/* Row 3: Liệu MSL3 mở đóng gói & Chương trình máy label */}
-    <div className="grid grid-cols-2 gap-4 mb-3">
-      <div className="min-w-0">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.mlS3Closed')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
-          {form.mlS3Closed || "—"}
-        </div>
-      </div>
-
-      <div className="min-w-0">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.labelProgram')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate overflow-hidden">
-          {form.labelProgram || "—"}
-        </div>
-      </div>
-    </div>
-
-    {/* Row 4: Chỉ sử dụng (full width) */}
-    <div className="mb-3">
-      <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.useOnly')}</div>
-      <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-        {form.useOnly === "Duksan" 
-          ? "Duksan" 
-          : form.useOnly === "Heesung" 
-          ? "Heesung" 
-          : "—"}
-      </div>
-    </div>
-
-    {/** Hình ảnh Standard production */}
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('fields.imageStandard')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
-          <ImageViewIcon 
-            imageUrl={form.imgStandard} 
-            title="Hình ảnh Tiêu Chuẩn Sản Xuất"
-            onView={openImagePreview}
-          />
-        </div>
-      </div>
-
-    {/* ghi chú vấn đề phát sinh */}
-    <div className="mb-3">
-      <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueNote')}</div>
-      <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-        {form.note || "—"}
-      </div>
-    </div>
-
-    {/** hình ảnh vấn đề phát sinh */}
-    <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueImg')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
-          <ImageViewIcon 
-            imageUrl={form.imgIssue} 
-            title="Hình ảnh Vấn đề phát sinh"
-            onView={openImagePreview}
-          />
-        </div>
-      </div>
-  </div>
-</div>
       {/** buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3 no-print">
         <ViewDetailButton onOpen={() => setOpen(true)} disabled={!canEdit} {...(!canEdit ? {} : { 'data-edit-button': 'true' })}>

@@ -688,7 +688,7 @@ const SheetDetailViewer = () => {
       </div>
 
       {/* Hiển thị các component */}
-      <div className={!isEditable ? '' : ''}>
+      <div>
         <div className="pdf-section">
           <SheetHeader canEdit={isEditable} returnPath={returnPath || window.location.pathname} />
         </div>
@@ -775,14 +775,14 @@ const SheetDetailViewer = () => {
           }
 
           /* ========================================
-            ✅ CRITICAL FIX: Override tất cả blocking layers
+            tất cả blocking layers
             ======================================== */
           
           /* Force image viewing elements lên trên mọi overlay */
           .pointer-events-none img[data-view-image="true"],
           .pointer-events-none button[data-view-image="true"] {
             position: relative !important;
-            z-index: 9999 !important; /* ✅ Cao hơn mọi overlay */
+            z-index: 9999 !important; /* Cao hơn mọi overlay */
             cursor: pointer !important;
             pointer-events: auto !important;
             opacity: 1 !important;
@@ -806,7 +806,7 @@ const SheetDetailViewer = () => {
             pointer-events: auto !important;
             cursor: pointer !important;
             opacity: 1 !important;
-            z-index: 9999 !important; /* ✅ Thêm z-index */
+            z-index: 9999 !important; /* Thêm z-index */
           }
 
           /* File view detail buttons */
@@ -817,7 +817,7 @@ const SheetDetailViewer = () => {
             border-color: #2563eb !important;
             pointer-events: auto !important;
             opacity: 1 !important;
-            z-index: 9999 !important; /* ✅ Thêm z-index */
+            z-index: 9999 !important; /* Thêm z-index */
           }
           
           .pointer-events-none button[data-view-detail="true"]:hover {

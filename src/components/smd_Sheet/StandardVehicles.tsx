@@ -378,7 +378,7 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
             </tr>
 
             
-      {/** printer section */}
+            {/** printer section */}
             {/** Row 17 */}
             <tr className="pdf-section-printer">
               <th rowSpan={7} className="border border-gray-600 px-2 py-2 text-xs text-left bg-gray-100">Printer</th>
@@ -418,11 +418,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
                 <div className="flex items-center justify-center flex-row gap-2">
                   <label className="font-bold text-xs">OK</label>
-                  <input 
-                    type="checkbox" 
-                    checked={!!form.printerQ1 || false}
-                    onChange={(e) => set("printerQ1", e.target.checked)}
-                  />
+                  <span className="text-base font-bold">
+                    {form.printerQ1 ? "✓" : ""}
+                  </span>
                 </div>
               </td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2"></td>
@@ -474,19 +472,15 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
             </tr>
 
-
-
             {/** Row 22 */}
             <tr>
               <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">{t('spi.inspectionSetting')}</th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
                 <div className="flex items-center justify-center flex-row gap-2">
                   <label className="font-bold text-xs">OK</label>
-                  <input 
-                    type="checkbox"
-                    checked={!!form.spiQ1}
-                    onChange={(e) => set("spiQ1", e.target.checked)}
-                  />
+                  <span className="text-base font-bold">
+                    {form.spiQ1 ? "✓" : ""}
+                  </span>
                 </div>
               </td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
@@ -520,7 +514,6 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
               <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">{form.rev || ""}</td>
             </tr>
 
-
             {/** Mount Section */}
             {/** Row 23 */}
             <tr className="pdf-section-mount">
@@ -529,27 +522,23 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
                 <div className="flex items-center justify-center flex-row gap-2">
                   <label className="font-bold text-xs">OK</label>
-                  <input 
-                    type="checkbox"
-                    checked={!!form.mountQ1}
-                    onChange={(e) => set("mountQ1", e.target.checked)}
-                  />
+                  <span className="text-base font-bold">
+                    {form.mountQ1 ? "✓" : ""}
+                  </span>
                 </div>
               </td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
             </tr>
 
-             {/** Row 24 */}
+            {/** Row 24 */}
             <tr>
               <th colSpan={8} className="border border-gray-600 px-2 py-2 text-left! text-xs bg-gray-100">{t('mount.checkBottomBoard')}</th>
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
                 <div className="flex items-center justify-center flex-row gap-2">
                   <label className="font-bold text-xs">OK</label>
-                  <input 
-                    type="checkbox"
-                    checked={!!form.mountQ2}
-                    onChange={(e) => set("mountQ2", e.target.checked)}
-                  />
+                  <span className="text-base font-bold">
+                    {form.mountQ2 ? "✓" : ""}
+                  </span>
                 </div>
               </td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
@@ -589,11 +578,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
                 <div className="flex items-center justify-center flex-row gap-2">
                   <label className="font-bold text-xs">OK</label>
-                  <input 
-                    type="checkbox"
-                    checked={!!form.reflowQ1}
-                    onChange={(e) => set("reflowQ1", e.target.checked)}
-                  />
+                  <span className="text-base font-bold">
+                    {form.reflowQ1 ? "✓" : ""}
+                  </span>
                 </div>
               </td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
@@ -632,28 +619,25 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
               <td colSpan={2} className="border border-gray-600 px-2 py-2">
                 <div className="flex items-center justify-center flex-row gap-2">
                   <label className="font-bold text-xs">OK</label>
-                  <input 
-                    type="checkbox"
-                    checked={!!form.aoiQ1}
-                    onChange={(e) => set("aoiQ1", e.target.checked)}
-                  />
+                  <span className="text-base font-bold">
+                    {form.aoiQ1 ? "✓" : ""}
+                  </span>
                 </div>
               </td>
               <td colSpan={2} className="border border-gray-600 px-2 py-2 text-left! text-xs">
                 {t('aoi.checker')}: {form.aoiCheck || ""}
               </td>
-
             </tr>
 
             {/** row 27.0: hình ảnh image xray */}
             <tr>
-              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">Hình ảnh X-ray</th>
+              <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100">{t2('xrayImg')}</th>
               <td colSpan={11} className="border border-gray-600 px-2 py-2 text-xs">
                 <div className="flex items-center justify-center">
                   <div className="flex items-center justify-center gap-2">
                     <ImageViewIcon 
                       imageUrl={form.imgXray} 
-                      title='Hình ảnh X-ray'
+                      title={t2('xrayImg')}
                       onView={openImagePreview}
                     />
                   </div>
@@ -706,11 +690,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
               <td colSpan={2} className="border px-2 py-2">
                 <div className="flex items-center justify-center gap-2">
                   <label className="text-xs font-bold">OK</label>
-                  <input
-                    type="checkbox"
-                    checked={!!form.outputQ1}
-                    onChange={(e) => set("outputQ1", e.target.checked)}
-                  />
+                  <span className="text-base font-bold">
+                    {form.outputQ1 ? "✓" : ""}
+                  </span>
                 </div>
               </td>
 
@@ -721,7 +703,6 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
 
             {/** Row 27.2 */}
             <tr>
-
               <th colSpan={8} className="border px-2 py-2 text-xs bg-gray-100">
                 <div className="font-semibold mb-1">{t('output.settingValue')}</div>
                 <div className="flex justify-center gap-4">
@@ -765,7 +746,7 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
               <td colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"></td>
             </tr>
 
-             {/** row 31: Ghi chú vấn đề phát sinh */}
+            {/** row 31: Ghi chú vấn đề phát sinh */}
             <tr>
               <th colSpan={1} className="border border-gray-600 px-2 py-2 text-xs bg-gray-100">{t2('issueNote')}</th>
               <td colSpan={12} className="border border-gray-600 px-2 py-2 text-xs">{form.note || ""}</td>
@@ -778,7 +759,7 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
                   <div className="flex items-center justify-center gap-2">
                     <ImageViewIcon 
                       imageUrl={form.imgIssue} 
-                      title="Hình ảnh vấn đề phát sinh"
+                      title={t2('issueImg')}
                       onView={openImagePreview}
                     />
                   </div>
@@ -790,414 +771,553 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
       </div>
     {/* Mobile View */}
     <div className="lg:hidden space-y-4">
-    {/* Printer Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
-      <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200">{t('printer.title')}</h3>
-      
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.specGTAL')}</div>
-          <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printerSpecGTAL || "—"}
+      {/* ==================== PRINTER SECTION ==================== */}
+      <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
+        {/* Clickable area */}
+        <div
+          onClick={() => canEdit && setOpen(true)}
+          className={`p-4 ${
+            canEdit ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : 'cursor-not-allowed opacity-90'
+          }`}
+          role="button"
+          tabIndex={canEdit ? 0 : -1}
+          onKeyDown={(e) => {
+            if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
+              setOpen(true);
+            }
+          }}
+          aria-disabled={!canEdit}
+        >
+          <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200">{t('printer.title')}</h3>
+          
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.specGTAL')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.printerSpecGTAL || "—"}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.realGTAL')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.printerRealGTAL || "—"}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.specTDQ')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.printerSpecTDQ || "—"}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.realTDQ')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.printerRealTDQ || "—"}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.specTDKC')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.printerSpecTDKC || "—"}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.realTDKC')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.printerRealTDKC || "—"}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.specSLL')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.printerSpecSLL || "—"}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.realSLL')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.printerRealSLL || "—"}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.specDSL')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.printerSpecDSL || "—"}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.realDSL')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.printerRealDSL || "—"}
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.vacuumBlock')}</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
+              {form.printerQ1 ? "✓ OK" : "—"}
+            </div>
+          </div>
+
+          <div className="mb-0">
+            <div className="text-xs font-semibold text-gray-600 mb-1">Sprinter Program</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+              {form.printerProgram || "—"}
+            </div>
           </div>
         </div>
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.realGTAL')}</div>
-          <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printerRealGTAL || "—"}
+
+        {/* Image section */}
+        <div className="px-4 pb-4 pt-0">
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('printerAfterImage')}</div>
+            <div 
+              className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ImageViewIcon 
+                imageUrl={form.imgPrinter} 
+                title={t2('printerAfterImage')}
+                onView={openImagePreview}
+              />
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.specTDQ')}</div>
-          <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printerSpecTDQ || "—"}
-          </div>
-        </div>
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.realTDQ')}</div>
-          <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printerRealTDQ || "—"}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.specTDKC')}</div>
-          <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printerSpecTDKC || "—"}
-          </div>
-        </div>
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.realTDKC')}</div>
-          <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printerRealTDKC || "—"}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.specSLL')}</div>
-          <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printerSpecSLL || "—"}
-          </div>
-        </div>
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.realSLL')}</div>
-          <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printerRealSLL || "—"}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.specDSL')}</div>
-          <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printerSpecDSL || "—"}
-          </div>
-        </div>
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.realDSL')}</div>
-          <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.printerRealDSL || "—"}
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('printer.vacuumBlock')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-          {form.printerQ1 ? "✓ OK" : "—"}
-        </div>
-      </div>
-
-      {/** Printer Program */}
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Sprinter Program</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-          {form.printerProgram || "—"}
-        </div>
-      </div>
-
-      {/** Hình ảnh sau printer */}
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t2('printerAfterImage')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
-          <ImageViewIcon 
-            imageUrl={form.imgPrinter} 
-            title={t2('printerAfterImage')}
-            onView={openImagePreview}
-          />
-        </div>
-      </div>
-      {/** Hình ảnh cleaning printer */}
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t2('autoCleaningPrinter')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
-          <ImageViewIcon 
-            imageUrl={form.imgPrinterClean} 
-            title={t2('autoCleaningPrinter')}
-            onView={openImagePreview}
-          />
-        </div>
-      </div>
-    </div>
-
-    {/* SPI Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
-      <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">SPI</h3>
-
-      {/** spi program */}
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">SPI Program</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-          {form.spiProgram || "—"}
-        </div>
-      </div>
-
-      {/** REV */}
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">REV</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-          {form.rev || "—"}
-        </div>
-      </div>
-
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('spi.inspectionSetting')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-          {form.spiQ1 ? "✓ OK" : "—"}
-        </div>
-      </div>
-
-      {/** Hình ảnh SPI */}
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('spi.imageSPI')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
-          <ImageViewIcon 
-            imageUrl={form.imgSPI} 
-            title="Hình ảnh SPI"
-            onView={openImagePreview}
-          />
-        </div>
-      </div>
-    </div>
-
-    {/* Mount Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
-      <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Mount</h3>
-
-      {/** mounter program */}
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Mounter Program</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-          {form.mounterProgram || "—"}
-        </div>
-      </div>
-
-      {/** point mounter */}
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Point Mounter</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-          {form.pointMounter || "—"}
-        </div>
-      </div>
-      
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('mount.checkFirst3Boards')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-          {form.mountQ1 ? "✓ OK" : "—"}
-        </div>
-      </div>
-
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('mount.checkBottomBoard')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-          {form.mountQ2 ? "✓ OK" : "—"}
-        </div>
-      </div>
-
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t2('mounterAfterImage')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
-          <ImageViewIcon 
-            imageUrl={form.imgMounter} 
-            title={t2('mounterAfterImage')}
-            onView={openImagePreview}
-          />
-        </div>
-      </div>
-    </div>
-
-    {/* Reflow Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
-      <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Reflow</h3>
-      
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('reflow.conveyorWidth')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-          {form.reflowQ1 ? "✓ OK" : "—"}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">{t('reflow.settingRail')}</div>
-          <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.reFlowSettingRail || "—"}
-          </div>
-        </div>
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">{t('reflow.realRail')}</div>
-          <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.reFlowRealRail || "—"}
+          <div className="mb-0">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('autoCleaningPrinter')}</div>
+            <div 
+              className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ImageViewIcon 
+                imageUrl={form.imgPrinterClean} 
+                title={t2('autoCleaningPrinter')}
+                onView={openImagePreview}
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      {/** reflow program */}
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Reflow Program</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-          {form.reflowProgram || "—"}
+      {/* ==================== SPI SECTION ==================== */}
+      <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
+        <div
+          onClick={() => canEdit && setOpen(true)}
+          className={`p-4 ${
+            canEdit ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : 'cursor-not-allowed opacity-90'
+          }`}
+          role="button"
+          tabIndex={canEdit ? 0 : -1}
+          onKeyDown={(e) => {
+            if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
+              setOpen(true);
+            }
+          }}
+          aria-disabled={!canEdit}
+        >
+          <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">SPI</h3>
+
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">SPI Program</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+              {form.spiProgram || "—"}
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">REV</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+              {form.rev || "—"}
+            </div>
+          </div>
+
+          <div className="mb-0">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('spi.inspectionSetting')}</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
+              {form.spiQ1 ? "✓ OK" : "—"}
+            </div>
+          </div>
+        </div>
+
+        <div className="px-4 pb-4 pt-0">
+          <div className="mb-0">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('spi.imageSPI')}</div>
+            <div 
+              className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ImageViewIcon 
+                imageUrl={form.imgSPI} 
+                title="Hình ảnh SPI"
+                onView={openImagePreview}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/** reflow speed */}
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Reflow Speed</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-          {form.reflowSpeed || "—"}
+      {/* ==================== MOUNT SECTION ==================== */}
+      <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
+        <div
+          onClick={() => canEdit && setOpen(true)}
+          className={`p-4 ${
+            canEdit ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : 'cursor-not-allowed opacity-90'
+          }`}
+          role="button"
+          tabIndex={canEdit ? 0 : -1}
+          onKeyDown={(e) => {
+            if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
+              setOpen(true);
+            }
+          }}
+          aria-disabled={!canEdit}
+        >
+          <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Mount</h3>
+
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">Mounter Program</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+              {form.mounterProgram || "—"}
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">Point Mounter</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+              {form.pointMounter || "—"}
+            </div>
+          </div>
+          
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('mount.checkFirst3Boards')}</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
+              {form.mountQ1 ? "✓ OK" : "—"}
+            </div>
+          </div>
+
+          <div className="mb-0">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('mount.checkBottomBoard')}</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
+              {form.mountQ2 ? "✓ OK" : "—"}
+            </div>
+          </div>
+        </div>
+
+        <div className="px-4 pb-4 pt-0">
+          <div className="mb-0">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('mounterAfterImage')}</div>
+            <div 
+              className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ImageViewIcon 
+                imageUrl={form.imgMounter} 
+                title={t2('mounterAfterImage')}
+                onView={openImagePreview}
+              />
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    {/* AOI Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
-      <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">AOI</h3>
-      
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('aoi.xray3Boards')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-          {form.aoiQ1 ? "✓ OK" : "—"}
+      {/* ==================== REFLOW SECTION ==================== */}
+      <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
+        <div
+          onClick={() => canEdit && setOpen(true)}
+          className={`p-4 ${
+            canEdit ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : 'cursor-not-allowed opacity-90'
+          }`}
+          role="button"
+          tabIndex={canEdit ? 0 : -1}
+          onKeyDown={(e) => {
+            if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
+              setOpen(true);
+            }
+          }}
+          aria-disabled={!canEdit}
+        >
+          <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Reflow</h3>
+          
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('reflow.conveyorWidth')}</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
+              {form.reflowQ1 ? "✓ OK" : "—"}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('reflow.settingRail')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.reFlowSettingRail || "—"}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('reflow.realRail')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.reFlowRealRail || "—"}
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">Reflow Program</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+              {form.reflowProgram || "—"}
+            </div>
+          </div>
+
+          <div className="mb-0">
+            <div className="text-xs font-semibold text-gray-600 mb-1">Reflow Speed</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+              {form.reflowSpeed || "—"}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/** Hình ảnh Xray */}
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Hình ảnh Xray</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-          <div className="flex items-center justify-center gap-2 flex-wrap">
-            {form.imgXray && form.imgXray.length > 0 ? (
-              form.imgXray.map((imageUrl, index) => (
+      {/* ==================== AOI SECTION ==================== */}
+      <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
+        <div
+          onClick={() => canEdit && setOpen(true)}
+          className={`p-4 ${
+            canEdit ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : 'cursor-not-allowed opacity-90'
+          }`}
+          role="button"
+          tabIndex={canEdit ? 0 : -1}
+          onKeyDown={(e) => {
+            if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
+              setOpen(true);
+            }
+          }}
+          aria-disabled={!canEdit}
+        >
+          <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">AOI</h3>
+          
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('aoi.xray3Boards')}</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
+              {form.aoiQ1 ? "✓ OK" : "—"}
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">mAoi Program</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+              {form.maoiProgram || "—"}
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">sAoi Program</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+              {form.saoiProgram || "—"}
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">Point sAoi</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+              {form.pointSAOI || "—"}
+            </div>
+          </div>
+
+          <div className="mb-0">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('aoi.checker')}</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+              {form.aoiCheck || "—"}
+            </div>
+          </div>
+        </div>
+
+        <div className="px-4 pb-4 pt-0">
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('xrayImg')}</div>
+            <div 
+              className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-center gap-2 flex-wrap">
                 <ImageViewIcon 
-                  key={index}
-                  imageUrl={imageUrl} 
-                  title={`Hình ảnh xray ${index + 1}`}
-                  onView={openImagePreview}
-                />
-              ))
-            ) : (
-              <span className="text-gray-400 text-xs" style={{ 
-                              fontSize: '16px',
-                              touchAction: 'manipulation'
-                            }}>Chưa có hình ảnh</span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">mAoi Program</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-          {form.maoiProgram || "—"}
-        </div>
-      </div>
-
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">sAoi Program</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-          {form.saoiProgram || "—"}
-        </div>
-      </div>
-
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">Point sAoi</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-          {form.pointSAOI || "—"}
-        </div>
-      </div>
-
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('aoi.checker')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-          {form.aoiCheck || "—"}
-        </div>
-      </div>
-
-      {/** Hình ảnh AOI */}
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('aoi.imageAOI')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
-          <ImageViewIcon 
-            imageUrl={form.imgAOI} 
-            title="Hình ảnh AOI"
-            onView={openImagePreview}
-          />
-        </div>
-      </div>
-    </div>
-
-    {/* Output Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
-      <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Output</h3>
-      
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('output.magazineDistance')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
-          {form.outputQ1 ? "✓ OK" : "—"}
-        </div>
-      </div>
-
-      <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t('output.checker')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-          {form.outputChecker || "—"}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">Model</div>
-          <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.outputModelValue || "—"}
-          </div>
-        </div>
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-gray-600 mb-1">Pitch</div>
-          <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-            {form.outputPitchValue || "—"}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {/* Worker Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
-      <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">{t('worker.title')}</h3>
-      <div className="mb-4">
-        <h4 className="text-xs font-bold text-gray-600 mb-2">OP</h4>
-          <div className="min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('worker.name')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-              {form.nameOP|| "—"}
+                      imageUrl={form.imgXray} 
+                      title={t2('xrayImg')}
+                      onView={openImagePreview}
+                    />
+              </div>
             </div>
           </div>
-      </div>
 
-      <div>
-        <h4 className="text-xs font-bold text-gray-600 mb-2">AOI</h4>
-          <div className="min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t('worker.name')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-              {form.nameAOI || "—"}
+          <div className="mb-0">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('aoi.imageAOI')}</div>
+            <div 
+              className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ImageViewIcon 
+                imageUrl={form.imgAOI} 
+                title={t('aoi.imageAOI')}
+                onView={openImagePreview}
+              />
             </div>
           </div>
-      </div>
-    </div>
-
-    {/* Notes Section */}
-    <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm mb-4" onClick={() => setOpen(true)}>
-      <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Vấn đề phát sinh</h3>
-      <div className="mb-4">
-          <div className="min-w-0">
-            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueNote')}</div>
-            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
-              {form.note|| "—"}
-            </div>
-          </div>
-      </div>
-
-      <div>
-         <div className="mb-3">
-        <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueImg')}</div>
-        <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center">
-          <ImageViewIcon 
-            imageUrl={form.imgIssue} 
-            title="Hình ảnh StandardVehicle: Vấn đề phát sinh"
-            onView={openImagePreview}
-          />
         </div>
       </div>
+
+      {/* ==================== OUTPUT SECTION ==================== */}
+      <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
+        <div
+          onClick={() => canEdit && setOpen(true)}
+          className={`p-4 ${
+            canEdit ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : 'cursor-not-allowed opacity-90'
+          }`}
+          role="button"
+          tabIndex={canEdit ? 0 : -1}
+          onKeyDown={(e) => {
+            if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
+              setOpen(true);
+            }
+          }}
+          aria-disabled={!canEdit}
+        >
+          <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">Output</h3>
+          
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('output.magazineDistance')}</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100">
+              {form.outputQ1 ? "✓ OK" : "—"}
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t('output.checker')}</div>
+            <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+              {form.outputChecker || "—"}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-0">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">Model</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.outputModelValue || "—"}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">Pitch</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.outputPitchValue || "—"}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ==================== WORKER SECTION ==================== */}
+      <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
+        <div
+          onClick={() => canEdit && setOpen(true)}
+          className={`p-4 ${
+            canEdit ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : 'cursor-not-allowed opacity-90'
+          }`}
+          role="button"
+          tabIndex={canEdit ? 0 : -1}
+          onKeyDown={(e) => {
+            if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
+              setOpen(true);
+            }
+          }}
+          aria-disabled={!canEdit}
+        >
+          <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">{t('worker.title')}</h3>
+          
+          <div className="mb-4">
+            <h4 className="text-xs font-bold text-gray-600 mb-2">OP</h4>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('worker.name')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.nameOP || "—"}
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-0">
+            <h4 className="text-xs font-bold text-gray-600 mb-2">AOI</h4>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t('worker.name')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.nameAOI || "—"}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ==================== NOTES SECTION ==================== */}
+      <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
+        <div
+          onClick={() => canEdit && setOpen(true)}
+          className={`p-4 ${
+            canEdit ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : 'cursor-not-allowed opacity-90'
+          }`}
+          role="button"
+          tabIndex={canEdit ? 0 : -1}
+          onKeyDown={(e) => {
+            if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
+              setOpen(true);
+            }
+          }}
+          aria-disabled={!canEdit}
+        >
+          <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300">{t2('issueMsg')}</h3>
+          
+          <div className="mb-0">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueNote')}</div>
+              <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
+                {form.note || "—"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-4 pb-4 pt-0">
+          <div className="mb-0">
+            <div className="text-xs font-semibold text-gray-600 mb-1">{t2('issueImg')}</div>
+            <div 
+              className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ImageViewIcon 
+                imageUrl={form.imgIssue} 
+                title={t2('issueImg')}
+                onView={openImagePreview}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-
-  </div>
 
   {/* Buttons */}
   <div className="flex flex-row justify-end w-full gap-2 mt-3 no-print">

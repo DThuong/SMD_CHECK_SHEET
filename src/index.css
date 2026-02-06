@@ -1,24 +1,183 @@
 @import "tailwindcss";
-*{
+
+* {
   margin: 0;
-  padding:0;
+  padding: 0;
   box-sizing: border-box;
 }
 
-table tr td{
+/* ========================================
+   🔥 CRITICAL iOS INPUT FIXES
+   ======================================== */
+
+/* 
+  QUAN TRỌNG: Font size >= 16px để tránh iOS auto-zoom
+  Đây là lý do chính gây ra vấn đề!
+*/
+input,
+textarea,
+select {
+  font-size: 16px !important;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Minimum touch target */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+  min-height: 44px;
+}
+
+/* Textarea specific */
+textarea {
+  resize: vertical;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Date/Time inputs */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"] {
+  min-height: 44px !important;
+}
+
+/* Keep native checkbox/radio */
+input[type="checkbox"],
+input[type="radio"] {
+  -webkit-appearance: checkbox;
+  appearance: auto;
+  width: auto;
+  height: auto;
+  min-height: auto;
+}
+
+input[type="radio"] {
+  -webkit-appearance: radio;
+}
+
+/* Uppercase transform optimization */
+input.uppercase,
+textarea.uppercase {
+  text-transform: uppercase;
+}
+
+/* ========================================
+   🔥 MODAL RESPONSIVE FIXES
+   ======================================== */
+
+/* Body lock khi modal mở */
+body.modal-open {
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+/* Modal height responsive */
+@media (max-height: 800px) {
+  /* iPhone 14 Pro và nhỏ hơn */
+  .modal-container,
+  [class*="modal"] > div[class*="max-w"] {
+    max-height: 85vh !important;
+  }
+}
+
+@media (max-height: 700px) {
+  /* iPhone SE, iPhone 12 Mini */
+  .modal-container,
+  [class*="modal"] > div[class*="max-w"] {
+    max-height: 80vh !important;
+  }
+  
+  /* Giảm padding */
+  .modal-container > div:first-child,
+  .modal-container > div:last-child {
+    padding: 12px 16px !important;
+  }
+}
+
+@media (max-height: 600px) {
+  /* Landscape mode */
+  .modal-container,
+  [class*="modal"] > div[class*="max-w"] {
+    max-height: 75vh !important;
+  }
+  
+  /* Giảm button size */
+  .modal-container button {
+    min-height: 40px !important;
+    padding: 8px 16px !important;
+  }
+}
+
+/* ========================================
+   🔥 PREVENT iOS ZOOM ON INPUT FOCUS
+   ======================================== */
+
+/* Override Tailwind text-sm cho mobile */
+@media (max-width: 768px) {
+  input.text-sm,
+  textarea.text-sm,
+  input[class*="text-"],
+  textarea[class*="text-"] {
+    font-size: 16px !important;
+  }
+  
+  /* Label có thể nhỏ hơn */
+  label.text-sm,
+  label.text-xs,
+  span.text-sm,
+  span.text-xs,
+  div.text-sm,
+  div.text-xs {
+    font-size: 0.75rem !important;
+  }
+}
+
+/* ========================================
+   🔥 SMOOTH SCROLLING & OVERFLOW
+   ======================================== */
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.overflow-auto,
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ========================================
+   🔥 iOS SAFE AREA (iPhone X+)
+   ======================================== */
+
+@supports (padding: max(0px)) {
+  .modal-container {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}
+
+/* ========================================
+   EXISTING STYLES
+   ======================================== */
+
+table tr td {
   height: 40px;
   min-width: 120px;
 }
 
-input{
-  outline: none;
-}
-
-.user-search-admin{
+.user-search-admin {
   padding-left: 32px;
 }
 
-/* animation: xuống, đứng, rồi lướt lên biến mất */
 @keyframes dropHoldLift {
   0% {
     transform: translateY(-140%);
@@ -38,30 +197,27 @@ input{
   }
 }
 
-/* class chính cho thông báo overlay */
 .slide-noti {
-  position: fixed;         /* overlay, không ảnh hưởng layout */
-  top: 20px;               /* vị trí ban đầu */
+  position: fixed;
+  top: 20px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
   animation: dropHoldLift 5s ease-in-out forwards;
-  width: min(900px, calc(100% - 48px)); /* trên web dài, trên mobile chừa margin */
+  width: min(900px, calc(100% - 48px));
   max-width: 95%;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
   border-radius: 0.5rem;
 }
 
-/* nội dung mặc định */
 .slide-noti .noti-inner {
   padding: 12px 16px;
-  background: #ecfdf5; /* xanh nhạt */
-  border-left: 4px solid #16a34a; /* green-600 */
-  color: #065f46; /* green-800 */
+  background: #ecfdf5;
+  border-left: 4px solid #16a34a;
+  color: #065f46;
   font-size: 15px;
 }
 
-/* responsive: tablet */
 @media (max-width: 900px) {
   .slide-noti {
     top: 14px;
@@ -73,13 +229,10 @@ input{
   }
 }
 
-/* responsive: mobile */
 @media (max-width: 480px) {
   .slide-noti {
     top: 10px;
     width: calc(100% - 24px);
-    left: 50%;
-    transform: translateX(-50%);
   }
   .slide-noti .noti-inner {
     padding: 10px 12px;
@@ -88,7 +241,6 @@ input{
   }
 }
 
-/* Pagination Custom Styles */
 .pagination {
   display: flex;
   list-style: none;
@@ -136,58 +288,21 @@ input{
   color: #6b7280;
 }
 
-/* Ẩn scrollbar cho chrome*/
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-/* Ẩn scrollbar cho Firefox */
-.scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-}
-
-/* Ẩn banner Google Translate */
-.goog-te-banner-frame.skiptranslate {
+.goog-te-banner-frame.skiptranslate,
+.goog-te-gadget,
+.goog-logo-link,
+.goog-te-gadget img,
+.goog-te-gadget span,
+.goog-te-banner-frame,
+.goog-close-link {
   display: none !important;
 }
 
-/* Fix body bị đẩy xuống */
 body {
   top: 0px !important;
   position: static !important;
 }
 
-/* Ẩn widget mặc định */
-.goog-te-gadget {
-  display: none !important;
-}
-
-/* Ẩn logo Google */
-.goog-logo-link {
-  display: none !important;
-}
-
-.goog-te-gadget img {
-  display: none !important;
-}
-
-/* Ẩn powered by Google */
-.goog-te-gadget span {
-  display: none !important;
-}
-
-/* Style cho iframe */
-.goog-te-banner-frame {
-  display: none !important;
-}
-
-/* Ẩn nút close của Google */
-.goog-close-link {
-  display: none !important;
-}
-
-/* Fix cho select element bị ẩn */
 #google_translate_element {
   position: fixed;
   bottom: -9999px;
@@ -199,7 +314,6 @@ body {
   visibility: hidden !important;
 }
 
-/* Custom animation cho card pulse slow */
 @keyframes pulse-slow {
   0%, 100% {
     transform: scale(1);
@@ -211,71 +325,6 @@ body {
   }
 }
 
-/* Apply animation class */
 .animate-pulse-slow {
   animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-
-
-@supports (-webkit-touch-callout: none) {
-  /* iOS Safari only */
-  
-  /* ✅ RULE 1: Force 16px font để tránh auto-zoom */
-  input:not([type="checkbox"]):not([type="radio"]),
-  textarea,
-  select {
-    font-size: 16px !important;
-  }
-  
-  /* ✅ RULE 2: Remove iOS default styling */
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="number"],
-  input[type="tel"],
-  input[type="url"],
-  input[type="search"],
-  textarea {
-    -webkit-appearance: none;
-    appearance: none;
-  }
-  
-  /* ✅ RULE 3: Date/Time inputs */
-  input[type="date"],
-  input[type="datetime-local"],
-  input[type="time"] {
-    -webkit-appearance: none;
-    appearance: none;
-    min-height: 44px;
-  }
-  
-  /* ✅ RULE 4: Select */
-  select {
-    -webkit-appearance: none;
-    appearance: none;
-  }
-  
-  /* ✅ RULE 5: Keep native appearance for checkbox & radio */
-  input[type="checkbox"],
-  input[type="radio"] {
-    -webkit-appearance: checkbox;
-    appearance: auto;
-    width: auto;
-    height: auto;
-    min-height: auto;
-    font-size: inherit;
-  }
-  
-  input[type="radio"] {
-    -webkit-appearance: radio;
-  }
-}
-
-/* ========================================
-   SMOOTH SCROLLING FOR MODAL
-   ======================================== */
-   
-.overflow-auto {
-  -webkit-overflow-scrolling: touch;
 }

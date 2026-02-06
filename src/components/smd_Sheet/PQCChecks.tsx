@@ -41,9 +41,10 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
        const pqcCheckId = currentSheet?.pqcCheckId || pqcCheck?.id;
        const isSaved = completedTables.includes('PQCCheck');
        const { notification, showNotification, hideNotification } = useNotification();
+       const activeInputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null); // kiểm tra input có đang được focus hay không
+       const hasUserEditedRef = useRef(false);
 
       const isUploadingRef = useRef(false);
-      const hasUserEditedRef = useRef(false);
 
       const {t} = useTranslation('pqcCheck');
       const {t: t2} = useTranslation('common');
@@ -56,14 +57,14 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
         }
       }, [pqcCheckId, dispatch]);
 
-      //  useEffect #2: Sync form với Redux state 
+      // useEffect #3: Sync form với Redux
       useEffect(() => {
         if (pqcCheck && !hasUserEditedRef.current && !isUploadingRef.current && !deletingRef.current) {
           setForm(pqcCheck);
         }
-      }, [pqcCheck]); 
+      }, [pqcCheck]);
 
-      //  useEffect #3: Reset flags khi đóng modal
+      // useEffect #4: Reset flags khi đóng modal
       useEffect(() => {
         if (!open) {
           hasUserEditedRef.current = false;
@@ -107,15 +108,15 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
 
   //  FIXED: Upload handler với flag protection
   const handleImageUpload = async (field: string, event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-  
-    if (!pqcCheckId) {
-      showNotification('error', 'Lỗi upload', 'Không tìm thấy PQC Check ID');
-      return;
-    }
-  
-   try {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  if (!pqcCheckId) {
+    showNotification('error', 'Lỗi upload', 'Không tìm thấy PQC Check ID');
+    return;
+  }
+
+  try {
     isUploadingRef.current = true;
     
     let result;
@@ -139,16 +140,15 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
         break;
     }
 
-    // Thêm ảnh mới vào array
+    // Thêm ảnh mới vào array, update local state
     if (result?.imageUrl) {
       setForm(prev => {
-        const currentValue = prev[field as keyof PQCCheckData];
+        const fieldKey = field as 'imgIC' | 'imgIssue';
+        const currentArray = prev[fieldKey] || [];
+        
         return {
           ...prev,
-          [field]: [
-            ...(Array.isArray(currentValue) ? currentValue : []),
-            result.imageUrl
-          ]
+          [fieldKey]: [...currentArray, result.imageUrl]
         };
       });
     }
@@ -156,13 +156,12 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
     showNotification('success', 'Thành công', successMessage);
     
   } catch (error) {
-      console.error('Failed to upload image:', error);
-      showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
-    } finally {
-      // Reset flag SAU KHI upload xong (thành công hay thất bại)
-      isUploadingRef.current = false;
-    }
-  };
+    console.error('Failed to upload image:', error);
+    showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
+  } finally {
+    isUploadingRef.current = false;
+  }
+};
 
   const handleRemoveImage = async (field: 'imgIC' | 'imgIssue', index: number) => {
   if (!pqcCheckId) {
@@ -213,7 +212,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
 
   //  Wrapper cho set() để đánh dấu user đã edit
   const set = <K extends keyof PQCCheckData>(k: K, v: PQCCheckData[K]) => {
-    hasUserEditedRef.current = true; // Đánh dấu user đã edit
+    hasUserEditedRef.current = true;
     setForm((s) => ({ ...s, [k]: v }));
   };
 
@@ -230,27 +229,47 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
     }
 
     try {
-      // Dispatch action để update
-      await dispatch(updatePQCCheck({
-        id: pqcCheckId,
-        data: form
-      })).unwrap();
-      
-      // Fetch lại data SAU KHI lưu thành công
-      if (pqcCheckId) {
-        await dispatch(fetchPQCCheck(pqcCheckId)).unwrap();
-      }
-      
-      // Reset flags
-      hasUserEditedRef.current = false;
-      isUploadingRef.current = false;
-      
-      setOpen(false);
-      showNotification('success', 'Thành công', 'Cập nhật PQC Check thành công');
+      // Uppercase TẤT CẢ field text trước khi submit
+    const dataToSubmit = {
+      ...form,
+      icPlan: form.icPlan?.toUpperCase() || "",
+      checksumReal: form.checksumReal?.toUpperCase() || "",
+      checksumConfirm: form.checksumConfirm?.toUpperCase() || "",
+      turner: form.turner?.toUpperCase() || "",
+      nameCheck: form.nameCheck?.toUpperCase() || "",
+      note: form.note?.toUpperCase() || ""
+    };
+
+    await dispatch(updatePQCCheck({
+      id: pqcCheckId,
+      data: dataToSubmit // ← Dùng data đã uppercase
+    })).unwrap();
+    
+    // Fetch lại data SAU KHI lưu thành công
+    if (pqcCheckId) {
+      await dispatch(fetchPQCCheck(pqcCheckId)).unwrap();
+    }
+    
+    setOpen(false);
+    showNotification('success', 'Thành công', 'Cập nhật PQC Check thành công');
     } catch (error) {
       console.error('Failed to update pqc checks:', error);
       showNotification('error', 'Lỗi lưu PQC Checks', 'Có lỗi xảy ra khi cập nhật pqc Checks');
     }
+  };
+
+  // scroll input vào viewport
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    activeInputRef.current = e.target;
+    
+    // Delay để đợi keyboard xuất hiện
+    setTimeout(() => {
+      e.target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center', // Đặt input ở giữa màn hình
+        inline: 'nearest'
+      });
+    }, 300); // iOS keyboard mất ~300ms để xuất hiện
   };
 
   return (
@@ -510,147 +529,152 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
       </div>
 
         {/* Modal chỉnh sửa — style & input */}
-      <Modal open={open} title="Chi tiết PQC Check" onClose={() => setOpen(false)} onSave={submit}>
-        <div className="grid gap-3 max-h-[60vh] overflow-y-auto scrollbar-hide">
+    <Modal open={open} title="Chi tiết PQC Check" onClose={() => setOpen(false)} onSave={submit}>
+      <div className="max-h-[60vh] overflow-y-auto scrollbar-hide"
+        style={{
+            WebkitOverflowScrolling: 'touch',
+            position: 'relative',
+            willChange: 'scroll-position'
+          }}
+      >
+        <div className="grid gap-3 p-1">
+          {/* IC nạp kế hoạch */}
           <label className="text-xs">
             IC nạp kế hoạch
             <input
               value={form.icPlan ?? ""}
-              onChange={(e) => set("icPlan", e.target.value.toUpperCase())}
-              className="mt-1 block w-full border rounded px-3 py-2 text-sm"
-              style={{ 
-                fontSize: '16px',
-                touchAction: 'manipulation'
-              }}
+              onChange={(e) => set("icPlan", e.target.value)}
+              onFocus={handleInputFocus}
+              className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
+              placeholder=""
             />
           </label>
 
+          {/* Checksum thực tế */}
           <label className="text-xs">
             Checksum thực tế
             <input
               value={form.checksumReal ?? ""}
-              onChange={(e) => set("checksumReal", e.target.value.toUpperCase())}
-              className="mt-1 block w-full border rounded px-3 py-2 text-sm"
-              style={{ 
-                fontSize: '16px',
-                touchAction: 'manipulation'
-              }}
+              onChange={(e) => set("checksumReal", e.target.value)}
+              onFocus={handleInputFocus}
+              className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
+              placeholder=""
             />
           </label>
 
+          {/* Xác nhận Checksum */}
           <label className="text-xs">
             Xác nhận khi có thay đổi Checksum mới
             <input
               value={form.checksumConfirm ?? ""}
-              onChange={(e) => set("checksumConfirm", e.target.value.toUpperCase())}
-              className="mt-1 block w-full border rounded px-3 py-2 text-sm"
-              style={{ 
-                fontSize: '16px',
-                touchAction: 'manipulation'
-              }}
+              onChange={(e) => set("checksumConfirm", e.target.value)}
+              onFocus={handleInputFocus}
+              className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
+              placeholder=""
             />
           </label>
 
-          <div className="grid grid-cols-1 gap-3">
+          {/* Tuner */}
+          <label className="text-xs">
+            Tuner
+            <input
+              value={form.turner ?? ""}
+              onChange={(e) => set("turner", e.target.value)}
+              onFocus={handleInputFocus}
+              className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
+              placeholder=""
+            />
+          </label>
+
+          {/* Datetime-local GIỮ NGUYÊN style */}
+          <div className="grid grid-cols-2 gap-3">
             <label className="text-xs">
-              Tuner
-              <input
-                value={form.turner ?? ""}
-                onChange={(e) => set("turner", e.target.value.toUpperCase())}
+              Thời gian bắt đầu đo LCR
+              <input 
+                type="datetime-local" 
+                value={form.startLCR ?? ""}
+                onChange={(e) => set("startLCR", e.target.value)}
                 className="mt-1 block w-full border rounded px-3 py-2 text-sm"
                 style={{ 
-                  fontSize: '16px',
-                  touchAction: 'manipulation'
+                  WebkitAppearance: 'none',
+                  minHeight: '44px'
                 }}
               />
             </label>
 
+            <label className="text-xs">
+              Thời gian kết thúc đo LCR
+              <input 
+                type="datetime-local" 
+                value={form.endLCR ?? ""}
+                onChange={(e) => set("endLCR", e.target.value)}
+                className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+                style={{ 
+                  WebkitAppearance: 'none',
+                  minHeight: '44px'
+                }}
+              />
+            </label>
           </div>
 
-         <div className="grid grid-cols-2 gap-3">
-      <label className="text-xs">
-        Thời gian bắt đầu đo LCR
-        <input 
-          type="datetime-local" 
-          value={form.startLCR ?? ""}
-          onChange={(e) => set("startLCR", e.target.value)}
-          className="mt-1 block w-full border rounded px-3 py-2 text-sm"
-          style={{ 
-            WebkitAppearance: 'none',  // Remove iOS default styling
-            minHeight: '44px'  // iOS minimum touch target
-          }}
-        />
-      </label>
-
-      <label className="text-xs">
-        Thời gian kết thúc đo LCR
-        <input 
-          type="datetime-local" 
-          value={form.endLCR ?? ""}
-          onChange={(e) => set("endLCR", e.target.value)}
-          className="mt-1 block w-full border rounded px-3 py-2 text-sm"
-          style={{ 
-            WebkitAppearance: 'none',  // Remove iOS default styling
-            minHeight: '44px'  // iOS minimum touch target
-          }}
-        />
-      </label>
-    </div>
-
+          {/* Tên PQC */}
           <label className="text-xs">
             Tên PQC
             <input
               value={form.nameCheck ?? ""}
-              onChange={(e) => set("nameCheck", e.target.value.toUpperCase())}
-              className="mt-1 block w-full border rounded px-3 py-2 text-sm"
-              style={{ 
-                fontSize: '16px',
-                touchAction: 'manipulation'
-              }}
+              onChange={(e) => set("nameCheck", e.target.value)}
+              onFocus={handleInputFocus}
+              className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
+              placeholder=""
             />
           </label>
 
+          {/* Checkbox giữ nguyên */}
           <div className="flex items-center gap-2">
             <div className="text-xs">Kết quả đo LCR</div>
             <input type="checkbox" checked={form.resultLCR} onChange={(e) => set("resultLCR", e.target.checked)} />
           </div>
 
-        <MultiImageUpload
-          label="IC"
-          images={form.imgIC}
-          fieldName="imgIC"
-          onUpload={handleImageUpload}
-          onRemove={(index) => handleRemoveImage('imgIC', index)}
-          onViewAll={() => openImagePreview(form.imgIC || [], 'Hình ảnh IC', 0)}
-          onViewSingle={(url, title) => openImagePreview(url, title)}
-        />
+          {/* MultiImageUpload giữ nguyên */}
+          <MultiImageUpload
+            label="IC"
+            images={form.imgIC}
+            fieldName="imgIC"
+            onUpload={handleImageUpload}
+            onRemove={(index) => handleRemoveImage('imgIC', index)}
+            onViewAll={() => openImagePreview(form.imgIC || [], 'Hình ảnh IC', 0)}
+            onViewSingle={(url, title) => openImagePreview(url, title)}
+          />
 
-    <label className="text-xs">
-      Ghi chú vấn đề phát sinh
-      <textarea 
-        value={form.note} 
-        onChange={(e) => set("note", e.target.value.toUpperCase())} 
-        className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
-        placeholder=""
-        style={{ 
-          fontSize: '16px',
-          touchAction: 'manipulation'
-        }}
-      />
-    </label>
+          {/* Textarea giữ nguyên style */}
+          <label className="text-xs">
+            Ghi chú vấn đề phát sinh
+            <textarea 
+              value={form.note} 
+              onChange={(e) => set("note", e.target.value)} 
+              className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
+              onFocus={handleInputFocus}
+              placeholder=""
+              rows={3}
+              style={{ 
+                touchAction: 'manipulation',
+                resize: 'vertical'
+              }}
+            />
+          </label>
 
-    <MultiImageUpload
-      label="Vấn đề phát sinh"
-      images={form.imgIssue}
-      fieldName="imgIssue"
-      onUpload={handleImageUpload}
-      onRemove={(index) => handleRemoveImage('imgIssue', index)}
-      onViewAll={() => openImagePreview(form.imgIssue || [], 'Hình ảnh Vấn đề phát sinh', 0)}
-      onViewSingle={(url, title) => openImagePreview(url, title)}
-    />
-
+          <MultiImageUpload
+            label="Vấn đề phát sinh"
+            images={form.imgIssue}
+            fieldName="imgIssue"
+            onUpload={handleImageUpload}
+            onRemove={(index) => handleRemoveImage('imgIssue', index)}
+            onViewAll={() => openImagePreview(form.imgIssue || [], 'Hình ảnh Vấn đề phát sinh', 0)}
+            onViewSingle={(url, title) => openImagePreview(url, title)}
+          />
         </div>
-      </Modal>
+      </div>
+    </Modal>
       
     </div>
     <ImagePreviewModal

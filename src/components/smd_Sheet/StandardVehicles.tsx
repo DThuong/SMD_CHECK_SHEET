@@ -92,12 +92,14 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
     const isSaved = completedTables.includes('StandardVehicle');
     
     const { notification, showNotification,  hideNotification } = useNotification();
-    const isUploadingRef = useRef(false);
+    // const isModalInitializedRef = useRef(false);
     const hasUserEditedRef = useRef(false);
+    const isUploadingRef = useRef(false);
+    const deletingRef = useRef(false);
 
     const {t} = useTranslation('standardVehicle');
     const {t: t2} = useTranslation('common');
-    const deletingRef = useRef(false);
+    
 
     // Xử lý upload hình ảnh preview modal
     const [imagePreview, setImagePreview] = useState<{
@@ -131,26 +133,29 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
       initialIndex: 0
     });
   };
-  // fetch data khi id thay đổi
-   useEffect(() => {
-    if (standardVehicleId) {
-      dispatch(fetchStandardVehicle(standardVehicleId));
-    }
-  }, [standardVehicleId, dispatch]);
-
-  useEffect(() => {
-    if (standardVehicle && !hasUserEditedRef.current && !isUploadingRef.current && !deletingRef.current) {
-      setForm(standardVehicle);
-    }
-  }, [standardVehicle]);
-
-  useEffect(() => {
-    if (!open) {
-      hasUserEditedRef.current = false;
-      isUploadingRef.current = false;
-      deletingRef.current = false;
-    }
-  }, [open]);
+    // useEffect #1: Fetch data khi ID thay đổi
+    useEffect(() => {
+      if (standardVehicleId) {
+        dispatch(fetchStandardVehicle(standardVehicleId));
+      }
+    }, [standardVehicleId, dispatch]);
+  
+    // useEffect #3: Sync form với Redux
+    useEffect(() => {
+      if (standardVehicle && !hasUserEditedRef.current && !isUploadingRef.current && !deletingRef.current) {
+        setForm(standardVehicle);
+      }
+    }, [standardVehicle]);
+  
+    // useEffect #4: Reset flags khi đóng modal
+    useEffect(() => {
+      if (!open) {
+        hasUserEditedRef.current = false;
+        isUploadingRef.current = false;
+        deletingRef.current = false;
+      }
+    }, [open]);
+  
   
   if (!standardVehicleId) {
     return (
@@ -211,16 +216,18 @@ const StandardVehicles = memo(({canEdit}: {canEdit: boolean}) => {
         break;
     }
 
-    // Thêm ảnh mới vào array (backend trả về single URL)
-     if (result?.imageUrl) {
-      setForm(prev => ({
-        ...prev,
-        [field]: [
-          ...(Array.isArray(prev[field as keyof StandardVehicleData]) ? prev[field as keyof StandardVehicleData] as string[] : []),
-          result.imageUrl
-        ]
-      }));
+    // Thêm ảnh mới vào array, update local state
+    if (result?.imageUrl) {
+      setForm(prev => {
+        const fieldKey = field as 'imgSPI' | 'imgAOI' | 'imgMounter' | 'imgPrinter' | 'imgPrinterClean' | 'imgIssue' | 'imgXray';
+        const currentArray = prev[fieldKey] || [];
+        return {
+          ...prev,
+          [fieldKey]: [...currentArray, result.imageUrl]
+        };
+      });
     }
+  
     
     showNotification('success', 'Thành công', successMessage);
     
@@ -309,7 +316,7 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
 
   // Wrapper cho set() để đánh dấu user đã edit
   const set = <K extends keyof StandardVehicleData>(k: K, v: StandardVehicleData[K]) => {
-    hasUserEditedRef.current = true; // Đánh dấu user đã edit
+    hasUserEditedRef.current = true;
     setForm((s) => ({ ...s, [k]: v }));
   };
     
@@ -325,23 +332,50 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
     }
 
     try {
-      // Dispatch action để update
-      await dispatch(updateStandardVehicle({
-        id: standardVehicleId,
-        data: form
-      })).unwrap();
-      
-      // Fetch lại data SAU KHI lưu thành công
-      if (standardVehicleId) {
-        await dispatch(fetchStandardVehicle(standardVehicleId)).unwrap();
-      }
-      
-      // Reset flags
-      hasUserEditedRef.current = false;
-      isUploadingRef.current = false;
-      
-      setOpen(false);
-      showNotification('success', 'Thành công', 'Cập nhật Standard Vehicle thành công');
+      const dataToSubmit = {
+      ...form,
+      printerSpecGTAL: form.printerSpecGTAL?.toUpperCase() || "",
+      printerSpecTDQ: form.printerSpecTDQ?.toUpperCase() || "",
+      printerSpecTDKC: form.printerSpecTDKC?.toUpperCase() || "",
+      printerSpecSLL: form.printerSpecSLL?.toUpperCase() || "",
+      printerSpecDSL: form.printerSpecDSL?.toUpperCase() || "",
+      printerRealGTAL: form.printerRealGTAL?.toUpperCase() || "",
+      printerRealTDQ: form.printerRealTDQ?.toUpperCase() || "",
+      printerRealTDKC: form.printerRealTDKC?.toUpperCase() || "",
+      printerRealSLL: form.printerRealSLL?.toUpperCase() || "",
+      printerRealDSL: form.printerRealDSL?.toUpperCase() || "",
+      reFlowSettingRail: form.reFlowSettingRail?.toUpperCase() || "",
+      reFlowRealRail: form.reFlowRealRail?.toUpperCase() || "",
+      aoiCheck: form.aoiCheck?.toUpperCase() || "",
+      outputModelValue: form.outputModelValue?.toUpperCase() || "",
+      outputPitchValue: form.outputPitchValue?.toUpperCase() || "",
+      outputChecker: form.outputChecker?.toUpperCase() || "",
+      nameOP: form.nameOP?.toUpperCase() || "",
+      nameAOI: form.nameAOI?.toUpperCase() || "",
+      printerProgram: form.printerProgram?.toUpperCase() || "",
+      spiProgram: form.spiProgram?.toUpperCase() || "",
+      mounterProgram: form.mounterProgram?.toUpperCase() || "",
+      pointMounter: form.pointMounter?.toUpperCase() || "",
+      maoiProgram: form.maoiProgram?.toUpperCase() || "",
+      saoiProgram: form.saoiProgram?.toUpperCase() || "",
+      pointSAOI: form.pointSAOI?.toUpperCase() || "",
+      reflowProgram: form.reflowProgram?.toUpperCase() || "",
+      reflowSpeed: form.reflowSpeed?.toUpperCase() || "",
+      rev: form.rev?.toUpperCase() || "",
+      note: form.note?.toUpperCase() || ""
+    };
+
+    await dispatch(updateStandardVehicle({
+      id: standardVehicleId,
+      data: dataToSubmit
+    })).unwrap();
+    
+    if (standardVehicleId) {
+      await dispatch(fetchStandardVehicle(standardVehicleId)).unwrap();
+    }
+    
+    setOpen(false);
+    showNotification('success', 'Thành công', 'Cập nhật Standard Vehicle thành công');
     } catch (error) {
       console.error('Failed to update StandardVehicles:', error);
       showNotification('error', 'Lỗi lưu Standard Vehicle', 'Có lỗi xảy ra khi cập nhật StandardVehicles');
@@ -1328,7 +1362,8 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
 
    {/* Modal */}
     <Modal open={open} title="Chi tiết Vehicle Check" onClose={() => setOpen(false)} onSave={submit}>
-  <div className="grid gap-4 max-h-[70vh] overflow-y-auto scrollbar-hide">
+  <div className="max-h-[70vh] overflow-y-auto scrollbar-hide" style={{WebkitOverflowScrolling: 'touch'}}>
+    <div className="grid gap-4 p-1">
     {/* Printer */}
     <section className="pb-3 border-b border-gray-200 scrollbar-hide">
       <h4 className="text-sm font-semibold mb-3 text-gray-700">Printer</h4>
@@ -1337,9 +1372,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
         <div className="min-w-0">
           <label className="text-xs block mb-1">Giá trị áp lực Spec (kg)</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.printerSpecGTAL ?? ""}
-            onChange={(e) => set("printerSpecGTAL", e.target.value.toUpperCase() )}
+            onChange={(e) => set("printerSpecGTAL", e.target.value)}
             type="text"
           />
         </div>
@@ -1347,9 +1382,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
         <div className="min-w-0">
           <label className="text-xs block mb-1">Tốc độ quét Spec (mm/s)</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.printerSpecTDQ ?? ""}
-            onChange={(e) => set("printerSpecTDQ", e.target.value.toUpperCase() )}
+            onChange={(e) => set("printerSpecTDQ", e.target.value)}
             type="text"
           />
         </div>
@@ -1358,9 +1393,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
       <div className="min-w-0 mb-3">
         <label className="text-xs block mb-1">Tốc độ khoảng cách tách bàn Spec (mm/s)</label>
         <input
-          className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+          className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
           value={form.printerSpecTDKC ?? ""}
-          onChange={(e) => set("printerSpecTDKC", e.target.value.toUpperCase() )}
+          onChange={(e) => set("printerSpecTDKC", e.target.value)}
           type="text"
         />
       </div>
@@ -1369,9 +1404,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
         <div className="min-w-0">
           <label className="text-xs block mb-1">Số lần lau Spec</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.printerSpecSLL ?? ""}
-            onChange={(e) => set("printerSpecSLL", e.target.value.toUpperCase() )}
+            onChange={(e) => set("printerSpecSLL", e.target.value)}
             type="text"
           />
         </div>
@@ -1379,9 +1414,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
         <div className="min-w-0">
           <label className="text-xs block mb-1">Dao sử dụng Spec</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.printerSpecDSL ?? ""}
-            onChange={(e) => set("printerSpecDSL", e.target.value.toUpperCase() )}
+            onChange={(e) => set("printerSpecDSL", e.target.value)}
             type="text"
           />
         </div>
@@ -1391,9 +1426,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
         <div className="min-w-0">
           <label className="text-xs block mb-1">Giá trị áp lực thực tế trên máy (kg)</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.printerRealGTAL ?? ""}
-            onChange={(e) => set("printerRealGTAL", e.target.value.toUpperCase() )}
+            onChange={(e) => set("printerRealGTAL", e.target.value)}
             type="text"
           />
         </div>
@@ -1401,9 +1436,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
         <div className="min-w-0">
           <label className="text-xs block mb-1">Tốc độ quét thực tế trên máy (mm/s)</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.printerRealTDQ ?? ""}
-            onChange={(e) => set("printerRealTDQ", e.target.value.toUpperCase() )}
+            onChange={(e) => set("printerRealTDQ", e.target.value )}
             type="text"
           />
         </div>
@@ -1412,9 +1447,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
       <div className="min-w-0 mb-3">
         <label className="text-xs block mb-1">Tốc độ tách bàn thực tế trên máy (mm/s)</label>
         <input
-          className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+          className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
           value={form.printerRealTDKC ?? ""}
-          onChange={(e) => set("printerRealTDKC", e.target.value.toUpperCase() )}
+          onChange={(e) => set("printerRealTDKC", e.target.value )}
           type="text"
         />
       </div>
@@ -1422,9 +1457,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
       <div className="min-w-0 mb-3">
           <label className="text-xs block mb-1">Số lần lau thực tế trên máy</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.printerRealSLL ?? ""}
-            onChange={(e) => set("printerRealSLL", e.target.value.toUpperCase() )}
+            onChange={(e) => set("printerRealSLL", e.target.value )}
             type="text"
           />
       </div>
@@ -1432,9 +1467,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
       <div className="min-w-0 mb-3">
           <label className="text-xs block mb-1">Dao sử dụng thực tế trên máy</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.printerRealDSL ?? ""}
-            onChange={(e) => set("printerRealDSL", e.target.value.toUpperCase() )}
+            onChange={(e) => set("printerRealDSL", e.target.value )}
             type="text"
           />
       </div>
@@ -1442,9 +1477,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
       <div className="min-w-0 mb-3">
           <label className="text-xs block mb-1">Printer Program</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.printerProgram ?? ""}
-            onChange={(e) => set("printerProgram", e.target.value.toUpperCase())}
+            onChange={(e) => set("printerProgram", e.target.value)}
             type="text"
           />
       </div>
@@ -1491,9 +1526,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
       <div className="min-w-0 mb-3">
           <label className="text-xs block mb-1">SPI Program</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.spiProgram ?? ""}
-            onChange={(e) => set("spiProgram", e.target.value.toUpperCase())}
+            onChange={(e) => set("spiProgram", e.target.value)}
             type="text"
           />
       </div>
@@ -1501,9 +1536,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
       <div className="min-w-0 mb-3">
           <label className="text-xs block mb-1">REV</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.rev ?? ""}
-            onChange={(e) => set("rev", e.target.value.toUpperCase())}
+            onChange={(e) => set("rev", e.target.value)}
             type="text"
           />
       </div>
@@ -1541,9 +1576,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
       <div className="min-w-0 mb-3">
           <label className="text-xs block mb-1">Mounter Program</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.mounterProgram ?? ""}
-            onChange={(e) => set("mounterProgram", e.target.value.toUpperCase())}
+            onChange={(e) => set("mounterProgram", e.target.value)}
             type="text"
           />
       </div>
@@ -1551,9 +1586,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
       <div className="min-w-0 mb-3">
           <label className="text-xs block mb-1">Point Mounter</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.pointMounter ?? ""}
-            onChange={(e) => set("pointMounter", e.target.value.toUpperCase() )}
+            onChange={(e) => set("pointMounter", e.target.value )}
             type="text"
           />
       </div>
@@ -1619,18 +1654,18 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
           <div className="min-w-0">
             <label className="text-xs block mb-1">Giá trị cài đặt Rail (mm)</label>
             <input
-              className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+              className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
               value={form.reFlowSettingRail ?? ""}
-              onChange={(e) => set("reFlowSettingRail", e.target.value.toUpperCase() )}
+              onChange={(e) => set("reFlowSettingRail", e.target.value )}
               type="text"
             />
           </div>
           <div className="min-w-0">
             <label className="text-xs block mb-1">Giá trị thực tế Rail (mm)</label>
             <input
-              className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+              className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
               value={form.reFlowRealRail ?? ""}
-              onChange={(e) => set("reFlowRealRail", e.target.value.toUpperCase() )}
+              onChange={(e) => set("reFlowRealRail", e.target.value )}
               type="text"
             />
           </div>
@@ -1639,9 +1674,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
         <div className="min-w-0 ">
           <label className="text-xs block mb-1">Reflow Program</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.reflowProgram ?? ""}
-            onChange={(e) => set("reflowProgram", e.target.value.toUpperCase() )}
+            onChange={(e) => set("reflowProgram", e.target.value )}
             type="text"
           />
       </div>
@@ -1649,9 +1684,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
       <div className="min-w-0">
           <label className="text-xs block mb-1">Reflow Speed</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.reflowSpeed ?? ""}
-            onChange={(e) => set("reflowSpeed", e.target.value.toUpperCase() )}
+            onChange={(e) => set("reflowSpeed", e.target.value )}
             type="text"
           />
       </div>
@@ -1688,9 +1723,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
   <div className="min-w-0 mb-3">
     <label className="text-xs block mb-1">Chương trình mAoi</label>
     <input
-      className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+      className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
       value={form.maoiProgram ?? ""}
-      onChange={(e) => set("maoiProgram", e.target.value.toUpperCase())}
+      onChange={(e) => set("maoiProgram", e.target.value)}
       type="text"
     />
   </div>
@@ -1698,9 +1733,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
   <div className="min-w-0 mb-3">
     <label className="text-xs block mb-1">Chương trình sAoi</label>
     <input
-      className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+      className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
       value={form.saoiProgram ?? ""}
-      onChange={(e) => set("saoiProgram", e.target.value.toUpperCase())}
+      onChange={(e) => set("saoiProgram", e.target.value)}
       type="text"
     />
   </div>
@@ -1708,9 +1743,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
   <div className="min-w-0 mb-3">
     <label className="text-xs block mb-1">Point sAoi</label>
     <input
-      className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+      className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
       value={form.pointSAOI ?? ""}
-      onChange={(e) => set("pointSAOI", e.target.value.toUpperCase())}
+      onChange={(e) => set("pointSAOI", e.target.value)}
       type="text"
     />
   </div>
@@ -1718,9 +1753,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
   <div className="min-w-0 mb-3">
     <label className="text-xs block mb-1">Người kiểm tra</label>
     <input
-      className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+      className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
       value={form.aoiCheck ?? ""}
-      onChange={(e) => set("aoiCheck", e.target.value.toUpperCase())}
+      onChange={(e) => set("aoiCheck", e.target.value)}
       type="text"
     />
   </div>
@@ -1755,9 +1790,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
         <div className="min-w-0">
           <label className="text-xs block mb-1">Người kiểm tra</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.outputChecker ?? ""}
-            onChange={(e) => set("outputChecker", e.target.value.toUpperCase())}
+            onChange={(e) => set("outputChecker", e.target.value)}
           />
         </div>
 
@@ -1765,17 +1800,17 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
           <div className="min-w-0">
             <label className="text-xs block mb-1">Giá trị cài đặt theo yêu cầu Model</label>
             <input
-              className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+              className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
               value={form.outputModelValue ?? ""}
-              onChange={(e) => set("outputModelValue", e.target.value.toUpperCase())}
+              onChange={(e) => set("outputModelValue", e.target.value)}
             />
           </div>
           <div className="min-w-0">
             <label className="text-xs block mb-1">Giá trị cài đặt theo yêu cầu Pitch</label>
             <input
-              className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+              className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
               value={form.outputPitchValue ?? ""}
-              onChange={(e) => set("outputPitchValue", e.target.value.toUpperCase())}
+              onChange={(e) => set("outputPitchValue", e.target.value)}
             />
           </div>
         </div>
@@ -1790,18 +1825,18 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
         <div className="min-w-0">
           <label className="text-xs block mb-1">Tên OP</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.nameOP ?? ""}
-            onChange={(e) => set("nameOP", e.target.value.toUpperCase())}
+            onChange={(e) => set("nameOP", e.target.value)}
           />
         </div>
 
         <div className="min-w-0">
           <label className="text-xs block mb-1">Tên AOI</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.nameAOI ?? ""}
-            onChange={(e) => set("nameAOI", e.target.value.toUpperCase())}
+            onChange={(e) => set("nameAOI", e.target.value)}
           />
         </div>
       </div>
@@ -1815,9 +1850,9 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
         <div className="min-w-0">
           <label className="text-xs block mb-1">Ghi chú vấn đề phát sinh</label>
           <input
-            className="block w-full border rounded px-3 py-2 text-sm min-w-0"
+            className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
             value={form.note}
-            onChange={(e) => set("note", e.target.value.toUpperCase())}
+            onChange={(e) => set("note", e.target.value)}
           />
         </div>
 
@@ -1832,6 +1867,7 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
       />
         </div>
     </section>
+    </div>
   </div>
 </Modal>
 

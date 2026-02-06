@@ -116,11 +116,17 @@ const TimeChangeModels = memo(({canEdit}: {canEdit: boolean}) => {
                 file 
               })).unwrap();
             
-              // Thêm ảnh mới vào array
-               if (result?.imageUrl) {
-                  const fetchData = await dispatch(fetchTimeChangeModel(timeChangeModelId)).unwrap();
-                  setForm(fetchData);
-                }
+              // Thêm ảnh mới vào array, update local state
+              if (result?.imageUrl) {
+                setForm(prev => {
+                  const fieldKey = field as 'imgIssue';
+                  const currentArray = prev[fieldKey] || [];
+                  return {
+                    ...prev,
+                    [fieldKey]: [...currentArray, result.imageUrl]
+                  };
+                });
+              }
               
               showNotification('success', 'Thành công', 'Upload hình ảnh Vấn đề phát sinh thành công');
             }

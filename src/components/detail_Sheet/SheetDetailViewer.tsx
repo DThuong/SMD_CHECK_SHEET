@@ -38,7 +38,7 @@ import { useTranslation } from 'react-i18next';
 import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
 import { clearLcrFile, getLcrFileData } from '../../redux/slices/FileSlice';
-import { saveFilterState } from '../../utils/navigationState';
+// import { saveFilterState } from '../../utils/navigationState';
 import NoteModal from '../general/NoteModal';
 import { MdStickyNote2 } from 'react-icons/md';
 
@@ -142,7 +142,7 @@ const SheetDetailViewer = () => {
     
     navigate(fullPath, {
       state: {
-        from: 'sheetDetail',  // ← Đánh dấu rõ ràng
+        from: 'sheetDetail', 
         savedFilter: savedState.filter,
         savedPage: savedState.currentPage,
         highlightSheetId: savedSheetId

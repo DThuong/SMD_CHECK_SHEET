@@ -104,14 +104,13 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
     const handleImageUpload = async (field: string, event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file) return;
-    
+
       if (!checkModelId) {
         showNotification('error', 'Lỗi upload', 'Không tìm thấy CheckModel ID');
         return;
       }
-    
+
       try {
-        // Set flag TRƯỚC KHI upload
         isUploadingRef.current = true;
         
         if (field === 'imgIssue') {
@@ -120,25 +119,24 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
             file 
           })).unwrap();
         
-          // Thêm ảnh mới vào array
-          if (result?.imageUrl) {
-            setForm(prev => ({
+        // Thêm ảnh mới vào array, update local state
+        if (result?.imageUrl) {
+          setForm(prev => {
+            const fieldKey = field as 'imgIssue';
+            const currentArray = prev[fieldKey] || [];
+            return {
               ...prev,
-              imgIssue: [
-                ...(Array.isArray(prev.imgIssue) ? prev.imgIssue : []),
-                result.imageUrl
-              ]
-            }));
-          }
-          
+              [fieldKey]: [...currentArray, result.imageUrl]
+            };
+          });
+        }
           showNotification('success', 'Thành công', 'Upload hình ảnh Vấn đề phát sinh thành công');
         }
-    
+
       } catch (error) {
         console.error('Failed to upload image:', error);
         showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
       } finally {
-        // Reset flag SAU KHI upload xong (thành công hay thất bại)
         isUploadingRef.current = false;
       }
     };
@@ -228,6 +226,7 @@ const CheckModels = memo(function CheckModels({canEdit}: {canEdit: boolean}) {
       hasUserEditedRef.current = false;
       isUploadingRef.current = false;
 
+      showNotification('success', 'Thành công', 'Cập nhật Check Model thành công');
       setOpen(false);
     } catch (error: any) {
       console.error('❌ Lỗi:', error);

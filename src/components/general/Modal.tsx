@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from "react";
+import React, { useEffect, useRef } from "react";
 
 type ModalProps = {
   open: boolean;
@@ -9,65 +9,75 @@ type ModalProps = {
   children?: React.ReactNode;
 };
 
-export default function Modal({ open, title, onClose, onSave, disabledSave, children }: ModalProps) {
+export default function Modal({ 
+  open, 
+  title, 
+  onClose, 
+  onSave, 
+  disabledSave, 
+  children 
+}: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
-  const savedScrollY = useRef(0);
-  
-  // Body scroll lock khi modal mở
+  const activeInputRef = useRef<HTMLElement | null>(null);
+
+  // Body scroll lock
   useEffect(() => {
-    if (open) {
-      savedScrollY.current = window.scrollY;
-      
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${savedScrollY.current}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
-      
-      return () => {
-        const scrollY = savedScrollY.current;
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        window.scrollTo(0, scrollY);
-      };
+    if (!open) {
+      document.body.classList.remove('modal-open');
+      return;
     }
+
+    document.body.classList.add('modal-open');
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.classList.remove('modal-open');
+    };
   }, [open]);
 
-  // iOS Input Focus Handler - ĐƠN GIẢN HÓA
+  // iOS Focus Handler với scroll into view
   useEffect(() => {
     if (!open || !contentRef.current) return;
 
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    if (!isIOS) return; // ✅ Chỉ chạy trên iOS
+    if (!isIOS) return;
 
     const handleFocus = (e: FocusEvent) => {
-      const target = e.target as HTMLInputElement;
+      const target = e.target as HTMLElement;
       
+      // Skip non-text inputs
       if (
-        target.tagName === 'INPUT' || 
-        target.tagName === 'TEXTAREA' || 
-        target.tagName === 'SELECT'
-      ) {
-        // Skip checkbox/radio
-        if (target.type === 'checkbox' || target.type === 'radio') return;
+        target instanceof HTMLInputElement && 
+        ['checkbox', 'radio', 'date', 'datetime-local', 'time'].includes(target.type)
+      ) return;
+
+      activeInputRef.current = target;
+
+      // Scroll input vào view
+      setTimeout(() => {
+        if (target !== activeInputRef.current) return;
         
-        // ✅ CHỈ scroll 1 lần, KHÔNG re-focus
-        setTimeout(() => {
-          target.scrollIntoView({
-            behavior: 'auto', // ✅ Không dùng smooth
-            block: 'center',
-            inline: 'nearest'
-          });
-        }, 150); // ✅ Giảm delay
-      }
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest'
+        });
+      }, 100);
+    };
+
+    const handleBlur = () => {
+      activeInputRef.current = null;
     };
 
     const content = contentRef.current;
-    content.addEventListener('focusin', handleFocus, { passive: true }); // ✅ Passive listener
+    content.addEventListener('focusin', handleFocus, { passive: true });
+    content.addEventListener('focusout', handleBlur, { passive: true });
 
     return () => {
       content.removeEventListener('focusin', handleFocus);
+      content.removeEventListener('focusout', handleBlur);
     };
   }, [open]);
 
@@ -75,23 +85,32 @@ export default function Modal({ open, title, onClose, onSave, disabledSave, chil
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center py-4"
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{
+        WebkitOverflowScrolling: 'touch',
+      }}
     >
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      
+      {/* Backdrop */}
       <div 
-        className="relative z-10 w-full max-w-lg mx-4 bg-white rounded-lg shadow-lg p-4 mb-4"
+        className="absolute inset-0 bg-black/40" 
+        onClick={onClose}
+      />
+      
+      {/* Modal Container */}
+      <div 
+        className="relative z-10 w-full max-w-lg mx-4 bg-white rounded-lg shadow-lg flex flex-col modal-container"
         style={{
           maxHeight: '85vh',
-          display: 'flex',
-          flexDirection: 'column',
+          height: 'auto',
         }}
       >
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-medium">{title ?? "Chi tiết"}</h3>
+        {/* Header */}
+        <div className="flex items-center justify-between p-3 border-b border-gray-200 shrink-0">
+          <h3 className="text-base font-medium">{title ?? "Chi tiết"}</h3>
           <button 
             onClick={onClose} 
             aria-label="close"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             style={{
               minWidth: '44px',
               minHeight: '44px',
@@ -101,21 +120,26 @@ export default function Modal({ open, title, onClose, onSave, disabledSave, chil
           </button>
         </div>
 
+        {/* Content */}
         <div 
           ref={contentRef}
-          className="overflow-auto flex-1 scrollbar-hide"
+          className="flex-1 overflow-y-auto scrollbar-hide"
           style={{
             WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
           }}
         >
-          {children}
+          <div className="p-3">
+            {children}
+          </div>
         </div>
 
-        <div className="mt-4 flex gap-2 mb-4">
+        {/* Footer */}
+        <div className="p-3 border-t border-gray-200 flex gap-2 shrink-0">
           <button 
             type="button" 
             onClick={onSave} 
-            className="flex-1 px-3 py-2 bg-blue-600 text-white rounded" 
+            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed" 
             disabled={disabledSave}
             style={{ minHeight: '44px' }}
           >
@@ -124,7 +148,7 @@ export default function Modal({ open, title, onClose, onSave, disabledSave, chil
           <button 
             type="button" 
             onClick={onClose} 
-            className="flex-1 px-3 py-2 border rounded"
+            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium"
             style={{ minHeight: '44px' }}
           >
             Hủy

@@ -45,8 +45,8 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
   const isSaved = completedTables.includes('StandardProduction');
 
   const { notification, showNotification,  hideNotification } = useNotification();
-  const isUploadingRef = useRef(false);
   const hasUserEditedRef = useRef(false);
+  const isUploadingRef = useRef(false);
 
   const {t} = useTranslation('standardProduction');
   const {t: t2} = useTranslation('common');
@@ -84,21 +84,21 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
     });
   };
 
-  // useEffect #1: Fetch data khi ID thay đổi
+  // Fetch data khi ID thay đổi
   useEffect(() => {
     if (standardProductionId) {
       dispatch(fetchStandardProduction(standardProductionId));
     }
   }, [standardProductionId, dispatch]);
 
-  // useEffect #2: Sync form với Redux state
+  // Sync form với Redux
   useEffect(() => {
     if (standardProduction && !hasUserEditedRef.current && !isUploadingRef.current && !deletingRef.current) {
       setForm(standardProduction);
     }
   }, [standardProduction]);
 
-  // useEffect #3: Reset flags khi đóng modal
+  // Reset flags khi đóng modal
   useEffect(() => {
     if (!open) {
       hasUserEditedRef.current = false;
@@ -118,56 +118,60 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
 
   // xử lý upload hình ảnh với flag
   const handleImageUpload = async (field: string, event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-  
-    if (!standardProductionId) {
-      showNotification('error', 'Lỗi upload', 'Không tìm thấy StandardProduction ID');
-      return;
-    }
-  
-    try {
-      // Set flag TRƯỚC KHI upload
-      isUploadingRef.current = true;
+  const file = event.target.files?.[0];
+  if (!file) return;
 
-      let result;
-      let successMessage = '';
+  if (!standardProductionId) {
+    showNotification('error', 'Lỗi upload', 'Không tìm thấy StandardProduction ID');
+    return;
+  }
+
+  try {
+    isUploadingRef.current = true;
+
+    let result;
+    let successMessage = '';
+    
+    switch (field) {
+      case 'imgStandard':
+        result = await dispatch(uploadStandardProductionImage({ 
+          standardProductionId: Number(standardProductionId), 
+          file 
+        })).unwrap();
+        successMessage = 'Upload hình ảnh Tiêu Chuẩn Sản Xuất thành công';
+        break;
       
-      switch (field) {
-        case 'imgStandard':
-          result = await dispatch(uploadStandardProductionImage({ 
-                standardProductionId: Number(standardProductionId), 
-                file 
-              })).unwrap();
-              successMessage = 'Upload hình ảnh Tiêu Chuẩn Sản Xuất thành công';
-              break;
-            
-        case 'imgIssue':
-          result = await dispatch(uploadStandardProductionIssueImage({ 
-            StandardProductionId: Number(standardProductionId), 
-            file 
-          })).unwrap();
-          successMessage = 'Upload hình ảnh vấn đề phát sinh thành công';
-          break;
-          }
-      
-          // Thêm ảnh mới vào array
-          if (result?.imageUrl) {
-              const fetchData = await dispatch(fetchStandardProduction(standardProductionId)).unwrap();
-              setForm(fetchData);
-          }
-        
-        showNotification('success', 'Thành công', successMessage);
-      }
-  
-    catch (error) {
-      console.error('Failed to upload image:', error);
-      showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
-    } finally {
-      // Reset flag SAU KHI upload xong (thành công hay thất bại)
-      isUploadingRef.current = false;
+      case 'imgIssue':
+        result = await dispatch(uploadStandardProductionIssueImage({ 
+          StandardProductionId: Number(standardProductionId), 
+          file 
+        })).unwrap();
+        successMessage = 'Upload hình ảnh vấn đề phát sinh thành công';
+        break;
     }
-  };
+    
+    // Thêm ảnh mới vào array, update local state
+    if (result?.imageUrl) {
+      setForm(prev => {
+        const fieldKey = field as 'imgStandard' | 'imgIssue';
+        const currentArray = prev[fieldKey] || [];
+        
+        return {
+          ...prev,
+          [fieldKey]: [...currentArray, result.imageUrl]
+        };
+      });
+    }
+  
+  
+    showNotification('success', 'Thành công', successMessage);
+  } catch (error) {
+    console.error('Failed to upload image:', error);
+    showNotification('error', 'Lỗi upload', 'Có lỗi xảy ra khi upload hình ảnh');
+  } finally {
+    isUploadingRef.current = false;
+  }
+};
 
     const handleRemoveImage = async (field: 'imgStandard' | 'imgIssue', index: number) => {
       if (!standardProductionId) {
@@ -210,7 +214,7 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
 
   // Wrapper cho set() để đánh dấu user đã edit
   const set = <K extends keyof StandardProductionData>(k: K, v: StandardProductionData[K]) => {
-    hasUserEditedRef.current = true; // Đánh dấu user đã edit
+    hasUserEditedRef.current = true;
     setForm((s) => ({ ...s, [k]: v }));
   };
     
@@ -226,18 +230,23 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
     }
 
     try {
-      // Dispatch action để update
+      const dataToSubmit = {
+        ...form,
+        numMASK: form.numMASK?.toUpperCase() || "",
+        numMES: form.numMES?.toUpperCase() || "",
+        numScanPrinter: form.numScanPrinter?.toUpperCase() || "",
+        numScanSignMES: form.numScanSignMES?.toUpperCase() || "",
+        mlS3Closed: form.mlS3Closed?.toUpperCase() || "",
+        labelProgram: form.labelProgram?.toUpperCase() || "",
+        note: form.note?.toUpperCase() || ""
+      };
+
       await dispatch(updateStandardProduction({
         id: standardProductionId,
-        data: form
+        data: dataToSubmit
       })).unwrap();
       
-      //Fetch lại data SAU KHI lưu thành công
       await dispatch(fetchStandardProduction(standardProductionId)).unwrap();
-      
-      // Reset flags
-      hasUserEditedRef.current = false;
-      isUploadingRef.current = false;
       
       setOpen(false);
       showNotification('success', 'Thành công', 'Cập nhật Standard Production thành công');
@@ -487,136 +496,143 @@ const StandardProductionSection = memo(({canEdit}: {canEdit: boolean}) => {
         </ViewDetailButton>
       </div>
 
-<Modal
-  open={open}
-  title="Chi tiết Tiêu chuẩn sản xuất"
-  onClose={() => setOpen(false)}
-  onSave={submit}
->
-  <div className="grid gap-3 max-h-[60vh] overflow-y-auto scrollbar-hide">
-    <div className="grid grid-cols-2 gap-3">
-      <label className="text-xs">
-        Số quản lý trên Mask
+    <Modal
+      open={open}
+      title="Chi tiết Tiêu chuẩn sản xuất"
+      onClose={() => setOpen(false)}
+      onSave={submit}
+    >
+      <div className="max-h-[60vh] overflow-y-auto scrollbar-hide" style={{WebkitOverflowScrolling: 'touch'}}>
+        <div className="grid gap-3 p-1">
+        <div className="grid grid-cols-2 gap-3">
+          <label className="text-xs">
+            Số quản lý trên Mask
+            <input 
+              value={form.numMASK ?? ""} 
+              onChange={(e) => set("numMASK", e.target.value)} 
+              className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
+              placeholder=""
+            />
+          </label>
+
+          <label className="text-xs">
+            Số đăng ký trên MES
+            <input 
+              value={form.numMES ?? ""} 
+              onChange={(e) => set("numMES", e.target.value)} 
+              className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
+              placeholder=""
+            />
+          </label>
+        </div>
+
+        <label className="text-xs">
+          Số dao quét Printer
         <input 
-          value={form.numMASK ?? ""} 
-          onChange={(e) => set("numMASK", e.target.value.toUpperCase())} 
-          className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
-          placeholder=""
+            value={form.numScanPrinter ?? ""} 
+            onChange={(e) => set("numScanPrinter", e.target.value)}
+            className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
+            placeholder=""
         />
-      </label>
+        </label>
 
-      <label className="text-xs">
-        Số đăng ký trên MES
+        <label className="text-xs">
+        Số đăng ký dao quét trên MES
         <input 
-          value={form.numMES ?? ""} 
-          onChange={(e) => set("numMES", e.target.value.toUpperCase())} 
-          className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
-          placeholder=""
+            value={form.numScanSignMES ?? ""} 
+            onChange={(e) => set("numScanSignMES", e.target.value)}
+            className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
+            placeholder=""
         />
-      </label>
-    </div>
+        </label>
 
-    <label className="text-xs">
-    Số dao quét Printer
-    <input 
-        value={form.numScanPrinter ?? ""} 
-        onChange={(e) => set("numScanPrinter", e.target.value.toUpperCase())}
-        className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
-        placeholder=""
-    />
-    </label>
+        <label className="text-xs">
+          Liệu MSL3 mở đóng gói
+          <input 
+            value={form.mlS3Closed ?? ""} 
+            onChange={(e) => set("mlS3Closed", e.target.value)} 
+            className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
+            placeholder=""
+          />
+        </label>
 
-    <label className="text-xs">
-    Số đăng ký dao quét trên MES
-    <input 
-        value={form.numScanSignMES ?? ""} 
-        onChange={(e) => set("numScanSignMES", e.target.value.toUpperCase())}
-        className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
-        placeholder=""
-    />
-    </label>
+        <label className="text-xs">
+          Chương trình máy label
+          <input 
+            value={form.labelProgram ?? ""} 
+            onChange={(e) => set("labelProgram", e.target.value)} 
+            className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
+            placeholder=""
+          />
+        </label>
 
-    <label className="text-xs">
-      Liệu MSL3 mở đóng gói
-      <input 
-        value={form.mlS3Closed ?? ""} 
-        onChange={(e) => set("mlS3Closed", e.target.value.toUpperCase())} 
-        className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
-        placeholder=""
-      />
-    </label>
+        <div className="flex flex-col gap-2">
+          <div>
+            <div className="text-xs mb-1">Chỉ sử dụng</div>
+            <div className="flex gap-2">
+              <button 
+                type="button" 
+                onClick={() => set("useOnly", "Duksan")} 
+                className={`px-3 py-2 rounded text-sm border ${form.useOnly === "Duksan" ? "bg-blue-100 border-blue-500" : ""}`}
+              >
+                Duksan
+              </button>
+              <button 
+                type="button" 
+                onClick={() => set("useOnly", "Heesung")} 
+                className={`px-3 py-2 rounded text-sm border ${form.useOnly === "Heesung" ? "bg-blue-100 border-blue-500" : ""}`}
+              >
+                Heesung
+              </button>
+              <button 
+                type="button" 
+                onClick={() => set("useOnly", undefined)} 
+                className="px-3 py-2 rounded text-sm border border-gray-300 text-gray-600 hover:bg-gray-50"
+              >
+                Xóa
+              </button>
+            </div>
+          </div>
+        </div>
 
-    <label className="text-xs">
-      Chương trình máy label
-      <input 
-        value={form.labelProgram ?? ""} 
-        onChange={(e) => set("labelProgram", e.target.value.toUpperCase())} 
-        className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
-        placeholder=""
-      />
-    </label>
+        <MultiImageUpload
+          label="Tiêu Chuẩn Sản Xuất"
+          images={form.imgStandard}
+          fieldName="imgStandard"
+          onUpload={handleImageUpload}
+          onRemove={(index) => handleRemoveImage('imgStandard', index)}
+          onViewAll={() => openImagePreview(form.imgStandard || [], 'Hình ảnh Tiêu Chuẩn Sản Xuất', 0)}
+          onViewSingle={(url, title) => openImagePreview(url, title)}
+        />
 
-    <div className="flex flex-col gap-2">
-      <div>
-        <div className="text-xs mb-1">Chỉ sử dụng</div>
-        <div className="flex gap-2">
-          <button 
-            type="button" 
-            onClick={() => set("useOnly", "Duksan")} 
-            className={`px-3 py-2 rounded text-sm border ${form.useOnly === "Duksan" ? "bg-blue-100 border-blue-500" : ""}`}
-          >
-            Duksan
-          </button>
-          <button 
-            type="button" 
-            onClick={() => set("useOnly", "Heesung")} 
-            className={`px-3 py-2 rounded text-sm border ${form.useOnly === "Heesung" ? "bg-blue-100 border-blue-500" : ""}`}
-          >
-            Heesung
-          </button>
-          <button 
-            type="button" 
-            onClick={() => set("useOnly", undefined)} 
-            className="px-3 py-2 rounded text-sm border border-gray-300 text-gray-600 hover:bg-gray-50"
-          >
-            Xóa
-          </button>
+        <label className="text-xs">
+          Ghi chú vấn đề phát sinh
+          <textarea 
+            value={form.note} 
+            onChange={(e) => set("note", e.target.value)} 
+            rows={3}
+            className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
+            placeholder=""
+            style={{
+              fontSize: '16px',
+              touchAction: 'manipulation',
+              resize: 'vertical'
+            }}
+          />
+        </label>
+
+        <MultiImageUpload
+          label="Vấn đề phát sinh"
+          images={form.imgIssue}
+          fieldName="imgIssue"
+          onUpload={handleImageUpload}
+          onRemove={(index) => handleRemoveImage('imgIssue', index)}
+          onViewAll={() => openImagePreview(form.imgIssue || [], 'Hình ảnh Vấn đề phát sinh', 0)}
+          onViewSingle={(url, title) => openImagePreview(url, title)}
+        />
         </div>
       </div>
-    </div>
-
-    <MultiImageUpload
-      label="Tiêu Chuẩn Sản Xuất"
-      images={form.imgStandard}
-      fieldName="imgStandard"
-      onUpload={handleImageUpload}
-      onRemove={(index) => handleRemoveImage('imgStandard', index)}
-      onViewAll={() => openImagePreview(form.imgStandard || [], 'Hình ảnh Tiêu Chuẩn Sản Xuất', 0)}
-      onViewSingle={(url, title) => openImagePreview(url, title)}
-    />
-
-    <label className="text-xs">
-      Ghi chú vấn đề phát sinh
-      <textarea 
-        value={form.note} 
-        onChange={(e) => set("note", e.target.value.toUpperCase())} 
-        className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
-        placeholder=""
-      />
-    </label>
-
-     <MultiImageUpload
-      label="Vấn đề phát sinh"
-      images={form.imgIssue}
-      fieldName="imgIssue"
-      onUpload={handleImageUpload}
-      onRemove={(index) => handleRemoveImage('imgIssue', index)}
-      onViewAll={() => openImagePreview(form.imgIssue || [], 'Hình ảnh Vấn đề phát sinh', 0)}
-      onViewSingle={(url, title) => openImagePreview(url, title)}
-    />
-
-  </div>
-</Modal>
+    </Modal>
 <ImagePreviewModal
   isOpen={imagePreview.isOpen}
   imageUrl={imagePreview.imageUrl}

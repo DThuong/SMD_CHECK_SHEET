@@ -47,7 +47,7 @@ export const setupApiInterceptor = (api: AxiosInstance, store: Store) => {
     (error) => Promise.reject(error)
   );
 
-  // ✅ RESPONSE INTERCEPTOR - Xử lý 401
+  // RESPONSE INTERCEPTOR - Xử lý 401
   api.interceptors.response.use(
     (response) => response,
     async (error) => {

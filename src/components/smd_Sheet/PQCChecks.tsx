@@ -11,6 +11,7 @@ import ImageViewIcon from "../files/ImageViewIcon";
 import ImagePreviewModal from "../files/ImagePreviewModal";
 import { useTranslation } from "react-i18next";
 import MultiImageUpload from "../files/MultiImageUpload";
+// import { useIOSInputFix } from "../../utils/useIOSInputFix";
 
 const initialPQCChecksState: PQCCheckData = {
   id: undefined,
@@ -41,10 +42,12 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
        const pqcCheckId = currentSheet?.pqcCheckId || pqcCheck?.id;
        const isSaved = completedTables.includes('PQCCheck');
        const { notification, showNotification, hideNotification } = useNotification();
-       const activeInputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null); // kiểm tra input có đang được focus hay không
+      //  const activeInputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null); // kiểm tra input có đang được focus hay không
        const hasUserEditedRef = useRef(false);
 
       const isUploadingRef = useRef(false);
+
+      // useIOSInputFix();
 
       const {t} = useTranslation('pqcCheck');
       const {t: t2} = useTranslation('common');
@@ -259,18 +262,18 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
   };
 
   // scroll input vào viewport
-  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    activeInputRef.current = e.target;
+  // const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  //   activeInputRef.current = e.target;
     
-    // Delay để đợi keyboard xuất hiện
-    setTimeout(() => {
-      e.target.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center', // Đặt input ở giữa màn hình
-        inline: 'nearest'
-      });
-    }, 300); // iOS keyboard mất ~300ms để xuất hiện
-  };
+  //   // Delay để đợi keyboard xuất hiện
+  //   setTimeout(() => {
+  //     e.target.scrollIntoView({
+  //       behavior: 'smooth',
+  //       block: 'center', // Đặt input ở giữa màn hình
+  //       inline: 'nearest'
+  //     });
+  //   }, 300); // iOS keyboard mất ~300ms để xuất hiện
+  // };
 
   return (
     <>
@@ -530,13 +533,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
 
         {/* Modal chỉnh sửa — style & input */}
     <Modal open={open} title="Chi tiết PQC Check" onClose={() => setOpen(false)} onSave={submit}>
-      <div className="max-h-[60vh] overflow-y-auto scrollbar-hide"
-        style={{
-            WebkitOverflowScrolling: 'touch',
-            position: 'relative',
-            willChange: 'scroll-position'
-          }}
-      >
+      <div className="max-h-[60vh] overflow-y-auto scrollbar-hide">
         <div className="grid gap-3 p-1">
           {/* IC nạp kế hoạch */}
           <label className="text-xs">
@@ -544,7 +541,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
             <input
               value={form.icPlan ?? ""}
               onChange={(e) => set("icPlan", e.target.value)}
-              onFocus={handleInputFocus}
+              // onFocus={handleInputFocus}
               className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
               placeholder=""
             />
@@ -556,7 +553,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
             <input
               value={form.checksumReal ?? ""}
               onChange={(e) => set("checksumReal", e.target.value)}
-              onFocus={handleInputFocus}
+              // onFocus={handleInputFocus}
               className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
               placeholder=""
             />
@@ -568,7 +565,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
             <input
               value={form.checksumConfirm ?? ""}
               onChange={(e) => set("checksumConfirm", e.target.value)}
-              onFocus={handleInputFocus}
+              // onFocus={handleInputFocus}
               className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
               placeholder=""
             />
@@ -580,7 +577,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
             <input
               value={form.turner ?? ""}
               onChange={(e) => set("turner", e.target.value)}
-              onFocus={handleInputFocus}
+              // onFocus={handleInputFocus}
               className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
               placeholder=""
             />
@@ -623,7 +620,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
             <input
               value={form.nameCheck ?? ""}
               onChange={(e) => set("nameCheck", e.target.value)}
-              onFocus={handleInputFocus}
+              // onFocus={handleInputFocus}
               className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
               placeholder=""
             />
@@ -653,7 +650,7 @@ const PQCChecks = memo(({canEdit}: {canEdit: boolean}) => {
               value={form.note} 
               onChange={(e) => set("note", e.target.value)} 
               className="mt-1 block w-full border rounded px-3 py-2 text-sm uppercase"
-              onFocus={handleInputFocus}
+              // onFocus={handleInputFocus}
               placeholder=""
               rows={3}
               style={{ 

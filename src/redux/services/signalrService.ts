@@ -25,7 +25,7 @@ class SignalRService {
     }
     if (!this.connection) {
     this.connection = new signalR.HubConnectionBuilder()
-      .withUrl('http://172.16.162.103:5000/notificationHub', {
+      .withUrl('http://172.16.162.123:5000/notificationHub', {
         accessTokenFactory: () => localStorage.getItem('token') || ''
       })
       .withAutomaticReconnect()

@@ -1362,7 +1362,7 @@ const handleRemoveImage = async (field: keyof StandardVehicleData, index: number
 
    {/* Modal */}
     <Modal open={open} title="Chi tiết Vehicle Check" onClose={() => setOpen(false)} onSave={submit}>
-  <div className="max-h-[70vh] overflow-y-auto scrollbar-hide" style={{WebkitOverflowScrolling: 'touch'}}>
+  <div className="max-h-[60vh] overflow-y-auto scrollbar-hide">
     <div className="grid gap-4 p-1">
     {/* Printer */}
     <section className="pb-3 border-b border-gray-200 scrollbar-hide">

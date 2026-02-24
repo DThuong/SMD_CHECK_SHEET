@@ -4,7 +4,13 @@ import type { AxiosInstance } from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://172.16.162.123:5000/api";
 
-//Tạo axios instance cơ bản
+const clearAuthAndRedirect = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('persist:auth');
+  sessionStorage.clear();
+  window.location.href = "/login";
+};
+
 const createSmdApi = (): AxiosInstance => {
   const api = axios.create({
     baseURL: BASE_URL,
@@ -14,17 +20,14 @@ const createSmdApi = (): AxiosInstance => {
     },
   });
 
-  // REQUEST INTERCEPTOR - Chỉ thêm token
+  // REQUEST INTERCEPTOR
   api.interceptors.request.use(
     (config) => {
       const token = localStorage.getItem("token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
-
-      // Tự động xử lý FormData
       if (config.data instanceof FormData) {
-        // Xóa Content-Type để axios tự set multipart/form-data với boundary
         delete config.headers['Content-Type'];
       }
       return config;
@@ -32,10 +35,20 @@ const createSmdApi = (): AxiosInstance => {
     (error) => Promise.reject(error)
   );
 
+  // RESPONSE INTERCEPTOR - Xử lý 401
+  api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) {
+        clearAuthAndRedirect();
+      }
+      return Promise.reject(error);
+    }
+  );
+
   return api;
 };
 
-// Export instance mặc định (chưa có 401 handler)
 const smdApi = createSmdApi();
 
 export default smdApi;

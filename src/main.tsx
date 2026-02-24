@@ -12,15 +12,13 @@ import '../src/lang/i18n/configs.ts';
 import { LanguageProvider } from './contexts/LanguageContext.tsx';
 
 // cập nhật code mới đổi version đảm bảo clear storage khi có thay đổi lớn (cấu trúc storage, logic auth...)
-const STORAGE_VERSION = 'v1';
-const storedVersion = localStorage.getItem('app_version');
-if (storedVersion !== STORAGE_VERSION) {
-  // Xóa các key liên quan đến auth
-  localStorage.removeItem('token');
-  localStorage.removeItem('persist:auth'); // redux-persist
-  sessionStorage.clear();
-  localStorage.setItem('app_version', STORAGE_VERSION);
-}
+// const STORAGE_VERSION = 'v1';
+// const storedVersion = localStorage.getItem('app_version');
+// if (storedVersion !== STORAGE_VERSION) {
+//   localStorage.clear()
+//   sessionStorage.clear();
+//   localStorage.setItem('app_version', STORAGE_VERSION);
+// }
 
 createRoot(document.getElementById('root')!).render(
     <Provider store={store}>

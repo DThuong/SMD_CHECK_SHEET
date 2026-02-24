@@ -5,8 +5,7 @@ import type { AxiosInstance } from "axios";
 const BASE_URL = import.meta.env.VITE_API_URL || "http://172.16.162.123:5000/api";
 
 const clearAuthAndRedirect = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('persist:auth');
+  localStorage.clear();
   sessionStorage.clear();
   window.location.href = "/login";
 };

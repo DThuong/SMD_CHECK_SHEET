@@ -59,7 +59,7 @@ const Dashboard = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-   // ==================== ADMIN DASHBOARD (GIỮ NGUYÊN CODE CŨ) ====================
+   // ==================== ADMIN DASHBOARD ====================
 
   const roleStats = React.useMemo(() => {
     const roleCounts: Record<string, number> = {};
@@ -191,259 +191,259 @@ const Dashboard = () => {
   
   // DASHBOARD CHO ENG/SUPERVISOR/MANAGER/KOREA_MANAGER
   if (user?.role !== 'Admin') {
-  // Định nghĩa cards theo role
-  const roleCards = {
-    'PQCLeader': [
-    { 
-      status: 'PQCDone', 
-      label: t('roleBasedDashboard.statusCards.needPQCLeader'),
-      description: t('roleBasedDashboard.statusCards.descPQCLeader'),
-      color: 'blue',
-      icon: '',
-      isUserCard: true
-    },
-    { 
-      status: 'PQCLeaderDone', 
-      label: t('roleBasedDashboard.statusCards.needEng'),
-      description: t('roleBasedDashboard.statusCards.descEng'),
-      color: 'green',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'ENGDone', 
-      label: t('roleBasedDashboard.statusCards.needSupervisor'),
-      description: t('roleBasedDashboard.statusCards.descSupervisor'),
-      color: 'green',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'SupervisiorDone', 
-      label: t('roleBasedDashboard.statusCards.needManager'),
-      description: t('roleBasedDashboard.statusCards.descManager'),
-      color: 'purple',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'ManagerDone', 
-      label: t('roleBasedDashboard.statusCards.needKoreaManager'),
-      description: t('roleBasedDashboard.statusCards.descKoreaManager'),
-      color: 'orange',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'KoreaManagerDone', 
-      label: t('roleBasedDashboard.statusCards.completed'),
-      description: t('roleBasedDashboard.statusCards.descCompleted'),
-      color: 'teal',
-      icon: '',
-      isUserCard: false
-    }
-  ],
-  'ENG': [
-    { 
-      status: 'PQCDone', 
-      label: t('roleBasedDashboard.statusCards.needPQCLeader'),
-      description: t('roleBasedDashboard.statusCards.descPQCLeader'),
-      color: 'blue',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'PQCLeaderDone', 
-      label: t('roleBasedDashboard.statusCards.needEng'),
-      description: t('roleBasedDashboard.statusCards.descEng'),
-      color: 'green',
-      icon: '',
-      isUserCard: true
-    },
-    { 
-      status: 'ENGDone', 
-      label: t('roleBasedDashboard.statusCards.needSupervisor'),
-      description: t('roleBasedDashboard.statusCards.descSupervisor'),
-      color: 'green',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'SupervisiorDone', 
-      label: t('roleBasedDashboard.statusCards.needManager'),
-      description: t('roleBasedDashboard.statusCards.descManager'),
-      color: 'purple',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'ManagerDone', 
-      label: t('roleBasedDashboard.statusCards.needKoreaManager'),
-      description: t('roleBasedDashboard.statusCards.descKoreaManager'),
-      color: 'orange',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'KoreaManagerDone', 
-      label: t('roleBasedDashboard.statusCards.completed'),
-      description: t('roleBasedDashboard.statusCards.descCompleted'),
-      color: 'teal',
-      icon: '',
-      isUserCard: false
-    }
-  ],
-  'Supervisior': [
-    { 
-      status: 'PQCDone', 
-      label: t('roleBasedDashboard.statusCards.needPQCLeader'),
-      description: t('roleBasedDashboard.statusCards.descPQCLeader'),
-      color: 'blue',
-      icon: '',
-      isUserCard: false
-    },
-    {
-      status: 'PQCLeaderDone', 
-      label: t('roleBasedDashboard.statusCards.needEng'),
-      description: t('roleBasedDashboard.statusCards.descEng'),
-      color: 'green',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'ENGDone', 
-      label: t('roleBasedDashboard.statusCards.needSupervisor'),
-      description: t('roleBasedDashboard.statusCards.descSupervisor'),
-      color: 'green',
-      icon: '',
-      isUserCard: true
-    },
-    { 
-      status: 'SupervisiorDone', 
-      label: t('roleBasedDashboard.statusCards.needManager'),
-      description: t('roleBasedDashboard.statusCards.descManager'),
-      color: 'purple',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'ManagerDone', 
-      label: t('roleBasedDashboard.statusCards.needKoreaManager'),
-      description: t('roleBasedDashboard.statusCards.descKoreaManager'),
-      color: 'orange',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'KoreaManagerDone', 
-      label: t('roleBasedDashboard.statusCards.completed'),
-      description: t('roleBasedDashboard.statusCards.descCompleted'),
-      color: 'teal',
-      icon: '',
-      isUserCard: false
-    }
-  ],
-  'Manager': [
-    { 
-      status: 'PQCDone', 
-      label: t('roleBasedDashboard.statusCards.needPQCLeader'),
-      description: t('roleBasedDashboard.statusCards.descPQCLeader'),
-      color: 'blue',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'PQCLeaderDone', 
-      label: t('roleBasedDashboard.statusCards.needEng'),
-      description: t('roleBasedDashboard.statusCards.descEng'),
-      color: 'green',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'ENGDone', 
-      label: t('roleBasedDashboard.statusCards.needSupervisor'),
-      description: t('roleBasedDashboard.statusCards.descSupervisor'),
-      color: 'green',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'SupervisiorDone', 
-      label: t('roleBasedDashboard.statusCards.needManager'),
-      description: t('roleBasedDashboard.statusCards.descManager'),
-      color: 'purple',
-      icon: '',
-      isUserCard: true
-    },
-    { 
-      status: 'ManagerDone', 
-      label: t('roleBasedDashboard.statusCards.needKoreaManager'),
-      description: t('roleBasedDashboard.statusCards.descKoreaManager'),
-      color: 'orange',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'KoreaManagerDone', 
-      label: t('roleBasedDashboard.statusCards.completed'),
-      description: t('roleBasedDashboard.statusCards.descCompleted'),
-      color: 'teal',
-      icon: '',
-      isUserCard: false
-    }
-  ],
-  'KoreaManager': [
-    { 
-      status: 'PQCDone', 
-      label: t('roleBasedDashboard.statusCards.needPQCLeader'),
-      description: t('roleBasedDashboard.statusCards.descPQCLeader'),
-      color: 'blue',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'PQCLeaderDone', 
-      label: t('roleBasedDashboard.statusCards.needEng'),
-      description: t('roleBasedDashboard.statusCards.descEng'),
-      color: 'green',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'ENGDone', 
-      label: t('roleBasedDashboard.statusCards.needSupervisor'),
-      description: t('roleBasedDashboard.statusCards.descSupervisor'),
-      color: 'green',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'SupervisiorDone', 
-      label: t('roleBasedDashboard.statusCards.needManager'),
-      description: t('roleBasedDashboard.statusCards.descManager'),
-      color: 'purple',
-      icon: '',
-      isUserCard: false
-    },
-    { 
-      status: 'ManagerDone', 
-      label: t('roleBasedDashboard.statusCards.needKoreaManager'),
-      description: t('roleBasedDashboard.statusCards.descKoreaManager'),
-      color: 'orange',
-      icon: '',
-      isUserCard: true
-    },
-    { 
-      status: 'KoreaManagerDone', 
-      label: t('roleBasedDashboard.statusCards.completed'),
-      description: t('roleBasedDashboard.statusCards.descCompleted'),
-      color: 'teal',
-      icon: '',
-      isUserCard: false
-    }
-  ]
-};
+    // Định nghĩa cards theo role
+    const roleCards = {
+        'PQCLeader': [
+        { 
+          status: 'PQCDone', 
+          label: t('roleBasedDashboard.statusCards.needPQCLeader'),
+          description: t('roleBasedDashboard.statusCards.descPQCLeader'),
+          color: 'blue',
+          icon: '',
+          isUserCard: true
+        },
+        { 
+          status: 'PQCLeaderDone', 
+          label: t('roleBasedDashboard.statusCards.needEng'),
+          description: t('roleBasedDashboard.statusCards.descEng'),
+          color: 'green',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'ENGDone', 
+          label: t('roleBasedDashboard.statusCards.needSupervisor'),
+          description: t('roleBasedDashboard.statusCards.descSupervisor'),
+          color: 'green',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'SupervisiorDone', 
+          label: t('roleBasedDashboard.statusCards.needManager'),
+          description: t('roleBasedDashboard.statusCards.descManager'),
+          color: 'purple',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'ManagerDone', 
+          label: t('roleBasedDashboard.statusCards.needKoreaManager'),
+          description: t('roleBasedDashboard.statusCards.descKoreaManager'),
+          color: 'orange',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'KoreaManagerDone', 
+          label: t('roleBasedDashboard.statusCards.completed'),
+          description: t('roleBasedDashboard.statusCards.descCompleted'),
+          color: 'teal',
+          icon: '',
+          isUserCard: false
+        }
+      ],
+      'ENG': [
+        { 
+          status: 'PQCDone', 
+          label: t('roleBasedDashboard.statusCards.needPQCLeader'),
+          description: t('roleBasedDashboard.statusCards.descPQCLeader'),
+          color: 'blue',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'PQCLeaderDone', 
+          label: t('roleBasedDashboard.statusCards.needEng'),
+          description: t('roleBasedDashboard.statusCards.descEng'),
+          color: 'green',
+          icon: '',
+          isUserCard: true
+        },
+        { 
+          status: 'ENGDone', 
+          label: t('roleBasedDashboard.statusCards.needSupervisor'),
+          description: t('roleBasedDashboard.statusCards.descSupervisor'),
+          color: 'green',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'SupervisiorDone', 
+          label: t('roleBasedDashboard.statusCards.needManager'),
+          description: t('roleBasedDashboard.statusCards.descManager'),
+          color: 'purple',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'ManagerDone', 
+          label: t('roleBasedDashboard.statusCards.needKoreaManager'),
+          description: t('roleBasedDashboard.statusCards.descKoreaManager'),
+          color: 'orange',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'KoreaManagerDone', 
+          label: t('roleBasedDashboard.statusCards.completed'),
+          description: t('roleBasedDashboard.statusCards.descCompleted'),
+          color: 'teal',
+          icon: '',
+          isUserCard: false
+        }
+      ],
+      'Supervisior': [
+        { 
+          status: 'PQCDone', 
+          label: t('roleBasedDashboard.statusCards.needPQCLeader'),
+          description: t('roleBasedDashboard.statusCards.descPQCLeader'),
+          color: 'blue',
+          icon: '',
+          isUserCard: false
+        },
+        {
+          status: 'PQCLeaderDone', 
+          label: t('roleBasedDashboard.statusCards.needEng'),
+          description: t('roleBasedDashboard.statusCards.descEng'),
+          color: 'green',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'ENGDone', 
+          label: t('roleBasedDashboard.statusCards.needSupervisor'),
+          description: t('roleBasedDashboard.statusCards.descSupervisor'),
+          color: 'green',
+          icon: '',
+          isUserCard: true
+        },
+        { 
+          status: 'SupervisiorDone', 
+          label: t('roleBasedDashboard.statusCards.needManager'),
+          description: t('roleBasedDashboard.statusCards.descManager'),
+          color: 'purple',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'ManagerDone', 
+          label: t('roleBasedDashboard.statusCards.needKoreaManager'),
+          description: t('roleBasedDashboard.statusCards.descKoreaManager'),
+          color: 'orange',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'KoreaManagerDone', 
+          label: t('roleBasedDashboard.statusCards.completed'),
+          description: t('roleBasedDashboard.statusCards.descCompleted'),
+          color: 'teal',
+          icon: '',
+          isUserCard: false
+        }
+      ],
+      'Manager': [
+        { 
+          status: 'PQCDone', 
+          label: t('roleBasedDashboard.statusCards.needPQCLeader'),
+          description: t('roleBasedDashboard.statusCards.descPQCLeader'),
+          color: 'blue',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'PQCLeaderDone', 
+          label: t('roleBasedDashboard.statusCards.needEng'),
+          description: t('roleBasedDashboard.statusCards.descEng'),
+          color: 'green',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'ENGDone', 
+          label: t('roleBasedDashboard.statusCards.needSupervisor'),
+          description: t('roleBasedDashboard.statusCards.descSupervisor'),
+          color: 'green',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'SupervisiorDone', 
+          label: t('roleBasedDashboard.statusCards.needManager'),
+          description: t('roleBasedDashboard.statusCards.descManager'),
+          color: 'purple',
+          icon: '',
+          isUserCard: true
+        },
+        { 
+          status: 'ManagerDone', 
+          label: t('roleBasedDashboard.statusCards.needKoreaManager'),
+          description: t('roleBasedDashboard.statusCards.descKoreaManager'),
+          color: 'orange',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'KoreaManagerDone', 
+          label: t('roleBasedDashboard.statusCards.completed'),
+          description: t('roleBasedDashboard.statusCards.descCompleted'),
+          color: 'teal',
+          icon: '',
+          isUserCard: false
+        }
+      ],
+      'KoreaManager': [
+        { 
+          status: 'PQCDone', 
+          label: t('roleBasedDashboard.statusCards.needPQCLeader'),
+          description: t('roleBasedDashboard.statusCards.descPQCLeader'),
+          color: 'blue',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'PQCLeaderDone', 
+          label: t('roleBasedDashboard.statusCards.needEng'),
+          description: t('roleBasedDashboard.statusCards.descEng'),
+          color: 'green',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'ENGDone', 
+          label: t('roleBasedDashboard.statusCards.needSupervisor'),
+          description: t('roleBasedDashboard.statusCards.descSupervisor'),
+          color: 'green',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'SupervisiorDone', 
+          label: t('roleBasedDashboard.statusCards.needManager'),
+          description: t('roleBasedDashboard.statusCards.descManager'),
+          color: 'purple',
+          icon: '',
+          isUserCard: false
+        },
+        { 
+          status: 'ManagerDone', 
+          label: t('roleBasedDashboard.statusCards.needKoreaManager'),
+          description: t('roleBasedDashboard.statusCards.descKoreaManager'),
+          color: 'orange',
+          icon: '',
+          isUserCard: true
+        },
+        { 
+          status: 'KoreaManagerDone', 
+          label: t('roleBasedDashboard.statusCards.completed'),
+          description: t('roleBasedDashboard.statusCards.descCompleted'),
+          color: 'teal',
+          icon: '',
+          isUserCard: false
+        }
+      ]
+    };
 
     const currentRoleCards = roleCards[user?.role as keyof typeof roleCards] || roleCards['ENG'];
 
@@ -879,7 +879,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* ... Giữ nguyên phần còn lại của Admin Dashboard ... */}
         {/* Timeline Chart - NEW */}
                 <div className="bg-white rounded-xl shadow-lg p-4 md:p-4 mb-4 mt-4">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
@@ -949,7 +948,7 @@ const Dashboard = () => {
                   </ResponsiveContainer>
                 </div>
 
-             {/* Charts Grid */}
+      {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-4 mb-4">
         {/* Role Distribution - Bar Chart */}
         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
@@ -1079,7 +1078,7 @@ const Dashboard = () => {
       </div>
         
 
-                {/* Role Details Table */}
+      {/* Role Details Table */}
       <div className="bg-white rounded-xl shadow-lg p-4 md:p-4 mb-4">
                   <h2 className="text-xl font-bold text-slate-800 mb-4">
                     {t('tables.roleDetails.title')}

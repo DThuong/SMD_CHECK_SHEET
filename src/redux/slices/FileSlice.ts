@@ -50,17 +50,25 @@ interface FileState {
   lcrValidation: LcrValidationResult | null;
   reflowFileUrl: string | null;   
   reflowFileBlob: string | null;
-  loading: boolean;
+  lcrLoading: boolean;
+  lcrError: string | null;
+  reflowLoading: boolean;
+  reflowError: string | null;
+  loading: boolean; // giữ cho downloadLCRExcelFile
   error: string | null;
 }
 
 const initialState: FileState = {
-  lcrFileUrl: null,
+   lcrFileUrl: null,
   lcrFileBlob: null,
-  lcrFileData: null, // Thêm field mới
+  lcrFileData: null,
   lcrValidation: null,
   reflowFileUrl: null,
   reflowFileBlob: null,
+  lcrLoading: false,
+  lcrError: null,
+  reflowLoading: false,
+  reflowError: null,
   loading: false,
   error: null,
 };
@@ -182,17 +190,17 @@ const FileSlice = createSlice({
     builder
       // LCR File Data (JSON)
       .addCase(getLcrFileData.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.lcrLoading = true;
+        state.lcrError = null;
       })
       .addCase(getLcrFileData.fulfilled, (state, action) => {
-        state.loading = false;
+        state.lcrLoading = false;
         state.lcrFileData = action.payload;
         state.lcrValidation = validateLcrFile(action.payload);
       })
       .addCase(getLcrFileData.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
+        state.lcrLoading = false;
+        state.lcrError = action.payload as string;
         state.lcrValidation = null;
       })
       
@@ -212,16 +220,16 @@ const FileSlice = createSlice({
       
       // Reflow File
       .addCase(getReflowFile.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.reflowLoading = true;
+        state.reflowError = null;
       })
       .addCase(getReflowFile.fulfilled, (state, action) => {
-        state.loading = false;
+        state.reflowLoading = false;
         state.reflowFileUrl = action.payload;
       })
       .addCase(getReflowFile.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;     
+        state.reflowLoading = false;
+        state.reflowError = action.payload as string;
       })
 
       // download excel file

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -27,121 +26,89 @@ const FileDetailViewer = () => {
   const returnPath = (location.state as any)?.returnPath;
   const originalReturnPath = (location.state as any)?.originalReturnPath;
   const originalReturnSearch = (location.state as any)?.originalReturnSearch;
+
   const user = useAppSelector((state) => state.auth.user);
-  
   const { currentSheet, loading: sheetLoading } = useAppSelector((state) => state.changeModel);
-  const { lcrFileData, reflowFileUrl, loading: fileLoading, error: fileError } = useAppSelector(
+  const { lcrFileData, reflowFileUrl, lcrLoading, lcrError, reflowLoading, reflowError } = useAppSelector(
     (state) => state.fileSlice
   );
 
   const { t } = useTranslation('fileDetail');
 
+  // Mobile detection
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Disable viewport scaling trên mobile để giữ desktop view
   useEffect(() => {
-  // Disable viewport scaling để giữ nguyên desktop view
-  const viewport = document.querySelector('meta[name="viewport"]');
-  const originalContent = viewport?.getAttribute('content');
-  
-  if (viewport) {
-    viewport.setAttribute('content', 'width=1280, initial-scale=0.5, user-scalable=yes');
-  }
-  
-  return () => {
-    if (viewport && originalContent) {
-      viewport.setAttribute('content', originalContent);
+    const viewport = document.querySelector('meta[name="viewport"]');
+    const originalContent = viewport?.getAttribute('content');
+    if (viewport) {
+      viewport.setAttribute('content', 'width=1280, initial-scale=0.5, user-scalable=yes');
     }
-  };
-}, []);
+    return () => {
+      if (viewport && originalContent) {
+        viewport.setAttribute('content', originalContent);
+      }
+    };
+  }, []);
 
-  // Load files
+  // Load sheet + files
   useEffect(() => {
-    if (id) {
-      const sheetId = parseInt(id);
-      // console.log(` FileDetailViewer: Loading files for sheet ${sheetId}`);
-      dispatch(getSheetWithFullObject(sheetId));
-      // Load LCR data (JSON)
-      dispatch(getLcrFileData(sheetId));
-      // Load Reflow file (PDF)
-      dispatch(getReflowFile(sheetId));
-    }
+    if (!id) return;
+    const sheetId = parseInt(id);
+    dispatch(getSheetWithFullObject(sheetId));
+    dispatch(getLcrFileData(sheetId));
+    dispatch(getReflowFile(sheetId));
 
     return () => {
       dispatch(clearLcrFile());
       dispatch(clearReflowFile());
     };
   }, [id, dispatch]);
-  
-  const handleChangeTab = (tab: FileType) => {
-  if (!id) return;
-  const newPath = location.pathname.replace(/(lcr|reflow)$/, tab);  
-  navigate(newPath, { 
-    replace: true,
-    state: { 
-      from, 
-      returnPath, 
-      originalReturnPath,
-      originalReturnSearch,
-    }
-  });
-};
 
-    const handleGoBack = () => {
-      const savedState = getFilterState();
-    if (returnPath) {
-    navigate(returnPath, {
-      state: { 
-        from: 'fileDetail',
-        returnPath: originalReturnPath,
-        returnSearch: originalReturnSearch,
-        savedFilter: savedState.filter,
-        savedPage: savedState.currentPage
-      }
+  const handleChangeTab = (tab: FileType) => {
+    if (!id) return;
+    const newPath = location.pathname.replace(/(lcr|reflow)$/, tab);
+    navigate(newPath, {
+      replace: true,
+      state: { from, returnPath, originalReturnPath, originalReturnSearch },
     });
-  } else if (from === 'sheetDetail') {
+  };
+
+  const handleGoBack = () => {
+    const savedState = getFilterState();
+    if (returnPath) {
+      navigate(returnPath, {
+        state: {
+          from: 'fileDetail',
+          returnPath: originalReturnPath,
+          returnSearch: originalReturnSearch,
+          savedFilter: savedState.filter,
+          savedPage: savedState.currentPage,
+        },
+      });
+    } else if (from === 'sheetDetail') {
       const roleLower = user?.role?.toLowerCase();
-      const targetPath = `/${roleLower}/sheet-detail/${id}`;
-      navigate(targetPath);
+      navigate(`/${roleLower}/sheet-detail/${id}`);
     } else {
-      const fallbackPath = `/?tab=create&sheetId=${id}`;
-      navigate(fallbackPath, { replace: true });
+      navigate(`/?tab=create&sheetId=${id}`, { replace: true });
     }
   };
 
-  // Loading state - chờ load sheet hoặc files
-  if (sheetLoading || fileLoading) {
+  // ── Guards ──────────────────────────────────────────────────────────────────
+
+  // Chờ sheet load (files load song song, không block UI)
+  if (sheetLoading) {
     return <LoadingSpinner />;
   }
 
-  // Error state
-  if (fileError) {
-    return (
-      <div className="container mx-auto p-4 my-4 max-w-8xl">
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-600">Error loading files: {fileError}</p>
-          <button
-            onClick={handleGoBack}
-            className="mt-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-          >
-            ← Go Back
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Sheet not found (chỉ hiển thị sau khi đã load xong)
-  if (!sheetLoading && !currentSheet && id) {
-    console.warn(`⚠️ FileDetailViewer: Sheet ${id} not found after loading`);
+  // Sheet không tìm thấy
+  if (!currentSheet) {
     return (
       <div className="container mx-auto my-4 max-w-8xl">
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -157,18 +124,16 @@ const FileDetailViewer = () => {
     );
   }
 
-  // Chờ load sheet
-  if (!currentSheet) {
-    return <LoadingSpinner />;
-  }
-
-  // Check file availability
-  const hasLcrData = !!lcrFileData;
+  // ── Derived values (currentSheet đã chắc chắn không null) ──────────────────
+  // LCR: có data hoặc đang load hoặc có lỗi → tab vẫn clickable
+  const hasLcrTab = !!lcrFileData || lcrLoading || !!lcrError;
   const hasReflowFile = !!reflowFileUrl || !!currentSheet.pdfFileUrl;
   const reflowUrl = reflowFileUrl || currentSheet.pdfFileUrl;
 
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className={`container mx-auto ${isMobile ? 'p-2 max-w-full min-w-[1200px]' : 'p-4 max-w-8xl'}`}>
+
       {/* Header */}
       <div className="mb-4">
         <button
@@ -180,7 +145,7 @@ const FileDetailViewer = () => {
           </svg>
           {t('backButton')}
         </button>
-        
+
         <h1 className={`font-bold text-gray-800 ${isMobile ? 'text-xl' : 'text-2xl'}`}>
           {t('title')}
         </h1>
@@ -189,126 +154,140 @@ const FileDetailViewer = () => {
         </p>
       </div>
 
-      {/* Tabs */}
-<div className="mb-4 relative">
-  <div className="flex items-end justify-between gap-4">
-    {/* Left side - Tabs */}
-    <div className="flex gap-4">
-      <button
-        onClick={() => handleChangeTab('lcr')}
-        disabled={!hasLcrData}
-        className={`px-6 py-3 font-semibold transition inline-flex items-center gap-2 ${
-          fileType === 'lcr'
-            ? 'text-green-600 border-b-2 border-green-600'
-            : 'text-gray-600 hover:text-green-600'
-        } ${!hasLcrData ? 'opacity-50 cursor-not-allowed' : ''}`}
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        LCR Data
-        {hasLcrData && lcrFileData && (
-          <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
-            {lcrFileData.count}
-          </span>
+      {/* Tabs + View Mode Toggle */}
+      <div className="mb-4 relative">
+        <div className="flex items-end justify-between gap-4">
+
+          {/* Tab buttons */}
+          <div className="flex gap-4">
+            {/* LCR Tab - luôn clickable nếu có file trên server (dù lỗi hay đang load) */}
+            <button
+              onClick={() => handleChangeTab('lcr')}
+              disabled={!hasLcrTab}
+              className={`px-6 py-3 font-semibold transition inline-flex items-center gap-2 ${
+                fileType === 'lcr'
+                  ? 'text-green-600 border-b-2 border-green-600'
+                  : 'text-gray-600 hover:text-green-600'
+              } ${!hasLcrTab ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              LCR Data
+              {lcrError ? (
+                <span className="px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-bold">!</span>
+              ) : lcrFileData ? (
+                <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
+                  {lcrFileData.count}
+                </span>
+              ) : null}
+            </button>
+
+            {/* Reflow Tab */}
+            <button
+              onClick={() => handleChangeTab('reflow')}
+              disabled={!hasReflowFile && !reflowError}
+              className={`px-6 py-3 font-semibold transition inline-flex items-center gap-2 ${
+                fileType === 'reflow'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-blue-600'
+              } ${!hasReflowFile && !reflowError ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              Reflow PDF
+              {reflowError && (
+                <span className="px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-bold">!</span>
+              )}
+            </button>
+          </div>
+
+          {/* View Mode Toggle - chỉ hiện khi LCR tab + có data */}
+          {fileType === 'lcr' && lcrFileData && (
+            <div className="flex gap-2 bg-gray-100 p-1 rounded-lg mb-0.5">
+              <button
+                onClick={() => setLcrViewMode('full')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition inline-flex items-center gap-2 ${
+                  lcrViewMode === 'full'
+                    ? 'bg-white text-green-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Full Table (27 cols)
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Reference Table - chỉ hiện khi Reflow tab */}
+        {fileType === 'reflow' && (
+          <div className="absolute right-0 bottom-0 z-10">
+            <div className="bg-white border border-b-0 border-gray-300 shadow-sm">
+              <table className="text-xs">
+                <tbody>
+                  <tr>
+                    <td className="border-r! text-center border-gray-300 px-3 py-1.5 font-semibold text-gray-700 bg-gray-50">Max'C</td>
+                    <td className="border-r! text-center border-gray-300 px-3 py-1.5 font-semibold text-gray-700 bg-gray-50">T4-s, Ov-220</td>
+                    <td className="text-center px-3 py-1.5 font-semibold text-gray-700 bg-gray-50">T2-s</td>
+                  </tr>
+                  <tr>
+                    <td className="border-r! border-t! border-gray-300 px-3 py-1.5 whitespace-nowrap">
+                      <span className="font-medium text-blue-600">PIP:</span> 240-250°C
+                    </td>
+                    <td className="border-r! border-t! border-gray-300 px-3 py-1.5 whitespace-nowrap">
+                      <span className="font-medium text-blue-600">PIP:</span> 50-70 sec
+                    </td>
+                    <td className="border-t! border-gray-300 px-3 py-1.5 whitespace-nowrap" rowSpan={2}>
+                      <div className="flex flex-col gap-2">
+                        <div><span className="font-medium text-orange-600">Preheating:</span> 150-180°C</div>
+                        <div><span className="font-medium text-orange-600">Time:</span> 70-110 sec</div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border-r! border-t! border-gray-300 px-3 py-1.5 whitespace-nowrap">
+                      <span className="font-medium text-green-600">None PIP:</span> 235-245°C
+                    </td>
+                    <td className="border-t! border-r! border-gray-300 px-3 py-1.5 whitespace-nowrap">
+                      <span className="font-medium text-green-600">None PIP:</span> 40-60 sec
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
-      </button>
-      
-      <button
-        onClick={() => handleChangeTab('reflow')}
-        disabled={!hasReflowFile}
-        className={`px-6 py-3 font-semibold transition inline-flex items-center gap-2 ${
-          fileType === 'reflow'
-            ? 'text-blue-600 border-b-2 border-blue-600'
-            : 'text-gray-600 hover:text-blue-600'
-        } ${!hasReflowFile ? 'opacity-50 cursor-not-allowed' : ''}`}
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-        </svg>
-        Reflow PDF
-      </button>
-    </div>
-
-    {/* View Mode Toggle - chỉ hiện khi LCR tab */}
-    {fileType === 'lcr' && hasLcrData && (
-      <div className="flex gap-2 bg-gray-100 p-1 rounded-lg mb-0.5">
-        <button
-          onClick={() => setLcrViewMode('full')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition inline-flex items-center gap-2 ${
-            lcrViewMode === 'full'
-              ? 'bg-white text-green-600 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-          Full Table (27 cols)
-        </button>
       </div>
-    )}
-  </div>
-
-  {/* Reference Table - Position absolute, chỉ hiện khi Reflow tab */}
-  {fileType === 'reflow' && (
-    <div className="absolute right-0 bottom-0 z-10">
-      <div className="bg-white border border-b-0 border-gray-300 shadow-sm">
-        <table className="text-xs">
-          <tbody>
-            <tr>
-              <td className="border-r! text-center border-gray-300 px-3 py-1.5 font-semibold text-gray-700 bg-gray-50">
-                Max'C
-              </td>
-              <td className="border-r! text-center border-gray-300 px-3 py-1.5 font-semibold text-gray-700 bg-gray-50">
-                T4-s, Ov-220
-              </td>
-              <td className="text-center px-3 py-1.5 font-semibold text-gray-700 bg-gray-50">
-                T2-s
-              </td>
-            </tr>
-            <tr>
-              <td className="border-r! border-t! border-gray-300 px-3 py-1.5 whitespace-nowrap">
-                <span className="font-medium text-blue-600">PIP:</span> 240-250°C
-              </td>
-              <td className="border-r! border-t! border-gray-300 px-3 py-1.5 whitespace-nowrap">
-                <span className="font-medium text-blue-600">PIP:</span> 50-70 sec
-              </td>
-              <td className="border-t! border-gray-300 px-3 py-1.5 whitespace-nowrap" rowSpan={2}>
-                <div className="flex flex-col gap-2">
-                  <div><span className="font-medium text-orange-600">Preheating:</span> 150-180°C</div>
-                  <div><span className="font-medium text-orange-600">Time:</span> 70-110 sec</div>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td className="border-r! border-t! border-gray-300 px-3 py-1.5 whitespace-nowrap">
-                <span className="font-medium text-green-600">None PIP:</span> 235-245°C
-              </td>
-              <td className="border-t! border-r! border-gray-300 px-3 py-1.5 whitespace-nowrap">
-                <span className="font-medium text-green-600">None PIP:</span> 40-60 sec
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )}
-</div>
 
       {/* Content */}
       <div className="bg-white rounded-lg">
+
+        {/* ── LCR Tab ── */}
         {fileType === 'lcr' && (
           <>
-            {hasLcrData && lcrFileData ? (
-              <>
-                {lcrViewMode === 'expandable' ? (
-                  <LCRDataTable lcrData={lcrFileData} />
-                ) : (
-                  <LCRFullTable lcrData={lcrFileData} />
-                )}
-              </>
-            ) : (
+            {lcrLoading && <LoadingSpinner />}
+
+            {!lcrLoading && lcrError && (
+              <div className="p-4 text-center bg-red-50 rounded-lg border-2 border-dashed border-red-300">
+                <svg className="w-16 h-16 mx-auto text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-red-600 text-lg font-medium">Lỗi đọc file LCR</p>
+                <p className="text-red-500 text-sm mt-2">{lcrError}</p>
+              </div>
+            )}
+
+            {!lcrLoading && !lcrError && lcrFileData && (
+              lcrViewMode === 'expandable'
+                ? <LCRDataTable lcrData={lcrFileData} />
+                : <LCRFullTable lcrData={lcrFileData} />
+            )}
+
+            {!lcrLoading && !lcrError && !lcrFileData && (
               <div className="p-8 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                 <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -320,11 +299,26 @@ const FileDetailViewer = () => {
           </>
         )}
 
+        {/* ── Reflow Tab ── */}
         {fileType === 'reflow' && (
           <>
-            {hasReflowFile && reflowUrl ? (
+            {reflowLoading && <LoadingSpinner />}
+
+            {!reflowLoading && reflowError && (
+              <div className="p-8 text-center bg-red-50 rounded-lg border-2 border-dashed border-red-300">
+                <svg className="w-16 h-16 mx-auto text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-red-600 text-lg font-medium">❌ Lỗi đọc file Reflow</p>
+                <p className="text-red-500 text-sm mt-2">{reflowError}</p>
+              </div>
+            )}
+
+            {!reflowLoading && !reflowError && hasReflowFile && reflowUrl && (
               <ReflowPDFViewer fileUrl={reflowUrl} />
-            ) : (
+            )}
+
+            {!reflowLoading && !reflowError && !hasReflowFile && (
               <div className="p-8 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                 <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />

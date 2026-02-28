@@ -192,8 +192,8 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
   if (!currentSheet?.id) return;
   
   const roleLower = user?.role?.toLowerCase() || 'pqc';
-  const hasLcr = currentSheet.excelFileUrl && currentSheet.excelFileUrl.trim() !== "";
-  const defaultFileType = hasLcr ? 'lcr' : 'reflow';
+  const hasReflow = currentSheet.pdfFileUrl && currentSheet.pdfFileUrl.trim() !== "";
+  const defaultFileType = hasReflow ? 'reflow' : 'lcr';
   
   // NAVIGATE với đầy đủ state
   navigate(`/${roleLower}/files/${currentSheet.id}/${defaultFileType}`, {
@@ -404,7 +404,7 @@ const reflowName = currentSheet?.pdfFileUrl && currentSheet.pdfFileUrl.trim() !=
                       )}
                     </div>
                     
-                    {/* ✅ Hiển thị tên người đo Reflow */}
+                    {/* Hiển thị tên người đo Reflow */}
                     {getWorkerNames.reflowWorker && (
                       <div className="text-xs mt-1 text-blue-600 font-medium">
                         Người đo: {getWorkerNames.reflowWorker}

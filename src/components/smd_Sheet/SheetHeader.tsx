@@ -87,14 +87,20 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
   const hasExistingLcr = currentSheet.excelFileUrl && currentSheet.excelFileUrl.trim() !== "";
   const hasExistingReflow = currentSheet.pdfFileUrl && currentSheet.pdfFileUrl.trim() !== "";
 
-  if (tempFileState.lcr && (!tempFileState.lcrWorker || tempFileState.lcrWorker.trim() === "")) {
-    showNotification('warning', 'Thiếu thông tin', 'Vui lòng nhập tên người đo LCR trước khi upload.');
-    return;
+  if (tempFileState.lcr) {
+    const effectiveLcrWorker = tempFileState.lcrWorker?.trim() || '';
+    if (!effectiveLcrWorker) {
+      showNotification('warning', 'Thiếu thông tin', 'Vui lòng nhập tên người đo LCR trước khi upload.');
+      return;
+    }
   }
 
-  if (tempFileState.reflow && (!tempFileState.reflowWorker || tempFileState.reflowWorker.trim() === "")) {
-    showNotification('warning', 'Thiếu thông tin', 'Vui lòng nhập tên người đo Reflow trước khi upload.');
-    return;
+  if (tempFileState.reflow) {
+    const effectiveReflowWorker = tempFileState.reflowWorker?.trim() || '';
+    if (!effectiveReflowWorker) {
+      showNotification('warning', 'Thiếu thông tin', 'Vui lòng nhập tên người đo Reflow trước khi upload.');
+      return;
+    }
   }
 
   // Nếu chưa có file nào trong hệ thống → BẮT BUỘC phải upload cả 2
@@ -178,10 +184,19 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
   }
 };
 
-  const handleOpenModal = () => {
-    setTempFileState({});
-    setOpen(true);
-  };
+const handleOpenModal = () => {
+  const existingWorkers = (() => {
+    if (!currentSheet?.workerFile) return { lcrWorker: '', reflowWorker: '' };
+    try { return JSON.parse(currentSheet.workerFile); }
+    catch { return { lcrWorker: '', reflowWorker: '' }; }
+  })();
+
+  setTempFileState({
+    lcrWorker: existingWorkers.lcrWorker || '',
+    reflowWorker: existingWorkers.reflowWorker || '',
+  });
+  setOpen(true);
+};
 
   const handleCloseModal = () => {
     setTempFileState({});

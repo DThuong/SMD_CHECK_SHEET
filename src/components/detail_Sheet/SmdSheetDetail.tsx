@@ -11,14 +11,10 @@ import TimeChangeModels from "../smd_Sheet/TimeChangeModels";
 import type { ChangeModelResponse } from '../../redux/slices/changeModelSlice';
 import { FaRegClock } from "react-icons/fa";
 import { 
-  setCheckModel,
-  setStandardProduction,
-  setTimeChangeModel,
-  setStandardVehicle,
-  setPQCCheck,
   clearAllSubTableData,
   addCompletedTable,
-  resetCompletedTables
+  resetCompletedTables,
+  setAllSubTableData
 } from '../../redux/slices/subTableSlice';
 import { 
   getSheetWithFullObject, 
@@ -70,92 +66,59 @@ const SmdSheetDetail = () => {
   // thông báo
   const { notification, showNotification, hideNotification } = useNotification();
 
-  useEffect(() => {
-    dispatch(resetCompletedTables());
-  }, [id, dispatch]);
-
   // Load dữ liệu sheet từ Redux action
   useEffect(() => {
-    const loadSheetData = async () => {
-      if (!id) return;
-      
-      try {
-        const result = await dispatch(getSheetWithFullObject(Number(id))).unwrap();
-      // CheckModel
-        if (result.checkModel) {
-          dispatch(setCheckModel(result.checkModel));
-          
-          if (hasAllRequiredData(result.checkModel, REQUIRED_FIELDS_CONFIG.CheckModel)) {
-            dispatch(addCompletedTable('CheckModel'));
-          } else {
-            getMissingFields(result.checkModel, REQUIRED_FIELDS_CONFIG.CheckModel);
-            // console.log(missing);
-          }
-        }
-        
-        //  StandardProduction
-        if (result.standardProduction) {
-          dispatch(setStandardProduction(result.standardProduction));
-          
-          if (hasAllRequiredData(result.standardProduction, REQUIRED_FIELDS_CONFIG.StandardProduction)) {
-            dispatch(addCompletedTable('StandardProduction'));
-          } else {
-            getMissingFields(result.standardProduction, REQUIRED_FIELDS_CONFIG.StandardProduction);
-            // console.log(missing);
-          }
-        }
-        
-        // TimeChangeModel
-        if (result.timeChangeModel) {
-          dispatch(setTimeChangeModel(result.timeChangeModel));
-          
-          if (hasAllRequiredData(result.timeChangeModel, REQUIRED_FIELDS_CONFIG.TimeChangeModel)) {
-            dispatch(addCompletedTable('TimeChangeModel'));
-          } else {
-            getMissingFields(result.timeChangeModel, REQUIRED_FIELDS_CONFIG.TimeChangeModel);
-            // console.log(missing);
-          }
-        }
-        
-        //  StandardVehicle
-        if (result.standardVehicle) {
-          dispatch(setStandardVehicle(result.standardVehicle));
-          
-          if (hasAllRequiredData(result.standardVehicle, REQUIRED_FIELDS_CONFIG.StandardVehicle)) {
-            dispatch(addCompletedTable('StandardVehicle'));
-          } else {
-            getMissingFields(result.standardVehicle, REQUIRED_FIELDS_CONFIG.StandardVehicle);
-            // console.log(missing);
-          }
-        }
-        
-        //  PQCCheck
-        if (result.pqcCheck) {
-          dispatch(setPQCCheck(result.pqcCheck));
-          
-          if (hasAllRequiredData(result.pqcCheck, REQUIRED_FIELDS_CONFIG.PQCCheck)) {
-            dispatch(addCompletedTable('PQCCheck'));
-          } else {
-            getMissingFields(result.pqcCheck, REQUIRED_FIELDS_CONFIG.PQCCheck);
-            // console.log(missing);
-          }
-        }
-        
-      } catch (error: any) {
-        console.error('❌ Error loading sheet:', error);
-      }
-    };
+  // Clear TRƯỚC khi fetch (Fix 1)
+  dispatch(clearAllSubTableData());
+  dispatch(resetCompletedTables());
+  dispatch(clearError());
 
-    loadSheetData();
+  const loadSheetData = async () => {
+    if (!id) return;
     
-    // Cleanup khi unmount
-    return () => {
-      dispatch(clearAllSubTableData());
-      dispatch(resetCompletedTables());
-      dispatch(clearError());
-    };
-  }, [id, dispatch]);
+    try {
+      const result = await dispatch(getSheetWithFullObject(Number(id))).unwrap();
 
+      // 1 dispatch thay vì 5 (Fix 2)
+      dispatch(setAllSubTableData({
+        checkModel: result.checkModel ?? null,
+        standardProduction: result.standardProduction ?? null,
+        timeChangeModel: result.timeChangeModel ?? null,
+        standardVehicle: result.standardVehicle ?? null,
+        pqcCheck: result.pqcCheck ?? null,
+      }));
+
+      // completedTables giữ nguyên
+      const tableConfigs = [
+        { data: result.checkModel, name: 'CheckModel' as const, config: REQUIRED_FIELDS_CONFIG.CheckModel },
+        { data: result.standardProduction, name: 'StandardProduction' as const, config: REQUIRED_FIELDS_CONFIG.StandardProduction },
+        { data: result.timeChangeModel, name: 'TimeChangeModel' as const, config: REQUIRED_FIELDS_CONFIG.TimeChangeModel },
+        { data: result.standardVehicle, name: 'StandardVehicle' as const, config: REQUIRED_FIELDS_CONFIG.StandardVehicle },
+        { data: result.pqcCheck, name: 'PQCCheck' as const, config: REQUIRED_FIELDS_CONFIG.PQCCheck },
+      ];
+
+      tableConfigs.forEach(({ data, name, config }) => {
+        if (!data) return;
+        if (hasAllRequiredData(data, config)) {
+          dispatch(addCompletedTable(name));
+        } else {
+          getMissingFields(data, config);
+        }
+      });
+
+    } catch (error: any) {
+      console.error('❌ Error loading sheet:', error);
+    }
+  };
+
+  loadSheetData();
+
+  return () => {
+    dispatch(clearAllSubTableData());
+    dispatch(resetCompletedTables());
+    dispatch(clearError());
+  };
+}, [id, dispatch]);
   const handleOpenConfirmModal = () => {
     // CHỈ mở modal, KHÔNG gọi API
     setOpenModal(true);

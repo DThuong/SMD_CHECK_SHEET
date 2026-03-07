@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import smdApi from '../services/smdApi'; // Chỉ import smdApi
 import { extractFileName } from '../../utils/imageUrl';
 
@@ -790,6 +790,20 @@ const subTableSlice = createSlice({
         console.log(`ℹ️ '${tableName}' not found in completedTables`);
       }
     },
+    setAllSubTableData: (state, action: PayloadAction<{
+      checkModel?: CheckModelData | null;
+      standardProduction?: StandardProductionData | null;
+      timeChangeModel?: TimeChangeModelData | null;
+      standardVehicle?: StandardVehicleData | null;
+      pqcCheck?: PQCCheckData | null;
+    }>) => {
+      const { checkModel, standardProduction, timeChangeModel, standardVehicle, pqcCheck } = action.payload;
+      if (checkModel !== undefined) state.checkModel = checkModel;
+      if (standardProduction !== undefined) state.standardProduction = standardProduction;
+      if (timeChangeModel !== undefined) state.timeChangeModel = timeChangeModel;
+      if (standardVehicle !== undefined) state.standardVehicle = standardVehicle;
+      if (pqcCheck !== undefined) state.pqcCheck = pqcCheck;
+    },
   },
   extraReducers: (builder) => {
     // ==================== FETCH DATA ====================
@@ -1534,7 +1548,8 @@ export const {
   setStandardProduction,
   setTimeChangeModel,
   removeCompletedTable,
-  setStandardVehicle
+  setStandardVehicle,
+  setAllSubTableData,
 } = subTableSlice.actions;
 
 export default subTableSlice.reducer;

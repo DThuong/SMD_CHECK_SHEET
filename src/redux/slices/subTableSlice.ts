@@ -134,6 +134,7 @@ interface subTableState {
     success: boolean;
     lastUpdatedTable: string | null;
     completedTables: string[];
+    loadedFromSheetId: number | null; // flag để check data đã load từ bảng cha hay chưa ?
 
     // data của từng bảng con
     checkModel: CheckModelData | null;
@@ -149,7 +150,7 @@ const initialState: subTableState = {
   success: false,
   lastUpdatedTable: null,
   completedTables: [],
-  
+  loadedFromSheetId: null,
   // Initialize data
   checkModel: null,
   standardProduction: null,
@@ -750,6 +751,7 @@ const subTableSlice = createSlice({
       state.timeChangeModel = null;
       state.standardVehicle = null;
       state.pqcCheck = null;
+      state.loadedFromSheetId = null;
       state.error = null;
       state.success = false;
       state.lastUpdatedTable = null;
@@ -796,13 +798,15 @@ const subTableSlice = createSlice({
       timeChangeModel?: TimeChangeModelData | null;
       standardVehicle?: StandardVehicleData | null;
       pqcCheck?: PQCCheckData | null;
+      loadedFromSheetId?: number;
     }>) => {
-      const { checkModel, standardProduction, timeChangeModel, standardVehicle, pqcCheck } = action.payload;
+      const { checkModel, standardProduction, timeChangeModel, standardVehicle, pqcCheck, loadedFromSheetId } = action.payload;
       if (checkModel !== undefined) state.checkModel = checkModel;
       if (standardProduction !== undefined) state.standardProduction = standardProduction;
       if (timeChangeModel !== undefined) state.timeChangeModel = timeChangeModel;
       if (standardVehicle !== undefined) state.standardVehicle = standardVehicle;
       if (pqcCheck !== undefined) state.pqcCheck = pqcCheck;
+      if (loadedFromSheetId !== undefined) state.loadedFromSheetId = loadedFromSheetId;
     },
   },
   extraReducers: (builder) => {

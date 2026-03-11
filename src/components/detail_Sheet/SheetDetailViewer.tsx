@@ -181,6 +181,7 @@ const SheetDetailViewer = () => {
             timeChangeModel: result.timeChangeModel ?? null,
             standardVehicle: result.standardVehicle ?? null,
             pqcCheck: result.pqcCheck ?? null,
+            loadedFromSheetId: Number(id),
           }),
         );
 

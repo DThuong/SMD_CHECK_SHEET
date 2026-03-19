@@ -14,6 +14,61 @@ interface MultiImageUploadProps {
   showDeleteButton?: boolean;
 }
 
+const addTimestampToImage = (file: File): Promise<File> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d")!;
+
+      // Vẽ ảnh gốc
+      ctx.drawImage(img, 0, 0);
+
+      // Format timestamp: DD/MM/YYYY HH:mm:ss
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const timestamp = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+      // Style chữ
+      const fontSize = Math.max(24, Math.floor(img.width * 0.035));
+      ctx.font = `bold ${fontSize}px monospace`;
+      ctx.textBaseline = "bottom";
+
+      // Đo width để tính vị trí
+      const textWidth = ctx.measureText(timestamp).width;
+      const padding = 10;
+      const x = img.width - textWidth - padding * 2;
+      const y = img.height - padding;
+
+      // Nền mờ phía sau chữ
+      ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+      ctx.fillRect(x - padding, y - fontSize - padding, textWidth + padding * 2, fontSize + padding * 1.5);
+
+      // Chữ màu vàng
+      ctx.fillStyle = "#FFD600";
+      ctx.fillText(timestamp, x, y);
+
+      URL.revokeObjectURL(url);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(new File([blob], file.name, { type: "image/jpeg" }));
+          } else {
+            resolve(file); // fallback
+          }
+        },
+        "image/jpeg",
+        0.92,
+      );
+    };
+    img.src = url;
+  });
+};
+
 const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
   label,
   images = [],
@@ -29,8 +84,21 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
   const canAddMore = !maxImages || imageCount < maxImages;
 
   // Handler wrapper để xử lý async
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onUpload(fieldName, event);
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const stampedFile = await addTimestampToImage(file);
+
+    // Tạo synthetic event với file đã có timestamp
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(stampedFile);
+    const syntheticEvent = {
+      ...event,
+      target: { ...event.target, files: dataTransfer.files },
+    } as React.ChangeEvent<HTMLInputElement>;
+
+    onUpload(fieldName, syntheticEvent);
   };
 
   return (

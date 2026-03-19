@@ -76,12 +76,6 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
       }else{
         showNotification('error', 'Lỗi', 'Không thể ký');
       }
-
-      // Update status to PQCDone
-      // if(currentSheet?.pdfFileUrl !== "" && currentSheet?.excelFileUrl !== "") {
-      // }else{
-      //   showNotification('warning', 'Thiếu file', 'Làm ơn upload cả 2 file: REFLOW và LCR.');
-      // }
     } catch (error: any) {
       console.error('❌ Lỗi khi hoàn thành:', error);
       showNotification('error', 'Lỗi khi hoàn thành', error || 'Không thể cập nhật status');
@@ -117,41 +111,6 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
         onConfirm={handleCompleteSheet}
         onCancel={handleCancelModal}
       />
-
-      {/* Progress indicator */}
-      {sheetData && (
-        <div className="mb-4 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="font-semibold text-gray-800">Tiến độ hoàn thành</h4>
-            <span className="text-sm font-bold text-blue-600">
-              {completedTables.length} / {requiredTables.length}
-            </span>
-          </div>
-          
-          <div className="max-w-8xl bg-gray-200 rounded-full h-3 mb-3">
-            <div 
-              className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-              style={{ width: `${(completedTables.length / requiredTables.length) * 100}%` }}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-            {requiredTables.map(table => (
-              <div 
-                key={table}
-                className={`flex items-center gap-2 px-3 py-2 rounded ${
-                  completedTables.includes(table) 
-                    ? 'bg-green-100 text-green-700 font-semibold' 
-                    : 'bg-gray-100 text-gray-600'
-                }`}
-              >
-                <span>{completedTables.includes(table) ? '✓' : '○'}</span>
-                <span>{table}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Thông báo role */}
       <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">

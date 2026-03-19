@@ -104,7 +104,7 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
   return (
     <div className="min-w-0 mb-3 mt-2">
       <label className="block text-xs font-medium mb-1">{label}</label>
-      
+
       {/* Upload Controls - Only show if can add more */}
       {canAddMore && (
         <>
@@ -117,27 +117,23 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
               className="border border-gray-300 rounded px-3 py-2 w-full"
             />
           </div>
-          
+
           {/* Camera Capture */}
-          <div>
+          <div className="flex justify-center">
             <input
               type="file"
               accept="image/*"
               capture="environment"
-              onChange={handleFileChange} // Sử dụng wrapper
+              onChange={handleFileChange}
               className="hidden"
               id={`camera-capture-${fieldName}`}
             />
             <label
               htmlFor={`camera-capture-${fieldName}`}
-              className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors font-medium shadow-sm"
+              className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex! items-center! justify-center! gap-2 cursor-pointer transition-colors font-medium shadow-sm"
             >
-              <div className="inline-flex items-center">
-                <FaCamera size={15} />
-              </div>
-              <div className="inline-flex items-center mx-2">
-                Chụp ảnh {label}
-              </div>
+              <FaCamera size={15} />
+              Chụp ảnh
             </label>
           </div>
         </>
@@ -149,27 +145,27 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
           Đã đạt giới hạn tối đa {maxImages} ảnh
         </div>
       )}
-      
+
       {/* Preview Gallery */}
       {images && images.length > 0 && (
         <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
           <p className="text-xs text-gray-600 mb-2">
             Đã có {images.length} ảnh{maxImages ? ` / ${maxImages}` : ''}:
           </p>
-          
+
           {/* Grid layout */}
           <div className="grid grid-cols-2 gap-3">
             {images.map((imageUrl, index) => (
               <div key={index} className="relative">
-                <img 
-                  src={imageUrl} 
-                  alt={`${label} ${index + 1}`} 
-                  className="w-full h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity" 
-                  onClick={() => onViewSingle(imageUrl, `${label} ${index + 1}`)} 
+                <img
+                  src={imageUrl}
+                  alt={`${label} ${index + 1}`}
+                  className="w-full h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => onViewSingle(imageUrl, `${label} ${index + 1}`)}
                   style={{ pointerEvents: 'auto' }}
                   data-view-image="true"
                 />
-                
+
                 {/* Delete Button */}
                 {showDeleteButton && (
                   <button
@@ -185,7 +181,7 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
                     </svg>
                   </button>
                 )}
-                
+
                 {/* Label số thứ tự */}
                 <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded">
                   #{index + 1}
@@ -193,7 +189,7 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
               </div>
             ))}
           </div>
-          
+
           {/* View All Button */}
           <button
             type="button"

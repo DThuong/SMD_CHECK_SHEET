@@ -457,7 +457,7 @@ const getCurrentDateTimeLocal = (): string => {
     return false;
   };
 
-  // ✅ PATTERN TỪ LOGS: HANDLE VIEW DETAIL - Save state trước khi navigate
+  // PATTERN TỪ LOGS: HANDLE VIEW DETAIL - Save state trước khi navigate
   const handleViewDetail = (sheet: ChangeModelResponse) => {
     if (!canViewDetail(sheet)) {
       showNotification(
@@ -468,7 +468,7 @@ const getCurrentDateTimeLocal = (): string => {
       return;
     }
 
-    // ✅ Save state trước khi navigate (giống Logs)
+    // Save state trước khi navigate (giống Logs)
     saveHomeFilterState(filter, currentPage, activeTab);
     saveSelectedSheetId(sheet.id);
     

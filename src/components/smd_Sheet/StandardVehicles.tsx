@@ -509,9 +509,6 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
               | ChangeModel ID: <strong>{currentSheet.id}</strong>
             </span>
           )}
-          {isSaved && (
-            <span className="ml-auto font-semibold">{t("status.saved")}</span>
-          )}
         </div>
       )}
       {/* Desktop View */}

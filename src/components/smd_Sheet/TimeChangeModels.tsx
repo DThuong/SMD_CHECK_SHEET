@@ -289,9 +289,6 @@ const TimeChangeModels = memo(({ canEdit }: { canEdit: boolean }) => {
               | ChangeModel ID: <strong>{currentSheet.id}</strong>
             </span>
           )}
-          {isSaved && (
-            <span className="ml-auto font-semibold">{t("status.saved")}</span>
-          )}
         </div>
       )}
       {/* Desktop View */}
@@ -460,11 +457,6 @@ const TimeChangeModels = memo(({ canEdit }: { canEdit: boolean }) => {
           >
             <h3 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200">
               {t("title")}
-              {isSaved && (
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded ml-2">
-                  ✓ Đã lưu
-                </span>
-              )}
             </h3>
 
             {/* Tên QC */}

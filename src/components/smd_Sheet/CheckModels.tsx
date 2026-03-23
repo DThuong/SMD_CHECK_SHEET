@@ -300,9 +300,6 @@ const CheckModels = memo(function CheckModels({
               | ChangeModel ID: <strong>{currentSheet.id}</strong>
             </span>
           )}
-          {isSaved && (
-            <span className="ml-auto font-semibold">{t("saved")}</span>
-          )}
         </div>
       )}
 
@@ -459,11 +456,6 @@ const CheckModels = memo(function CheckModels({
           >
             <h3 className="text-base font-bold text-gray-700 mb-3 pb-2 border-b border-gray-300 flex items-center gap-2">
               Check Model
-              {isSaved && (
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
-                  ✓ Đã lưu
-                </span>
-              )}
             </h3>
 
             {/* Line đổi */}

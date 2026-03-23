@@ -316,9 +316,20 @@ const SheetDetailViewer = () => {
         `${t("success.confirmSuccess")} ${user.role}!`,
       );
 
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // Reload sheet data silently via Redux — không reload cả trang
+      try {
+        const refreshed = await dispatch(getSheetWithFullObject(currentSheet.id!)).unwrap();
+        dispatch(
+          setAllSubTableData({
+            checkModel: refreshed.checkModel ?? null,
+            standardProduction: refreshed.standardProduction ?? null,
+            timeChangeModel: refreshed.timeChangeModel ?? null,
+            standardVehicle: refreshed.standardVehicle ?? null,
+            pqcCheck: refreshed.pqcCheck ?? null,
+            loadedFromSheetId: currentSheet.id!,
+          }),
+        );
+      } catch {}
     } catch (error: any) {
       console.error("❌ Lỗi khi xác nhận:", error);
       showNotification(

@@ -283,7 +283,7 @@ const SheetDetailViewer = () => {
 
     if (!user || !currentSheet) return;
 
-    // Check required files cho PQCLeader (giữ nguyên logic cũ)
+    // Check required files cho PQCLeader
     if (user.role === "PQCLeader") {
       const { hasLCR, hasReflow } = checkRequiredFiles(currentSheet);
 

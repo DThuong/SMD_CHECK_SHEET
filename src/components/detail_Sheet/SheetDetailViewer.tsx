@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -53,7 +52,6 @@ const SheetDetailViewer = () => {
 
   // Lấy saved state từ location
   const returnPath = (location.state as any)?.returnPath;
-  const returnSearch = (location.state as any)?.returnSearch;
   // Lấy data từ Redux store
   const { currentSheet, loading, error } = useAppSelector(
     (state) => state.changeModel,
@@ -136,28 +134,44 @@ const SheetDetailViewer = () => {
   };
 
   const handleBack = () => {
-    const savedState = getFilterState();
-    const savedSheetId = getSelectedSheetId();
-
-    console.log("🔙 Navigating back with state:", { savedState, savedSheetId });
-
-    if (returnPath) {
-      const fullPath = returnSearch
-        ? `${returnPath}${returnSearch}`
-        : returnPath;
-
-      navigate(fullPath, {
-        state: {
-          from: "sheetDetail",
-          savedFilter: savedState.filter,
-          savedPage: savedState.currentPage,
-          highlightSheetId: savedSheetId,
-        },
-      });
-    } else {
-      navigate(-1);
-    }
-  };
+  const navState = location.state as any;
+  const from = navState?.from;
+ 
+  // Back về Dashboard (từ click xem sheet trong bảng chi tiết)
+  if (from === "dashboard") {
+    const returnPath = navState?.returnPath || "/";
+    const returnSearch = navState?.returnSearch || "";
+    const dashboardState = navState?.dashboardState;
+ 
+    navigate(`${returnPath}${returnSearch}`, {
+      state: {
+        from: "sheetDetail",          // Dashboard nhận key này để restore
+        dashboardState,               // Chứa sheetId, date, shift để scroll/highlight
+      },
+    });
+    return;
+  }
+ 
+  // Back về Logs (giữ nguyên logic cũ)
+  const savedState = getFilterState();
+  const savedSheetId = getSelectedSheetId();
+  const returnPath = navState?.returnPath;
+  const returnSearch = navState?.returnSearch;
+ 
+  if (returnPath) {
+    const fullPath = returnSearch ? `${returnPath}${returnSearch}` : returnPath;
+    navigate(fullPath, {
+      state: {
+        from: "sheetDetail",
+        savedFilter: savedState.filter,
+        savedPage: savedState.currentPage,
+        highlightSheetId: savedSheetId,
+      },
+    });
+  } else {
+    navigate(-1);
+  }
+};
 
   // Load dữ liệu sheet từ Redux action
   useEffect(() => {
@@ -329,9 +343,11 @@ const SheetDetailViewer = () => {
             loadedFromSheetId: currentSheet.id!,
           }),
         );
-      } catch {}
+      } catch (error: any) {
+        console.error("Lỗi khi tải lại dữ liệu sau khi xác nhận:", error);
+      }
     } catch (error: any) {
-      console.error("❌ Lỗi khi xác nhận:", error);
+      console.error("Lỗi khi xác nhận:", error);
       showNotification(
         "error",
         t("error.confirmFailed"),

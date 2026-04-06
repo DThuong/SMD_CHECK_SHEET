@@ -48,7 +48,12 @@
       "7days": "7 days",
       "30days": "30 days",
       "all": "All",
-      "count": "Sheets created"
+      "count": "Sheets created",
+      "dayshift": "Day Shift",
+      "nightshift": "Night Shift",
+      "both": "Both Shifts",
+      "morningLegend": "Day Shift (08:00–19:59)",
+      "nightLegend": "Night Shift (20:00–07:59)"
     },
     "roleDistribution": {
       "title": "User Distribution by Role",
@@ -59,6 +64,20 @@
     }
   },
   "tables": {
+    "sheetDetails": {
+      "title": "Sheet Details for Selected Period",
+      "noSelection": "Click a point on the chart to view sheet details.",
+      "stt": "STT",
+      "sheetId": "Sheet ID",
+      "workOrder": "Work Order",
+      "createdBy": "Created By",
+      "createTime": "Creation Time",
+      "status": "Status",
+      "action": "Action",
+      "view": "View",
+      "noSheets": "No sheets found for this period.",
+      "selectedInfo": "Showing {{count}} sheets for: {{info}}"
+    },
     "roleDetails": {
       "title": "User Permission Details",
       "role": "Role",

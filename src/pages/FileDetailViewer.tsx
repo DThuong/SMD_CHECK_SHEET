@@ -26,6 +26,8 @@ const FileDetailViewer = () => {
   const returnPath = (location.state as any)?.returnPath;
   const originalReturnPath = (location.state as any)?.originalReturnPath;
   const originalReturnSearch = (location.state as any)?.originalReturnSearch;
+  const originalFrom = (location.state as any)?.originalFrom;
+  const dashboardState = (location.state as any)?.dashboardState;
 
   const user = useAppSelector((state) => state.auth.user);
   const { currentSheet, loading: sheetLoading } = useAppSelector((state) => state.changeModel);
@@ -76,12 +78,32 @@ const FileDetailViewer = () => {
     const newPath = location.pathname.replace(/(lcr|reflow)$/, tab);
     navigate(newPath, {
       replace: true,
-      state: { from, returnPath, originalReturnPath, originalReturnSearch },
+      state: {
+        from,
+        returnPath,
+        originalReturnPath,
+        originalReturnSearch,
+        originalFrom,
+        dashboardState,
+      },
     });
   };
 
   const handleGoBack = () => {
     const savedState = getFilterState();
+
+    if (returnPath && originalFrom === 'dashboard') {
+      navigate(returnPath, {
+        state: {
+          from: 'dashboard',
+          returnPath: originalReturnPath,
+          returnSearch: originalReturnSearch ?? '',
+          dashboardState,
+        },
+      });
+      return;
+    }
+
     if (returnPath) {
       navigate(returnPath, {
         state: {

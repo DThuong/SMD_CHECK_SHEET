@@ -48,7 +48,12 @@
       "7days": "7 ngày",
       "30days": "30 ngày",
       "all": "Tất cả",
-      "count": "Số sheet tạo"
+      "count": "Số sheet tạo",
+      "dayshift": "Ca ngày",
+      "nightshift": "Ca tối",
+      "both": "Cả 2 ca",
+      "morningLegend": "Ca sáng (08:00–19:59)",
+      "nightLegend": "Ca tối (20:00–07:59)"
     },
     "roleDistribution": {
       "title": "Phân bổ Users theo Role",
@@ -72,12 +77,26 @@
       "count": "Số lượng",
       "percentage": "Tỷ lệ",
       "description": "Mô tả"
+    },
+    "sheetDetails": {
+      "title": "Chi tiết Sheets theo điểm chọn",
+      "noSelection": "Nhấp vào một điểm trên biểu đồ để xem chi tiết sheets.",
+      "stt": "STT",
+      "sheetId": "Sheet ID",
+      "workOrder": "Work Order",
+      "createdBy": "Người tạo",
+      "createTime": "Thời gian tạo",
+      "status": "Trạng thái",
+      "action": "Hành động",
+      "view": "Xem",
+      "noSheets": "Không có sheet nào trong khoảng thời gian này.",
+      "selectedInfo": "Đang hiển thị {{count}} sheet cho: {{info}}"
     }
   },
   "statusDescriptions": {
     "pending": "Chờ PQC xác nhận",
     "pqcDone": "Chờ PQC Leader xác nhận",
-    "pqcLeaderDone": "Chờ ENG xác nhận", 
+    "pqcLeaderDone": "Chờ ENG xác nhận",
     "engDone": "Chờ Supervisor xác nhận",
     "supervisorDone": "Chờ Manager xác nhận",
     "managerDone": "Chờ Korea Manager xác nhận",

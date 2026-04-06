@@ -114,3 +114,43 @@ export const clearSelectedSheetId = () => {
     console.error('Error clearing selected sheet ID:', error);
   }
 };
+
+/** Context khi rời Dashboard → Sheet detail / file viewer (back + F5 vẫn highlight đúng) */
+const DASHBOARD_RETURN_CONTEXT_KEY = 'dashboardReturnContext';
+
+export type DashboardReturnContext = {
+  sheetId: number;
+  fullDate?: string;
+  date?: string;
+  shift?: 'morning' | 'night';
+  detailTablePage?: number;
+  timeRange?: 'week' | 'month' | 'all';
+  shiftFilter?: 'morning' | 'night' | 'both';
+};
+
+export const saveDashboardReturnContext = (ctx: DashboardReturnContext) => {
+  try {
+    sessionStorage.setItem(DASHBOARD_RETURN_CONTEXT_KEY, JSON.stringify(ctx));
+  } catch (error) {
+    console.error('Error saving dashboard return context:', error);
+  }
+};
+
+export const getDashboardReturnContext = (): DashboardReturnContext | null => {
+  try {
+    const raw = sessionStorage.getItem(DASHBOARD_RETURN_CONTEXT_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as DashboardReturnContext;
+  } catch (error) {
+    console.error('Error getting dashboard return context:', error);
+    return null;
+  }
+};
+
+export const clearDashboardReturnContext = () => {
+  try {
+    sessionStorage.removeItem(DASHBOARD_RETURN_CONTEXT_KEY);
+  } catch (error) {
+    console.error('Error clearing dashboard return context:', error);
+  }
+};

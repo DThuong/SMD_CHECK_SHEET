@@ -11,12 +11,10 @@ import {
 } from "../../redux/slices/changeModelSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { IoEyeSharp } from "react-icons/io5";
 import { useTranslation } from "react-i18next";
 import { getLcrFileData } from "../../redux/slices/FileSlice";
-// import { useLocation } from "react-router-dom";
-
 interface FileUploadState {
   lcr?: File;
   reflow?: File;
@@ -41,6 +39,7 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
 
   const { user } = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
+  const location = useLocation();
   const { notification, showNotification, hideNotification } =
     useNotification();
   const { t } = useTranslation("sheetHeader");
@@ -252,19 +251,23 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
 
   const handleViewFiles = () => {
     if (!currentSheet?.id) return;
-
     const roleLower = user?.role?.toLowerCase() || "pqc";
     const hasReflow =
       currentSheet.pdfFileUrl && currentSheet.pdfFileUrl.trim() !== "";
     const defaultFileType = hasReflow ? "reflow" : "lcr";
 
-    // NAVIGATE với đầy đủ state
+    const navState = location.state as Record<string, unknown> | null;
+
     navigate(`/${roleLower}/files/${currentSheet.id}/${defaultFileType}`, {
       state: {
         from: "sheetDetail",
         returnPath: window.location.pathname,
         returnSearch: window.location.search,
         originalReturnPath: returnPath,
+        originalReturnSearch:
+          (navState?.returnSearch as string | undefined) ?? "",
+        originalFrom: navState?.from as string | undefined,
+        dashboardState: navState?.dashboardState,
       },
     });
   };

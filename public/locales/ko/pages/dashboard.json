@@ -48,7 +48,12 @@
       "7days": "7일",
       "30days": "30일",
       "all": "전체",
-      "count": "생성된 시트"
+      "count": "생성된 시트",
+      "dayshift": "주간 근무",
+      "nightshift": "야간 근무",
+      "both": "전체",
+      "morningLegend": "주간 (08:00–19:59)",
+      "nightLegend": "야간 (20:00–07:59)"
     },
     "roleDistribution": {
       "title": "역할별 사용자 분포",
@@ -72,6 +77,20 @@
       "count": "개수",
       "percentage": "비율",
       "description": "설명"
+    },
+    "sheetDetails": {
+      "title": "선택한 지점의 시트 상세 정보",
+      "noSelection": "시트 상세 정보를 보려면 차트의 점을 클릭하십시오.",
+      "stt": "STT",
+      "sheetId": "시트 ID",
+      "workOrder": "Work Order",
+      "createdBy": "생성자",
+      "createTime": "생성 시간",
+      "status": "상태",
+      "action": "작업",
+      "view": "보기",
+      "noSheets": "이 기간에 해당되는 시트가 없습니다.",
+      "selectedInfo": "{{info}}에 대한 {{count}}개의 시트를 표시 중"
     }
   },
   "statusDescriptions": {

@@ -334,7 +334,7 @@ const Logs = () => {
   useEffect(() => {
     if (selectedSheet && filteredSheets?.length) {
       const updated = filteredSheets.find((s) => s.id === selectedSheet.id);
-      if (updated) {
+      if (updated && updated.status !== selectedSheet.status) {
         setSelectedSheet(updated);
       }
     }
@@ -473,6 +473,8 @@ const Logs = () => {
 
   try {
     setConfirmingSheetId(sheetId);
+    setSelectedSheetId(null);
+    clearSelectedSheetId();
 
     if (!user) {
       showNotification("error", t("error.invalidUser"));
@@ -817,7 +819,7 @@ const Logs = () => {
       /** DETAIL VIEW */
     }
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 select-none">
         <Notification
           show={notification.show}
           type={notification.type}
@@ -985,7 +987,7 @@ const Logs = () => {
 
   // ==================== LIST VIEW ====================
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 select-none">
       <Notification
         show={notification.show}
         type={notification.type}

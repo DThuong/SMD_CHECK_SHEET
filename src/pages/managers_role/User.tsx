@@ -16,6 +16,8 @@ import {
   type RegisterUserRequest
 } from '../../redux/slices/authSlice';
 import ReactPaginate from 'react-paginate';
+import LoadingSpinner from '../../components/general/LoadingSpinner';
+import { FaSpinner } from 'react-icons/fa6';
 
 const User = () => {
   const dispatch = useAppDispatch();
@@ -405,9 +407,7 @@ const User = () => {
         {/* Users Table */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           {usersLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
-            </div>
+            <LoadingSpinner size='sm' />
           ) : (
             <>
               {/* Desktop Table View */}
@@ -735,8 +735,10 @@ const User = () => {
                   disabled={usersLoading}
                   className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <FaUserPlus />
-                  {usersLoading ? 'Đang thêm...' : 'Thêm người dùng'}
+                  {usersLoading
+                    ? <><FaSpinner className="animate-spin" /> Đang thêm...</>
+                    : <><FaUserPlus /> Thêm người dùng</>
+                  }
                 </button>
                 <button
                   type="button"
@@ -861,8 +863,10 @@ const User = () => {
                   disabled={usersLoading}
                   className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <FaKey />
-                  {usersLoading ? 'Đang xử lý...' : 'Đổi mật khẩu'}
+                  {usersLoading
+                    ? <><FaSpinner className="animate-spin" /> Đang xử lý...</>
+                    : <><FaKey /> Đổi mật khẩu</>
+                  }
                 </button>
                 <button
                   onClick={handleClosePasswordModal}
@@ -987,8 +991,10 @@ const User = () => {
                   disabled={usersLoading}
                   className="flex-1 flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <FaSave />
-                  {usersLoading ? 'Đang cập nhật...' : 'Cập nhật'}
+                  {usersLoading
+                    ? <><FaSpinner className="animate-spin" /> Đang cập nhật...</>
+                    : <><FaSave /> Cập nhật</>
+                  }
                 </button>
                 <button
                   type="button"

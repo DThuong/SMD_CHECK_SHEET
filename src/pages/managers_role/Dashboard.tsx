@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, {
   useState,
@@ -26,7 +27,6 @@ import {
   FaFileAlt,
   FaChartLine,
   FaCheckCircle,
-  FaSpinner,
 } from "react-icons/fa";
 import { AiOutlineEye } from "react-icons/ai";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
@@ -41,6 +41,7 @@ import {
   clearDashboardReturnContext,
 } from "../../utils/navigationState";
 import ReactPaginate from "react-paginate";
+import LoadingSpinner from "../../components/general/LoadingSpinner";
 
 // ==================== CONSTANTS ====================
 const DETAIL_PAGE_SIZE = 10;
@@ -122,6 +123,74 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 // ==================== SHARED COMPONENTS ====================
+
+const getStatusBadge = (sheet: any) => {
+  const status = sheet.status?.toLowerCase();
+
+  const statusConfig: Record<
+    string,
+    { bg: string; text: string; label: string; icon: string }
+  > = {
+    pending: {
+      bg: "bg-yellow-100",
+      text: "text-yellow-600",
+      label: "Pending",
+      icon: "",
+    },
+    pqcdone: {
+      bg: "bg-green-100",
+      text: "text-green-700",
+      label: "PQC Done",
+      icon: "✓",
+    },
+    pqcleaderdone: {
+      bg: "bg-blue-100",
+      text: "text-blue-700",
+      label: "PQC Leader Done",
+      icon: "✓",
+    },
+    engdone: {
+      bg: "bg-blue-100",
+      text: "text-blue-700",
+      label: "ENG Done",
+      icon: "✓",
+    },
+    supervisiordone: {
+      bg: "bg-purple-100",
+      text: "text-purple-700",
+      label: "SUP Done",
+      icon: "✓",
+    },
+    managerdone: {
+      bg: "bg-indigo-100",
+      text: "text-indigo-700",
+      label: "MGR Done",
+      icon: "✓",
+    },
+    koreamanagerdone: {
+      bg: "bg-teal-100",
+      text: "text-teal-700",
+      label: "KMGR Done",
+      icon: "✓",
+    },
+  };
+
+  const config = statusConfig[status || "pending"] || {
+    bg: "bg-gray-100",
+    text: "text-gray-700",
+    label: status || "Unknown",
+    icon: "❓",
+  };
+
+  return (
+    <div
+      className={`inline-flex items-center gap-1 ${config.bg} ${config.text} rounded-full px-3 py-1 text-[10px] font-bold`}
+    >
+      <span>{config.icon}</span>
+      <span>{config.label}</span>
+    </div>
+  );
+};
 
 /** Bảng chi tiết sheets — dùng chung cho cả Admin và Role-based dashboard */
 const SheetTable = ({
@@ -284,17 +353,7 @@ const SheetTable = ({
                         : "N/A"}
                     </td>
                     <td className="py-3 px-4">
-                      <span
-                        className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                          sheet.status === "pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : sheet.status === "KoreaManagerDone"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-blue-100 text-blue-700"
-                        }`}
-                      >
-                        {sheet.status}
-                      </span>
+                      {getStatusBadge(sheet)}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <button
@@ -788,14 +847,7 @@ const Dashboard = () => {
 
   // ==================== LOADING ====================
   if (usersLoading || loadingList) {
-    return (
-      <div className="min-h-dvh bg-linear-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-        <div className="text-center">
-          <FaSpinner className="animate-spin text-blue-500 text-5xl mx-auto mb-4" />
-          <p className="text-slate-600 text-lg">{t("loading")}</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message={t("loading")} />;
   }
 
   // ==================== ROLE-BASED DASHBOARD ====================

@@ -7,22 +7,22 @@ import { extractFileName } from '../../utils/imageUrl';
 
 // CheckModel
 export interface CheckModelData {
-    id?: number,
-    lineChange?: string,
-    model?: string,
-    fCode?: string,
-    pcBver?: string,
-    workOrder?: string,
-    usedCNcard?: boolean,
-    revS15?: string,
-    revMounter?: string,
-    qty?: string,
-    feederCheck?: string,
-    opAccept?: string,
-    jig?: boolean,
-    codePCB?: string,
-    note?: string, // thêm
-    imgIssue?: string[]; // thêm
+  id?: number,
+  lineChange?: string,
+  model?: string,
+  fCode?: string,
+  pcBver?: string,
+  workOrder?: string,
+  usedCNcard?: boolean,
+  revS15?: string,
+  revMounter?: string,
+  qty?: string,
+  feederCheck?: string,
+  opAccept?: string,
+  jig?: boolean,
+  codePCB?: string,
+  note?: string, // thêm
+  imgIssue?: string[]; // thêm
 }
 
 // StandardProduction
@@ -103,12 +103,13 @@ export interface StandardVehicleData {
 
   id?: number;
 
-  note?: string; // thêm
-  imgIssue?: string[]; // thêm
-  imgMounter?: string[]; // thêm
-  imgPrinter?: string[]; // thêm
-  imgPrinterClean?: string[]; // thêm
-  imgXray?: string[]; // thêm
+  note?: string;
+  imgIssue?: string[];
+  imgMounter?: string[];
+  imgPrinter?: string[];
+  imgPrinterClean?: string[];
+  imgXray?: string[];
+  imgReflow?: string[];
 }
 
 // PQCCheck
@@ -123,25 +124,25 @@ export interface PQCCheckData {
   nameCheck?: string;
   resultLCR?: boolean;
   imgIC?: string[];
-  note?: string; // thêm
-  imgIssue?: string[]; // thêm
+  note?: string;
+  imgIssue?: string[];
 }
 
 // ==================== STATE ====================
 interface subTableState {
-    loading: boolean;
-    error: string | null;
-    success: boolean;
-    lastUpdatedTable: string | null;
-    completedTables: string[];
-    loadedFromSheetId: number | null; // flag để check data đã load từ bảng cha hay chưa ?
+  loading: boolean;
+  error: string | null;
+  success: boolean;
+  lastUpdatedTable: string | null;
+  completedTables: string[];
+  loadedFromSheetId: number | null; // flag để check data đã load từ bảng cha hay chưa ?
 
-    // data của từng bảng con
-    checkModel: CheckModelData | null;
-    standardProduction: StandardProductionData | null;
-    timeChangeModel: TimeChangeModelData | null;
-    standardVehicle: StandardVehicleData | null;
-    pqcCheck: PQCCheckData | null;
+  // data của từng bảng con
+  checkModel: CheckModelData | null;
+  standardProduction: StandardProductionData | null;
+  timeChangeModel: TimeChangeModelData | null;
+  standardVehicle: StandardVehicleData | null;
+  pqcCheck: PQCCheckData | null;
 }
 
 const initialState: subTableState = {
@@ -411,6 +412,25 @@ export const uploadStandardProductionIssueImage = createAsyncThunk(
   }
 )
 
+// Upload StandardVehicle reflow image
+export const uploadStandardVehicleReflowImage = createAsyncThunk(
+  'subTable/uploadVehicleReflowImage',
+  async ({ StandardVehicleId, file }: { StandardVehicleId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await smdApi.put(`StandardVehicle/image-reflow/${StandardVehicleId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải VehicleReflow');
+    }
+  }
+)
+
 // Upload StandardVehicle issue image
 export const uploadStandardVehicleIssueImage = createAsyncThunk(
   'subTable/uploadVehicleIssueImage',
@@ -554,7 +574,7 @@ export const deleteCheckModelIssueImage = createAsyncThunk(
       const response = await smdApi.delete(`CheckModel/image-issue/${checkModelId}/${imageName}`);
       return { data: response.data, imageUrl }; //  Return imageUrl để filter
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể xóa CheckModelIssueImage');
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh Issue của CheckModel');
     }
   }
 )
@@ -568,7 +588,7 @@ export const deletePQCCheckImage = createAsyncThunk(
       const response = await smdApi.delete(`PQCCheck/image/${pqcCheckId}/${imageName}`);
       return { data: response.data, imageUrl }; //  Return imageUrl
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể xóa PQCCheckImage');
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh của PQCCheck');
     }
   }
 )
@@ -582,7 +602,7 @@ export const deletePQCCheckIssueImage = createAsyncThunk(
       const response = await smdApi.delete(`PQCCheck/image-issue/${pqcCheckId}/${imageName}`);
       return { data: response.data, imageUrl }; //  Return imageUrl
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể xóa PQCCheckIssueImage');
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh Issue của PQCCheck');
     }
   }
 )
@@ -596,7 +616,7 @@ export const deleteStandardProductionImage = createAsyncThunk(
       const response = await smdApi.delete(`StandardProduction/image/${standardProductionId}/${imageName}`);
       return { data: response.data, imageUrl }; //  Return imageUrl
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể xóa StandardProductionImage');
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh của StandardProduction');
     }
   }
 )
@@ -610,7 +630,7 @@ export const deleteStandardProductionIssueImage = createAsyncThunk(
       const response = await smdApi.delete(`StandardProduction/image-issue/${standardProductionId}/${imageName}`);
       return { data: response.data, imageUrl }; //  Return imageUrl
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể xóa StandardProductionIssueImage');
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh Issue của StandardProduction');
     }
   }
 )
@@ -624,7 +644,7 @@ export const deleteSPIImage = createAsyncThunk(
       const response = await smdApi.delete(`StandardVehicle/image-spi/${standardVehicleId}/${imageName}`);
       return { data: response.data, imageUrl }; //  Return imageUrl
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể xóa SPIImage');
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh SPI');
     }
   }
 )
@@ -638,7 +658,7 @@ export const deleteAOIImage = createAsyncThunk(
       const response = await smdApi.delete(`StandardVehicle/image-aoi/${standardVehicleId}/${imageName}`);
       return { data: response.data, imageUrl }; //  Return imageUrl
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể xóa AOIImage');
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh AOI');
     }
   }
 )
@@ -652,7 +672,7 @@ export const deleteStandardVehicleIssueImage = createAsyncThunk(
       const response = await smdApi.delete(`StandardVehicle/image-issue/${standardVehicleId}/${imageName}`);
       return { data: response.data, imageUrl }; //  Return imageUrl
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể xóa StandardVehicleIssueImage');
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh Issue của StandardVehicle');
     }
   }
 )
@@ -666,7 +686,7 @@ export const deletePrinterImage = createAsyncThunk(
       const response = await smdApi.delete(`StandardVehicle/image-printer/${standardVehicleId}/${imageName}`);
       return { data: response.data, imageUrl }; //  Return imageUrl
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể xóa PrinterImage');
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh Printer');
     }
   }
 )
@@ -680,7 +700,7 @@ export const deletePrinterCleanImage = createAsyncThunk(
       const response = await smdApi.delete(`StandardVehicle/image-printer-clean/${standardVehicleId}/${imageName}`);
       return { data: response.data, imageUrl }; //  Return imageUrl
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể xóa PrinterCleanImage');
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh Printer Clean');
     }
   }
 )
@@ -694,7 +714,7 @@ export const deleteMounterImage = createAsyncThunk(
       const response = await smdApi.delete(`StandardVehicle/image-mounter/${standardVehicleId}/${imageName}`);
       return { data: response.data, imageUrl }; //  Return imageUrl
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể xóa MounterImage');
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh Mounter');
     }
   }
 )
@@ -708,7 +728,7 @@ export const deleteXRayImage = createAsyncThunk(
       const response = await smdApi.delete(`StandardVehicle/image-xray/${standardVehicleId}/${imageName}`);
       return { data: response.data, imageUrl }; //  Return imageUrl
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể xóa XRayImage');
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh X-Ray');
     }
   }
 )
@@ -722,7 +742,21 @@ export const deleteTimeChangeModelIssueImage = createAsyncThunk(
       const response = await smdApi.delete(`TimeChangeModel/image-issue/${timeChangeModelId}/${imageName}`);
       return { data: response.data, imageUrl }; //  Return imageUrl
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể xóa TimeChangeModelIssueImage');
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh Issue của TimeChangeModel');
+    }
+  }
+)
+
+// Delete standardVehicle reflow image
+export const deleteStandardVehicleReflowImage = createAsyncThunk(
+  'subTable/deleteStandardVehicleReflowImage',
+  async ({ standardVehicleId, imageUrl }: { standardVehicleId: number; imageUrl: string }, { rejectWithValue }) => {
+    try {
+      const imageName = extractFileName(imageUrl);
+      const response = await smdApi.delete(`StandardVehicle/image-reflow/${standardVehicleId}/${imageName}`);
+      return { data: response.data, imageUrl };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh Reflow');
     }
   }
 )
@@ -811,7 +845,7 @@ const subTableSlice = createSlice({
   },
   extraReducers: (builder) => {
     // ==================== FETCH DATA ====================
-    
+
     // CheckModel
     builder
       .addCase(fetchCheckModel.pending, (state) => {
@@ -827,7 +861,7 @@ const subTableSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
-    
+
     // StandardProduction
     builder
       .addCase(fetchStandardProduction.pending, (state) => {
@@ -843,7 +877,7 @@ const subTableSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
-    
+
     // StandardVehicle
     builder
       .addCase(fetchStandardVehicle.pending, (state) => {
@@ -859,7 +893,7 @@ const subTableSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
-    
+
     // PQCCheck
     builder
       .addCase(fetchPQCCheck.pending, (state) => {
@@ -875,7 +909,7 @@ const subTableSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
-    
+
     // TimeChangeModel
     builder
       .addCase(fetchTimeChangeModel.pending, (state) => {
@@ -893,7 +927,7 @@ const subTableSlice = createSlice({
       });
 
     // ==================== UPDATE DATA ====================
-    
+
     // CheckModel
     builder
       .addCase(updateCheckModel.pending, (state) => {
@@ -1004,6 +1038,28 @@ const subTableSlice = createSlice({
         state.success = false;
       });
     // ----------------------------------- UPLOAD IMAGE -----------------------------------
+    // Upload reflow image
+    builder
+      .addCase(uploadStandardVehicleReflowImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadStandardVehicleReflowImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.standardVehicle && action.payload?.imageUrl) {
+          if (!Array.isArray(state.standardVehicle.imgReflow)) {
+            state.standardVehicle.imgReflow = [];
+          }
+          if (!state.standardVehicle.imgReflow.includes(action.payload.imageUrl)) {
+            state.standardVehicle.imgReflow.push(action.payload.imageUrl);
+          }
+        }
+        state.error = null;
+      })
+      .addCase(uploadStandardVehicleReflowImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
     // Upload check model issue image
     builder
       .addCase(uploadCheckModelIssueImage.pending, (state) => {
@@ -1066,7 +1122,7 @@ const subTableSlice = createSlice({
       .addCase(uploadStandardVehicleIssueImage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-    })
+      })
 
     // Upload StandardVehicle printer image
     builder
@@ -1088,7 +1144,7 @@ const subTableSlice = createSlice({
       .addCase(uploadPrinterImage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-    })
+      })
 
     // Upload StandardVehicle mounter image
     builder
@@ -1110,7 +1166,7 @@ const subTableSlice = createSlice({
       .addCase(uploadMounterImage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-    })
+      })
 
     // Upload StandardVehicle printer clean image
     builder
@@ -1132,7 +1188,7 @@ const subTableSlice = createSlice({
       .addCase(uploadPrinterCleanImage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-    })
+      })
 
     // Upload timeChangeModel issue image
     builder
@@ -1154,7 +1210,7 @@ const subTableSlice = createSlice({
       .addCase(uploadTimeChangeModelIssueImage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-    })
+      })
 
     // Upload pqcCheck issue image
     builder
@@ -1176,8 +1232,8 @@ const subTableSlice = createSlice({
       .addCase(uploadPQCCheckIssueImage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-    })
-    
+      })
+
     // Upload SPI Image
     builder
       .addCase(uploadSPIImage.pending, (state) => {
@@ -1222,330 +1278,349 @@ const subTableSlice = createSlice({
         state.error = action.payload as string;
       });
 
-      // upload Standard Production Image
-      builder
-        .addCase(uploadStandardProductionImage.pending, (state) => {
-          state.loading = true;
-          state.error = null;
-        })
-        .addCase(uploadStandardProductionImage.fulfilled, (state, action) => {
-          state.loading = false;
-          if (state.standardProduction && action.payload?.imageUrl) {
-            if (!Array.isArray(state.standardProduction.imgStandard)) {
-              state.standardProduction.imgStandard = [];
-            }
-            if (!state.standardProduction.imgStandard.includes(action.payload.imageUrl)) {
-              state.standardProduction.imgStandard.push(action.payload.imageUrl);
-            }
+    // upload Standard Production Image
+    builder
+      .addCase(uploadStandardProductionImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadStandardProductionImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.standardProduction && action.payload?.imageUrl) {
+          if (!Array.isArray(state.standardProduction.imgStandard)) {
+            state.standardProduction.imgStandard = [];
           }
-        })
-        .addCase(uploadStandardProductionImage.rejected, (state, action) => {
-          state.loading = false;
-          state.error = action.payload as string;
-        });
-
-      // upload pqc check Image
-      builder
-        .addCase(uploadPQCCheckImage.pending, (state) => {
-          state.loading = true;
-          state.error = null;
-        })
-        .addCase(uploadPQCCheckImage.fulfilled, (state, action) => {
-          state.loading = false;
-          if (state.pqcCheck && action.payload?.imageUrl) {
-            if (!Array.isArray(state.pqcCheck.imgIC)) {
-              state.pqcCheck.imgIC = [];
-            }
-            if (!state.pqcCheck.imgIC.includes(action.payload.imageUrl)) {
-              state.pqcCheck.imgIC.push(action.payload.imageUrl);
-            }
+          if (!state.standardProduction.imgStandard.includes(action.payload.imageUrl)) {
+            state.standardProduction.imgStandard.push(action.payload.imageUrl);
           }
-        })
-        .addCase(uploadPQCCheckImage.rejected, (state, action) => {
-          state.loading = false;
-          state.error = action.payload as string;
-        });
+        }
+      })
+      .addCase(uploadStandardProductionImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
 
-        // upload image-xray StandardVehicle
-        builder
-        .addCase(uploadXRayImage.pending, (state) => {
-          state.loading = true;
-          state.error = null;
-        })
-        .addCase(uploadXRayImage.fulfilled, (state, action) => {
-          state.loading = false;
-          // Cập nhật URL hình ảnh nếu backend trả về
-          if (state.standardVehicle && action.payload?.imageUrl) {
-            // Nếu imgXray chưa tồn tại hoặc không phải array, khởi tạo mảng mới
-            if (!Array.isArray(state.standardVehicle.imgXray)) {
-              state.standardVehicle.imgXray = [];
-            }
-            
-            // Thêm URL mới vào array (không trùng lặp)
-            if (!state.standardVehicle.imgXray.includes(action.payload.imageUrl)) {
-              state.standardVehicle.imgXray.push(action.payload.imageUrl);
-            }
+    // upload pqc check Image
+    builder
+      .addCase(uploadPQCCheckImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadPQCCheckImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.pqcCheck && action.payload?.imageUrl) {
+          if (!Array.isArray(state.pqcCheck.imgIC)) {
+            state.pqcCheck.imgIC = [];
           }
-        })
-        .addCase(uploadXRayImage.rejected, (state, action) => {
-          state.loading = false;
-          state.error = action.payload as string;
-        });
-      // ----------------------------------- DELETE IMAGE -----------------------------------
-// Delete checkModel issue image
-builder
-  .addCase(deleteCheckModelIssueImage.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(deleteCheckModelIssueImage.fulfilled, (state, action) => {
-    state.loading = false;
-    if (state.checkModel && state.checkModel.imgIssue) {
-      state.checkModel.imgIssue = state.checkModel.imgIssue.filter(
-        url => url !== action.payload.imageUrl //  giữ lại các hình ảnh không trùng với imageUrl đã xóa
-      );
-    }
-  })
-  .addCase(deleteCheckModelIssueImage.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
+          if (!state.pqcCheck.imgIC.includes(action.payload.imageUrl)) {
+            state.pqcCheck.imgIC.push(action.payload.imageUrl);
+          }
+        }
+      })
+      .addCase(uploadPQCCheckImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
 
-// Delete pqcCheck ic image
-builder
-  .addCase(deletePQCCheckImage.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(deletePQCCheckImage.fulfilled, (state, action) => {
-    state.loading = false;
-    if (state.pqcCheck && state.pqcCheck.imgIC) {
-      state.pqcCheck.imgIC = state.pqcCheck.imgIC.filter(
-        url => url !== action.payload.imageUrl //  Sửa logic filter
-      );
-    }
-  })
-  .addCase(deletePQCCheckImage.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
+    // upload image-xray StandardVehicle
+    builder
+      .addCase(uploadXRayImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadXRayImage.fulfilled, (state, action) => {
+        state.loading = false;
+        // Cập nhật URL hình ảnh nếu backend trả về
+        if (state.standardVehicle && action.payload?.imageUrl) {
+          // Nếu imgXray chưa tồn tại hoặc không phải array, khởi tạo mảng mới
+          if (!Array.isArray(state.standardVehicle.imgXray)) {
+            state.standardVehicle.imgXray = [];
+          }
 
-// Delete pqcCheck issue image
-builder
-  .addCase(deletePQCCheckIssueImage.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(deletePQCCheckIssueImage.fulfilled, (state, action) => {
-    state.loading = false;
-    if (state.pqcCheck && state.pqcCheck.imgIssue) {
-      state.pqcCheck.imgIssue = state.pqcCheck.imgIssue.filter(
-        url => url !== action.payload.imageUrl //  Sửa logic filter
-      );
-    }
-  })
-  .addCase(deletePQCCheckIssueImage.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
+          // Thêm URL mới vào array (không trùng lặp)
+          if (!state.standardVehicle.imgXray.includes(action.payload.imageUrl)) {
+            state.standardVehicle.imgXray.push(action.payload.imageUrl);
+          }
+        }
+      })
+      .addCase(uploadXRayImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+    // ----------------------------------- DELETE IMAGE -----------------------------------
+    // Delete checkModel issue image
+    builder
+      .addCase(deleteCheckModelIssueImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteCheckModelIssueImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.checkModel && state.checkModel.imgIssue) {
+          state.checkModel.imgIssue = state.checkModel.imgIssue.filter(
+            url => url !== action.payload.imageUrl //  giữ lại các hình ảnh không trùng với imageUrl đã xóa
+          );
+        }
+      })
+      .addCase(deleteCheckModelIssueImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
 
-// Delete StandardProduction image
-builder
-  .addCase(deleteStandardProductionImage.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(deleteStandardProductionImage.fulfilled, (state, action) => {
-    state.loading = false;
-    if (state.standardProduction && state.standardProduction.imgStandard) {
-      state.standardProduction.imgStandard = state.standardProduction.imgStandard.filter(
-        url => url !== action.payload.imageUrl //  Sửa logic filter
-      );
-    }
-  })
-  .addCase(deleteStandardProductionImage.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
+    // Delete pqcCheck ic image
+    builder
+      .addCase(deletePQCCheckImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deletePQCCheckImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.pqcCheck && state.pqcCheck.imgIC) {
+          state.pqcCheck.imgIC = state.pqcCheck.imgIC.filter(
+            url => url !== action.payload.imageUrl //  Sửa logic filter
+          );
+        }
+      })
+      .addCase(deletePQCCheckImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
 
-// Delete StandardProduction issue image
-builder
-  .addCase(deleteStandardProductionIssueImage.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(deleteStandardProductionIssueImage.fulfilled, (state, action) => {
-    state.loading = false;
-    if (state.standardProduction && state.standardProduction.imgIssue) {
-      state.standardProduction.imgIssue = state.standardProduction.imgIssue.filter(
-        url => url !== action.payload.imageUrl //  Sửa logic filter
-      );
-    }
-  })
-  .addCase(deleteStandardProductionIssueImage.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
+    // Delete pqcCheck issue image
+    builder
+      .addCase(deletePQCCheckIssueImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deletePQCCheckIssueImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.pqcCheck && state.pqcCheck.imgIssue) {
+          state.pqcCheck.imgIssue = state.pqcCheck.imgIssue.filter(
+            url => url !== action.payload.imageUrl //  Sửa logic filter
+          );
+        }
+      })
+      .addCase(deletePQCCheckIssueImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
 
-// Delete StandardVehicle spi image
-builder
-  .addCase(deleteSPIImage.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(deleteSPIImage.fulfilled, (state, action) => {
-    state.loading = false;
-    if (state.standardVehicle && state.standardVehicle.imgSPI) {
-      state.standardVehicle.imgSPI = state.standardVehicle.imgSPI.filter(
-        url => url !== action.payload.imageUrl //  Sửa logic filter
-      );
-    }
-  })
-  .addCase(deleteSPIImage.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
+    // Delete StandardVehicle reflow image
+    builder
+      .addCase(deleteStandardVehicleReflowImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteStandardVehicleReflowImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.standardVehicle && state.standardVehicle.imgReflow) {
+          state.standardVehicle.imgReflow = state.standardVehicle.imgReflow.filter(
+            url => url !== action.payload.imageUrl
+          );
+        }
+      })
+      .addCase(deleteStandardVehicleReflowImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
 
-// Delete StandardVehicle aoi image
-builder
-  .addCase(deleteAOIImage.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(deleteAOIImage.fulfilled, (state, action) => {
-    state.loading = false;
-    if (state.standardVehicle && state.standardVehicle.imgAOI) {
-      state.standardVehicle.imgAOI = state.standardVehicle.imgAOI.filter(
-        url => url !== action.payload.imageUrl //  Sửa logic filter
-      );
-    }
-  })
-  .addCase(deleteAOIImage.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
+    // Delete StandardProduction image
+    builder
+      .addCase(deleteStandardProductionImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteStandardProductionImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.standardProduction && state.standardProduction.imgStandard) {
+          state.standardProduction.imgStandard = state.standardProduction.imgStandard.filter(
+            url => url !== action.payload.imageUrl //  Sửa logic filter
+          );
+        }
+      })
+      .addCase(deleteStandardProductionImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
 
-// Delete StandardVehicle issue image
-builder
-  .addCase(deleteStandardVehicleIssueImage.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(deleteStandardVehicleIssueImage.fulfilled, (state, action) => {
-    state.loading = false;
-    if (state.standardVehicle && state.standardVehicle.imgIssue) {
-      state.standardVehicle.imgIssue = state.standardVehicle.imgIssue.filter(
-        url => url !== action.payload.imageUrl //  Sửa logic filter
-      );
-    }
-  })
-  .addCase(deleteStandardVehicleIssueImage.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
+    // Delete StandardProduction issue image
+    builder
+      .addCase(deleteStandardProductionIssueImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteStandardProductionIssueImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.standardProduction && state.standardProduction.imgIssue) {
+          state.standardProduction.imgIssue = state.standardProduction.imgIssue.filter(
+            url => url !== action.payload.imageUrl //  Sửa logic filter
+          );
+        }
+      })
+      .addCase(deleteStandardProductionIssueImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
 
-// Delete StandardVehicle printer image
-builder
-  .addCase(deletePrinterImage.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(deletePrinterImage.fulfilled, (state, action) => {
-    state.loading = false;
-    if (state.standardVehicle && state.standardVehicle.imgPrinter) {
-      state.standardVehicle.imgPrinter = state.standardVehicle.imgPrinter.filter(
-        url => url !== action.payload.imageUrl //  Sửa logic filter
-      );
-    }
-  })
-  .addCase(deletePrinterImage.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
+    // Delete StandardVehicle spi image
+    builder
+      .addCase(deleteSPIImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteSPIImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.standardVehicle && state.standardVehicle.imgSPI) {
+          state.standardVehicle.imgSPI = state.standardVehicle.imgSPI.filter(
+            url => url !== action.payload.imageUrl //  Sửa logic filter
+          );
+        }
+      })
+      .addCase(deleteSPIImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
 
-// Delete StandardVehicle printer clean image
-builder
-  .addCase(deletePrinterCleanImage.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(deletePrinterCleanImage.fulfilled, (state, action) => {
-    state.loading = false;
-    if (state.standardVehicle && state.standardVehicle.imgPrinterClean) {
-      state.standardVehicle.imgPrinterClean = state.standardVehicle.imgPrinterClean.filter(
-        url => url !== action.payload.imageUrl //  Sửa logic filter
-      );
-    }
-  })
-  .addCase(deletePrinterCleanImage.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
+    // Delete StandardVehicle aoi image
+    builder
+      .addCase(deleteAOIImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteAOIImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.standardVehicle && state.standardVehicle.imgAOI) {
+          state.standardVehicle.imgAOI = state.standardVehicle.imgAOI.filter(
+            url => url !== action.payload.imageUrl //  Sửa logic filter
+          );
+        }
+      })
+      .addCase(deleteAOIImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
 
-// Delete StandardVehicle mounter image
-builder
-  .addCase(deleteMounterImage.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(deleteMounterImage.fulfilled, (state, action) => {
-    state.loading = false;
-    if (state.standardVehicle && state.standardVehicle.imgMounter) {
-      state.standardVehicle.imgMounter = state.standardVehicle.imgMounter.filter(
-        url => url !== action.payload.imageUrl //  Sửa logic filter
-      );
-    }
-  })
-  .addCase(deleteMounterImage.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
+    // Delete StandardVehicle issue image
+    builder
+      .addCase(deleteStandardVehicleIssueImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteStandardVehicleIssueImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.standardVehicle && state.standardVehicle.imgIssue) {
+          state.standardVehicle.imgIssue = state.standardVehicle.imgIssue.filter(
+            url => url !== action.payload.imageUrl //  Sửa logic filter
+          );
+        }
+      })
+      .addCase(deleteStandardVehicleIssueImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
 
-// Delete StandardVehicle xray image
-builder
-  .addCase(deleteXRayImage.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(deleteXRayImage.fulfilled, (state, action) => {
-    state.loading = false;
-    if (state.standardVehicle && state.standardVehicle.imgXray) {
-      state.standardVehicle.imgXray = state.standardVehicle.imgXray.filter(
-        url => url !== action.payload.imageUrl //  Sửa logic filter
-      );
-    }
-  })
-  .addCase(deleteXRayImage.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
+    // Delete StandardVehicle printer image
+    builder
+      .addCase(deletePrinterImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deletePrinterImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.standardVehicle && state.standardVehicle.imgPrinter) {
+          state.standardVehicle.imgPrinter = state.standardVehicle.imgPrinter.filter(
+            url => url !== action.payload.imageUrl //  Sửa logic filter
+          );
+        }
+      })
+      .addCase(deletePrinterImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
 
-// Delete timeChangeModel issue image
-builder
-  .addCase(deleteTimeChangeModelIssueImage.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(deleteTimeChangeModelIssueImage.fulfilled, (state, action) => {
-    state.loading = false;
-    if (state.timeChangeModel && state.timeChangeModel.imgIssue) {
-      state.timeChangeModel.imgIssue = state.timeChangeModel.imgIssue.filter(
-        url => url !== action.payload.imageUrl //  Sửa logic filter
-      );
-    }
-  })
-  .addCase(deleteTimeChangeModelIssueImage.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
+    // Delete StandardVehicle printer clean image
+    builder
+      .addCase(deletePrinterCleanImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deletePrinterCleanImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.standardVehicle && state.standardVehicle.imgPrinterClean) {
+          state.standardVehicle.imgPrinterClean = state.standardVehicle.imgPrinterClean.filter(
+            url => url !== action.payload.imageUrl //  Sửa logic filter
+          );
+        }
+      })
+      .addCase(deletePrinterCleanImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+    // Delete StandardVehicle mounter image
+    builder
+      .addCase(deleteMounterImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteMounterImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.standardVehicle && state.standardVehicle.imgMounter) {
+          state.standardVehicle.imgMounter = state.standardVehicle.imgMounter.filter(
+            url => url !== action.payload.imageUrl //  Sửa logic filter
+          );
+        }
+      })
+      .addCase(deleteMounterImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+    // Delete StandardVehicle xray image
+    builder
+      .addCase(deleteXRayImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteXRayImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.standardVehicle && state.standardVehicle.imgXray) {
+          state.standardVehicle.imgXray = state.standardVehicle.imgXray.filter(
+            url => url !== action.payload.imageUrl //  Sửa logic filter
+          );
+        }
+      })
+      .addCase(deleteXRayImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+    // Delete timeChangeModel issue image
+    builder
+      .addCase(deleteTimeChangeModelIssueImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteTimeChangeModelIssueImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.timeChangeModel && state.timeChangeModel.imgIssue) {
+          state.timeChangeModel.imgIssue = state.timeChangeModel.imgIssue.filter(
+            url => url !== action.payload.imageUrl //  Sửa logic filter
+          );
+        }
+      })
+      .addCase(deleteTimeChangeModelIssueImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 
-export const { 
-  clearSubTableError, 
-  clearSubTableSuccess, 
-  resetCompletedTables, 
-  clearAllSubTableData, 
+export const {
+  clearSubTableError,
+  clearSubTableSuccess,
+  resetCompletedTables,
+  clearAllSubTableData,
   addCompletedTable,
   setCheckModel,
   setPQCCheck,

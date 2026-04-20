@@ -1449,7 +1449,7 @@ const Logs = () => {
                           }}
                           disabled={confirmingSheetId === sheet.id}
                           className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 
-                        bg-orange-600 text-white rounded-lg hover:bg-orange-700 
+                          bg-orange-600 text-white rounded-lg hover:bg-orange-700 
                           transition-colors text-sm font-semibold shadow-md
                           disabled:opacity-60 disabled:cursor-not-allowed"
                         >

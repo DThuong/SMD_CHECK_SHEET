@@ -18,6 +18,8 @@ import {
   uploadMounterImage,
   uploadPrinterImage,
   uploadPrinterCleanImage,
+  uploadStandardVehicleReflowImage,
+  deleteStandardVehicleReflowImage
 } from "../../redux/slices/subTableSlice";
 import ImagePreviewModal from "../files/ImagePreviewModal";
 import ImageViewIcon from "../files/ImageViewIcon";
@@ -84,6 +86,7 @@ const initialStandardVehiclesState: StandardVehicleData = {
   imgPrinter: [],
   imgPrinterClean: [],
   imgXray: [],
+  imgReflow: [],
 };
 
 const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
@@ -268,6 +271,15 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
           ).unwrap();
           successMessage = "Upload hình ảnh X-ray thành công";
           break;
+        case "imgReflow":
+          result = await dispatch(
+            uploadStandardVehicleReflowImage({
+              StandardVehicleId: Number(standardVehicleId),
+              file,
+            }),
+          ).unwrap();
+          successMessage = "Upload hình ảnh Reflow thành công";
+          break;
       }
 
       // Thêm ảnh mới vào array, update local state
@@ -280,7 +292,8 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
             | "imgPrinter"
             | "imgPrinterClean"
             | "imgIssue"
-            | "imgXray";
+            | "imgXray"
+            | "imgReflow";
           const currentArray = prev[fieldKey] || [];
           return {
             ...prev,
@@ -370,6 +383,14 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         case "imgXray":
           await dispatch(
             deleteXRayImage({
+              standardVehicleId: Number(standardVehicleId),
+              imageUrl,
+            }),
+          ).unwrap();
+          break;
+        case "imgReflow":
+          await dispatch(
+            deleteStandardVehicleReflowImage({
               standardVehicleId: Number(standardVehicleId),
               imageUrl,
             }),
@@ -494,11 +515,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
       {/* Status indicator */}
       {standardVehicleId && (
         <div
-          className={`mb-2 text-xs p-2 rounded flex items-center gap-2 no-print ${
-            isSaved
+          className={`mb-2 text-xs p-2 rounded flex items-center gap-2 no-print ${isSaved
               ? "bg-green-50 text-green-700 border border-green-200"
               : "bg-gray-50 text-gray-600 border border-gray-200"
-          }`}
+            }`}
         >
           {isSaved && <span className="text-green-600">✓</span>}
           <span>
@@ -945,7 +965,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
             <tr className="pdf-section-reflow">
               <th
                 colSpan={1}
-                rowSpan={4}
+                rowSpan={5}
                 className="border border-gray-600 px-2 py-2 text-xs bg-gray-100"
               >
                 Reflow
@@ -1036,6 +1056,30 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
                 colSpan={2}
                 className="border border-gray-600 px-2 py-2 text-xs bg-gray-300"
               ></td>
+            </tr>
+
+            {/** Reflow image  */}
+            <tr>
+              <th
+                colSpan={1}
+                className="border border-gray-600 px-2 py-2 text-xs text-left! bg-gray-100"
+              >
+                {t("reflow.imgReflow")}
+              </th>
+              <td
+                colSpan={11}
+                className="border border-gray-600 px-2 py-2 text-xs"
+              >
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <ImageViewIcon
+                      imageUrl={form.imgReflow}
+                      title={t("reflow.imgReflow")}
+                      onView={openImagePreview}
+                    />
+                  </div>
+                </div>
+              </td>
             </tr>
 
             {/** Row 27 - HÀNG ĐẦU TIÊN */}
@@ -1362,11 +1406,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
           {/* Clickable area */}
           <div
             onClick={() => canEdit && setOpen(true)}
-            className={`p-4 ${
-              canEdit
+            className={`p-4 ${canEdit
                 ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
                 : "cursor-not-allowed opacity-90"
-            }`}
+              }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
             onKeyDown={(e) => {
@@ -1535,11 +1578,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
           <div
             onClick={() => canEdit && setOpen(true)}
-            className={`p-4 ${
-              canEdit
+            className={`p-4 ${canEdit
                 ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
                 : "cursor-not-allowed opacity-90"
-            }`}
+              }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
             onKeyDown={(e) => {
@@ -1605,11 +1647,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
           <div
             onClick={() => canEdit && setOpen(true)}
-            className={`p-4 ${
-              canEdit
+            className={`p-4 ${canEdit
                 ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
                 : "cursor-not-allowed opacity-90"
-            }`}
+              }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
             onKeyDown={(e) => {
@@ -1684,11 +1725,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
           <div
             onClick={() => canEdit && setOpen(true)}
-            className={`p-4 ${
-              canEdit
+            className={`p-4 ${canEdit
                 ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
                 : "cursor-not-allowed opacity-90"
-            }`}
+              }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
             onKeyDown={(e) => {
@@ -1740,12 +1780,29 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
               </div>
             </div>
 
-            <div className="mb-0">
+            <div className="mb-3">
               <div className="text-xs font-semibold text-gray-600 mb-1">
                 Reflow Speed
               </div>
               <div className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 truncate">
                 {form.reflowSpeed || "—"}
+              </div>
+            </div>
+
+            {/* Reflow image */}
+            <div className="mb-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">
+                {t("reflow.imgReflow")}
+              </div>
+              <div
+                className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ImageViewIcon
+                  imageUrl={form.imgReflow}
+                  title={t("reflow.imgReflow")}
+                  onView={openImagePreview}
+                />
               </div>
             </div>
           </div>
@@ -1755,11 +1812,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
           <div
             onClick={() => canEdit && setOpen(true)}
-            className={`p-4 ${
-              canEdit
+            className={`p-4 ${canEdit
                 ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
                 : "cursor-not-allowed opacity-90"
-            }`}
+              }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
             onKeyDown={(e) => {
@@ -1861,11 +1917,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
           <div
             onClick={() => canEdit && setOpen(true)}
-            className={`p-4 ${
-              canEdit
+            className={`p-4 ${canEdit
                 ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
                 : "cursor-not-allowed opacity-90"
-            }`}
+              }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
             onKeyDown={(e) => {
@@ -1923,11 +1978,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
           <div
             onClick={() => canEdit && setOpen(true)}
-            className={`p-4 ${
-              canEdit
+            className={`p-4 ${canEdit
                 ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
                 : "cursor-not-allowed opacity-90"
-            }`}
+              }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
             onKeyDown={(e) => {
@@ -1972,11 +2026,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
           <div
             onClick={() => canEdit && setOpen(true)}
-            className={`p-4 ${
-              canEdit
+            className={`p-4 ${canEdit
                 ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
                 : "cursor-not-allowed opacity-90"
-            }`}
+              }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
             onKeyDown={(e) => {
@@ -2418,6 +2471,17 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
                   />
                 </div>
               </div>
+              <MultiImageUpload
+                label="Reflow"
+                images={form.imgReflow}
+                fieldName="imgReflow"
+                onUpload={handleImageUpload}
+                onRemove={(index) => handleRemoveImage("imgReflow", index)}
+                onViewAll={() =>
+                  openImagePreview(form.imgReflow || [], "Hình ảnh Reflow", 0)
+                }
+                onViewSingle={(url, title) => openImagePreview(url, title)}
+              />
             </section>
 
             {/* AOI */}

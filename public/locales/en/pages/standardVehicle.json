@@ -59,7 +59,8 @@
       "settingRail": "Rail setting value (mm)",
       "realRail": "Rail actual value (mm)",
       "program": "Reflow Program",
-      "speed": "Reflow Speed"
+      "speed": "Reflow Speed",
+      "imgReflow": "Reflow Image"
     },
     "aoi": {
       "title": "AOI",

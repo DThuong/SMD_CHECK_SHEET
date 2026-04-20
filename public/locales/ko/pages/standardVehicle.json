@@ -59,7 +59,8 @@
       "settingRail": "레일 설정 값 (mm)",
       "realRail": "실제 레일 값 (mm)",
       "program": "리플로우 프로그램",
-      "speed": "리플로우 속도"
+      "speed": "리플로우 속도",
+      "imgReflow": "Reflow 이미지"
     },
     "aoi": {
       "title": "AOI",

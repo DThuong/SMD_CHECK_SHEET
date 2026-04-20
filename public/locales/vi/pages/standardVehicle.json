@@ -59,7 +59,8 @@
       "settingRail": "Giá trị cài đặt Rail (mm)",
       "realRail": "Giá trị thực tế Rail (mm)",
       "program": "Reflow Program",
-      "speed": "Reflow Speed"
+      "speed": "Reflow Speed",
+      "imgReflow": "Hình ảnh Reflow"
     },
     "aoi": {
       "title": "AOI",

@@ -65,6 +65,9 @@
     "deleteFailed": "Xóa thất bại",
     "deleteAllSuccess": "Đã xóa toàn bộ kế hoạch ngày",
     "updateStatusSuccess": "Cập nhật trạng thái thành công!",
-    "updateStatusFailed": "Cập nhật thất bại"
+    "updateStatusFailed": "Cập nhật thất bại",
+    "closeDate": "Kết thúc ngày",
+    "closeDateSuccess": "Đã đóng kế hoạch cho ngày này!",
+    "closeDateFailed": "Kết thúc ngày thất bại"
   }
 }

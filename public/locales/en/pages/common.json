@@ -65,6 +65,9 @@
     "deleteFailed": "Delete failed",
     "deleteAllSuccess": "All plan data for the day deleted",
     "updateStatusSuccess": "Status updated successfully!",
-    "updateStatusFailed": "Update failed"
+    "updateStatusFailed": "Update failed",
+    "closeDate": "Finish Day",
+    "closeDateSuccess": "Plan for this day has been closed!",
+    "closeDateFailed": "Failed to close the day"
   }
 }

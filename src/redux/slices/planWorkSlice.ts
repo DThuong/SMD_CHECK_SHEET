@@ -72,11 +72,11 @@ export const getPlanWorkByDate = createAsyncThunk(
     }
 )
 
-export const putPlanWorkStatus = createAsyncThunk(
-    'PlanWork/status',
-    async ({ workOrder }: { workOrder: string }, { rejectWithValue }) => {
+export const closePlanWorkByDate = createAsyncThunk(
+    'PlanWork/close-date',
+    async ({ date }: { date: string }, { rejectWithValue }) => {
         try {
-            const res = await smdApi.put(`/PlanWork/${workOrder}/status`)
+            const res = await smdApi.put(`/PlanWork/close-date/${date}`)
             return res.data
         } catch (error) {
             return rejectWithValue(error)
@@ -166,22 +166,14 @@ const planWorkSlice = createSlice({
             })
             .addCase(getPlanWorkByDate.rejected, handleRejected)
 
-        // putPlanWorkStatus — cập nhật status của item trong danh sách
+        // closePlanWorkByDate
         builder
-            .addCase(putPlanWorkStatus.pending, handlePending)
-            .addCase(putPlanWorkStatus.fulfilled, (state, action: PayloadAction<Plan>) => {
+            .addCase(closePlanWorkByDate.pending, handlePending)
+            .addCase(closePlanWorkByDate.fulfilled, (state) => {
                 state.loading = false
-                // cập nhật trực tiếp item trong plans (optimistic-style)
-                const index = state.plans.findIndex(p => p.workOrder === action.payload.workOrder)
-                if (index !== -1) state.plans[index] = action.payload
-
-                // cập nhật luôn trong planByDate nếu đang có
-                if (state.planByDate) {
-                    const i = state.planByDate.items.findIndex(p => p.workOrder === action.payload.workOrder)
-                    if (i !== -1) state.planByDate.items[i] = action.payload
-                }
+                // Sau khi đóng ngày, có thể fetch lại data để thấy status thay đổi
             })
-            .addCase(putPlanWorkStatus.rejected, handleRejected)
+            .addCase(closePlanWorkByDate.rejected, handleRejected)
 
         // deletePlanWorkById
         builder

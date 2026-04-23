@@ -15,7 +15,7 @@ import {
   uploadPlan,
   deletePlanWorkById,
   deletePlanWorkByDate,
-  putPlanWorkStatus,
+  closePlanWorkByDate,
   clearError,
   resetPlanByDate,
 } from '../../redux/slices/planWorkSlice'
@@ -111,8 +111,8 @@ const PlanPage = () => {
 
   const [selectedDate, setSelectedDate] = useState(getPlanDate() ?? toInputDate(new Date()))
   const [uploading, setUploading] = useState(false)
+  const [closing, setClosing] = useState(false)
   const [deletingId, setDeletingId] = useState<number | null>(null)
-  const [updatingWO, setUpdatingWO] = useState<string | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deletingDate, setDeletingDate] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -179,16 +179,16 @@ const PlanPage = () => {
     }
   }
 
-  const handleUpdateStatus = async (workOrder: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setUpdatingWO(workOrder)
-    const result = await dispatch(putPlanWorkStatus({ workOrder }))
-    setUpdatingWO(null)
-    if (putPlanWorkStatus.fulfilled.match(result)) {
-      toast.success(t('plan.updateStatusSuccess'))
+  const handleCloseDate = async () => {
+    if (!window.confirm(`${t('plan.closeDate')} ${fmtDate(selectedDate)}?`)) return
+    setClosing(true)
+    const result = await dispatch(closePlanWorkByDate({ date: selectedDate }))
+    setClosing(false)
+    if (closePlanWorkByDate.fulfilled.match(result)) {
+      toast.success(t('plan.closeDateSuccess'))
       fetchByDate(selectedDate)
     } else {
-      toast.error(t('plan.updateStatusFailed'))
+      toast.error(t('plan.closeDateFailed'))
     }
   }
 
@@ -213,7 +213,7 @@ const PlanPage = () => {
 
             {/* Actions */}
             <div className="flex flex-wrap gap-2 items-center">
-              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400 transition-all">
+              <div className="flex items-center gap-2 bg-white border border-slate-200 px-3 h-[44px] focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400 transition-all shadow-sm">
                 <input
                   type="date"
                   value={selectedDate}
@@ -225,17 +225,26 @@ const PlanPage = () => {
               <button
                 onClick={() => fetchByDate(selectedDate)}
                 disabled={loading}
-                className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 hover:border-slate-300! hover:bg-slate-50! rounded-xl text-sm font-semibold text-slate-600 transition-all disabled:opacity-50 shadow-sm"
+                className="flex items-center gap-2 px-3 h-[44px] bg-white border border-slate-200 hover:border-slate-300! hover:bg-slate-50! rounded-xl text-sm font-semibold text-slate-600 transition-all disabled:opacity-50 shadow-sm"
               >
                 <ArrowClockwise size={16} weight="bold" className={loading ? 'animate-spin' : ''} />
                 <span className="hidden sm:inline">{t('plan.refresh')}</span>
+              </button>
+
+              <button
+                onClick={handleCloseDate}
+                disabled={loading || closing}
+                className="flex items-center gap-2 px-4 h-[44px] bg-blue-600 hover:bg-blue-700! disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-blue-200"
+              >
+                {closing ? <Spinner size={16} className="animate-spin" /> : <CheckCircle size={18} weight="bold" />}
+                <span className="hidden xs:inline">{t('plan.closeDate')}</span>
               </button>
 
               <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileChange} />
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading || loading}
-                className="flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700! disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-emerald-200"
+                className="flex items-center gap-2 px-4 h-[44px] bg-emerald-600 hover:bg-emerald-700! disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-emerald-200"
               >
                 {uploading ? <Spinner size={16} className="animate-spin" /> : <UploadSimple size={16} weight="bold" />}
                 <span>{t('plan.importPlan')}</span>
@@ -244,7 +253,7 @@ const PlanPage = () => {
               {items.length > 0 && (
                 <button
                   onClick={() => setShowDeleteModal(true)}
-                  className="flex items-center gap-2 px-3 py-2 bg-white border border-red-200 hover:bg-red-50! hover:border-red-300! text-red-600 rounded-xl text-sm font-semibold transition-all"
+                  className="flex items-center gap-2 px-3 h-[44px] bg-white border border-red-200 hover:bg-red-50! hover:border-red-300! text-red-600 rounded-xl text-sm font-semibold transition-all"
                 >
                   <Trash size={16} weight="bold" />
                   <span className="hidden sm:inline">{t('plan.deleteThisDay')}</span>
@@ -291,7 +300,7 @@ const PlanPage = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-100">
-                      {[t('plan.stt'), t('plan.workOrder'), t('plan.setToWork'), t('plan.quantity'), t('plan.status'), t('plan.actions')].map((h, i) => (
+                      {[t('plan.stt'), t('plan.workOrder'), t('plan.setToWork'), t('plan.quantity'), t('plan.status'), t('plan.delete')].map((h, i) => (
                         <th key={h}
                           className={`px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest ${i === 3 || i === 5 ? 'text-center' : 'text-left'}`}>
                           {h}
@@ -325,17 +334,7 @@ const PlanPage = () => {
                           </td>
                           <td className="px-5 py-3"><StatusBadge status={plan.status} /></td>
                           <td className="px-5 py-3">
-                            <div className="flex items-center justify-center gap-2">
-                              {plan.status !== 'Done' && (
-                                <button onClick={(e) => handleUpdateStatus(plan.workOrder, e)}
-                                  disabled={updatingWO === plan.workOrder}
-                                  className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all disabled:opacity-50 shadow-sm whitespace-nowrap">
-                                  {updatingWO === plan.workOrder
-                                    ? <Spinner size={12} className="animate-spin" />
-                                    : <CheckCircle size={12} weight="bold" />}
-                                  {t('plan.update')}
-                                </button>
-                              )}
+                            <div className="flex items-center justify-center">
                               <button onClick={(e) => handleDeleteById(plan.id, e)}
                                 disabled={deletingId === plan.id}
                                 className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 hover:border-red-200 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-lg text-xs font-semibold transition-all disabled:opacity-50 whitespace-nowrap">
@@ -395,22 +394,10 @@ const PlanPage = () => {
 
                       {/* Line 3: actions */}
                       <div className="flex gap-2 pl-7">
-                        {plan.status !== 'Done' && (
-                          <button
-                            onClick={(e) => handleUpdateStatus(plan.workOrder, e)}
-                            disabled={updatingWO === plan.workOrder}
-                            className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all disabled:opacity-50"
-                          >
-                            {updatingWO === plan.workOrder
-                              ? <Spinner size={11} className="animate-spin" />
-                              : <CheckCircle size={11} weight="bold" />}
-                            {t('plan.update')}
-                          </button>
-                        )}
                         <button
                           onClick={(e) => handleDeleteById(plan.id, e)}
                           disabled={deletingId === plan.id}
-                          className="flex items-center justify-center gap-2 px-3 py-2 bg-white border border-slate-200 hover:border-red-200 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-lg text-xs font-semibold transition-all disabled:opacity-50"
+                          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white border border-slate-200 hover:border-red-200 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-lg text-xs font-semibold transition-all disabled:opacity-50"
                         >
                           {deletingId === plan.id
                             ? <Spinner size={11} className="animate-spin" />

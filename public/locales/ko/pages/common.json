@@ -65,6 +65,9 @@
     "deleteFailed": "삭제 실패",
     "deleteAllSuccess": "해당 날짜의 모든 계획 데이터가 삭제되었습니다",
     "updateStatusSuccess": "상태가 성공적으로 업데이트되었습니다!",
-    "updateStatusFailed": "업데이트 실패"
+    "updateStatusFailed": "업데이트 실패",
+    "closeDate": "날짜 마감",
+    "closeDateSuccess": "해당 날짜의 계획이 마감되었습니다!",
+    "closeDateFailed": "날짜 마감 실패"
   }
 }

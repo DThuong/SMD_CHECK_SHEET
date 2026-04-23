@@ -5,7 +5,8 @@
   "menu": {
     "dashboard": "대시보드",
     "smdSheet": "SMD 시트",
-    "settings": "설정"
+    "settings": "설정",
+    "plan": "계획"
   },
   "roles": {
     "engineering": "엔지니어링",
@@ -27,5 +28,43 @@
   "printerAfterImage": "프린터 후 이미지",
   "mounterAfterImage": "마운터 후 이미지",
   "autoCleaningPrinter": "프린터 자동 클리닝 이미지",
-  "xrayImg": "X-Ray 이미지"
+  "xrayImg": "X-Ray 이미지",
+  "plan": {
+    "title": "생산 계획",
+    "subtitle": "일별 작업 지시서 관리 및 추적",
+    "refresh": "새로고침",
+    "importPlan": "계획 가져오기",
+    "deleteThisDay": "이 날짜 삭제",
+    "totalPlan": "총 계획",
+    "createdSheet": "시트 생성됨",
+    "notCreated": "미생성",
+    "inProgress": "진행 중",
+    "done": "완료",
+    "noData": "데이터 없음",
+    "noDataForDay": "이 날짜에 대한 데이터가 없습니다",
+    "importExcelHint": "계획을 추가하려면 Excel 파일을 가져오세요",
+    "workOrders": "작업 지시서",
+    "stt": "번호",
+    "workOrder": "작업 지시서",
+    "setToWork": "작업 설정",
+    "quantity": "수량",
+    "status": "상태",
+    "actions": "작업",
+    "update": "업데이트",
+    "delete": "삭제",
+    "clickToView": "시트를 보려면 작업 지시서를 클릭하세요",
+    "confirmDeletePlan": "전체 계획을 삭제하시겠습니까?",
+    "cannotUndo": "이 작업은 되돌릴 수 없습니다",
+    "confirmDeleteAllWO": "해당 날짜의 모든 작업 지시서 삭제:",
+    "deleteAll": "모두 삭제",
+    "cancel": "취소",
+    "importSuccess": "계획을 성공적으로 가져왔습니다!",
+    "importFailed": "가져오기 실패. 파일 형식을 확인하세요.",
+    "confirmDeleteWO": "작업 지시서 삭제",
+    "deleteSuccess": "작업 지시서가 삭제되었습니다!",
+    "deleteFailed": "삭제 실패",
+    "deleteAllSuccess": "해당 날짜의 모든 계획 데이터가 삭제되었습니다",
+    "updateStatusSuccess": "상태가 성공적으로 업데이트되었습니다!",
+    "updateStatusFailed": "업데이트 실패"
+  }
 }

@@ -52,7 +52,6 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
       try {
         // 1. Check token hết hạn
         if (tokenExpiresAt && Date.now() >= tokenExpiresAt) {
-          console.log('❌ Token đã hết hạn');
           handleLogout();
           return;
         }
@@ -60,26 +59,25 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
         // 2. Validate role
         const validRoles = ['PQC', 'Admin', 'ENG', 'Supervisior', 'Manager', 'KoreaManager', 'PQCLeader'];
         if (user?.role && !validRoles.includes(user.role)) {
-          console.log('❌ Invalid role:', user.role);
           handleLogout();
           return;
         }
 
         // 3.VERIFY TOKEN VỚI SERVER (chỉ 1 lần khi khởi động)
         try {
-          console.log('Initial token verification...');
+          // console.log('Initial token verification...');
           await smdApi.get('/Account/verify');
           console.log('Token valid');
         } catch (error: any) {
           if (error.response?.status === 401) {
-            console.log('❌ Token không hợp lệ (401) - Có thể đã login ở thiết bị khác');
+            // console.log('❌ Token không hợp lệ (401) - Có thể đã login ở thiết bị khác');
             handleLogout();
             return;
           }
           console.warn('⚠️ Verification failed, continuing');
         }
 
-        console.log('✅ Session valid');
+        // console.log('✅ Session valid');
       } catch (error) {
         console.error('❌ Check error:', error);
         handleLogout();
@@ -118,7 +116,7 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
 
     // Token đã hết hạn
     if (timeUntilExpiry <= 0) {
-      console.log('❌ Token expired');
+      // console.log('❌ Token expired');
       
       const deviceId = localStorage.getItem('smd_device_id');
       localStorage.clear();
@@ -132,11 +130,11 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    console.log(`Token expires in ${Math.floor(timeUntilExpiry / 1000)}s`);
+    // console.log(`Token expires in ${Math.floor(timeUntilExpiry / 1000)}s`);
     
     // Setup timeout để auto logout khi hết hạn
     const timer = setTimeout(() => {
-      console.log('Auto logout - Token expired');
+      // console.log('Auto logout - Token expired');
       
       const deviceId = localStorage.getItem('smd_device_id');
       localStorage.clear();

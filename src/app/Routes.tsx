@@ -24,6 +24,7 @@ import AuthInitializer from '../components/auth/AuthInitializer';
 import SheetDetailViewer from '../components/detail_Sheet/SheetDetailViewer';
 import FileDetailViewer from '../pages/FileDetailViewer';
 import ChangePassword from '../pages/ChangePassword';
+import Plan from '../pages/managers_role/Plan';
 
 // ========================================
 // Component bảo vệ route cho PQC
@@ -153,7 +154,7 @@ const App = () => {
         {/* ========== ADMIN ROUTES ========== */}
         <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
           <Route path="/admin/dashboard" element={<Dashboard />} />
-          {/* <Route path="/admin/profile" element={<Profile />} /> */}
+          <Route path="/admin/plan" element={<Plan />} />
           <Route path="/admin/user" element={<User />} />
           <Route path="/admin/smd-sheet-logs" element={<Logs />} />
           <Route path="/admin/sheet-detail/:id" element={<SheetDetailViewer />} />
@@ -166,6 +167,7 @@ const App = () => {
         <Route path="/:role" element={<RoleBasedRoute><RoleBasedLayout /></RoleBasedRoute>}>
           <Route path="/:role/smd-sheet-logs" element={<Logs />} />
           <Route path="/:role/dashboard" element={<Dashboard />} />
+          <Route path="/:role/plan" element={<Plan />}></Route>
           <Route path="/:role/settings" element={<Settings />} />
           <Route path="/:role/change-password" element={<ChangePassword />} />
           <Route path="/:role/sheet-detail/:id" element={<SheetDetailViewer />} />

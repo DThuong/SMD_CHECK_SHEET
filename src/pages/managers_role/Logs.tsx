@@ -179,12 +179,24 @@ const Logs = () => {
       setSelectedSheetId(savedSheetId);
     }
 
-    // Kiểm tra xem có status từ URL không
+    // Kiểm tra xem có status và workOrder từ URL không
     const statusFromUrl = searchParams.get("status");
+    const workOrderFromUrl = searchParams.get('workOrder')
 
     // CHECK navigation state
     const navigationState = (location.state as any) || {};
     const comingFromSheetDetail = navigationState?.from === "sheetDetail";
+
+    // check workOrder
+    if (workOrderFromUrl && !comingFromSheetDetail) {
+      const newFilter = { ...filter, workOrder: workOrderFromUrl }
+      setFilter(newFilter)
+      setCurrentPage(0)
+      setTimeout(() => {
+        dispatch(getSheetByFilter({ workOrder: workOrderFromUrl })).unwrap()
+      }, 100)
+      return
+    }
 
     // Priority 1: URL params (từ Dashboard)
     if (statusFromUrl && !comingFromSheetDetail) {
@@ -281,8 +293,7 @@ const Logs = () => {
       return;
     }
 
-    // Priority 4: Load all sheets (default)
-    // console.log('📋 Loading all sheets (default)');
+    // Priority 4: check workOrder
     loadSheets();
 
     if (savedSheetId) {
@@ -303,6 +314,7 @@ const Logs = () => {
       return () => clearTimeout(timer);
     }
   }, []);
+
   // clear state khi reload hoặc close tab
   useEffect(() => {
     const handleBeforeUnload = () => {

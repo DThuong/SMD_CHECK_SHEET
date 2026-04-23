@@ -5,7 +5,8 @@
   "menu": {
     "dashboard": "Dashboard",
     "smdSheet": "SMD Sheet",
-    "settings": "Cài đặt"
+    "settings": "Cài đặt",
+    "plan": "Kế hoạch"
   },
   "roles": {
     "engineering": "Engineering",
@@ -27,5 +28,43 @@
   "printerAfterImage": "Hình ảnh sau printer",
   "mounterAfterImage": "Hình ảnh sau mounter",
   "autoCleaningPrinter": "Hình ảnh cleaning printer tự động",
-  "xrayImg": "Hình ảnh x-ray"
+  "xrayImg": "Hình ảnh x-ray",
+  "plan": {
+    "title": "Kế hoạch sản xuất",
+    "subtitle": "Quản lý và theo dõi work order theo ngày",
+    "refresh": "Làm mới",
+    "importPlan": "Import Plan",
+    "deleteThisDay": "Xóa ngày này",
+    "totalPlan": "Tổng kế hoạch",
+    "createdSheet": "Đã tạo sheet",
+    "notCreated": "Chưa tạo",
+    "inProgress": "Đang làm",
+    "done": "Hoàn thành",
+    "noData": "Không có dữ liệu",
+    "noDataForDay": "Không có dữ liệu cho ngày này",
+    "importExcelHint": "Import file Excel để thêm kế hoạch",
+    "workOrders": "work orders",
+    "stt": "STT",
+    "workOrder": "Work Order",
+    "setToWork": "Set To Work",
+    "quantity": "SL",
+    "status": "Trạng thái",
+    "actions": "Thao tác",
+    "update": "Cập nhật",
+    "delete": "Xóa",
+    "clickToView": "Click Work Order để xem phiếu",
+    "confirmDeletePlan": "Xóa toàn bộ kế hoạch ?",
+    "cannotUndo": "Hành động này không thể hoàn tác",
+    "confirmDeleteAllWO": "Xóa tất cả work order ngày",
+    "deleteAll": "Xóa tất cả",
+    "cancel": "Hủy",
+    "importSuccess": "Import kế hoạch thành công!",
+    "importFailed": "Import thất bại. Kiểm tra lại định dạng file.",
+    "confirmDeleteWO": "Xóa work order",
+    "deleteSuccess": "Đã xóa work order!",
+    "deleteFailed": "Xóa thất bại",
+    "deleteAllSuccess": "Đã xóa toàn bộ kế hoạch ngày",
+    "updateStatusSuccess": "Cập nhật trạng thái thành công!",
+    "updateStatusFailed": "Cập nhật thất bại"
+  }
 }

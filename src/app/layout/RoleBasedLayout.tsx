@@ -60,6 +60,7 @@ const RoleBasedLayout = () => {
   const menuItems = [
     { name: t('menu.dashboard'), path: `/${role}/dashboard`, shouldReload: false },
     { name: t('menu.smdSheet'), path: `/${role}/smd-sheet-logs`, shoudReload: true },
+    { name: t('menu.plan'), path: `/${role}/plan`, shouldReload: true },
     { name: t('menu.settings'), path: `/${role}/settings`, shouldReload: false },
   ];
 

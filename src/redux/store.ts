@@ -19,6 +19,7 @@ import FileSliceReducer from "./slices/FileSlice";
 import NotificationReducer from "./slices/notificationSlice"; // thông báo của UI
 import noteReducer from "./slices/notiSignalr/noteSlice"; // của signalr
 import notificationSlice from "./slices/notiSignalr/notificationSlice"; // của signalr
+import planWorkReducer from "./slices/planWorkSlice";
 
 import smdApi from "./services/smdApi";
 import { setupApiInterceptor } from "./setupApiInterceptor";
@@ -37,6 +38,7 @@ const rootReducer = combineReducers({
   subTable: subTableReducer, 
   changeModel: changeModelReducer,
   fileSlice: FileSliceReducer,
+  planSlice: planWorkReducer,
   notification: NotificationReducer,
   note: noteReducer,
   notiSignalr: notificationSlice,

@@ -5,7 +5,8 @@
   "menu": {
     "dashboard": "Dashboard",
     "smdSheet": "SMD Sheet",
-    "settings": "Settings"
+    "settings": "Settings",
+    "plan": "Plan"
   },
   "roles": {
     "engineering": "Engineering",
@@ -27,5 +28,43 @@
   "printerAfterImage": "Printer After Image",
   "mounterAfterImage": "Mounter After Image",
   "autoCleaningPrinter": "Auto Cleaning Printer",
-  "xrayImg": "X-Ray Image"
+  "xrayImg": "X-Ray Image",
+  "plan": {
+    "title": "Production Plan",
+    "subtitle": "Manage and track work orders by day",
+    "refresh": "Refresh",
+    "importPlan": "Import Plan",
+    "deleteThisDay": "Delete this day",
+    "totalPlan": "Total Plan",
+    "createdSheet": "Sheet Created",
+    "notCreated": "Not Created",
+    "inProgress": "In Progress",
+    "done": "Done",
+    "noData": "No Data",
+    "noDataForDay": "No data for this day",
+    "importExcelHint": "Import Excel file to add plan",
+    "workOrders": "work orders",
+    "stt": "No.",
+    "workOrder": "Work Order",
+    "setToWork": "Set To Work",
+    "quantity": "Qty",
+    "status": "Status",
+    "actions": "Actions",
+    "update": "Update",
+    "delete": "Delete",
+    "clickToView": "Click Work Order to view sheet",
+    "confirmDeletePlan": "Delete entire plan?",
+    "cannotUndo": "This action cannot be undone",
+    "confirmDeleteAllWO": "Delete all work orders for",
+    "deleteAll": "Delete All",
+    "cancel": "Cancel",
+    "importSuccess": "Plan imported successfully!",
+    "importFailed": "Import failed. Please check the file format.",
+    "confirmDeleteWO": "Delete work order",
+    "deleteSuccess": "Work order deleted!",
+    "deleteFailed": "Delete failed",
+    "deleteAllSuccess": "All plan data for the day deleted",
+    "updateStatusSuccess": "Status updated successfully!",
+    "updateStatusFailed": "Update failed"
+  }
 }

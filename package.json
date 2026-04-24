@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "generate-version": "node -e \"const fs=require('fs'); const v=Date.now(); if(!fs.existsSync('public')) fs.mkdirSync('public'); fs.writeFileSync('public/version.json', JSON.stringify({version: v.toString()})); console.log('Version generated:', v)\"",
+    "build": "npm run generate-version && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

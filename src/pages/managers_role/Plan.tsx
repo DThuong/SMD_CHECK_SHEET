@@ -431,7 +431,7 @@ const PlanPage = () => {
               <LoadingSpinner size="sm" />
             </div>
           ) : items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400 p-4!">
               <FileArrowDown size={40} weight="thin" />
               <p className="text-sm font-medium">{t("plan.noDataForDay")}</p>
               <p className="text-xs">{t("plan.importExcelHint")}</p>

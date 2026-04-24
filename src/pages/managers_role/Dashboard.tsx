@@ -478,6 +478,7 @@ const TimelineChart = ({
         />
         <YAxis stroke="#64748b" />
         <Tooltip
+          cursor={false}
           contentStyle={{
             backgroundColor: "#fff",
             border: "1px solid #e2e8f0",

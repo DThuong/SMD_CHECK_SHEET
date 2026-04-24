@@ -69,5 +69,10 @@
     "closeDate": "Finish Day",
     "closeDateSuccess": "Plan for this day has been closed!",
     "closeDateFailed": "Failed to close the day"
+  },
+  "update": {
+    "detected_title": "App Update",
+    "detected_msg": "A new version has been deployed. Please click the button below to reload the page one more time to ensure stability.",
+    "reload_button": "Reload Now"
   }
 }

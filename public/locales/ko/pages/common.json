@@ -69,5 +69,10 @@
     "closeDate": "날짜 마감",
     "closeDateSuccess": "해당 날짜의 계획이 마감되었습니다!",
     "closeDateFailed": "날짜 마감 실패"
+  },
+  "update": {
+    "detected_title": "앱 업데이트",
+    "detected_msg": "새 버전이 배포되었습니다. 안정성을 위해 아래 버튼을 클릭하여 페이지를 한 번 더 새로고침해 주세요.",
+    "reload_button": "지금 새로고침"
   }
 }

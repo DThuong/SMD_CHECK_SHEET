@@ -7,12 +7,17 @@ declare global {
   const __APP_VERSION__: string;
 }
 
+const isDev = import.meta.env.DEV;
+
 /**
  * UpdateChecker Component
- * Mục đích: 
- * 1. Tự động kiểm tra file version.json trên server mỗi phút.
- * 2. Nếu phát hiện version khác với hiện tại, tự động reload trang (lần 1).
- * 3. Sau khi reload, nếu có flag trong localStorage, hiển thị Popup yêu cầu người dùng reload lần nữa (lần 2).
+ * Luồng hoạt động:
+ * 1. Check version ngay khi mount, mỗi 60s (interval), và khi user quay lại tab (visibilitychange).
+ * 2. Nếu server down (Docker restart), tự động retry sau 10s.
+ * 3. Nếu phát hiện version khác → lưu flag → tự động reload (lần 1).
+ * 4. Sau reload, nếu có flag trong localStorage → hiển thị popup yêu cầu reload lần 2.
+ *
+ * Performance note: Chỉ fetch 1 file JSON ~30 bytes mỗi 60s → không ảnh hưởng performance.
  */
 const UpdateChecker: React.FC = () => {
   const { t } = useTranslation('common');
@@ -20,44 +25,58 @@ const UpdateChecker: React.FC = () => {
   const STORAGE_KEY = 'app_needs_second_reload';
 
   useEffect(() => {
-    // 1. Kiểm tra xem có đang chờ reload lần 2 không (sau khi hệ thống tự reload lần 1)
+    // Hiển thị popup nếu vừa reload lần 1 xong
     if (localStorage.getItem(STORAGE_KEY) === 'true') {
       setShowModal(true);
     }
 
-    // 2. Thiết lập polling kiểm tra version mới
+    let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+
     const checkVersion = async () => {
-      // Không check trong môi trường development nếu không muốn phiền
-      if (import.meta.env.DEV) return;
+      if (isDev) return;
 
       try {
-        const response = await fetch(`/version.json?t=${Date.now()}`, {
-          cache: 'no-store'
-        });
-        if (!response.ok) return;
-        
+        const response = await fetch(`/version.json?t=${Date.now()}`, { cache: 'no-store' });
+
+        if (!response.ok) {
+          retryTimeout = setTimeout(checkVersion, 10000);
+          return;
+        }
+
         const data = await response.json();
-        const serverVersion = data.version;
-        const currentVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
+        const serverVersion: string = data.version;
+        const localVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'undefined';
 
-        // console.log(`[UpdateChecker] Server: ${serverVersion}, Local: ${currentVersion}`);
+        if (!serverVersion || !localVersion || localVersion === 'undefined' || localVersion === 'dev') return;
 
-        if (serverVersion && currentVersion && serverVersion !== currentVersion && currentVersion !== 'dev') {
-          console.log('[UpdateChecker] New version detected! Triggering automatic reload...');
+        if (serverVersion !== localVersion) {
           localStorage.setItem(STORAGE_KEY, 'true');
-          // Sử dụng location.reload(true) để force reload từ server (nếu trình duyệt hỗ trợ)
           window.location.reload();
         }
-      } catch (error) {
-        console.error('[UpdateChecker] Failed to check version:', error);
+      } catch {
+        // Retry sau 10s nếu server đang restart (Docker rebuild)
+        retryTimeout = setTimeout(checkVersion, 10000);
       }
     };
 
-    // Kiểm tra ngay khi mount và sau mỗi 60 giây
+    // Kiểm tra ngay khi user quay lại tab (phát hiện version mới nhanh hơn)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
+        checkVersion();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Check ngay lập tức + interval 60s
     checkVersion();
     const interval = setInterval(checkVersion, 60000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (retryTimeout) clearTimeout(retryTimeout);
+    };
   }, []);
 
   const handleReload = () => {
@@ -66,10 +85,10 @@ const UpdateChecker: React.FC = () => {
   };
 
   return (
-    <Modal 
-      show={showModal} 
-      onHide={() => {}} // Không cho phép đóng bằng phím Esc hoặc click bên ngoài
-      backdrop="static" 
+    <Modal
+      show={showModal}
+      onHide={() => {}}
+      backdrop="static"
       keyboard={false}
       centered
     >
@@ -81,7 +100,7 @@ const UpdateChecker: React.FC = () => {
       </Modal.Header>
       <Modal.Body className="py-4 text-center">
         <div className="mb-3">
-            <i className="bi bi-cloud-download text-primary" style={{ fontSize: '3rem' }}></i>
+          <i className="bi bi-cloud-download text-primary" style={{ fontSize: '3rem' }}></i>
         </div>
         <p className="mb-0 fs-5">{t('update.detected_msg')}</p>
       </Modal.Body>

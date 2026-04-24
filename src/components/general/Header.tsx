@@ -5,8 +5,7 @@ import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logoutUser } from '../../redux/slices/authSlice';
 import { FaKey } from 'react-icons/fa6';
 import { TbLogout } from "react-icons/tb";
-import NotificationBell from './NotificationBell';
-import { signalRService } from '../../redux/services/signalrService';
+
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,15 +15,7 @@ const Header = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  // Initialize SignalR when user logs in
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      console.log('User authenticated, starting SignalR connection');
-      signalRService.start().catch(err => {
-        console.error('Failed to start SignalR:', err);
-      });
-    }
-  }, [isAuthenticated, user]);
+
 
   // Disable body scroll when menu open
   useEffect(() => {
@@ -71,9 +62,6 @@ const Header = () => {
     try {
       await dispatch(logoutUser()).unwrap();
       
-      // Stop SignalR connection
-      await signalRService.stop();
-      
       setIsMenuOpen(false);
       setIsDropdownOpen(false);
       navigate('/login');
@@ -102,8 +90,6 @@ const Header = () => {
           <div className="hidden md:flex items-center gap-4">
             {user && isAuthenticated ? (
               <>
-                {/* NOTIFICATION BELL */}
-                <NotificationBell />
                 
                 <div className="flex items-center gap-1">
                   {/* Welcome message */}

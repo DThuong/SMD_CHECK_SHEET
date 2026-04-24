@@ -5,7 +5,6 @@ import { HiMenu, HiX, HiLogout, HiUser } from "react-icons/hi";
 import logo from "../../assets/image/brand_image_3.webp";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { logoutUser } from "../../redux/slices/authSlice";
-import NotificationBell from "../../components/general/NotificationBell";
 
 const AdminLayout = () => {
   // States
@@ -88,14 +87,11 @@ const AdminLayout = () => {
             {user?.role} Dashboard
           </h1>
 
-          <div className="md:hidden">
-            <NotificationBell />
-          </div>
+
 
 
           {/* Desktop Right Side: Notification + User Menu */}
           <div className="w-full hidden md:flex items-center justify-end gap-2">
-            <NotificationBell />
             <div className="relative" ref={userMenuRef}>
               <button
                 className="flex items-center px-3 py-2 rounded hover:bg-gray-100 transition"

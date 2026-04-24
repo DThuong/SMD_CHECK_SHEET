@@ -17,8 +17,7 @@ import subTableReducer from "./slices/subTableSlice";
 import changeModelReducer from "./slices/changeModelSlice";
 import FileSliceReducer from "./slices/FileSlice";
 import NotificationReducer from "./slices/notificationSlice"; // thông báo của UI
-import noteReducer from "./slices/notiSignalr/noteSlice"; // của signalr
-import notificationSlice from "./slices/notiSignalr/notificationSlice"; // của signalr
+import noteReducer from "./slices/noteSlice";
 import planWorkReducer from "./slices/planWorkSlice";
 
 import smdApi from "./services/smdApi";
@@ -41,7 +40,6 @@ const rootReducer = combineReducers({
   planSlice: planWorkReducer,
   notification: NotificationReducer,
   note: noteReducer,
-  notiSignalr: notificationSlice,
 });
 
 // Tạo store

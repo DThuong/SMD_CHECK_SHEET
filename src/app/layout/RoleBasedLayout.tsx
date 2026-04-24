@@ -8,7 +8,6 @@ import logo from "../../assets/image/brand_image_3.webp";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { logoutUser } from "../../redux/slices/authSlice";
 import { useTranslation } from "react-i18next";
-import NotificationBell from "../../components/general/NotificationBell";
 
 const RoleBasedLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -141,7 +140,6 @@ const RoleBasedLayout = () => {
             sidebarOpen ? "hidden md:block" : "block"
           }`}>
             <div className="flex lg:flex-row">
-              <NotificationBell />
             <button
               className="flex items-center justify-center px-3 py-2 rounded hover:bg-gray-100"
               onClick={() => {

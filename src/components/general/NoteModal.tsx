@@ -9,11 +9,11 @@ import {
   deleteNote, 
   clearNotes,
   type Note 
-} from '../../redux/slices/notiSignalr/noteSlice';
+} from '../../redux/slices/noteSlice';
 import { MdClose, MdAdd, MdEdit, MdDelete, MdSave } from 'react-icons/md';
 import { useNotification } from '../../redux/hooks';
 import Notification from '../general/Notification';
-import { signalRService } from '../../redux/services/signalrService';
+
 
 interface NoteModalProps {
   sheetId: number;
@@ -63,28 +63,7 @@ const NoteModal = ({ sheetId, isOpen, onClose }: NoteModalProps) => {
     };
   }, [isOpen, sheetId, dispatch, user?.role]);
 
-  const handleSignalRNotification = useCallback((data: any) => {
-    try {
-      const notification = typeof data === 'string' ? JSON.parse(data) : data;
-      const notificationSheetId = notification.changeModel?.id || notification.changeModelId;
 
-      if (notificationSheetId === sheetIdRef.current && isOpenRef.current) {
-        dispatch(getNotesBySheet(sheetIdRef.current));
-      }
-    } catch (error) {
-      console.error('❌ [NoteModal] Error parsing notification:', error);
-    }
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    signalRService.start();
-    signalRService.onNotification(handleSignalRNotification);
-
-    return () => {
-      signalRService.offNotification(handleSignalRNotification);
-    };
-  }, [isOpen, sheetId, handleSignalRNotification]);
 
   // Check permissions
   const canManageNotes = useCallback(() => {

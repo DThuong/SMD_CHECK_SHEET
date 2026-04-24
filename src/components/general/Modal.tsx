@@ -135,25 +135,27 @@ export default function Modal({
         </div>
 
         {/* Footer */}
-        <div className="p-3 border-t border-gray-200 flex gap-2 shrink-0">
-          <button 
-            type="button" 
-            onClick={onSave} 
-            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed" 
-            disabled={disabledSave}
-            style={{ minHeight: '44px' }}
-          >
-            Lưu
-          </button>
-          <button 
-            type="button" 
-            onClick={onClose} 
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium"
-            style={{ minHeight: '44px' }}
-          >
-            Hủy
-          </button>
-        </div>
+        {onSave && (
+          <div className="p-3 border-t border-gray-200 flex gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={onSave}
+              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={disabledSave}
+              style={{ minHeight: '44px' }}
+            >
+              Lưu
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium"
+              style={{ minHeight: '44px' }}
+            >
+              Hủy
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

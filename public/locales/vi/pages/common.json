@@ -33,7 +33,7 @@
     "title": "Kế hoạch sản xuất",
     "subtitle": "Quản lý và theo dõi work order theo ngày",
     "refresh": "Làm mới",
-    "importPlan": "Import Plan",
+    "importPlan": "Upload kế hoạch",
     "deleteThisDay": "Xóa ngày này",
     "totalPlan": "Tổng kế hoạch",
     "createdSheet": "Đã tạo sheet",
@@ -66,8 +66,8 @@
     "deleteAllSuccess": "Đã xóa toàn bộ kế hoạch ngày",
     "updateStatusSuccess": "Cập nhật trạng thái thành công!",
     "updateStatusFailed": "Cập nhật thất bại",
-    "closeDate": "Kết thúc ngày",
+    "closeDate": "Đóng WorkOrder",
     "closeDateSuccess": "Đã đóng kế hoạch cho ngày này!",
-    "closeDateFailed": "Kết thúc ngày thất bại"
+    "closeDateFailed": "Đóng WorkOrder thất bại"
   }
 }

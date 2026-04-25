@@ -466,28 +466,26 @@ const PlanPage = () => {
                       return (
                         <tr
                           key={plan.id}
-                          className={`transition-colors ${cfg.rowBg}`}
+                          onClick={() => handleWorkOrderClick(plan.workOrder)}
+                          className={`transition-colors ${cfg.rowBg} cursor-pointer group/row`}
                         >
                           <td className="px-5 py-3 text-xs font-mono text-slate-400 w-12">
                             {String(idx + 1).padStart(2, "0")}
                           </td>
                           <td className="px-5 py-3">
-                            <button
-                              onClick={() =>
-                                handleWorkOrderClick(plan.workOrder)
-                              }
-                              className="flex items-center gap-2 group/wo"
+                            <div
+                              className="flex items-center gap-2"
                               title={`Xem phiếu của ${plan.workOrder}`}
                             >
-                              <span className="font-bold text-slate-800 text-sm group-hover/wo:text-blue-600 transition-colors">
+                              <span className="font-bold text-slate-800 text-sm group-hover/row:text-blue-600 transition-colors">
                                 {plan.workOrder}
                               </span>
                               <ArrowSquareOut
                                 size={12}
                                 weight="bold"
-                                className="text-slate-300 group-hover/wo:text-blue-500 transition-colors shrink-0"
+                                className="text-slate-300 group-hover/row:text-blue-500 transition-colors shrink-0"
                               />
-                            </button>
+                            </div>
                           </td>
                           <td className="px-5 py-3 text-sm text-slate-600 whitespace-nowrap">
                             {fmtDate(plan.setToWork)}
@@ -530,7 +528,8 @@ const PlanPage = () => {
                   return (
                     <div
                       key={plan.id}
-                      className={`px-4 py-4 transition-colors ${cfg.rowBg}`}
+                      onClick={() => handleWorkOrderClick(plan.workOrder)}
+                      className={`px-4 py-4 transition-colors ${cfg.rowBg} cursor-pointer group/row`}
                     >
                       {/* Line 1: index + workOrder + badge */}
                       <div className="flex items-center justify-between gap-2 mb-2">
@@ -538,19 +537,18 @@ const PlanPage = () => {
                           <span className="text-[10px] font-mono text-slate-400 shrink-0 w-5">
                             {String(idx + 1).padStart(2, "0")}
                           </span>
-                          <button
-                            onClick={() => handleWorkOrderClick(plan.workOrder)}
-                            className="flex items-center gap-1 group/wo min-w-0"
+                          <div
+                            className="flex items-center gap-1 min-w-0"
                           >
-                            <span className="font-bold text-slate-800 text-sm group-hover/wo:text-blue-600 transition-colors truncate">
+                            <span className="font-bold text-slate-800 text-sm group-hover/row:text-blue-600 transition-colors truncate">
                               {plan.workOrder}
                             </span>
                             <ArrowSquareOut
                               size={11}
                               weight="bold"
-                              className="text-slate-300 group-hover/wo:text-blue-500 shrink-0 transition-colors"
+                              className="text-slate-300 group-hover/row:text-blue-500 shrink-0 transition-colors"
                             />
-                          </button>
+                          </div>
                         </div>
                         <StatusBadge status={plan.status} />
                       </div>

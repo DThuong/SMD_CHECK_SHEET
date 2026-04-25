@@ -465,8 +465,8 @@ const TimelineChart = ({
       </div>
     </div>
 
-    <ResponsiveContainer width="100%" height={250}>
-      <LineChart data={timelineStats}>
+    <ResponsiveContainer width="100%" height={250} className="[&_*:focus]:outline-none">
+      <LineChart data={timelineStats} accessibilityLayer={false} style={{ outline: "none" }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
         <XAxis
           dataKey="date"
@@ -505,14 +505,14 @@ const TimelineChart = ({
                   fill="#E24B4A"
                   stroke="#fff"
                   strokeWidth={2}
-                  style={{ cursor: "pointer" }}
+                  style={{ cursor: "pointer", outline: "none" }}
                   onClick={() => onPointClick(payload, 0, "morning")}
                 />
               );
             }}
             activeDot={{
               r: 7,
-              style: { cursor: "pointer" },
+              style: { cursor: "pointer", outline: "none" },
               onClick: (_: any, p: any) => onPointClick(p, 0, "morning"),
             }}
           />
@@ -536,14 +536,14 @@ const TimelineChart = ({
                   fill="#534AB7"
                   stroke="#fff"
                   strokeWidth={2}
-                  style={{ cursor: "pointer" }}
+                  style={{ cursor: "pointer", outline: "none" }}
                   onClick={() => onPointClick(payload, 0, "night")}
                 />
               );
             }}
             activeDot={{
               r: 7,
-              style: { cursor: "pointer" },
+              style: { cursor: "pointer", outline: "none" },
               onClick: (_: any, p: any) => onPointClick(p, 0, "night"),
             }}
           />

@@ -108,7 +108,7 @@ export const REQUIRED_FIELDS_CONFIG = {
 export const hasAllRequiredData = (obj: any, requiredFields: string[]): boolean => {
   if (!obj || !obj.id) return false;
   
-  return requiredFields.every(field => {
+  return requiredFields.some(field => {
     const value = obj[field];
     
     // Boolean: luôn valid (true/false đều ok)

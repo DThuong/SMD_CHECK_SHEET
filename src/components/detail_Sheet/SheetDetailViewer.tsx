@@ -41,8 +41,7 @@ import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 import { clearLcrFile, getLcrFileData } from "../../redux/slices/FileSlice";
 // import { saveFilterState } from '../../utils/navigationState';
-import NoteModal from "../general/NoteModal";
-import { MdStickyNote2 } from "react-icons/md";
+
 
 const SheetDetailViewer = () => {
   const id = Number(useParams().id);
@@ -64,7 +63,6 @@ const SheetDetailViewer = () => {
 
   const contentRef = useRef<HTMLDivElement>(null);
   const { lcrValidation } = useAppSelector((state) => state.fileSlice);
-  const [noteModalOpen, setNoteModalOpen] = useState(false);
 
   const checkLcrFileValidity = (): boolean => {
     if (
@@ -730,18 +728,6 @@ const SheetDetailViewer = () => {
               </div>
               {/* Status Badge + Note Button */}
               <div className="flex items-center gap-3">
-                {/* NOTE BUTTON - CHỈ HIỆN CHO QUẢN LÝ */}
-                {(user?.role === "ENG" ||
-                  user?.role === "Supervisior" ||
-                  user?.role === "Manager") && (
-                  <button
-                    onClick={() => setNoteModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-95 font-semibold text-sm"
-                  >
-                    <MdStickyNote2 size={20} />
-                    Ghi chú quản lý
-                  </button>
-                )}
                 <div className="text-center flex items-center justify-start py-2">
                   {getStatusBadge(currentSheet)}
                 </div>
@@ -995,11 +981,6 @@ const SheetDetailViewer = () => {
         `}</style>
         )}
       </div>
-      <NoteModal
-        sheetId={Number(id)}
-        isOpen={noteModalOpen}
-        onClose={() => setNoteModalOpen(false)}
-      />
     </div>
   );
 };

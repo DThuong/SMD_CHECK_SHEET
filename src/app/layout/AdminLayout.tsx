@@ -39,10 +39,11 @@ const AdminLayout = () => {
 
   // Menu items
   const menuItems = [
-    { name: "Dashboard", path: "dashboard" },
-    { name: "User", path: "user" },
-    { name: "SMD SHEET", path: "smd-sheet-logs" },
-    { name: "Settings", path: "settings" },
+    { name: "Dashboard", path: "dashboard", shouldReload: false },
+    { name: "User", path: "user", shouldReload: false },
+    { name: "SMD SHEET", path: "smd-sheet-logs", shouldReload: true },
+    { name: "Plan", path: "plan", shouldReload: true },
+    { name: "Settings", path: "settings", shouldReload: false },
   ];
 
   // Handlers
@@ -134,6 +135,7 @@ const AdminLayout = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                reloadDocument={item.shouldReload}
                 className={({ isActive }) =>
                   `block px-4 py-3 rounded-lg transition-colors mb-2 text-decoration-none ${
                     isActive
@@ -191,6 +193,7 @@ const AdminLayout = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                reloadDocument={item.shouldReload}
                 onClick={closeSidebar}
                 className={({ isActive }) =>
                   `block px-4 py-3 rounded-lg transition-colors mb-2 text-decoration-none ${

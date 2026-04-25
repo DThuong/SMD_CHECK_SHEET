@@ -310,7 +310,7 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
       return {
         hasFile: false,
         isValid: false,
-        message: "⚠️ Chưa upload",
+        message: `⚠️ ${t("notUploaded")}`,
         bgColor: "bg-orange-50",
         notMeasuredCount: 0,
       };
@@ -487,7 +487,7 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                     currentSheet.pdfFileUrl.trim() !== "" ? (
                       <>{reflowName}</>
                     ) : (
-                      <>⚠️ Chưa upload</>
+                      <>⚠️ {t("notUploaded")}</>
                     )}
                   </div>
 
@@ -515,7 +515,7 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                     currentSheet.noteFile.trim() !== "" ? (
                       <>{currentSheet.noteFile}</>
                     ) : (
-                      <>⚠️ Chưa có ghi chú</>
+                      <>⚠️ {t("noNotes")}</>
                     )}
                   </div>
                 </td>
@@ -592,7 +592,7 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                 >
                   {currentSheet?.pdfFileUrl
                     ? `✓ ${reflowName}`
-                    : `⚠️ Chưa upload`}
+                    : `⚠️ ${t("notUploaded")}`}
                 </div>
               </div>
 
@@ -610,7 +610,7 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                 >
                   {currentSheet?.noteFile && currentSheet.noteFile.trim() !== ""
                     ? currentSheet.noteFile
-                    : "Chưa có ghi chú"}
+                    : t("noNotes")}
                 </div>
               </div>
             </div>

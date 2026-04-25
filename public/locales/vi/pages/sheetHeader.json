@@ -1,5 +1,7 @@
 {
     "noFile": "Chưa có file",
     "saved": "Đã lưu",
-    "success_msg": "Cả hai file đã được upload thành công."
+    "success_msg": "Cả hai file đã được upload thành công.",
+    "notUploaded": "Chưa upload",
+    "noNotes": "Chưa có ghi chú"
 }

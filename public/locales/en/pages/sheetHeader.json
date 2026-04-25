@@ -1,5 +1,7 @@
 {
     "noFile": "No File",
     "saved": "Saved",
-    "success_msg": "Both files have been uploaded successfully."
+    "success_msg": "Both files have been uploaded successfully.",
+    "notUploaded": "Not uploaded",
+    "noNotes": "No notes"
 }

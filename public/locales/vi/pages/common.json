@@ -5,8 +5,8 @@
   "menu": {
     "dashboard": "Dashboard",
     "smdSheet": "SMD Sheet",
-    "settings": "Cài đặt",
-    "plan": "Kế hoạch"
+    "settings": "Settings",
+    "plan": "Plan"
   },
   "roles": {
     "engineering": "Engineering",

@@ -278,8 +278,8 @@ const PlanPage = () => {
   const items: Plan[] = planByDate?.items ?? [];
   const total = planByDate?.total ?? 0;
   const created = planByDate?.created ?? 0;
-  const notCreated = total - created;
   const inProgress = items.filter((p) => p.status === "In Progress").length;
+  const notCreated = total - inProgress;
   const done = items.filter((p) => p.status === "Done").length;
 
   return (

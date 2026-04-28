@@ -8,19 +8,16 @@ import {
   AiOutlineClockCircle,
   AiOutlineCalendar,
   AiOutlineEdit,
-  AiOutlineSearch,
   AiOutlineClose,
   AiOutlineHistory,
   AiOutlineLoading3Quarters,
 } from "react-icons/ai";
-import { FaCalendarAlt, FaRegUserCircle } from "react-icons/fa";
-import { MdSignalWifiStatusbar2Bar } from "react-icons/md";
+import { FaRegUserCircle } from "react-icons/fa";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import ReactPaginate from "react-paginate";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../../components/general/Notification";
-import { MdFavoriteBorder } from "react-icons/md";
 import { useSearchParams } from "react-router-dom";
 import { deleteSheetById } from "../../redux/slices/changeModelSlice";
 import { ConfirmModal } from "../../components/general/ConfirmModal";
@@ -33,6 +30,7 @@ import {
   clearFilterState,
 } from "../../utils/navigationState";
 import LoadingSpinner from "../../components/general/LoadingSpinner";
+import { SmartSearchBar } from "../../components/general/SmartSearchBar";
 
 // Redux actions
 import {
@@ -74,7 +72,18 @@ type SheetFilter = {
   status: string;
   fcode: string;
   id: number;
+  createrName: string;
 };
+
+  function saveLogsSession(data: object) {
+    try { sessionStorage.setItem('logs_filter_state', JSON.stringify(data)); } catch { }
+  }
+  function readLogsSession(): any {
+    try { return JSON.parse(sessionStorage.getItem('logs_filter_state') || '{}'); } catch { return {}; }
+  }
+  function clearLogsSession() {
+    try { sessionStorage.removeItem('logs_filter_state'); } catch { }
+  }
 
 const Logs = () => {
   const dispatch = useAppDispatch();
@@ -120,6 +129,7 @@ const Logs = () => {
     fcode: "",
     id: 0,
     status: "all",
+    createrName: "",
   });
 
   // Pagination
@@ -128,6 +138,17 @@ const Logs = () => {
   const [confirmingSheetId, setConfirmingSheetId] = useState<number | null>(
     null,
   );
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Candidates cho FuzzySearchInput
+  const candidatesRef = useRef<{
+    fcode: string[];
+    workOrder: string[];
+    createrName: string[];
+    id: string[];
+  }>({ fcode: [], workOrder: [], createrName: [], id: [] });
+  const [, setCandidatesTick] = useState(0);
 
   // Load sheets với filter được truyền vào (không dùng state)
   const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
@@ -139,8 +160,9 @@ const Logs = () => {
         filterToUse.status !== "" && filterToUse.status !== "all";
       const hasFcode = filterToUse.fcode.trim() !== "";
       const hasId = filterToUse.id && filterToUse.id > 0;
+      const hasCreaterName = filterToUse.createrName?.trim() !== '';
 
-      if (hasWorkOrder || hasDateRange || hasStatus || hasFcode || hasId) {
+      if (hasWorkOrder || hasDateRange || hasStatus || hasFcode || hasId || hasCreaterName) {
         const filterParams: any = {
           workOrder: hasWorkOrder ? filterToUse.workOrder.trim() : undefined,
           fromDate: hasDateRange
@@ -151,6 +173,7 @@ const Logs = () => {
             : undefined,
           status: hasStatus ? filterToUse.status : undefined,
           fcode: hasFcode ? filterToUse.fcode.trim() : undefined,
+          createrName: hasCreaterName ? filterToUse.createrName.trim() : undefined,
         };
 
         if (hasId) {
@@ -294,6 +317,15 @@ const Logs = () => {
     }
 
     // Priority 4: check workOrder
+    const logsSession = readLogsSession();
+    if (logsSession.filter && Object.keys(logsSession.filter).length > 0) {
+      setFilter(logsSession.filter);
+      setCurrentPage(logsSession.currentPage || 0);
+      setTimeout(() => loadSheetsWithFilter(logsSession.filter), 100);
+      return;
+    }
+
+    // Priority 5: Load all
     loadSheets();
 
     if (savedSheetId) {
@@ -352,38 +384,39 @@ const Logs = () => {
     }
   }, [filteredSheets]);
 
+  // Cập nhật candidates từ filteredSheets (chỉ khi không có text filter)
+  useEffect(() => {
+    if (!filteredSheets || filteredSheets.length === 0) return;
+    const hasTextFilter = filter.workOrder.trim() || filter.fcode.trim() || filter.createrName.trim();
+    if (hasTextFilter) return;
+
+    const newId = [...new Set(filteredSheets.map(s => String(s.id)).filter(Boolean))];
+    const newFcode = [...new Set(filteredSheets.map(s => s.checkModel?.fCode).filter(Boolean) as string[])];
+    const newWorkOrder = [...new Set(filteredSheets.map(s => s.checkModel?.workOrder).filter(Boolean) as string[])];
+    const newCreater = [...new Set(filteredSheets.map(s => s.account?.fullName || s.account?.userName).filter(Boolean) as string[])];
+
+    let changed = false;
+    if (newId.length > candidatesRef.current.id.length) { candidatesRef.current.id = newId; changed = true; }
+    if (newFcode.length > candidatesRef.current.fcode.length) { candidatesRef.current.fcode = newFcode; changed = true; }
+    if (newWorkOrder.length > candidatesRef.current.workOrder.length) { candidatesRef.current.workOrder = newWorkOrder; changed = true; }
+    if (newCreater.length > candidatesRef.current.createrName.length) { candidatesRef.current.createrName = newCreater; changed = true; }
+    if (changed) setCandidatesTick(t => t + 1);
+  }, [filteredSheets]);
+
+  // Auto save session khi filter/page thay đổi
+  useEffect(() => {
+    saveLogsSession({ filter, currentPage });
+  }, [filter, currentPage]);
+
   // ==================== LOAD SHEETS ====================
   const loadSheets = async () => {
     await loadSheetsWithFilter(filter);
   };
 
-  // ==================== FILTER HANDLERS ====================
-  const applyFilter = () => {
-    setCurrentPage(0);
-
-    if (filter.fromDate && !filter.toDate) {
-      showNotification("warning", t("warning.selectFromDate"));
-      return;
-    }
-    if (!filter.fromDate && filter.toDate) {
-      showNotification("warning", t("warning.selectToDate"));
-      return;
-    }
-
-    if (filter.fromDate && filter.toDate) {
-      const from = new Date(filter.fromDate);
-      const to = new Date(filter.toDate);
-      if (from > to) {
-        showNotification("warning", t("warning.invalidDateRange"));
-        resetFilter();
-        return;
-      }
-    }
-
-    loadSheets();
-  };
-
   const resetFilter = async () => {
+    clearLogsSession();
+    candidatesRef.current = { fcode: [], workOrder: [], createrName: [], id: [] };
+    setCandidatesTick(0);
     setFilter({
       workOrder: "",
       fromDate: "",
@@ -391,8 +424,8 @@ const Logs = () => {
       id: 0,
       fcode: "",
       status: "all",
+      createrName: "",
     });
-
     try {
       await dispatch(fetchChangeModel()).unwrap();
       setCurrentPage(0);
@@ -401,11 +434,31 @@ const Logs = () => {
     }
   };
 
-  // Thêm handler cho Enter key
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      applyFilter();
+  const handleFilterChange = (key: string, value: any) => {
+    let parsedValue = value;
+    if (key === 'id') {
+      parsedValue = value === '' ? 0 : parseInt(String(value).replace(/[^0-9]/g, ''), 10) || 0;
     }
+    const newFilter = { ...filter, [key]: parsedValue };
+    setFilter(newFilter);
+    setCurrentPage(0);
+    saveLogsSession({ filter: newFilter, currentPage: 0 });
+
+    // Validate date range — chỉ call API khi cả 2 ngày hợp lệ hoặc không có ngày nào
+    if (key === 'fromDate' || key === 'toDate') {
+      const from = key === 'fromDate' ? parsedValue : filter.fromDate;
+      const to = key === 'toDate' ? parsedValue : filter.toDate;
+      if ((from && !to) || (!from && to)) return; // Chờ nhập đủ cả 2
+      if (from && to && new Date(from) > new Date(to)) {
+        showNotification("warning", t("warning.invalidDateRange"));
+        return;
+      }
+    }
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      loadSheetsWithFilter(newFilter);
+    }, 400);
   };
 
   // ==================== VIEW HANDLERS ====================
@@ -472,93 +525,93 @@ const Logs = () => {
   };
 
   const handleConfirmStep = async (
-  sheetId: number,
-  role:
-    | typeof ROLES.PQC
-    | typeof ROLES.PQCLEADER
-    | typeof ROLES.ENG
-    | typeof ROLES.SUPERVISOR
-    | typeof ROLES.MANAGER
-    | typeof ROLES.KOREA_MANAGER,
-) => {
-  if (confirmingSheetId === sheetId) return;
+    sheetId: number,
+    role:
+      | typeof ROLES.PQC
+      | typeof ROLES.PQCLEADER
+      | typeof ROLES.ENG
+      | typeof ROLES.SUPERVISOR
+      | typeof ROLES.MANAGER
+      | typeof ROLES.KOREA_MANAGER,
+  ) => {
+    if (confirmingSheetId === sheetId) return;
 
-  try {
-    setConfirmingSheetId(sheetId);
-    setSelectedSheetId(null);
-    clearSelectedSheetId();
+    try {
+      setConfirmingSheetId(sheetId);
+      setSelectedSheetId(null);
+      clearSelectedSheetId();
 
-    if (!user) {
-      showNotification("error", t("error.invalidUser"));
-      return;
-    }
-
-    const sheet = filteredSheets?.find((s) => s.id === sheetId);
-    if (!sheet) return;
-
-    if (!canConfirmAtStep(sheet, role)) {
-      showNotification("error", t("error.noPermission"));
-      return;
-    }
-
-    if (role === ROLES.PQCLEADER) {
-      const { hasLCR, hasReflow } = checkRequiredFiles(sheet);
-
-      if (!hasLCR || !hasReflow) {
-        showNotification(
-          "warning",
-          "Thiếu File Bắt Buộc",
-          "Vui lòng upload đầy đủ các file: lcr file, reflow file trước khi ký xác nhận.",
-        );
+      if (!user) {
+        showNotification("error", t("error.invalidUser"));
         return;
       }
 
-      if (!lcrValidation || !lcrValidation.isValid) {
-        const errorDetail = lcrValidation?.stats
-          ? `\n\nChi tiết: OK=${lcrValidation.stats.ok}, NG=${lcrValidation.stats.ng}, SKIP=${lcrValidation.stats.skip}`
-          : "";
+      const sheet = filteredSheets?.find((s) => s.id === sheetId);
+      if (!sheet) return;
 
-        showNotification(
-          "error",
-          "LCR File Không Hợp Lệ",
-          `${lcrValidation?.errorMessage || "File LCR phải có 100% kết quả OK"}${errorDetail}\n\nVui lòng xem chi tiết và upload lại file.`,
-        );
+      if (!canConfirmAtStep(sheet, role)) {
+        showNotification("error", t("error.noPermission"));
         return;
       }
+
+      if (role === ROLES.PQCLEADER) {
+        const { hasLCR, hasReflow } = checkRequiredFiles(sheet);
+
+        if (!hasLCR || !hasReflow) {
+          showNotification(
+            "warning",
+            "Thiếu File Bắt Buộc",
+            "Vui lòng upload đầy đủ các file: lcr file, reflow file trước khi ký xác nhận.",
+          );
+          return;
+        }
+
+        if (!lcrValidation || !lcrValidation.isValid) {
+          const errorDetail = lcrValidation?.stats
+            ? `\n\nChi tiết: OK=${lcrValidation.stats.ok}, NG=${lcrValidation.stats.ng}, SKIP=${lcrValidation.stats.skip}`
+            : "";
+
+          showNotification(
+            "error",
+            "LCR File Không Hợp Lệ",
+            `${lcrValidation?.errorMessage || "File LCR phải có 100% kết quả OK"}${errorDetail}\n\nVui lòng xem chi tiết và upload lại file.`,
+          );
+          return;
+        }
+      }
+
+      await dispatch(
+        updateSheetStatus({
+          sheetId,
+          currentStatus: sheet.status || STATUS.PENDING,
+          userRole: role,
+        }),
+      ).unwrap();
+
+      const roleNames: Record<string, string> = {
+        [ROLES.PQCLEADER]: "PQC Leader",
+        [ROLES.ENG]: "Engineering",
+        [ROLES.SUPERVISOR]: "Supervisor",
+        [ROLES.MANAGER]: "Manager",
+        [ROLES.KOREA_MANAGER]: "Korea Manager",
+      };
+      showNotification("success", `${t("success.confirmed")} ${roleNames[role]}!`);
+
+      // Reload history và list — selectedSheet sẽ tự sync qua useEffect
+      await dispatch(getSheetStatusHistory(sheetId)).unwrap();
+      await loadSheets();
+
+    } catch (error: any) {
+      console.error("Error confirming sheet:", error);
+      showNotification(
+        "error",
+        t("error.loadSheetsFailed"),
+        error || t("error.confirmFailed"),
+      );
+    } finally {
+      setConfirmingSheetId(null);
     }
-
-    await dispatch(
-      updateSheetStatus({
-        sheetId,
-        currentStatus: sheet.status || STATUS.PENDING,
-        userRole: role,
-      }),
-    ).unwrap();
-
-    const roleNames: Record<string, string> = {
-      [ROLES.PQCLEADER]: "PQC Leader",
-      [ROLES.ENG]: "Engineering",
-      [ROLES.SUPERVISOR]: "Supervisor",
-      [ROLES.MANAGER]: "Manager",
-      [ROLES.KOREA_MANAGER]: "Korea Manager",
-    };
-    showNotification("success", `${t("success.confirmed")} ${roleNames[role]}!`);
-
-    // Reload history và list — selectedSheet sẽ tự sync qua useEffect
-    await dispatch(getSheetStatusHistory(sheetId)).unwrap();
-    await loadSheets();
-
-  } catch (error: any) {
-    console.error("Error confirming sheet:", error);
-    showNotification(
-      "error",
-      t("error.loadSheetsFailed"),
-      error || t("error.confirmFailed"),
-    );
-  } finally {
-    setConfirmingSheetId(null);
-  }
-};
+  };
 
   // ==================== UTILITIES ====================
   const formatDateTime = (dateString?: string): string => {
@@ -586,20 +639,6 @@ const Logs = () => {
 
     return `${month}-${day}-${year} ${hours}:${minutes}`;
   };
-
-  /**
-   * Get max datetime for datetime-local input (current datetime)
-   */
-  const maxDateTime = useMemo(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    const hours = String(now.getHours()).padStart(2, "0");
-    const minutes = String(now.getMinutes()).padStart(2, "0");
-
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  }, []);
 
   const canEdit = (sheet: ChangeModelResponse): boolean => {
     if (!user) return false;
@@ -1033,179 +1072,39 @@ const Logs = () => {
           </div>
 
           {/* SEARCH FILTERS */}
-          <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex items-center gap-2 mb-3">
-              <AiOutlineSearch className="w-5 h-5 text-gray-600" />
-              <h3 className="font-semibold text-gray-700">
-                {t("search.title")}
-              </h3>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {/* Id */}
-              <div>
-                <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <MdFavoriteBorder />
-                  <span>{t("search.id")}</span>
-                </div>
-                <input
-                  type="number"
-                  value={filter.id || ""}
-                  onChange={(e) =>
-                    setFilter((s) => ({
-                      ...s,
-                      id: Number(e.target.value) || 0,
-                    }))
-                  }
-                  onKeyPress={handleKeyPress}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder={t("search.placeholder.id")}
-                  min="1"
-                />
-              </div>
-              {/* FCode */}
-              <div>
-                <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <MdFavoriteBorder />
-                  <span>{t("search.fcode")}</span>
-                </div>
-                <input
-                  type="text"
-                  value={filter.fcode}
-                  onChange={(e) =>
-                    setFilter((s) => ({ ...s, fcode: e.target.value }))
-                  }
-                  onKeyPress={handleKeyPress}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder={t("search.placeholder.fcode")}
-                />
-              </div>
-              {/* Work Order */}
-              <div>
-                <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <MdFavoriteBorder />
-                  <span>{t("search.workOrder")}</span>
-                </div>
-                <input
-                  type="text"
-                  value={filter.workOrder}
-                  onChange={(e) =>
-                    setFilter((s) => ({ ...s, workOrder: e.target.value }))
-                  }
-                  onKeyPress={handleKeyPress}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder={t("search.placeholder.workOrder")}
-                />
-              </div>
-
-              {/* Status */}
-              <div>
-                <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <MdSignalWifiStatusbar2Bar />
-                  <span>{t("search.status")}</span>
-                </div>
-                <select
-                  value={filter.status}
-                  onChange={(e) =>
-                    setFilter((s) => ({ ...s, status: e.target.value }))
-                  }
-                  onKeyPress={handleKeyPress}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">{t("status.all")}</option>
-                  <option value={STATUS.PENDING}>{t("status.pending")}</option>
-                  <option value={STATUS.PQC_DONE}>{t("status.pqcDone")}</option>
-                  <option value={STATUS.PQCLEADER_DONE}>
-                    {t("status.pqcLeaderDone")}
-                  </option>
-                  <option value={STATUS.ENG_DONE}>{t("status.engDone")}</option>
-                  <option value={STATUS.SUPERVISOR_DONE}>
-                    {t("status.supervisorDone")}
-                  </option>
-                  <option value={STATUS.MANAGER_DONE}>
-                    {t("status.managerDone")}
-                  </option>
-                  <option value={STATUS.KOREA_MANAGER_DONE}>
-                    {t("status.koreaManagerDone")}
-                  </option>
-                </select>
-              </div>
-
-              {/* From Date */}
-              <div>
-                <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <FaCalendarAlt />
-                  <span>{t("search.fromDate")}</span>
-                </div>
-                <input
-                  type="datetime-local"
-                  value={filter.fromDate}
-                  max={maxDateTime}
-                  onKeyPress={handleKeyPress}
-                  onChange={(e) =>
-                    setFilter((s) => ({ ...s, fromDate: e.target.value }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* To Date */}
-              <div>
-                <div className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <FaCalendarAlt />
-                  <span>{t("search.toDate")}</span>
-                </div>
-                <input
-                  type="datetime-local"
-                  value={filter.toDate}
-                  max={maxDateTime}
-                  onKeyPress={handleKeyPress}
-                  onChange={(e) =>
-                    setFilter((s) => ({ ...s, toDate: e.target.value }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="mt-3 flex flex-col lg:flex-row md:flex-row gap-2">
-              <button
-                onClick={applyFilter}
-                disabled={loadingList}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
-              >
-                <AiOutlineSearch className="w-4 h-4" />
-                {loadingList
-                  ? t("search.button.searching")
-                  : t("search.button.search")}
-              </button>
-              <button
-                onClick={resetFilter}
-                disabled={loadingList}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
-              >
-                <AiOutlineClose className="w-4 h-4" />
-                {t("search.button.reset")}
-              </button>
-            </div>
-
-            {/* Result Count */}
-            <div className="mt-3 text-sm text-gray-600" ref={resultsRef}>
-              {t("search.result.count")}:{" "}
-              <span className="font-semibold text-blue-600">
-                {currentSheets.length}
-              </span>{" "}
-              / <span className="font-semibold">{sortedSheets.length}</span>{" "}
-              sheet
-              {pageCount > 1 && (
-                <span className="ml-2">
-                  {" "}
-                  ({t("search.result.page")} {currentPage + 1}/{pageCount})
-                </span>
-              )}
-            </div>
-          </div>
+          <SmartSearchBar
+            fields={[
+              { key: 'id', label: t("search.id"), placeholder: t("search.placeholder.id"), candidates: candidatesRef.current.id },
+              { key: 'fcode', label: t("search.fcode"), placeholder: t("search.placeholder.fcode"), candidates: candidatesRef.current.fcode },
+              { key: 'workOrder', label: t("search.workOrder"), placeholder: t("search.placeholder.workOrder"), candidates: candidatesRef.current.workOrder },
+              { key: 'createrName', label: t("search.createrName"), placeholder: t("search.placeholder.createrName"), candidates: candidatesRef.current.createrName },
+              {
+                key: 'status', label: t("search.status"), type: 'select' as const,
+                options: [
+                  { value: 'all', label: t("status.all") },
+                  { value: STATUS.PENDING, label: t("status.pending") },
+                  { value: STATUS.PQC_DONE, label: t("status.pqcDone") },
+                  { value: STATUS.PQCLEADER_DONE, label: t("status.pqcLeaderDone") },
+                  { value: STATUS.ENG_DONE, label: t("status.engDone") },
+                  { value: STATUS.SUPERVISOR_DONE, label: t("status.supervisorDone") },
+                  { value: STATUS.MANAGER_DONE, label: t("status.managerDone") },
+                  { value: STATUS.KOREA_MANAGER_DONE, label: t("status.koreaManagerDone") },
+                ],
+              },
+              { key: 'fromDate', label: t("search.fromDate"), type: 'datetime-local' as const },
+              { key: 'toDate', label: t("search.toDate"), type: 'datetime-local' as const },
+            ]}
+            values={filter}
+            onChange={handleFilterChange}
+            onReset={resetFilter}
+            loading={loadingList}
+            resultCount={{
+              current: currentSheets.length,
+              total: sortedSheets.length,
+              page: currentPage,
+              pageCount,
+            }}
+          />
 
           {/* Error Message */}
           {sheetError && (

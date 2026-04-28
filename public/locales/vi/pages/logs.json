@@ -10,6 +10,7 @@
     },
     "search": {
       "title": "Tìm kiếm",
+      "createrName": "Người tạo",
       "id": "Id",
       "fcode": "FCode",
       "workOrder": "Work Order",
@@ -24,7 +25,8 @@
       "placeholder": {
         "id": "Tìm kiếm theo Id...",
         "fcode": "Tìm kiếm theo fcode...",
-        "workOrder": "Tìm kiếm theo work order..."
+        "workOrder": "Tìm kiếm theo work order...",
+        "createrName": "Nhập tên người tạo..."
       },
       "result": {
         "count": "Số trang",

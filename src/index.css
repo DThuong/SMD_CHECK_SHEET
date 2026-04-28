@@ -21,6 +21,13 @@ select {
   -webkit-text-size-adjust: 100%;
 }
 
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* Minimum touch target */
 input:not([type="checkbox"]):not([type="radio"]),
 textarea,

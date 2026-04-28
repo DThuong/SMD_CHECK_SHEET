@@ -10,6 +10,7 @@
   },
   "search": {
     "title": "Search",
+    "createrName": "Creator",
     "id": "Id",
     "fcode": "FCode",
     "workOrder": "Work Order",
@@ -24,7 +25,8 @@
     "placeholder": {
       "id": "Search by Id...",
       "fcode": "Search by fcode...",
-      "workOrder": "Search by work order..."
+      "workOrder": "Search by work order...",
+      "createrName": "Enter creator name..."
     },
     "result": {
       "count": "Pages",

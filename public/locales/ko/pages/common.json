@@ -53,7 +53,7 @@
     "update": "업데이트",
     "delete": "삭제",
     "clickToView": "시트를 보려면 작업 지시서를 클릭하세요",
-    "confirmDeletePlan": "전체 계획을 삭제하시겠습니까?",
+    "confirmDeletePlan": "계획을 삭제하시겠습니까?",
     "cannotUndo": "이 작업은 되돌릴 수 없습니다",
     "confirmDeleteAllWO": "해당 날짜의 모든 작업 지시서 삭제:",
     "deleteAll": "모두 삭제",

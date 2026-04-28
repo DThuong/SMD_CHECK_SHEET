@@ -53,7 +53,7 @@
     "update": "Update",
     "delete": "Delete",
     "clickToView": "Click Work Order to view sheet",
-    "confirmDeletePlan": "Delete entire plan?",
+    "confirmDeletePlan": "Delete plan?",
     "cannotUndo": "This action cannot be undone",
     "confirmDeleteAllWO": "Delete all work orders for",
     "deleteAll": "Delete All",

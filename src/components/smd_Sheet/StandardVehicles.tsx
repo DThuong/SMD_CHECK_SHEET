@@ -104,11 +104,23 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
     currentSheet?.standardVehicleId || standardVehicle?.id;
 
   const [open, setOpen] = useState(false);
+  const [scrollTarget, setScrollTarget] = useState<string>('');
   const [form, setForm] = useState<StandardVehicleData>(
     initialStandardVehiclesState,
   );
+  const sectionRefs = {
+    printer: useRef<HTMLDivElement>(null),
+    spi: useRef<HTMLDivElement>(null),
+    mount: useRef<HTMLDivElement>(null),
+    reflow: useRef<HTMLDivElement>(null),
+    aoi: useRef<HTMLDivElement>(null),
+    output: useRef<HTMLDivElement>(null),
+    worker: useRef<HTMLDivElement>(null),
+    issue: useRef<HTMLDivElement>(null),
+  };
 
   const isSaved = completedTables.includes("StandardVehicle");
+
 
   const { notification, showNotification, hideNotification } =
     useNotification();
@@ -179,6 +191,49 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
       deletingRef.current = false;
     }
   }, [open]);
+
+  // useEffect scroll đến section khi modal mở
+  useEffect(() => {
+  if (!open || !scrollTarget) return;
+
+  const timer = setTimeout(() => {
+    const ref = sectionRefs[scrollTarget as keyof typeof sectionRefs];
+    if (!ref?.current) {
+      setScrollTarget('');
+      return;
+    }
+
+    // Tìm scrollable container bằng cách đi ngược lên DOM từ section
+    let container: HTMLElement | null = ref.current.parentElement;
+    while (container) {
+      const overflow = window.getComputedStyle(container).overflowY;
+      if (overflow === 'auto' || overflow === 'scroll') break;
+      container = container.parentElement;
+    }
+
+    if (container) {
+      const containerTop = container.getBoundingClientRect().top;
+      const sectionTop = ref.current.getBoundingClientRect().top;
+      const offset = sectionTop - containerTop;
+
+      container.scrollBy({
+        top: offset,
+        behavior: 'smooth',
+      });
+    }
+
+    setScrollTarget('');
+  }, 150);
+
+  return () => clearTimeout(timer);
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [open, scrollTarget]);
+
+  const openModalAt = (section: string) => {
+    if (!canEdit) return;
+    setScrollTarget(section);
+    setOpen(true);
+  };
 
   if (!standardVehicleId) {
     return (
@@ -516,8 +571,8 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
       {standardVehicleId && (
         <div
           className={`mb-2 text-xs p-2 rounded flex items-center gap-2 no-print ${isSaved
-              ? "bg-green-50 text-green-700 border border-green-200"
-              : "bg-gray-50 text-gray-600 border border-gray-200"
+            ? "bg-green-50 text-green-700 border border-green-200"
+            : "bg-gray-50 text-gray-600 border border-gray-200"
             }`}
         >
           {isSaved && <span className="text-green-600">✓</span>}
@@ -1405,10 +1460,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
           {/* Clickable area */}
           <div
-            onClick={() => canEdit && setOpen(true)}
+            onClick={() => openModalAt('printer')}
             className={`p-4 ${canEdit
-                ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
-                : "cursor-not-allowed opacity-90"
+              ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
+              : "cursor-not-allowed opacity-90"
               }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
@@ -1577,10 +1632,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         {/* ==================== SPI SECTION ==================== */}
         <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
           <div
-            onClick={() => canEdit && setOpen(true)}
+            onClick={() => openModalAt('spi')}
             className={`p-4 ${canEdit
-                ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
-                : "cursor-not-allowed opacity-90"
+              ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
+              : "cursor-not-allowed opacity-90"
               }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
@@ -1646,10 +1701,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         {/* ==================== MOUNT SECTION ==================== */}
         <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
           <div
-            onClick={() => canEdit && setOpen(true)}
+            onClick={() => openModalAt('mount')}
             className={`p-4 ${canEdit
-                ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
-                : "cursor-not-allowed opacity-90"
+              ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
+              : "cursor-not-allowed opacity-90"
               }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
@@ -1724,10 +1779,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         {/* ==================== REFLOW SECTION ==================== */}
         <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
           <div
-            onClick={() => canEdit && setOpen(true)}
+            onClick={() => openModalAt('reflow')}
             className={`p-4 ${canEdit
-                ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
-                : "cursor-not-allowed opacity-90"
+              ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
+              : "cursor-not-allowed opacity-90"
               }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
@@ -1811,10 +1866,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         {/* ==================== AOI SECTION ==================== */}
         <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
           <div
-            onClick={() => canEdit && setOpen(true)}
+            onClick={() => openModalAt('aoi')}
             className={`p-4 ${canEdit
-                ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
-                : "cursor-not-allowed opacity-90"
+              ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
+              : "cursor-not-allowed opacity-90"
               }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
@@ -1916,10 +1971,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         {/* ==================== OUTPUT SECTION ==================== */}
         <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
           <div
-            onClick={() => canEdit && setOpen(true)}
+            onClick={() => openModalAt('output')}
             className={`p-4 ${canEdit
-                ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
-                : "cursor-not-allowed opacity-90"
+              ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
+              : "cursor-not-allowed opacity-90"
               }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
@@ -1977,10 +2032,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         {/* ==================== WORKER SECTION ==================== */}
         <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
           <div
-            onClick={() => canEdit && setOpen(true)}
+            onClick={() => openModalAt('worker')}
             className={`p-4 ${canEdit
-                ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
-                : "cursor-not-allowed opacity-90"
+              ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
+              : "cursor-not-allowed opacity-90"
               }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
@@ -2025,10 +2080,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         {/* ==================== NOTES SECTION ==================== */}
         <div className="w-full bg-white border border-gray-300 rounded-lg shadow-sm mb-3">
           <div
-            onClick={() => canEdit && setOpen(true)}
+            onClick={() => openModalAt('issue')}
             className={`p-4 ${canEdit
-                ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
-                : "cursor-not-allowed opacity-90"
+              ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100"
+              : "cursor-not-allowed opacity-90"
               }`}
             role="button"
             tabIndex={canEdit ? 0 : -1}
@@ -2079,7 +2134,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
       {/* Buttons */}
       <div className="flex flex-row justify-end w-full gap-2 mt-3 no-print">
         <ViewDetailButton
-          onOpen={() => setOpen(true)}
+          onOpen={() => openModalAt('printer')}
           disabled={!canEdit}
           {...(!canEdit ? {} : { "data-edit-button": "true" })}
         >
@@ -2097,7 +2152,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         <div className="max-h-[60vh] overflow-y-auto scrollbar-hide">
           <div className="grid gap-4 p-1">
             {/* Printer */}
-            <section className="pb-3 border-b border-gray-200 scrollbar-hide">
+            <section ref={sectionRefs.printer} className="pb-3 border-b border-gray-200 scrollbar-hide">
               <h4 className="text-sm font-semibold mb-3 text-gray-700">
                 Printer
               </h4>
@@ -2284,7 +2339,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
             </section>
 
             {/* SPI */}
-            <div className="grid grid-cols-1 border-b border-gray-200 pb-3">
+            <section ref={sectionRefs.spi} className="grid grid-cols-1 border-b border-gray-200 pb-3">
               <h4 className="text-sm font-semibold mb-3 text-gray-700">SPI</h4>
               {/** spi program */}
               <div className="min-w-0 mb-3">
@@ -2332,10 +2387,10 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
                 }
                 onViewSingle={(url, title) => openImagePreview(url, title)}
               />
-            </div>
+            </section>
 
             {/* Mount */}
-            <section className="pb-3 border-b border-gray-200">
+            <section ref={sectionRefs.mount} className="pb-3 border-b border-gray-200">
               <h4 className="text-sm font-semibold mb-3 text-gray-700">
                 Mount
               </h4>
@@ -2407,7 +2462,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
             </section>
 
             {/* Reflow */}
-            <section className="pb-3 border-b border-gray-200">
+            <section ref={sectionRefs.reflow} className="pb-3 border-b border-gray-200">
               <h4 className="text-sm font-semibold mb-3 text-gray-700">
                 Reflow
               </h4>
@@ -2485,7 +2540,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
             </section>
 
             {/* AOI */}
-            <div className="grid grid-cols-1 border-b border-gray-200 pb-3">
+            <section ref={sectionRefs.aoi} className="grid grid-cols-1 border-b border-gray-200 pb-3">
               <h4 className="text-sm font-semibold mb-3 text-gray-700">AOI</h4>
               {/** xray 3 board đầu tiên có Ok hay không ? */}
               <div className="min-w-0 flex items-center gap-2 mb-3">
@@ -2563,9 +2618,9 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
                 }
                 onViewSingle={(url, title) => openImagePreview(url, title)}
               />
-            </div>
+            </section>
             {/* Output */}
-            <section className="pb-3 border-b border-gray-200">
+            <section ref={sectionRefs.output} className="pb-3 border-b border-gray-200">
               <h4 className="text-sm font-semibold mb-3 text-gray-700">
                 Output
               </h4>
@@ -2620,7 +2675,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
             </section>
 
             {/* Worker */}
-            <section>
+            <section ref={sectionRefs.worker}>
               <h4 className="text-sm font-semibold mb-3 text-gray-700">
                 Công nhân
               </h4>
@@ -2647,7 +2702,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
             </section>
 
             {/* Ghi chú vấn đề phát sinh */}
-            <section>
+            <section ref={sectionRefs.issue}>
               <h4 className="text-sm font-semibold mb-3 text-gray-700">
                 Vấn đề phát sinh
               </h4>

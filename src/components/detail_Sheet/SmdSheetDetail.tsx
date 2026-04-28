@@ -68,9 +68,7 @@ const SmdSheetDetail = () => {
 
   // Load dữ liệu sheet từ Redux action
   useEffect(() => {
-  // Clear TRƯỚC khi fetch (Fix 1)
-  dispatch(clearAllSubTableData());
-  dispatch(resetCompletedTables());
+  // Chỉ clear error thôi, KHÔNG clear data cũ vội
   dispatch(clearError());
 
   const loadSheetData = async () => {
@@ -79,7 +77,10 @@ const SmdSheetDetail = () => {
     try {
       const result = await dispatch(getSheetWithFullObject(Number(id))).unwrap();
 
-      // 1 dispatch thay vì 5 (Fix 2)
+      // Clear và set data MỚI cùng lúc SAU KHI có data
+      // UI không bao giờ thấy trạng thái trống
+      dispatch(clearAllSubTableData());
+      dispatch(resetCompletedTables());
       dispatch(setAllSubTableData({
         checkModel: result.checkModel ?? null,
         standardProduction: result.standardProduction ?? null,
@@ -88,7 +89,7 @@ const SmdSheetDetail = () => {
         pqcCheck: result.pqcCheck ?? null,
       }));
 
-      // completedTables giữ nguyên
+      // completedTables giữ nguyên logic
       const tableConfigs = [
         { data: result.checkModel, name: 'CheckModel' as const, config: REQUIRED_FIELDS_CONFIG.CheckModel },
         { data: result.standardProduction, name: 'StandardProduction' as const, config: REQUIRED_FIELDS_CONFIG.StandardProduction },
@@ -107,6 +108,9 @@ const SmdSheetDetail = () => {
       });
 
     } catch (error: any) {
+      // Lỗi mới clear để tránh hiển thị data cũ sai
+      dispatch(clearAllSubTableData());
+      dispatch(resetCompletedTables());
       console.error('❌ Error loading sheet:', error);
     }
   };
@@ -114,11 +118,13 @@ const SmdSheetDetail = () => {
   loadSheetData();
 
   return () => {
+    // Cleanup khi unmount hoặc id thay đổi
     dispatch(clearAllSubTableData());
     dispatch(resetCompletedTables());
     dispatch(clearError());
   };
 }, [id, dispatch]);
+
   const handleOpenConfirmModal = () => {
     // CHỈ mở modal, KHÔNG gọi API
     setOpenModal(true);

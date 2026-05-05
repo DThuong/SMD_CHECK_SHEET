@@ -1032,9 +1032,7 @@ const Logs = () => {
     );
   }
 
-  if (loadingList && !filteredSheets?.length) {
-    return <LoadingSpinner />;
-  }
+
 
   // ==================== LIST VIEW ====================
   return (

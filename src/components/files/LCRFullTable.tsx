@@ -98,7 +98,7 @@ const LCRFullTable = ({ lcrData }: LCRFullTableProps) => {
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Header với Statistics */}
       <div className="p-4 border-b border-gray-200 bg-linear-to-r from-green-50 to-white">
-        <div className="flex flex-row items-center justify-between gap-4">
+        <div className="flex flex-col gap-4">
           <div>
             <h2 className="text-xl font-bold text-gray-800">LCR File Data - Full View</h2>
             <p className="text-sm text-gray-600 mt-1">
@@ -111,47 +111,47 @@ const LCRFullTable = ({ lcrData }: LCRFullTableProps) => {
           </div>
           
           {/* Statistics */}
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             {/**total */}
-            <div className="px-4 py-2 bg-gray-100 rounded-lg">
+            <div className="px-4 py-2 bg-gray-100 rounded-lg min-w-[110px]">
               <p className="text-xs text-gray-600">Total</p>
               <p className="text-lg font-bold text-gray-600">{validCount}</p>
             </div>
-            <div className="px-4 py-2 bg-green-100 rounded-lg">
+            <div className="px-4 py-2 bg-green-100 rounded-lg min-w-[110px]">
               <p className="text-xs text-gray-600">OK</p>
               <p className="text-lg font-bold text-green-600">{okCount}</p>
             </div>
-            <div className="px-4 py-2 bg-orange-100 rounded-lg">
+            <div className="px-4 py-2 bg-orange-100 rounded-lg min-w-[110px]">
               <p className="text-xs text-gray-600">SKIP</p>
               <p className="text-lg font-bold text-orange-600">{skipCount}</p>
             </div>
-            <div className="px-4 py-2 bg-red-100 rounded-lg">
+            <div className="px-4 py-2 bg-red-100 rounded-lg min-w-[110px]">
               <p className="text-xs text-gray-600">NG</p>
               <p className="text-lg font-bold text-red-600">{ngCount}</p>
             </div>
             
-            <div className="px-4 py-2 bg-blue-100 rounded-lg">
+            <div className="px-4 py-2 bg-blue-100 rounded-lg min-w-[110px]">
               <p className="text-xs text-gray-600">Pass Rate</p>
               <p className="text-lg font-bold text-blue-600">
                 {validCount > 0 ? ((okCount / validCount) * 100).toFixed(1) : '0.0'}%
               </p>
             </div>
-            <div className="px-4 py-2 bg-orange-100 rounded-lg">
+            <div className="px-4 py-2 bg-orange-100 rounded-lg min-w-[110px]">
               <p className="text-xs text-gray-600">Skip Rate</p>
               <p className="text-lg font-bold text-orange-600">
                 {validCount > 0 ? ((skipCount / validCount) * 100).toFixed(1) : '0.0'}%
               </p>
             </div>
             {/** NG Rate */}
-            <div className="px-4 py-2 bg-red-100 rounded-lg">
+            <div className="px-4 py-2 bg-red-100 rounded-lg min-w-[110px]">
               <p className="text-xs text-gray-600">NG Rate</p>
               <p className="text-lg font-bold text-red-600">
                 {validCount > 0 ? ((ngCount / validCount) * 100).toFixed(1) : '0.0'}%
               </p>
             </div>
             {/** Chưa đo */}
-            <div className="px-4 py-2 bg-purple-100 rounded-lg">
-              <p className="text-xs text-gray-600">Not Measured</p>
+            <div className="px-4 py-2 bg-purple-100 rounded-lg min-w-[110px]">
+              <p className="text-xs text-gray-600 whitespace-nowrap">Not Measured</p>
               <p className="text-lg font-bold text-purple-600">{notMeasuredCount}</p>
           </div>
           </div>

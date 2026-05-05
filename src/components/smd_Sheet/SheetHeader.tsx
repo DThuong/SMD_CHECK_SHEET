@@ -250,6 +250,15 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
   };
 
   const handleViewFiles = () => {
+    if (window.innerWidth <= 768) {
+      showNotification(
+        "warning",
+        "Không hỗ trợ",
+        "Thiết bị của bạn không được hỗ trợ để xem nội dung này"
+      );
+      return;
+    }
+
     if (!currentSheet?.id) return;
     const roleLower = user?.role?.toLowerCase() || "pqc";
     const hasReflow =

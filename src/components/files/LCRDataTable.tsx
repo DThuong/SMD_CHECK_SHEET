@@ -83,7 +83,7 @@ const LCRDataTable = ({ lcrData }: LCRDataTableProps) => {
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Header với Statistics */}
       <div className="p-4 border-b border-gray-200 bg-linear-to-r from-green-50 to-white">
-        <div className="flex flex-row items-center justify-between gap-4">
+        <div className="flex flex-col gap-4">
           <div>
             <h2 className="text-xl font-bold text-gray-800">LCR File Data</h2>
             <p className="text-sm text-gray-600 mt-1">
@@ -92,16 +92,16 @@ const LCRDataTable = ({ lcrData }: LCRDataTableProps) => {
           </div>
           
           {/* Statistics */}
-          <div className="flex gap-4">
-            <div className="px-4 py-2 bg-green-100 rounded-lg">
+          <div className="flex gap-3">
+            <div className="px-4 py-2 bg-green-100 rounded-lg min-w-[110px]">
               <p className="text-xs text-gray-600">OK</p>
               <p className="text-lg font-bold text-green-600">{okCount}</p>
             </div>
-            <div className="px-4 py-2 bg-red-100 rounded-lg">
+            <div className="px-4 py-2 bg-red-100 rounded-lg min-w-[110px]">
               <p className="text-xs text-gray-600">NG</p>
               <p className="text-lg font-bold text-red-600">{ngCount}</p>
             </div>
-            <div className="px-4 py-2 bg-blue-100 rounded-lg">
+            <div className="px-4 py-2 bg-blue-100 rounded-lg min-w-[110px]">
               <p className="text-xs text-gray-600">Pass Rate</p>
               <p className="text-lg font-bold text-blue-600">
                 {((okCount / lcrData.count) * 100).toFixed(1)}%

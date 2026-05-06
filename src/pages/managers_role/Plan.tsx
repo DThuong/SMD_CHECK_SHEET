@@ -298,8 +298,8 @@ const PlanPage = () => {
             </div>
 
             {/* Actions */}
-            <div className="flex flex-wrap gap-2 items-center">
-              <div className="flex items-center gap-2 bg-white border border-slate-200 px-3 h-11 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400 transition-all shadow-sm">
+            <div className="flex flex-wrap gap-2 items-center w-full lg:w-auto">
+              <div className="flex items-center gap-2 bg-white border border-slate-200 px-3 h-11 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400 transition-all shadow-sm w-full sm:w-auto">
                 <input
                   type="date"
                   value={selectedDate}
@@ -311,7 +311,7 @@ const PlanPage = () => {
               <button
                 onClick={() => fetchByDate(selectedDate)}
                 disabled={loading}
-                className="flex items-center gap-2 px-3 h-11 bg-white border border-slate-200 hover:border-slate-300! hover:bg-slate-50! rounded-xl text-sm font-semibold text-slate-600 transition-all disabled:opacity-50 shadow-sm"
+                className="flex items-center justify-center gap-2 px-3 h-11 bg-white border border-slate-200 hover:border-slate-300! hover:bg-slate-50! rounded-xl text-sm font-semibold text-slate-600 transition-all disabled:opacity-50 shadow-sm w-full sm:w-auto"
               >
                 <ArrowClockwise
                   size={16}
@@ -324,7 +324,7 @@ const PlanPage = () => {
               <button
                 onClick={handleCloseDate}
                 disabled={loading || closing}
-                className="flex items-center gap-2 px-4 h-11 bg-green-700 hover:bg-green-800! disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-green-200"
+                className="flex items-center justify-center gap-2 px-4 h-11 bg-green-700 hover:bg-green-800! disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-green-200 w-full sm:w-auto"
               >
                 {closing ? (
                   <Spinner size={16} className="animate-spin" />
@@ -346,7 +346,7 @@ const PlanPage = () => {
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading || loading}
-                className="flex items-center gap-2 px-4 h-11 bg-emerald-600 hover:bg-emerald-700! disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-emerald-200"
+                className="flex items-center justify-center gap-2 px-4 h-11 bg-emerald-600 hover:bg-emerald-700! disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-emerald-200 w-full sm:w-auto"
               >
                 {uploading ? (
                   <Spinner size={16} className="animate-spin" />
@@ -359,7 +359,7 @@ const PlanPage = () => {
               {items.length > 0 && (
                 <button
                   onClick={() => setConfirmModal({ type: "deleteByDate" })}
-                  className="flex items-center gap-2 px-3 h-11 bg-white border border-red-200 hover:bg-red-50! hover:border-red-300! text-red-600 rounded-xl text-sm font-semibold transition-all"
+                  className="flex items-center justify-center gap-2 px-3 h-11 bg-white border border-red-200 hover:bg-red-50! hover:border-red-300! text-red-600 rounded-xl text-sm font-semibold transition-all w-full sm:w-auto"
                 >
                   <Trash size={16} weight="bold" />
                   <span className="hidden sm:inline">

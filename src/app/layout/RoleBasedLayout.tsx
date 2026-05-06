@@ -209,69 +209,66 @@ const RoleBasedLayout = () => {
         </aside>
 
         {/* SIDEBAR - MOBILE với OVERLAY */}
-        {sidebarOpen && (
-          <>
-            {/* Sidebar panel - 70% width - Z-INDEX CAO HƠN */}
+        {/* SIDEBAR - MOBILE với OVERLAY */}
+        <>
+          {/* ✅ OVERLAY MÀU XÁM - 30% còn lại - Z-INDEX THẤP HƠN */}
+          {sidebarOpen && (
             <div
-              className={`fixed inset-y-0 left-0 bg-white z-50 md:hidden flex flex-col w-[80%] 
-              transform transition-transform duration-300 ease-in-out 
-              ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
-              style={{ top: "0px" }}
-            >
-              {/* Close button */}
-              <div className="flex justify-start px-4 pt-4 pb-4">
-                <button
-                  onClick={closeAllMenus}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <HiX className="w-7 h-7 text-gray-700" />
-                </button>
-              </div>
-
-              {/* Navigation menu */}
-              <nav className="flex-1 overflow-y-auto px-4 py-2">
-                {menuItems.map((item) => (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    reloadDocument={item.shouldReload}
-                    onClick={closeAllMenus}
-                    className={({ isActive }) =>
-                      `block px-4 py-4 rounded-lg transition-colors mb-4 text-lg font-medium text-decoration-none ${
-                        isActive
-                          ? "bg-gray-500 text-white font-semibold"
-                          : "bg-gray-700 text-white hover:bg-gray-600"
-                      }`
-                    }
-                  >
-                    {item.name}
-                  </NavLink>
-                ))}
-              </nav>
-
-              {/* Logo at bottom */}
-              <div className="px-4 py-6 border-t border-gray-200">
-                <img
-                  src={logo}
-                  alt="Logo"
-                  className="w-full max-w-[200px] mx-auto"
-                />
-              </div>
-            </div>
-
-            {/* ✅ OVERLAY MÀU XÁM - 30% còn lại - Z-INDEX THẤP HƠN */}
-            <div
-              className={`fixed inset-0 bg-black z-40 md:hidden transition-opacity duration-300 ease-in-out ${
-                sidebarOpen
-                  ? "bg-opacity-50 pointer-events-auto"
-                  : "bg-opacity-0 pointer-events-none"
-              }`}
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden pointer-events-auto"
               style={{ top: "0px" }}
               onClick={closeAllMenus}
               aria-label="Close sidebar"
             />
-          </>
-        )}
+          )}
+
+          {/* Sidebar panel - 80% width - Z-INDEX CAO HƠN */}
+          <div
+            className={`fixed inset-y-0 left-0 bg-white z-50 md:hidden flex flex-col w-[80%] transform transition-transform duration-300 ease-in-out ${
+              sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+            style={{ top: "0px" }}
+          >
+            {/* Close button */}
+            <div className="flex justify-start px-4 pt-4 pb-4">
+              <button
+                onClick={closeAllMenus}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <HiX className="w-7 h-7 text-gray-700" />
+              </button>
+            </div>
+
+            {/* Navigation menu */}
+            <nav className="flex-1 overflow-y-auto px-4 py-2">
+              {menuItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  reloadDocument={item.shouldReload}
+                  onClick={closeAllMenus}
+                  className={({ isActive }) =>
+                    `block px-4 py-4 rounded-lg transition-colors mb-4 text-lg font-medium text-decoration-none ${
+                      isActive
+                        ? "bg-gray-500 text-white font-semibold"
+                        : "bg-gray-700 text-white hover:bg-gray-600"
+                    }`
+                  }
+                >
+                  {item.name}
+                </NavLink>
+              ))}
+            </nav>
+
+            {/* Logo at bottom */}
+            <div className="px-4 py-6 border-t border-gray-200">
+              <img
+                src={logo}
+                alt="Logo"
+                className="w-full max-w-[200px] mx-auto"
+              />
+            </div>
+          </div>
+        </>
 
         {/* USER MENU - MOBILE FULL OVERLAY */}
         {userMenuOpen && (

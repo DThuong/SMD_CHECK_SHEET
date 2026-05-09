@@ -8,13 +8,11 @@ import React, {
   useMemo,
 } from "react";
 import {
-  BarChart,
   Bar,
-  PieChart,
-  Pie,
   Cell,
   LineChart,
   Line,
+  ComposedChart,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -197,7 +195,7 @@ const SheetTable = ({
   selectedSheets,
   selectedPoint,
   selectedPointLabel,
-  tableRef,
+  detailTableRef,
   userRole,
   navigate,
   t,
@@ -212,7 +210,7 @@ const SheetTable = ({
   selectedSheets: any[];
   selectedPoint: { date: string; shift: "morning" | "night" } | null;
   selectedPointLabel: string | null;
-  tableRef: React.RefObject<HTMLDivElement | null>;
+  detailTableRef: React.RefObject<HTMLDivElement | null>;
   userRole?: string;
   navigate: ReturnType<typeof useNavigate>;
   t: (key: string, opts?: any) => string;
@@ -269,7 +267,7 @@ const SheetTable = ({
 
   return (
     <div
-      ref={tableRef}
+      ref={detailTableRef}
       className="bg-white rounded-xl shadow-lg p-4 mb-4 transition-all duration-300"
     >
       {/* Header */}
@@ -578,7 +576,7 @@ const Dashboard = () => {
     fullDate: string;
     shift: "morning" | "night";
   } | null>(null);
-  const tableRef = useRef<HTMLDivElement>(null);
+  const detailTableRef = useRef<HTMLDivElement>(null);
   // Lưu highlighted sheetId khi back từ SheetDetail
   const [highlightedSheetId, setHighlightedSheetId] = useState<number | null>(
     null,
@@ -700,7 +698,7 @@ const Dashboard = () => {
     });
 
     const timer = setTimeout(() => setHighlightedSheetId(null), 2500);
-    scrollDashboardToHighlightedRow(ds.sheetId!, tableRef.current);
+    scrollDashboardToHighlightedRow(ds.sheetId!, detailTableRef.current);
 
     return () => {
       clearTimeout(timer);
@@ -744,11 +742,13 @@ const Dashboard = () => {
           },
           {} as Record<string, number>,
         ),
-      ).map(([status, count]) => ({
-        name: status,
-        value: count,
-        color: STATUS_COLORS[status] || "#6b7280",
-      })),
+      )
+        .map(([status, count]) => ({
+          name: status,
+          value: count,
+          color: STATUS_COLORS[status] || "#6b7280",
+        }))
+        .sort((a, b) => a.value - b.value), // Sắp xếp từ nhỏ đến lớn theo yêu cầu
     [displaySheets],
   );
 
@@ -836,7 +836,7 @@ const Dashboard = () => {
       clearDashboardReturnContext();
       setTimeout(
         () =>
-          tableRef.current?.scrollIntoView({
+          detailTableRef.current?.scrollIntoView({
             behavior: "smooth",
             block: "start",
           }),
@@ -934,6 +934,18 @@ const Dashboard = () => {
 
     return (
       <div className="min-h-dvh bg-linear-to-br from-slate-50 to-slate-100 pb-4">
+        <style>
+          {`
+            .recharts-wrapper:focus, 
+            .recharts-surface:focus,
+            .recharts-wrapper *,
+            .recharts-surface * {
+              outline: none !important;
+              box-shadow: none !important;
+              -webkit-tap-highlight-color: transparent;
+            }
+          `}
+        </style>
         <div className="max-w-screen-2xl mx-auto">
           <div className="mb-6 pt-4">
             <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-2 lg:text-left text-center">
@@ -1074,7 +1086,7 @@ const Dashboard = () => {
             selectedPoint={selectedPoint}
             selectedPointLabel={selectedPointLabel}
             selectedPointInfo={selectedPointInfo}
-            tableRef={tableRef}
+            detailTableRef={detailTableRef}
             userRole={user?.role}
             highlightedSheetId={highlightedSheetId}
             navigate={navigate}
@@ -1085,67 +1097,98 @@ const Dashboard = () => {
             onDetailTablePageChange={setDetailTablePage}
           />
 
-          {/* Charts Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          {/* Charts Grid - Chuyển sang 1 cột mỗi biểu đồ 1 row (CHO NON-ADMIN) */}
+          <div className="flex flex-col gap-6 mb-6">
+            {/* Phân bổ Users theo Role */}
             <ChartCard title={t("charts.roleDistribution.title")}>
-              <BarChart data={roleStats}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize }}
-                  angle={-30}
-                  textAnchor="end"
-                  height={80}
-                  interval={0}
-                  stroke="#64748b"
-                />
-                <YAxis stroke="#64748b" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#fff",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
-                  }}
-                />
-                <Legend />
-                <Bar
-                  dataKey="value"
-                  fill="#3b82f6"
-                  radius={[8, 8, 0, 0]}
-                  name={t("charts.roleDistribution.count")}
-                >
-                  {roleStats.map((e, i) => (
-                    <Cell key={i} fill={e.color} />
-                  ))}
-                </Bar>
-              </BarChart>
+              <div className="h-[350px] outline-none">
+                <ResponsiveContainer width="100%" height="100%" style={{ outline: 'none' }}>
+                  <ComposedChart data={roleStats} style={{ outline: 'none' }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      axisLine={{ stroke: '#e2e8f0' }}
+                      tickLine={false}
+                      interval={0}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "rgba(255, 255, 255, 0.96)",
+                        border: "none",
+                        borderRadius: "12px",
+                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                      }}
+                      cursor={false}
+                      formatter={(value, name) => {
+                        if (name === "value" || name === "Trend") return [null, null];
+                        return [value, name];
+                      }}
+                    />
+                    <Legend verticalAlign="top" align="right" height={36} />
+                    <Bar
+                      dataKey="value"
+                      name={t("charts.roleDistribution.count")}
+                      fill="#374151"
+                      radius={0} // KHÔNG BO GÓC THEO YÊU CẦU
+                      barSize={45}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#94a3b8"
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: '#fff', stroke: '#94a3b8', strokeWidth: 2, cursor: 'pointer' }}
+                      activeDot={{ r: 6, strokeWidth: 0, cursor: 'pointer' }}
+                      legendType="none" // ẨN KHỎI LEGEND
+                      tooltipType="none"
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
             </ChartCard>
 
+            {/* Trạng thái SMD Sheets - Đã đổi sang ComposedChart */}
             <ChartCard title={t("charts.sheetStatus.title")}>
-              <PieChart>
-                <Pie
-                  data={statusStats}
-                  cx="50%"
-                  cy="50%"
-                  labelLine
-                  outerRadius={90}
-                  dataKey="value"
-                  label={({ name, percent }: any) =>
-                    `${name} ${(percent * 100).toFixed(0)}%`
-                  }
-                >
-                  {statusStats.map((e, i) => (
-                    <Cell key={i} fill={e.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#fff",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
-                  }}
-                />
-              </PieChart>
+              <div className="h-[350px] outline-none">
+                <ResponsiveContainer width="100%" height="100%" style={{ outline: 'none' }}>
+                  <ComposedChart data={statusStats} layout="vertical" style={{ outline: 'none' }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                    <XAxis type="number" hide />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      width={120}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "rgba(255, 255, 255, 0.96)",
+                        border: "none",
+                        borderRadius: "12px",
+                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                      }}
+                      cursor={false} // LOẠI BỎ ĐƯỜNG KẺ NGANG
+                    />
+                    <Legend verticalAlign="top" align="right" height={36} />
+                    <Bar
+                      dataKey="value"
+                      name={t("charts.sheetStatus.count")}
+                      fill="#374151"
+                      radius={0} // KHÔNG BO GÓC THEO YÊU CẦU
+                      barSize={30}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
             </ChartCard>
           </div>
         </div>
@@ -1226,6 +1269,18 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-dvh bg-linear-to-br from-slate-50 to-slate-100 pb-4">
+      <style>
+        {`
+          .recharts-wrapper:focus, 
+          .recharts-surface:focus,
+          .recharts-wrapper *,
+          .recharts-surface * {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+          }
+        `}
+      </style>
       <div className="max-w-screen-2xl mx-auto">
         <div className="mb-4 pt-4">
           <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-2 lg:text-left text-center">
@@ -1372,7 +1427,9 @@ const Dashboard = () => {
                 >
                   {item.value}
                 </p>
-                <p className="text-sm text-gray-600 mt-1 py-2">{item.label}</p>
+                <p className="text-sm text-gray-600 mt-1 py-2">
+                  {item.label}
+                </p>
               </div>
             ))}
           </div>
@@ -1401,7 +1458,7 @@ const Dashboard = () => {
           selectedPoint={selectedPoint}
           selectedPointLabel={selectedPointLabel}
           selectedPointInfo={selectedPointInfo}
-          tableRef={tableRef}
+          detailTableRef={detailTableRef}
           userRole={user?.role}
           highlightedSheetId={highlightedSheetId}
           navigate={navigate}
@@ -1412,67 +1469,98 @@ const Dashboard = () => {
           onDetailTablePageChange={setDetailTablePage}
         />
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        {/* Charts Grid - Chuyển sang 1 cột mỗi biểu đồ 1 row */}
+        <div className="flex flex-col gap-6 mb-6">
+          {/* Phân bổ Users theo Role */}
           <ChartCard title={t("charts.roleDistribution.title")}>
-            <BarChart data={roleStats}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis
-                dataKey="name"
-                tick={{ fontSize }}
-                angle={-30}
-                textAnchor="end"
-                height={80}
-                interval={0}
-                stroke="#64748b"
-              />
-              <YAxis stroke="#64748b" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#fff",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "8px",
-                }}
-              />
-              <Legend />
-              <Bar
-                dataKey="value"
-                fill="#3b82f6"
-                radius={[8, 8, 0, 0]}
-                name={t("charts.roleDistribution.count")}
-              >
-                {roleStats.map((e, i) => (
-                  <Cell key={i} fill={e.color} />
-                ))}
-              </Bar>
-            </BarChart>
+            <div className="h-[350px] outline-none">
+              <ResponsiveContainer width="100%" height="100%" style={{ outline: 'none' }}>
+                <ComposedChart data={roleStats} style={{ outline: 'none' }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    axisLine={{ stroke: '#e2e8f0' }}
+                    tickLine={false}
+                    interval={0}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "rgba(255, 255, 255, 0.96)",
+                      border: "none",
+                      borderRadius: "12px",
+                      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                    }}
+                    cursor={false}
+                    formatter={(value, name) => {
+                      if (name === "value" || name === "Trend") return [null, null];
+                      return [value, name];
+                    }}
+                  />
+                  <Legend verticalAlign="top" align="right" height={36} />
+                  <Bar
+                    dataKey="value"
+                    name={t("charts.roleDistribution.count")}
+                    fill="#374151"
+                    radius={0} // KHÔNG BO GÓC THEO YÊU CẦU
+                    barSize={45}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#94a3b8"
+                    strokeWidth={3}
+                    dot={{ r: 4, fill: '#fff', stroke: '#94a3b8', strokeWidth: 2, cursor: 'pointer' }}
+                    activeDot={{ r: 6, strokeWidth: 0, cursor: 'pointer' }}
+                    legendType="none" // ẨN KHỎI LEGEND
+                    tooltipType="none"
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
           </ChartCard>
 
+          {/* Trạng thái SMD Sheets - Đã đổi sang ComposedChart */}
           <ChartCard title={t("charts.sheetStatus.title")}>
-            <PieChart>
-              <Pie
-                data={statusStats}
-                cx="50%"
-                cy="50%"
-                labelLine
-                outerRadius={90}
-                dataKey="value"
-                label={({ name, percent }: any) =>
-                  `${name} ${(percent * 100).toFixed(0)}%`
-                }
-              >
-                {statusStats.map((e, i) => (
-                  <Cell key={i} fill={e.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#fff",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "8px",
-                }}
-              />
-            </PieChart>
+            <div className="h-[350px] outline-none">
+              <ResponsiveContainer width="100%" height="100%" style={{ outline: 'none' }}>
+                <ComposedChart data={statusStats} layout="vertical" style={{ outline: 'none' }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                  <XAxis type="number" hide />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    width={120}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "rgba(255, 255, 255, 0.96)",
+                      border: "none",
+                      borderRadius: "12px",
+                      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                    }}
+                    cursor={false} // LOẠI BỎ ĐƯỜNG KẺ NGANG
+                  />
+                  <Legend verticalAlign="top" align="right" height={36} />
+                  <Bar
+                    dataKey="value"
+                    name={t("charts.sheetStatus.count")}
+                    fill="#374151"
+                    radius={0}
+                    barSize={30}
+                    style={{ cursor: 'pointer' }} // THÊM CURSOR POINTER
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
           </ChartCard>
         </div>
       </div>

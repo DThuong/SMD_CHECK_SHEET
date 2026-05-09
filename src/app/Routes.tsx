@@ -25,6 +25,7 @@ import SheetDetailViewer from '../components/detail_Sheet/SheetDetailViewer';
 import FileDetailViewer from '../pages/FileDetailViewer';
 import ChangePassword from '../pages/ChangePassword';
 import Plan from '../pages/managers_role/Plan';
+import PatrolComponent from '../pages/managers_role/PatrolComponent';
 
 // ========================================
 // Component bảo vệ route cho PQC
@@ -148,6 +149,7 @@ const App = () => {
           <Route path="/change-password" element={<ChangePasswordRoute><ChangePassword /></ChangePasswordRoute>} />
           <Route path="/pqc-sheet-detail/:id" element={<PQCRoute><SmdSheetDetail /></PQCRoute>} />
           <Route path="/pqc-files/:id/:fileType" element={<PQCRoute><FileDetailViewer /></PQCRoute>} />
+          <Route path="/pqc-patrol" element={<PQCRoute><PatrolComponent /></PQCRoute>} />
           <Route path="*" element={<ErrorPage />} />
         </Route>
 
@@ -159,6 +161,7 @@ const App = () => {
           <Route path="/admin/smd-sheet-logs" element={<Logs />} />
           <Route path="/admin/sheet-detail/:id" element={<SheetDetailViewer />} />
           <Route path="/admin/settings" element={<Settings />} />
+          <Route path="/admin/patrol" element={<PatrolComponent />} />
           <Route path="/admin/files/:id/:fileType" element={<FileDetailViewer />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>
@@ -171,6 +174,7 @@ const App = () => {
           <Route path="/:role/settings" element={<Settings />} />
           <Route path="/:role/change-password" element={<ChangePassword />} />
           <Route path="/:role/sheet-detail/:id" element={<SheetDetailViewer />} />
+          <Route path="/:role/patrol" element={<PatrolComponent />} />
           <Route path="/:role/files/:id/:fileType" element={<FileDetailViewer />} />
           <Route path="/:role" element={<RoleDynamicRedirect />} />
         </Route>

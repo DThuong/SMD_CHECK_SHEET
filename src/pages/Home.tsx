@@ -524,12 +524,12 @@ const Home = () => {
       {/* Main content */}
       <div className="bg-white rounded-lg shadow p-4">
         {/* Tabs */}
-        <div className="flex gap-2 mb-4 mx-0">
+        <div className="flex w-full gap-2 mb-4 mx-0">
           <button
             onClick={handleCreateNewSheet}
             disabled={creatingSheet || user?.role?.toUpperCase() !== 'PQC'}
-            className={`px-4 py-2 rounded-md transition-colors ${
-              activeTab === 'create' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
+            className={`flex-1 px-4 py-3 rounded-md transition-colors font-medium ${
+              activeTab === 'create' ? 'bg-blue-500 text-white shadow-sm' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             } ${creatingSheet || user?.role?.toUpperCase() !== 'PQC' ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {creatingSheet ? 'Đang tạo...' : 'Tạo Sheet Mới'}
@@ -548,8 +548,8 @@ const Home = () => {
 
           <button
             onClick={() => setActiveTab('list')}
-            className={`px-4 py-2 rounded-md transition-colors ${
-              activeTab === 'list' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
+            className={`flex-1 px-4 py-3 rounded-md transition-colors font-medium ${
+              activeTab === 'list' ? 'bg-blue-500 text-white shadow-sm' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}
           >
             {user?.role?.toUpperCase() === 'PQC' ? 'Sheets của tôi' : 'Tất cả Sheets'}

@@ -60,7 +60,8 @@
       "count": "Count"
     },
     "sheetStatus": {
-      "title": "SMD Sheet Status"
+      "title": "SMD Sheet Status",
+      "count": "Count"
     }
   },
   "tables": {

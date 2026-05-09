@@ -60,7 +60,8 @@
       "count": "Số lượng"
     },
     "sheetStatus": {
-      "title": "Trạng thái SMD Sheets"
+      "title": "Trạng thái SMD Sheets",
+      "count": "Số lượng"
     }
   },
   "tables": {

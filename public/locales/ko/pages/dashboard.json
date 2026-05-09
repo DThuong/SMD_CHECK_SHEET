@@ -60,7 +60,8 @@
       "count": "개수"
     },
     "sheetStatus": {
-      "title": "SMD 시트 상태"
+      "title": "SMD 시트 상태",
+      "count": "수량"
     }
   },
   "tables": {

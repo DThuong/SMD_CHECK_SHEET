@@ -3,13 +3,15 @@ import logo from '../../assets/image/brand_image_3.webp';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logoutUser } from '../../redux/slices/authSlice';
-import { FaKey } from 'react-icons/fa6';
+import { FaKey, FaListUl, FaChartPie, FaMicrochip, FaPencil } from 'react-icons/fa6';
 import { TbLogout } from "react-icons/tb";
 
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isPatrolOpen, setIsPatrolOpen] = useState(false);
+  const [isMobilePatrolOpen, setIsMobilePatrolOpen] = useState(false);
   
   const { user, isAuthenticated, loading } = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
@@ -30,13 +32,17 @@ const Header = () => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const dropdownContainer = document.querySelector('.user-dropdown');
+      const patrolDropdownContainer = document.querySelector('.patrol-dropdown');
       
       if (dropdownContainer && !dropdownContainer.contains(target)) {
         setIsDropdownOpen(false);
       }
+      if (patrolDropdownContainer && !patrolDropdownContainer.contains(target)) {
+        setIsPatrolOpen(false);
+      }
     };
 
-    if (isDropdownOpen) {
+    if (isDropdownOpen || isPatrolOpen) {
       setTimeout(() => {
         document.addEventListener('mousedown', handleClickOutside);
       }, 0);
@@ -45,7 +51,7 @@ const Header = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isDropdownOpen]);
+  }, [isDropdownOpen, isPatrolOpen]);
 
   const handleChangePassword = () => {
     setIsDropdownOpen(false);
@@ -87,21 +93,22 @@ const Header = () => {
           </div>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-6">
+            {/* Removed standalone Patrol dropdown */}
             {user && isAuthenticated ? (
               <>
                 
                 <div className="flex items-center gap-1">
                   {/* Welcome message */}
-                  <span className="text-gray-700 font-medium">
-                    Welcome, <span className="text-blue-600 font-semibold">{user.fullName}</span>
+                  <span className="text-sm text-gray-600">
+                    Xin chào, <span className="text-blue-600">{user.fullName}</span>
                   </span>
 
                   {/* User dropdown */}
                   <div className="relative user-dropdown">
                     {isDropdownOpen && (
                       <div 
-                        className="fixed inset-0 z-9998" 
+                        className="fixed inset-0 z-40" 
                         onClick={(e) => {
                           e.stopPropagation();
                           setIsDropdownOpen(false);
@@ -111,7 +118,7 @@ const Header = () => {
                     )}
                     <button
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition relative z-9999"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition relative z-50"
                     >
                       <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                         {user?.username?.charAt(0).toUpperCase() }
@@ -128,13 +135,71 @@ const Header = () => {
 
                     {/* Dropdown menu */}
                     {isDropdownOpen && (
-                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-9999">
+                      <div className="absolute right-0 mt-2 w-56 bg-white shadow-xl border border-gray-200 z-50">
+                        <div className="">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsPatrolOpen(!isPatrolOpen);
+                            }}
+                            className="w-full flex items-center justify-between px-4 py-2 text-sm font-medium transition-colors rounded-md text-gray-600 hover:bg-gray-50"
+                          >
+                            <div className="flex items-center gap-2">
+                              <FaMicrochip className="text-gray-400" />
+                              <span>Patrol</span>
+                            </div>
+                            <svg className={`w-4 h-4 transition-transform ${isPatrolOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+
+                          {isPatrolOpen && (
+                            <div className="space-y-1 animate-fade-in">
+                               <Link 
+                                to="/pqc-patrol?view=list&type=daily" 
+                                className="flex items-center gap-2 px-8! py-2 text-decoration-none text-sm !text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                                onClick={() => {
+                                  setIsDropdownOpen(false);
+                                  setIsPatrolOpen(false);
+                                }}
+                              >
+                                <FaPencil className="text-gray-400 text-xs" />
+                                Patrol Ngày
+                              </Link>
+                              <Link 
+                                to="/pqc-patrol?view=list&type=weekly" 
+                                className="flex items-center gap-2 px-8! py-2 text-decoration-none text-sm !text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                                onClick={() => {
+                                  setIsDropdownOpen(false);
+                                  setIsPatrolOpen(false);
+                                }}
+                              >
+                                <FaPencil className="text-gray-400 text-xs" />
+                                Patrol Tuần
+                              </Link>
+                              <Link 
+                                to="/pqc-patrol?view=report" 
+                                className="flex items-center gap-2 px-8! py-2 text-sm text-decoration-none !text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                                onClick={() => {
+                                  setIsDropdownOpen(false);
+                                  setIsPatrolOpen(false);
+                                }}
+                              >
+                                <FaChartPie className="text-gray-400 text-xs" />
+                                Báo cáo Patrol
+                              </Link>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="border-t border-gray-100"></div>
+
                         <button
                           onClick={handleChangePassword}
                           disabled={loading}
-                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
                         >
-                          <FaKey />
+                          <FaKey className="text-gray-400" />
                           Đổi mật khẩu
                         </button>
 
@@ -211,11 +276,55 @@ const Header = () => {
               </button>
             </div>
 
-            <div className="flex-1 px-4 py-6 mt-3">
+            <div className="flex-1 px-4 py-6 mt-3 overflow-y-auto">
               {user ? (
                 // Menu khi đã login
                 <>
-                <button
+                  <div className="mb-3 overflow-hidden transition-all bg-gray-700">
+                    <button
+                      onClick={() => setIsMobilePatrolOpen(!isMobilePatrolOpen)}
+                      className={`w-full flex items-center justify-between px-4 py-3 font-medium transition text-white ${window.location.pathname.includes('patrol') ? 'bg-gray-500' : 'hover:bg-gray-600'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <FaMicrochip />
+                        <span>Patrol Check list</span>
+                      </div>
+                      <svg className={`w-5 h-5 transition-transform ${isMobilePatrolOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    
+                    <div className={`grid transition-all duration-300 ease-in-out ${isMobilePatrolOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                      <div className="overflow-hidden">
+                        <Link 
+                          to="/pqc-patrol?view=list&type=daily" 
+                          className={`flex items-center h-11 gap-3 px-4 text-decoration-none text-white transition-colors ${window.location.href.includes('type=daily') ? 'bg-gray-600 font-bold' : 'hover:bg-gray-600/70'}`} 
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <FaPencil className="opacity-70" />
+                          Patrol Ngày
+                        </Link>
+                        <Link 
+                          to="/pqc-patrol?view=list&type=weekly" 
+                          className={`flex items-center h-11 gap-3 px-4 text-decoration-none text-white transition-colors ${window.location.href.includes('type=weekly') ? 'bg-gray-600 font-bold' : 'hover:bg-gray-600/70'}`} 
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <FaPencil className="opacity-70" />
+                          Patrol Tuần
+                        </Link>
+                        <Link 
+                          to="/pqc-patrol?view=report" 
+                          className={`flex items-center h-11 gap-3 px-4 text-decoration-none text-white transition-colors ${window.location.href.includes('view=report') ? 'bg-gray-600 font-bold' : 'hover:bg-gray-600/70'}`} 
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <FaChartPie className="opacity-70" />
+                          Báo cáo Patrol
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <button
                   disabled={loading}
                     onClick={handleChangePassword}
                     className="w-full flex items-center gap-3 px-3 py-3 mb-3 rounded-lg font-medium bg-gray-500 hover:bg-gray-600 text-white transition"

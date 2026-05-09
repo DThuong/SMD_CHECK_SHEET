@@ -134,7 +134,7 @@ const Logs = () => {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = 5;
+  const itemsPerPage = 20;
   const [confirmingSheetId, setConfirmingSheetId] = useState<number | null>(
     null,
   );
@@ -683,12 +683,11 @@ const Logs = () => {
     if (user.role !== ROLES.PQCLEADER) return false;
     const status = sheet.status?.toLowerCase();
     // Chỉ được xóa khi status là PQCDone (PQC đã ký xong, nhưng PQCLeader chưa ký)
-    return status === STATUS.PQC_DONE.toLowerCase();
+    return status === STATUS.PQC_DONE.toLowerCase() || status === STATUS.PENDING.toLowerCase();
   };
 
   const handleDeleteSheet = async () => {
     if (!confirmDeleteModal.sheet) return;
-
     const sheetId = confirmDeleteModal.sheet.id;
 
     try {
@@ -1036,7 +1035,7 @@ const Logs = () => {
 
   // ==================== LIST VIEW ====================
   return (
-    <div className="min-h-screen bg-gray-50 select-none">
+    <div className="min-h-screen bg-gray-50">
       <Notification
         show={notification.show}
         type={notification.type}
@@ -1203,7 +1202,7 @@ const Logs = () => {
                         <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center">
                           {getStatusBadge(sheet)}
                         </td>
-                        <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center">
+                        <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center select-none">
                           {canUserSignSheet(sheet) ? (
                             <button
                               onClick={() => {
@@ -1236,7 +1235,7 @@ const Logs = () => {
                             </span>
                           )}
                         </td>
-                        <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center">
+                        <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center select-none">
                           <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 justify-center">
                             <button
                               onClick={() => handleViewDetail(sheet)}
@@ -1341,7 +1340,7 @@ const Logs = () => {
                       </div>
                     </div>
 
-                    <div className="flex lg:flex-row md:flex-row flex-col gap-2">
+                    <div className="flex lg:flex-row md:flex-row flex-col gap-2 select-none">
                       <button
                         onClick={() => handleViewDetail(sheet)}
                         className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
@@ -1430,7 +1429,7 @@ const Logs = () => {
                           "flex items-center lg:justify-center md:justify-center gap-1 sm:gap-2 px-2 min-w-max sm:px-0"
                         }
                         pageLinkClassName={
-                          "px-3 py-2 sm:px-3 sm:py-2 rounded-lg block ring-1 ring-inset ring-gray-300 hover:bg-blue-50 hover:ring-blue-500 transition-all text-xs sm:text-sm font-medium no-underline"
+                          "px-3 py-2 sm:px-3 sm:py-2 rounded-lg block ring-1 ring-inset ring-gray-300 hover:bg-blue-50 hover:ring-blue-500 transition-all text-xs sm:text-sm font-medium no-underline!"
                         }
                         previousLinkClassName={
                           "px-3 py-2 sm:px-4 sm:py-2 rounded-lg block ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium no-underline!"

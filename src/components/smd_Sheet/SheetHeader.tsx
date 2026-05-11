@@ -442,8 +442,7 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                 {/* LCR FILE DATA */}
                 <td
                   colSpan={2}
-                  className={`border border-gray-600 px-2 py-1 text-xs text-left ${lcrFileStatus.bgColor}`}
-                  style={{ maxWidth: "300px", width: "300px" }}
+                  className={`border border-gray-600 px-2 py-1 text-xs text-left w-48 ${lcrFileStatus.bgColor}`}
                 >
                   <div className="text-sm font-semibold text-gray-800">
                     <div className="wrap-break-words whitespace-normal">
@@ -483,13 +482,12 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                 {/* REFLOW FILE DATA */}
                 <td
                   colSpan={2}
-                  className={`border border-gray-600 px-2 py-1 text-xs text-left ${
+                  className={`border border-gray-600 px-2 py-1 text-xs text-left w-48 ${
                     currentSheet?.pdfFileUrl &&
                     currentSheet.pdfFileUrl.trim() !== ""
                       ? "bg-green-50"
                       : "bg-orange-50"
                   }`}
-                  style={{ maxWidth: "180px", width: "180px" }}
                 >
                   <div className="text-sm font-semibold text-gray-800 wrap-break-words whitespace-normal">
                     {currentSheet?.pdfFileUrl &&
@@ -511,13 +509,12 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                 {/* NOTE FILE DATA - giữ nguyên */}
                 <td
                   colSpan={2}
-                  className={`border border-gray-600 px-2 py-1 text-xs text-left ${
+                  className={`border border-gray-600 px-2 py-1 text-xs text-left w-48 ${
                     currentSheet?.noteFile &&
                     currentSheet.noteFile.trim() !== ""
                       ? "bg-green-50"
                       : "bg-orange-50"
                   }`}
-                  style={{ maxWidth: "150px", width: "150px" }}
                 >
                   <div className="text-sm font-semibold text-gray-800 wrap-break-words whitespace-normal">
                     {currentSheet?.noteFile &&

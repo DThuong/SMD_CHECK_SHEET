@@ -12,6 +12,7 @@ import {
   AiOutlineHistory,
   AiOutlineLoading3Quarters,
 } from "react-icons/ai";
+import { MdKeyboardReturn } from "react-icons/md";
 import { FaRegUserCircle } from "react-icons/fa";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import ReactPaginate from "react-paginate";
@@ -37,6 +38,7 @@ import {
   fetchChangeModel,
   getSheetByFilter,
   updateSheetStatus,
+  returnSheetToPending,
   getSheetStatusHistory,
   clearStatusHistory,
 } from "../../redux/slices/changeModelSlice";
@@ -120,6 +122,10 @@ const Logs = () => {
     open: false,
     sheet: null,
   });
+  const [confirmReturnModal, setConfirmReturnModal] = useState<{
+    open: boolean;
+    sheet: ChangeModelResponse | null;
+  }>({ open: false, sheet: null });
 
   // Filter state
   const [filter, setFilter] = useState<SheetFilter>({
@@ -684,6 +690,25 @@ const Logs = () => {
     const status = sheet.status?.toLowerCase();
     // Chỉ được xóa khi status là PQCDone (PQC đã ký xong, nhưng PQCLeader chưa ký)
     return status === STATUS.PQC_DONE.toLowerCase() || status === STATUS.PENDING.toLowerCase();
+  };
+
+  const canReturnToPending = (sheet: ChangeModelResponse): boolean => {
+    if (!user) return false;
+    if (user.role !== ROLES.PQCLEADER) return false;
+    return sheet.status?.toLowerCase() === STATUS.PQC_DONE.toLowerCase();
+  };
+
+  const handleReturnToPending = async (sheet: ChangeModelResponse) => {
+    try {
+      setConfirmingSheetId(sheet.id);
+      await dispatch(returnSheetToPending({ sheetId: sheet.id })).unwrap();
+      showNotification("success", `Sheet #${sheet.id} đã được trả về Pending`);
+      await loadSheets();
+    } catch (error: any) {
+      showNotification("error", "Lỗi", error || "Không thể trả sheet về Pending");
+    } finally {
+      setConfirmingSheetId(null);
+    }
   };
 
   const handleDeleteSheet = async () => {
@@ -1281,6 +1306,19 @@ const Logs = () => {
                                 <span>Xóa Sheet</span>
                               </button>
                             )}
+
+                            {canReturnToPending(sheet) && (
+                              <button
+                                onClick={() => setConfirmReturnModal({ open: true, sheet })}
+                                className="inline-flex items-center justify-center gap-1 px-2 py-2 
+                                  bg-amber-500 text-white rounded hover:bg-amber-600 
+                                  transition-colors text-xs font-medium whitespace-nowrap"
+                                title="Trả sheet về Pending để PQC chỉnh sửa lại"
+                              >
+                                <MdKeyboardReturn className="w-4 h-4" />
+                                <span>Trả về</span>
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -1406,6 +1444,18 @@ const Logs = () => {
                           <span>Xóa Sheet</span>
                         </button>
                       )}
+
+                      {canReturnToPending(sheet) && (
+                        <button
+                          onClick={() => setConfirmReturnModal({ open: true, sheet })}
+                          className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 
+                            bg-amber-500 text-white rounded-lg hover:bg-amber-600 
+                            transition-colors text-sm font-semibold"
+                        >
+                          <MdKeyboardReturn className="w-4 h-4" />
+                          <span>Trả về</span>
+                        </button>
+                      )}                
                     </div>
                   </div>
                 ))}
@@ -1472,6 +1522,28 @@ const Logs = () => {
         onConfirm={handleDeleteSheet}
         onCancel={closeDeleteConfirm}
         type="danger"
+      />
+
+      <ConfirmModal
+        open={confirmReturnModal.open}
+        title="Trả sheet về Pending"
+        message={
+          confirmReturnModal.sheet
+            ? `Trả Sheet #${confirmReturnModal.sheet.id} về Pending?\n\n` +
+              `WorkOrder: ${confirmReturnModal.sheet.checkModel?.workOrder || "N/A"}\n` +
+              `PQC sẽ cần ký lại từ đầu.`
+            : ""
+        }
+        confirmText="Trả về"
+        cancelText="Hủy"
+        onConfirm={() => {
+          if (confirmReturnModal.sheet) {
+            handleReturnToPending(confirmReturnModal.sheet);
+            setConfirmReturnModal({ open: false, sheet: null });
+          }
+        }}
+        onCancel={() => setConfirmReturnModal({ open: false, sheet: null })}
+        type="warning"
       />
     </div>
   );

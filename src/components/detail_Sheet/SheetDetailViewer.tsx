@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { IoEyeSharp } from "react-icons/io5";
-import { MdModeEdit } from "react-icons/md";
+import { MdKeyboardReturn, MdModeEdit } from "react-icons/md";
 import {
   clearAllSubTableData,
   addCompletedTable,
@@ -13,6 +13,7 @@ import {
 import {
   getSheetWithFullObject,
   updateSheetStatus,
+  returnSheetToPending,
   clearError,
   type ChangeModelResponse,
 } from "../../redux/slices/changeModelSlice";
@@ -31,6 +32,7 @@ import TimeChangeModels from "../smd_Sheet/TimeChangeModels";
 import { FaRegClock } from "react-icons/fa6";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
+import { ConfirmModal } from "../general/ConfirmModal";
 import {
   REQUIRED_FIELDS_CONFIG,
   hasAllRequiredData,
@@ -63,6 +65,31 @@ const SheetDetailViewer = () => {
 
   const contentRef = useRef<HTMLDivElement>(null);
   const { lcrValidation } = useAppSelector((state) => state.fileSlice);
+
+  const [returningToPending, setReturningToPending] = useState(false);
+  const [confirmReturnModal, setConfirmReturnModal] = useState(false);
+
+  const canReturnToPending = (): boolean => {
+    if (!user || !currentSheet) return false;
+    if (user.role !== 'PQCLeader') return false;
+    return currentSheet.status?.toLowerCase() === 'pqcdone';
+  };
+
+  const handleReturnToPending = async () => {
+    if (!currentSheet) return;
+    try {
+      setReturningToPending(true);
+      await dispatch(returnSheetToPending({ sheetId: currentSheet.id })).unwrap();
+      showNotification('success', `Sheet #${currentSheet.id} đã được trả về Pending`);
+      setConfirmReturnModal(false);
+      // Reload lại sheet để UI đồng bộ
+      await dispatch(getSheetWithFullObject(currentSheet.id)).unwrap();
+    } catch (error: any) {
+      showNotification('error', 'Lỗi', error || 'Không thể trả sheet về Pending');
+    } finally {
+      setReturningToPending(false);
+    }
+  };
 
   const checkLcrFileValidity = (): boolean => {
     if (
@@ -813,6 +840,20 @@ const SheetDetailViewer = () => {
             {t("button.back")}
           </button>
 
+          {canReturnToPending() && (
+            <button
+              onClick={() => setConfirmReturnModal(true)}
+              disabled={returningToPending}
+              className="w-full px-4 py-3 bg-amber-500 text-white text-sm font-semibold 
+                        hover:bg-amber-600 transition-colors shadow-md 
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                        flex items-center justify-center gap-2"
+            >
+              <MdKeyboardReturn size={18} />
+              {returningToPending ? 'Đang xử lý...' : 'Trả về Pending'}
+            </button>
+          )}
+
           {isConfirmable && (
             <button
               onClick={handleConfirm}
@@ -981,6 +1022,20 @@ const SheetDetailViewer = () => {
         `}</style>
         )}
       </div>
+      <ConfirmModal
+        open={confirmReturnModal}
+        title="Trả sheet về Pending"
+        message={
+          `Trả Sheet #${currentSheet.id} về Pending?\n\n` +
+          `WorkOrder: ${currentSheet.checkModel?.workOrder || 'N/A'}\n` +
+          `PQC sẽ cần ký lại từ đầu.`
+        }
+        confirmText={returningToPending ? 'Đang xử lý...' : 'Trả về'}
+        cancelText="Hủy"
+        onConfirm={handleReturnToPending}
+        onCancel={() => setConfirmReturnModal(false)}
+        type="warning"
+      />
     </div>
   );
 };

@@ -359,6 +359,27 @@ export const updateSheetStatus = createAsyncThunk(
     }
   }
 );
+/**
+ * RETURN STATUS TO PENDING
+ * PUT /api/ChangeModel/status/{id}
+ */
+export const returnSheetToPending = createAsyncThunk(
+  'changeModel/returnToPending',
+  async ({ sheetId }: { sheetId: number }, { rejectWithValue }) => {
+    try {
+      await smdApi.put(`ChangeModel/status-reject/${sheetId}`);
+      return { sheetId };
+    } catch (error: any) {
+      if (error.response?.status === 401)
+        return rejectWithValue('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+      if (error.response?.status === 404)
+        return rejectWithValue('Không tìm thấy sheet với ID này.');
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Không thể trả sheet về Pending'
+      );
+    }
+  }
+);
 
 /** 
  * FILTER
@@ -918,6 +939,34 @@ const changeModelSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
+
+      // ==================== RETURN TO PENDING ====================
+      builder
+        .addCase(returnSheetToPending.pending, (state) => {
+          state.loading = true;
+          state.error = null;
+        })
+        .addCase(returnSheetToPending.fulfilled, (state, action) => {
+          state.loading = false;
+          state.error = null;
+          const { sheetId } = action.payload;
+
+          // Update status trong cả 2 list
+          const updateStatus = (sheet: ChangeModelResponse) =>
+            sheet.id === sheetId ? { ...sheet, status: 'Pending' } : sheet;
+
+          if (state.filteredSheets) state.filteredSheets = state.filteredSheets.map(updateStatus);
+          if (state.sheets) state.sheets = state.sheets.map(updateStatus);
+
+          // Nếu đang xem sheet này thì cũng update currentSheet
+          if (state.currentSheet?.id === sheetId) {
+            state.currentSheet = { ...state.currentSheet, status: 'Pending' };
+          }
+        })
+        .addCase(returnSheetToPending.rejected, (state, action) => {
+          state.loading = false;
+          state.error = action.payload as string;
+        });
   },
 });
 

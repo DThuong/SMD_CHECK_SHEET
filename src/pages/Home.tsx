@@ -53,13 +53,13 @@ const SESSION_KEY = 'home_filter_state';
 // ─── Session helpers ──────────────────────────────────────────────────────────
 
 function saveSession(data: object) {
-  try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(data)); } catch {}
+  try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(data)); } catch { }
 }
 function readSession(): any {
   try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || '{}'); } catch { return {}; }
 }
 function clearSession() {
-  try { sessionStorage.removeItem(SESSION_KEY); } catch {}
+  try { sessionStorage.removeItem(SESSION_KEY); } catch { }
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -133,7 +133,7 @@ const Home = () => {
   // ── Login noti
   useEffect(() => {
     if (!showLoginNoti) return;
-    try { sessionStorage.removeItem("justLoggedIn"); } catch {}
+    try { sessionStorage.removeItem("justLoggedIn"); } catch { }
     const timer = setTimeout(() => setShowLoginNoti(false), 2000);
     return () => clearTimeout(timer);
   }, [showLoginNoti]);
@@ -352,7 +352,7 @@ const Home = () => {
     setCandidatesTick(0);
     setFilter(EMPTY_FILTER);
     setCurrentPage(0);
-    try { await dispatch(fetchChangeModel()).unwrap(); } catch {}
+    try { await dispatch(fetchChangeModel()).unwrap(); } catch { }
   }, [dispatch]);
 
   // ── Format datetime hiển thị
@@ -499,12 +499,18 @@ const Home = () => {
 
       {/* Login notification */}
       {user && isAuthenticated && showLoginNoti && (
-        <div className="fixed top-4 left-1/2 px-3 -translate-x-1/2 z-50 w-full max-w-[900px] animate-slide-down">
-          <div className="bg-green-50 border-l-4 border-green-600 p-3 rounded shadow">
-            <p className="font-bold text-green-800 text-lg">Đăng nhập thành công!</p>
-            <p className="text-green-700 text-sm mt-1">
-              User: <strong>{user?.username}</strong> - Role: <strong>{user?.role}</strong>
-            </p>
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] animate-slide-down px-2 whitespace-nowrap flex-nowrap">
+          <div className="bg-green-50 border border-green-200 rounded-full shadow-lg flex flex-row items-center gap-3 py-2 px-4 flex-nowrap">
+            <span className="flex items-center justify-center w-5 h-5 bg-green-500 text-white rounded-full text-xs shrink-0">✓</span>
+            <span className="font-bold text-green-800 text-sm shrink-0">
+              Đăng nhập thành công!
+            </span>
+            <div className="h-4 w-px bg-green-300 shrink-0" />
+            <div className="text-green-700 text-xs font-medium flex flex-row items-center gap-1 shrink-0 flex-nowrap">
+              <span>User: <strong className="text-green-900">{user?.username}</strong></span>
+              <span className="mx-1 text-green-300">|</span>
+              <span>Role: <strong className="text-green-900">{user?.role}</strong></span>
+            </div>
           </div>
         </div>
       )}
@@ -528,9 +534,8 @@ const Home = () => {
           <button
             onClick={handleCreateNewSheet}
             disabled={creatingSheet || user?.role?.toUpperCase() !== 'PQC'}
-            className={`flex-1 px-4 py-3 rounded-md transition-colors font-medium ${
-              activeTab === 'create' ? 'bg-blue-500 text-white shadow-sm' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-            } ${creatingSheet || user?.role?.toUpperCase() !== 'PQC' ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`flex-1 px-4 py-3 rounded-md transition-colors font-medium ${activeTab === 'create' ? 'bg-blue-500 text-white shadow-sm' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              } ${creatingSheet || user?.role?.toUpperCase() !== 'PQC' ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {creatingSheet ? 'Đang tạo...' : 'Tạo Sheet Mới'}
           </button>
@@ -548,9 +553,8 @@ const Home = () => {
 
           <button
             onClick={() => setActiveTab('list')}
-            className={`flex-1 px-4 py-3 rounded-md transition-colors font-medium ${
-              activeTab === 'list' ? 'bg-blue-500 text-white shadow-sm' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-            }`}
+            className={`flex-1 px-4 py-3 rounded-md transition-colors font-medium ${activeTab === 'list' ? 'bg-blue-500 text-white shadow-sm' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              }`}
           >
             {user?.role?.toUpperCase() === 'PQC' ? 'Sheets của tôi' : 'Tất cả Sheets'}
           </button>
@@ -644,11 +648,10 @@ const Home = () => {
                       <div
                         key={sheet.id}
                         id={`sheet-row-${sheet.id}`}
-                        className={`lg:p-4 p-3 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-500 bg-white cursor-pointer ${
-                          selectedSheetId === sheet.id
-                            ? 'bg-yellow-50 border-yellow-400 shadow-xl ring-2 ring-yellow-300'
-                            : ''
-                        }`}
+                        className={`lg:p-4 p-3 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-500 bg-white cursor-pointer ${selectedSheetId === sheet.id
+                          ? 'bg-yellow-50 border-yellow-400 shadow-xl ring-2 ring-yellow-300'
+                          : ''
+                          }`}
                       >
                         <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center justify-between">
                           <div className="flex-1 w-full">

@@ -98,9 +98,8 @@ const AdminLayout = () => {
 
       {/* ===================== DESKTOP SIDEBAR ===================== */}
       <aside
-        className={`hidden md:flex flex-col bg-white flex-shrink-0 transition-all duration-300 ease-in-out z-40 ${
-          isSidebarCollapsed ? "w-20" : "w-64 lg:w-96"
-        }`}
+        className={`hidden md:flex flex-col bg-white flex-shrink-0 transition-all duration-300 ease-in-out z-40 ${isSidebarCollapsed ? "w-20" : "w-64 lg:w-96"
+          }`}
       >
         {/* Sidebar Title */}
         <div className="h-20 flex items-center shrink-0 overflow-hidden">
@@ -130,11 +129,10 @@ const AdminLayout = () => {
                 >
                   <button
                     onClick={() => !isSidebarCollapsed && setIsPatrolOpen(!isPatrolOpen)}
-                    className={`w-full h-11 transition-colors flex items-center gap-2 rounded-lg ${
-                      isSidebarCollapsed
+                    className={`w-full h-11 transition-colors flex items-center gap-2 rounded-lg ${isSidebarCollapsed
                         ? "justify-center py-4 text-gray-600! hover:text-gray-900!"
                         : `px-4 py-3 justify-between ${isDropdownActive ? "bg-gray-500 text-white font-semibold" : "bg-gray-700 text-white hover:bg-gray-600"}`
-                    }`}
+                      }`}
                     title={isSidebarCollapsed ? item.name : ""}
                   >
                     <span className="text-xl! shrink-0">{item.icon}</span>
@@ -147,9 +145,8 @@ const AdminLayout = () => {
                   </button>
                   {!isSidebarCollapsed && (
                     <div
-                      className={`grid transition-all duration-300 ease-in-out ${
-                        isPatrolOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                      }`}
+                      className={`grid transition-all duration-300 ease-in-out ${isPatrolOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                        }`}
                     >
                       <div className="overflow-hidden space-y-1">
                         {item.children?.map((child) => {
@@ -163,11 +160,10 @@ const AdminLayout = () => {
                             <Link
                               key={child.path}
                               to={child.path}
-                              className={`flex items-center h-11 px-4 !text-white transition-all text-sm text-decoration-none ${
-                                isChildActive
+                              className={`flex items-center h-11 px-4 !text-white transition-all text-sm text-decoration-none ${isChildActive
                                   ? "bg-gray-500 text-white font-semibold"
                                   : "text-gray-300 hover:bg-gray-600 hover:text-white"
-                              }`}
+                                }`}
                             >
                               {child.name}
                             </Link>
@@ -186,11 +182,10 @@ const AdminLayout = () => {
                 key={item.path}
                 to={item.path}
                 reloadDocument={item.shouldReload}
-                className={`flex items-center h-11 transition-colors mb-3 text-decoration-none gap-2 w-full rounded-lg ${
-                  isSidebarCollapsed
+                className={`flex items-center h-11 transition-colors mb-3 text-decoration-none gap-2 w-full rounded-lg ${isSidebarCollapsed
                     ? "justify-center py-4 text-gray-600! hover:text-gray-900!"
                     : `px-4 py-3 ${isActive ? "bg-gray-500 text-white font-semibold" : "bg-gray-700 text-white hover:bg-gray-600"}`
-                }`}
+                  }`}
                 title={isSidebarCollapsed ? item.name : ""}
               >
                 <span className="text-xl! shrink-0">{item.icon}</span>
@@ -289,17 +284,15 @@ const AdminLayout = () => {
 
       {/* ===================== MOBILE SIDEBAR OVERLAY ===================== */}
       <div
-        className={`fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity duration-300 ${
-          sidebarOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
+        className={`fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity duration-300 ${sidebarOpen ? "opacity-100 visible" : "opacity-0 invisible"
+          }`}
         onClick={closeAllMenus}
       />
 
       {/* Mobile Drawer */}
       <div
-        className={`fixed inset-y-0 left-0 bg-white z-50 md:hidden flex flex-col w-[80%] transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 bg-white z-50 md:hidden flex flex-col w-[80%] transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="flex justify-start px-4 pt-4 pb-2">
           <button onClick={closeAllMenus} className="p-2 rounded hover:bg-gray-100">
@@ -317,9 +310,8 @@ const AdminLayout = () => {
               <div key={item.path} className="mb-3 overflow-hidden rounded-lg bg-gray-700">
                 <button
                   onClick={() => setIsMobilePatrolOpen(!isMobilePatrolOpen)}
-                  className={`w-full text-left px-4 py-4 text-white font-medium flex justify-between items-center transition-colors ${
-                    location.pathname.includes("patrol") ? "bg-gray-500" : "hover:bg-gray-600"
-                  }`}
+                  className={`w-full text-left px-4 py-4 text-white font-medium flex justify-between items-center transition-colors ${location.pathname.includes("patrol") ? "bg-gray-500" : "hover:bg-gray-600"
+                    }`}
                 >
                   <span className="flex items-center gap-3">
                     {item.icon}
@@ -328,9 +320,8 @@ const AdminLayout = () => {
                   <span className={`transform transition-transform ${isMobilePatrolOpen ? "rotate-180" : ""}`}>▲</span>
                 </button>
                 <div
-                  className={`grid transition-all duration-300 ease-in-out ${
-                    isMobilePatrolOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                  }`}
+                  className={`grid transition-all duration-300 ease-in-out ${isMobilePatrolOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                    }`}
                 >
                   <div className="overflow-hidden">
                     {item.children?.map((child) => {
@@ -344,9 +335,8 @@ const AdminLayout = () => {
                           key={child.path}
                           to={child.path}
                           onClick={closeAllMenus}
-                          className={`flex items-center h-11 px-4 text-white text-sm transition-all text-decoration-none ${
-                            isChildActive ? "bg-gray-600 font-bold" : "hover:bg-gray-600"
-                          }`}
+                          className={`flex items-center h-11 px-4 text-white text-sm transition-all text-decoration-none ${isChildActive ? "bg-gray-600 font-bold" : "hover:bg-gray-600"
+                            }`}
                         >
                           {child.name}
                         </Link>
@@ -361,8 +351,7 @@ const AdminLayout = () => {
                 to={item.path}
                 onClick={closeAllMenus}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-4 rounded-lg transition-colors mb-4 text-lg font-medium text-decoration-none ${
-                    isActive ? "bg-gray-500 text-white font-semibold" : "bg-gray-700 text-white"
+                  `flex items-center gap-3 px-4 py-4 rounded-lg transition-colors mb-4 text-lg font-medium text-decoration-none ${isActive ? "bg-gray-500 text-white font-semibold" : "bg-gray-700 text-white"
                   }`
                 }
               >

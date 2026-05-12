@@ -279,8 +279,8 @@ const PlanPage = () => {
   const total = planByDate?.total ?? 0;
   const created = planByDate?.created ?? 0;
   const inProgress = items.filter((p) => p.status === "In Progress").length;
-  const notCreated = total - inProgress;
   const done = items.filter((p) => p.status === "Done").length;
+  const notCreated = total - inProgress - done;
 
   return (
     <div className="min-h-screen bg-slate-50/80">

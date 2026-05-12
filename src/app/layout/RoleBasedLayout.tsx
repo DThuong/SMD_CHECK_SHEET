@@ -2,7 +2,7 @@
 // src/router/layout/RoleBasedLayout.tsx
 import { useState, useEffect, useRef } from "react";
 import { Link, NavLink, Outlet, useParams, Navigate, useNavigate, useLocation } from "react-router-dom";
-import { HiMenu, HiX, HiLogout, HiChevronDown} from "react-icons/hi";
+import { HiMenu, HiX, HiLogout, HiChevronDown } from "react-icons/hi";
 import { FaAnglesLeft, FaAnglesRight } from "react-icons/fa6";
 import { FaKey, FaUser, FaChartPie, FaFileAlt, FaCog, FaMicrochip } from "react-icons/fa";
 import logo from "../../assets/image/brand_image_3.webp";
@@ -139,24 +139,26 @@ const RoleBasedLayout = () => {
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
       {user && isAuthenticated && showNoti && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md animate-fade-in-down px-4">
-          <div className="noti-inner bg-green-50 border-l-4 border-green-600 p-3 rounded shadow">
-            <p className="font-bold text-green-800 text-lg">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] animate-fade-in-down px-2 whitespace-nowrap flex-nowrap">
+          <div className="bg-green-50 border border-green-200 rounded-full shadow-lg flex flex-row items-center gap-3 py-2 px-4 flex-nowrap">
+            <span className="flex items-center justify-center w-5 h-5 bg-green-500 text-white rounded-full text-xs shrink-0">✓</span>
+            <span className="font-bold text-green-800 text-sm shrink-0">
               {t('msg_success')}
-            </p>
-            <p className="text-green-700 text-sm mt-1">
-              {t('user')}: <strong>{user?.username}</strong> - {t('role')}:{" "}
-              <strong>{user?.role}</strong>
-            </p>
+            </span>
+            <div className="h-4 w-px bg-green-300 shrink-0" />
+            <div className="text-green-700 text-xs font-medium flex flex-row items-center gap-1 shrink-0 flex-nowrap">
+              <span>{t('user')}: <strong className="text-green-900">{user?.username}</strong></span>
+              <span className="mx-1 text-green-300">|</span>
+              <span>{t('role')}: <strong className="text-green-900">{user?.role}</strong></span>
+            </div>
           </div>
         </div>
       )}
 
       {/* SIDEBAR - DESKTOP */}
-      <aside 
-        className={`hidden md:flex flex-col bg-white flex-shrink-0 transition-all duration-300 ease-in-out z-40 ${
-          isSidebarCollapsed ? 'w-20' : 'w-64 lg:w-96'
-        }`}
+      <aside
+        className={`hidden md:flex flex-col bg-white flex-shrink-0 transition-all duration-300 ease-in-out z-40 ${isSidebarCollapsed ? 'w-20' : 'w-64 lg:w-96'
+          }`}
       >
         {/* Sidebar Title */}
         <div className="h-20 flex items-center shrink-0 overflow-hidden">
@@ -182,11 +184,10 @@ const RoleBasedLayout = () => {
                 <div key={item.path} ref={patrolMenuRef} className={`mb-3 transition-all w-full rounded-lg overflow-hidden ${isPatrolOpen ? 'bg-gray-700 shadow-md' : ''}`}>
                   <button
                     onClick={() => !isSidebarCollapsed && setIsPatrolOpen(!isPatrolOpen)}
-                    className={`w-full h-11 transition-colors flex items-center gap-2 rounded-lg ${
-                      isSidebarCollapsed 
-                        ? "justify-center py-4 text-gray-600! hover:text-gray-900!" 
-                        : `px-4 py-3 justify-between ${isDropdownActive ? 'bg-gray-500 text-white font-semibold' : 'bg-gray-700 text-white hover:bg-gray-600'}`
-                    }`}
+                    className={`w-full h-11 transition-colors flex items-center gap-2 rounded-lg ${isSidebarCollapsed
+                      ? "justify-center py-4 text-gray-600! hover:text-gray-900!"
+                      : `px-4 py-3 justify-between ${isDropdownActive ? 'bg-gray-500 text-white font-semibold' : 'bg-gray-700 text-white hover:bg-gray-600'}`
+                      }`}
                     title={isSidebarCollapsed ? item.name : ''}
                   >
                     <span className="text-xl! shrink-0">{item.icon}</span>
@@ -212,8 +213,8 @@ const RoleBasedLayout = () => {
                               key={child.path}
                               to={child.path}
                               className={`flex items-center h-11 px-4 !text-white transition-all text-sm text-decoration-none ${isChildActive
-                                  ? 'bg-gray-500 text-white font-semibold'
-                                  : 'text-gray-300 hover:bg-gray-600 hover:text-white'
+                                ? 'bg-gray-500 text-white font-semibold'
+                                : 'text-gray-300 hover:bg-gray-600 hover:text-white'
                                 }`}
                             >
                               {child.name}
@@ -232,11 +233,10 @@ const RoleBasedLayout = () => {
                 key={item.path}
                 to={item.path}
                 reloadDocument={item.shouldReload}
-                className={`flex items-center h-11 transition-colors mb-3 text-decoration-none gap-2 w-full rounded-lg ${
-                  isSidebarCollapsed 
-                    ? "justify-center py-4 text-gray-600! hover:text-gray-900!" 
-                    : `px-4 py-3 ${isActive ? "bg-gray-500 text-white font-semibold" : "bg-gray-700 text-white hover:bg-gray-600"}`
-                }`}
+                className={`flex items-center h-11 transition-colors mb-3 text-decoration-none gap-2 w-full rounded-lg ${isSidebarCollapsed
+                  ? "justify-center py-4 text-gray-600! hover:text-gray-900!"
+                  : `px-4 py-3 ${isActive ? "bg-gray-500 text-white font-semibold" : "bg-gray-700 text-white hover:bg-gray-600"}`
+                  }`}
                 title={isSidebarCollapsed ? item.name : ''}
               >
                 <span className="text-xl! shrink-0">{item.icon}</span>
@@ -304,14 +304,14 @@ const RoleBasedLayout = () => {
                     onClick={handleChangePassword}
                     className="flex items-center gap-3 w-full px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-100 transition-colors"
                   >
-                    <FaKey className="text-gray-400" />
+                    <FaKey className="w-4 h-4 text-gray-400" />
                     Đổi mật khẩu
                   </button>
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-3 w-full px-3 py-2 text-sm font-bold text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors group"
                   >
-                    <HiLogout className="w-5 h-5 text-gray-400 group-hover:text-red-600" />
+                    <HiLogout className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
                     Đăng xuất
                   </button>
                 </div>
@@ -329,73 +329,72 @@ const RoleBasedLayout = () => {
       </div>
 
       {/* MOBILE SIDEBAR (Drawer) */}
-      <div 
-        className={`fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity duration-300 ${sidebarOpen ? "opacity-100 visible" : "opacity-0 invisible"}`} 
-        onClick={closeAllMenus} 
+      <div
+        className={`fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity duration-300 ${sidebarOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}
+        onClick={closeAllMenus}
       />
       <div className={`fixed inset-y-0 left-0 bg-white z-50 md:hidden flex flex-col w-[80%] transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-            <div className="flex justify-start px-4 pt-4 pb-2">
-              <button onClick={closeAllMenus} className="p-2 rounded hover:bg-gray-100">
-                <HiX className="w-7 h-7 text-gray-700" />
-              </button>
-            </div>
-            <div className="px-6 py-4 flex flex-col items-center border-gray-100">
-              <img src={logo} alt="Logo" className="w-32 h-auto" />
-            </div>
-            <nav className="flex-1 overflow-y-auto px-4 py-2">
-              {menuItems.map((item) => (
-                item.isDropdown ? (
-                  <div key={item.path} className="mb-3 overflow-hidden rounded-lg bg-gray-700">
-                    <button
-                      onClick={() => setIsMobilePatrolOpen(!isMobilePatrolOpen)}
-                      className={`w-full text-left px-4 py-4 text-white font-medium flex justify-between items-center transition-colors ${location.pathname.includes('patrol') ? 'bg-gray-500' : 'hover:bg-gray-600'}`}
-                    >
-                      <span className="flex items-center gap-3">
-                        {item.icon}
-                        {item.name}
-                      </span>
-                      <span className={`transform transition-transform ${isMobilePatrolOpen ? 'rotate-180' : ''}`}>▲</span>
-                    </button>
-                    <div className={`grid transition-all duration-300 ease-in-out ${isMobilePatrolOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
-                      <div className="overflow-hidden">
-                        {item.children?.map((child) => {
-                          const isChildActive = location.pathname === child.path.split('?')[0] && 
-                                               (child.path.includes('?') ? window.location.href.includes(child.path) : !window.location.search);
-                          return (
-                            <Link
-                              key={child.path}
-                              to={child.path}
-                              onClick={closeAllMenus}
-                              className={`flex items-center h-11 px-4 text-white text-sm transition-all text-decoration-none ${isChildActive ? 'bg-gray-600 font-bold' : 'hover:bg-gray-600'}`}
-                            >
-                              {child.name}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    onClick={closeAllMenus}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 px-4 py-4 rounded-lg transition-colors mb-4 text-lg font-medium text-decoration-none ${
-                        isActive ? "bg-gray-500 text-white font-semibold" : "bg-gray-700 text-white"
-                      }`
-                    }
-                  >
+        <div className="flex justify-start px-4 pt-4 pb-2">
+          <button onClick={closeAllMenus} className="p-2 rounded hover:bg-gray-100">
+            <HiX className="w-7 h-7 text-gray-700" />
+          </button>
+        </div>
+        <div className="px-6 py-4 flex flex-col items-center border-gray-100">
+          <img src={logo} alt="Logo" className="w-32 h-auto" />
+        </div>
+        <nav className="flex-1 overflow-y-auto px-4 py-2">
+          {menuItems.map((item) => (
+            item.isDropdown ? (
+              <div key={item.path} className="mb-3 overflow-hidden rounded-lg bg-gray-700">
+                <button
+                  onClick={() => setIsMobilePatrolOpen(!isMobilePatrolOpen)}
+                  className={`w-full text-left px-4 py-4 text-white font-medium flex justify-between items-center transition-colors ${location.pathname.includes('patrol') ? 'bg-gray-500' : 'hover:bg-gray-600'}`}
+                >
+                  <span className="flex items-center gap-3">
                     {item.icon}
                     {item.name}
-                  </NavLink>
-                )
-              ))}
-            </nav>
-            <div className="px-4 py-6 border-t border-gray-200">
-              <img src={logo} alt="Logo" className="w-full max-w-[200px] mx-auto" />
-            </div>
-          </div>
+                  </span>
+                  <span className={`transform transition-transform ${isMobilePatrolOpen ? 'rotate-180' : ''}`}>▲</span>
+                </button>
+                <div className={`grid transition-all duration-300 ease-in-out ${isMobilePatrolOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                  <div className="overflow-hidden">
+                    {item.children?.map((child) => {
+                      const isChildActive = location.pathname === child.path.split('?')[0] &&
+                        (child.path.includes('?') ? window.location.href.includes(child.path) : !window.location.search);
+                      return (
+                        <Link
+                          key={child.path}
+                          to={child.path}
+                          onClick={closeAllMenus}
+                          className={`flex items-center h-11 px-4 text-white text-sm transition-all text-decoration-none ${isChildActive ? 'bg-gray-600 font-bold' : 'hover:bg-gray-600'}`}
+                        >
+                          {child.name}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                onClick={closeAllMenus}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-4 rounded-lg transition-colors mb-4 text-lg font-medium text-decoration-none ${isActive ? "bg-gray-500 text-white font-semibold" : "bg-gray-700 text-white"
+                  }`
+                }
+              >
+                {item.icon}
+                {item.name}
+              </NavLink>
+            )
+          ))}
+        </nav>
+        <div className="px-4 py-6 border-t border-gray-200">
+          <img src={logo} alt="Logo" className="w-full max-w-[200px] mx-auto" />
+        </div>
+      </div>
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }

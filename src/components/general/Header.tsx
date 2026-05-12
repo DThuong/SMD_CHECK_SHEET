@@ -12,7 +12,7 @@ const Header = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isPatrolOpen, setIsPatrolOpen] = useState(false);
   const [isMobilePatrolOpen, setIsMobilePatrolOpen] = useState(false);
-  
+
   const { user, isAuthenticated, loading } = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ const Header = () => {
       const target = e.target as HTMLElement;
       const dropdownContainer = document.querySelector('.user-dropdown');
       const patrolDropdownContainer = document.querySelector('.patrol-dropdown');
-      
+
       if (dropdownContainer && !dropdownContainer.contains(target)) {
         setIsDropdownOpen(false);
       }
@@ -67,7 +67,7 @@ const Header = () => {
   const handleLogout = async () => {
     try {
       await dispatch(logoutUser()).unwrap();
-      
+
       setIsMenuOpen(false);
       setIsDropdownOpen(false);
       navigate('/login');
@@ -97,7 +97,7 @@ const Header = () => {
             {/* Removed standalone Patrol dropdown */}
             {user && isAuthenticated ? (
               <>
-                
+
                 <div className="flex items-center gap-1">
                   {/* Welcome message */}
                   <span className="text-sm text-gray-600">
@@ -107,8 +107,8 @@ const Header = () => {
                   {/* User dropdown */}
                   <div className="relative user-dropdown">
                     {isDropdownOpen && (
-                      <div 
-                        className="fixed inset-0 z-40" 
+                      <div
+                        className="fixed inset-0 z-40"
                         onClick={(e) => {
                           e.stopPropagation();
                           setIsDropdownOpen(false);
@@ -121,12 +121,12 @@ const Header = () => {
                       className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition relative z-50"
                     >
                       <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                        {user?.username?.charAt(0).toUpperCase() }
+                        {user?.username?.charAt(0).toUpperCase()}
                       </div>
-                      <svg 
-                        className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
-                        fill="none" 
-                        stroke="currentColor" 
+                      <svg
+                        className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -155,8 +155,8 @@ const Header = () => {
 
                           {isPatrolOpen && (
                             <div className="space-y-1 animate-fade-in">
-                               <Link 
-                                to="/pqc-patrol?view=list&type=daily" 
+                              <Link
+                                to="/pqc-patrol?view=list&type=daily"
                                 className="flex items-center gap-2 px-8! py-2 text-decoration-none text-sm !text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
                                 onClick={() => {
                                   setIsDropdownOpen(false);
@@ -166,8 +166,8 @@ const Header = () => {
                                 <FaPencil className="text-gray-400 text-xs" />
                                 Patrol Ngày
                               </Link>
-                              <Link 
-                                to="/pqc-patrol?view=list&type=weekly" 
+                              <Link
+                                to="/pqc-patrol?view=list&type=weekly"
                                 className="flex items-center gap-2 px-8! py-2 text-decoration-none text-sm !text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
                                 onClick={() => {
                                   setIsDropdownOpen(false);
@@ -177,8 +177,8 @@ const Header = () => {
                                 <FaPencil className="text-gray-400 text-xs" />
                                 Patrol Tuần
                               </Link>
-                              <Link 
-                                to="/pqc-patrol?view=report" 
+                              <Link
+                                to="/pqc-patrol?view=report"
                                 className="flex items-center gap-2 px-8! py-2 text-sm text-decoration-none !text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
                                 onClick={() => {
                                   setIsDropdownOpen(false);
@@ -208,7 +208,7 @@ const Header = () => {
                           disabled={loading}
                           className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                         >
-                         <TbLogout />
+                          <TbLogout />
                           Logout
                         </button>
                       </div>
@@ -293,28 +293,28 @@ const Header = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
-                    
+
                     <div className={`grid transition-all duration-300 ease-in-out ${isMobilePatrolOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                       <div className="overflow-hidden">
-                        <Link 
-                          to="/pqc-patrol?view=list&type=daily" 
-                          className={`flex items-center h-11 gap-3 px-4 text-decoration-none text-white transition-colors ${window.location.href.includes('type=daily') ? 'bg-gray-600 font-bold' : 'hover:bg-gray-600/70'}`} 
+                        <Link
+                          to="/pqc-patrol?view=list&type=daily"
+                          className={`flex items-center h-11 gap-3 px-4 text-decoration-none text-white transition-colors ${window.location.href.includes('type=daily') ? 'bg-gray-600 font-bold' : 'hover:bg-gray-600/70'}`}
                           onClick={() => setIsMenuOpen(false)}
                         >
                           <FaPencil className="opacity-70" />
                           Patrol Ngày
                         </Link>
-                        <Link 
-                          to="/pqc-patrol?view=list&type=weekly" 
-                          className={`flex items-center h-11 gap-3 px-4 text-decoration-none text-white transition-colors ${window.location.href.includes('type=weekly') ? 'bg-gray-600 font-bold' : 'hover:bg-gray-600/70'}`} 
+                        <Link
+                          to="/pqc-patrol?view=list&type=weekly"
+                          className={`flex items-center h-11 gap-3 px-4 text-decoration-none text-white transition-colors ${window.location.href.includes('type=weekly') ? 'bg-gray-600 font-bold' : 'hover:bg-gray-600/70'}`}
                           onClick={() => setIsMenuOpen(false)}
                         >
                           <FaPencil className="opacity-70" />
                           Patrol Tuần
                         </Link>
-                        <Link 
-                          to="/pqc-patrol?view=report" 
-                          className={`flex items-center h-11 gap-3 px-4 text-decoration-none text-white transition-colors ${window.location.href.includes('view=report') ? 'bg-gray-600 font-bold' : 'hover:bg-gray-600/70'}`} 
+                        <Link
+                          to="/pqc-patrol?view=report"
+                          className={`flex items-center h-11 gap-3 px-4 text-decoration-none text-white transition-colors ${window.location.href.includes('view=report') ? 'bg-gray-600 font-bold' : 'hover:bg-gray-600/70'}`}
                           onClick={() => setIsMenuOpen(false)}
                         >
                           <FaChartPie className="opacity-70" />
@@ -323,22 +323,22 @@ const Header = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <button
-                  disabled={loading}
+                    disabled={loading}
                     onClick={handleChangePassword}
                     className="w-full flex items-center gap-3 px-3 py-3 mb-3 rounded-lg font-medium bg-gray-500 hover:bg-gray-600 text-white transition"
                   >
-                   <FaKey />
+                    <FaKey />
                     Đổi mật khẩu
                   </button>
 
                   <button
-                  disabled={loading}
+                    disabled={loading}
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-3 py-3 rounded-lg font-medium bg-red-500 hover:bg-red-600 text-white transition"
                   >
-                   <TbLogout />
+                    <TbLogout />
                     Logout
                   </button>
                 </>

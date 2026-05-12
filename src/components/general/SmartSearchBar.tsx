@@ -129,7 +129,7 @@ export const SmartSearchBar = ({
         <button
           onClick={onReset}
           disabled={loading}
-          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+          className="w-full sm:w-auto px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <AiOutlineClose className="w-4 h-4" />
           Xóa bộ lọc

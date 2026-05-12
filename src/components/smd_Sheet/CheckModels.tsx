@@ -19,6 +19,14 @@ import {
 } from "../../redux/slices/subTableSlice";
 import { useSubTableFetch } from "../../utils/useSubTableFetch";
 import MultiImageUpload from "../files/MultiImageUpload";
+
+const getWorkOrderPrefix = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `PD${year}${month}${day}`;
+};
 const initialFormState: CheckModelData = {
   lineChange: "",
   model: "",
@@ -75,12 +83,15 @@ const CheckModels = memo(function CheckModels({
   }, [checkModel]);
 
   useEffect(() => {
+    if (open && !form.workOrder) {
+      setForm((prev) => ({ ...prev, workOrder: getWorkOrderPrefix() }));
+    }
     if (!open) {
       hasUserEditedRef.current = false;
       isUploadingRef.current = false;
-      deletingRef.current = false; // ← Reset khi đóng modal
+      deletingRef.current = false;
     }
-  }, [open]);
+  }, [open, form.workOrder]);
 
   const [imagePreview, setImagePreview] = useState<{
     isOpen: boolean;
@@ -222,7 +233,7 @@ const CheckModels = memo(function CheckModels({
       showNotification(
         "error",
         "Sai format Work Order",
-        "Work Order phải đủ đúng 14 ký tự (VD: PD2026XXXXXXXX)",
+        `Work Order phải đủ đúng 14 ký tự (VD: ${getWorkOrderPrefix()}XXXX)`,
       );
       return; // KHÔNG cho dispatch
     }
@@ -781,25 +792,25 @@ const CheckModels = memo(function CheckModels({
             <label className="text-xs">
               Work Order
               <input
-                placeholder="PD2026XXXXXXXX"
-                value={form.workOrder ?? "PD2026"}
+                placeholder={`${getWorkOrderPrefix()}XXXX`}
+                value={form.workOrder || ""}
                 onChange={(e) => {
                   const value = e.target.value.toUpperCase();
                   if (value.length > 14) {
                     showNotification(
                       "error",
-                      "Work Order đã vượt qua 14 ký tự",
-                      "Vui lòng kiểm tra lại",
+                      "Work Order đã vượt qua 14 ký tự",
+                      "Vui lòng kiểm tra lại",
                     );
                     return;
                   }
-                  if (value.startsWith("PD2026")) {
-                    set("workOrder", value);
-                  } else if (value.length < "PD2026".length) {
-                    set("workOrder", "PD2026");
-                  }
+                  set("workOrder", value);
                 }}
                 className="mt-1 block w-full border rounded px-3 py-2 text-base uppercase"
+                style={{
+                  fontSize: "16px",
+                  touchAction: "manipulation",
+                }}
               />
             </label>
           </div>

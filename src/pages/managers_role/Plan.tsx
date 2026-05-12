@@ -284,7 +284,7 @@ const PlanPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50/80">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
+      <div className="max-w-full mx-auto sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4">
         {/* ── Header ── */}
         <div className=" mb-3">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -447,13 +447,15 @@ const PlanPage = () => {
                         t("plan.stt"),
                         t("plan.workOrder"),
                         t("plan.setToWork"),
+                        "Oper",
+                        "S-Code",
                         t("plan.quantity"),
                         t("plan.status"),
                         t("plan.delete"),
                       ].map((h, i) => (
                         <th
                           key={h}
-                          className={`px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest ${i === 3 || i === 5 ? "text-center" : "text-left"}`}
+                          className={`px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap ${i === 5 || i === 7 ? "text-center" : "text-left"}`}
                         >
                           {h}
                         </th>
@@ -467,12 +469,12 @@ const PlanPage = () => {
                         <tr
                           key={plan.id}
                           onClick={() => handleWorkOrderClick(plan.workOrder)}
-                          className={`transition-colors ${cfg.rowBg} cursor-pointer group/row`}
+                          className={`transition-colors ${cfg.rowBg} cursor-pointer group/row border-b border-slate-50 last:border-0`}
                         >
-                          <td className="px-5 py-3 text-xs font-mono text-slate-400 w-12">
+                          <td className="px-5 py-4 text-xs font-mono text-slate-400 w-12 whitespace-nowrap">
                             {String(idx + 1).padStart(2, "0")}
                           </td>
-                          <td className="px-5 py-3">
+                          <td className="px-5 py-4 whitespace-nowrap">
                             <div
                               className="flex items-center gap-2"
                               title={`Xem phiếu của ${plan.workOrder}`}
@@ -487,23 +489,29 @@ const PlanPage = () => {
                               />
                             </div>
                           </td>
-                          <td className="px-5 py-3 text-sm text-slate-600 whitespace-nowrap">
+                          <td className="px-5 py-4 text-sm text-slate-600 whitespace-nowrap">
                             {fmtDate(plan.setToWork)}
                           </td>
-                          <td className="px-5 py-3 text-center">
+                          <td className="px-5 py-4 text-sm font-semibold text-slate-700 whitespace-nowrap">
+                            {plan.oper || "—"}
+                          </td>
+                          <td className="px-5 py-4 text-sm font-semibold text-slate-700 whitespace-nowrap">
+                            {plan.sCode || "—"}
+                          </td>
+                          <td className="px-5 py-4 text-center whitespace-nowrap">
                             <span className="inline-flex items-center justify-center w-8 h-7 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold border border-slate-200">
                               {plan.quantity}
                             </span>
                           </td>
-                          <td className="px-5 py-3">
+                          <td className="px-5 py-4 whitespace-nowrap">
                             <StatusBadge status={plan.status} />
                           </td>
-                          <td className="px-5 py-3">
+                          <td className="px-5 py-4 whitespace-nowrap">
                             <div className="flex items-center justify-center">
                               <button
                                 onClick={(e) => handleDeleteById(plan.id, e)}
                                 disabled={deletingId === plan.id}
-                                className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 hover:border-red-200 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-lg text-xs font-semibold transition-all disabled:opacity-50 whitespace-nowrap"
+                                className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 hover:border-red-200 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-lg text-xs font-semibold transition-all disabled:opacity-50"
                               >
                                 {deletingId === plan.id ? (
                                   <Spinner size={12} className="animate-spin" />
@@ -522,69 +530,62 @@ const PlanPage = () => {
               </div>
 
               {/* ── Mobile List (< md) ── */}
-              <div className="md:hidden divide-y divide-slate-100">
+              <div className="md:hidden space-y-3! p-3 bg-slate-50/50">
                 {items.map((plan, idx) => {
-                  const cfg = getStatusCfg(plan.status);
                   return (
                     <div
                       key={plan.id}
                       onClick={() => handleWorkOrderClick(plan.workOrder)}
-                      className={`px-4 py-4 transition-colors ${cfg.rowBg} cursor-pointer group/row`}
+                      className={`p-4 bg-white border border-slate-100 rounded-xl shadow-sm transition-colors active:bg-slate-50 group/row`}
                     >
-                      {/* Line 1: index + workOrder + badge */}
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="text-[10px] font-mono text-slate-400 shrink-0 w-5">
-                            {String(idx + 1).padStart(2, "0")}
+                      {/* Header with ID and Status */}
+                      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-50">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">
+                            #{String(idx + 1).padStart(2, "0")}
                           </span>
-                          <div
-                            className="flex items-center gap-1 min-w-0"
-                          >
-                            <span className="font-bold text-slate-800 text-sm group-hover/row:text-blue-600 transition-colors truncate">
-                              {plan.workOrder}
-                            </span>
-                            <ArrowSquareOut
-                              size={11}
-                              weight="bold"
-                              className="text-slate-300 group-hover/row:text-blue-500 shrink-0 transition-colors"
-                            />
+                          <div className="flex items-center gap-1 font-bold text-slate-800">
+                            {plan.workOrder}
+                            <ArrowSquareOut size={14} className="text-slate-300" />
                           </div>
                         </div>
                         <StatusBadge status={plan.status} />
                       </div>
 
-                      {/* Line 2: meta info */}
-                      <div className="flex items-center gap-3 mb-3 pl-7 text-xs text-slate-500">
-                        <span>
-                          <span className="font-medium text-slate-400">
-                            {t("plan.setToWork")}:{" "}
-                          </span>
-                          <span className="font-semibold text-slate-600">
-                            {fmtDate(plan.setToWork)}
-                          </span>
-                        </span>
-                        <span className="text-slate-300">·</span>
-                        <span>
-                          <span className="font-medium text-slate-400">
-                            {t("plan.quantity")}:{" "}
-                          </span>
-                          <span className="font-bold text-slate-700">
-                            {plan.quantity}
-                          </span>
-                        </span>
+                      {/* Details - One item per row */}
+                      <div className="space-y-2! mb-2!">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-400 font-medium">{t("plan.setToWork")}</span>
+                          <span className="text-slate-600 font-semibold">{fmtDate(plan.setToWork)}</span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-400 font-medium whitespace-nowrap">Oper</span>
+                          <span className="text-slate-700 font-bold bg-slate-50 px-2 py-0.5 rounded">{plan.oper || "—"}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-400 font-medium whitespace-nowrap">S-Code</span>
+                          <span className="text-slate-700 font-bold bg-slate-50 px-2 py-0.5 rounded">{plan.sCode || "—"}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-400 font-medium">{t("plan.quantity")}</span>
+                          <span className="text-slate-800 font-black">{plan.quantity}</span>
+                        </div>
                       </div>
 
-                      {/* Line 3: actions */}
-                      <div className="flex gap-2 pl-7">
+                      {/* Actions */}
+                      <div className="pt-3 border-t border-slate-50">
                         <button
                           onClick={(e) => handleDeleteById(plan.id, e)}
                           disabled={deletingId === plan.id}
-                          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white border border-slate-200 hover:border-red-200 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-lg text-xs font-semibold transition-all disabled:opacity-50"
+                          className="w-full flex items-center justify-center gap-2 py-3 bg-red-100 hover:bg-red-50 text-red-500 hover:text-red-600 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
                         >
                           {deletingId === plan.id ? (
-                            <Spinner size={11} className="animate-spin" />
+                            <Spinner size={12} className="animate-spin" />
                           ) : (
-                            <Trash size={11} weight="bold" />
+                            <Trash size={18} weight="bold" />
                           )}
                           {t("plan.delete")}
                         </button>

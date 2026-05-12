@@ -19,7 +19,9 @@ import {
   uploadPrinterImage,
   uploadPrinterCleanImage,
   uploadStandardVehicleReflowImage,
-  deleteStandardVehicleReflowImage
+  deleteStandardVehicleReflowImage,
+  uploadOcrImage,
+  deleteOCRImage
 } from "../../redux/slices/subTableSlice";
 import ImagePreviewModal from "../files/ImagePreviewModal";
 import ImageViewIcon from "../files/ImageViewIcon";
@@ -87,6 +89,7 @@ const initialStandardVehiclesState: StandardVehicleData = {
   imgPrinterClean: [],
   imgXray: [],
   imgReflow: [],
+  imgOCR: [],
 };
 
 const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
@@ -115,6 +118,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
     reflow: useRef<HTMLDivElement>(null),
     aoi: useRef<HTMLDivElement>(null),
     output: useRef<HTMLDivElement>(null),
+    ocr: useRef<HTMLDivElement>(null),
     worker: useRef<HTMLDivElement>(null),
     issue: useRef<HTMLDivElement>(null),
   };
@@ -335,6 +339,15 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
           ).unwrap();
           successMessage = "Upload hình ảnh Reflow thành công";
           break;
+        case "imgOCR":
+          result = await dispatch(
+            uploadOcrImage({
+              standardVehicleId: Number(standardVehicleId),
+              file,
+            }),
+          ).unwrap();
+          successMessage = "Upload hình ảnh OCR thành công";
+          break;
       }
 
       // Thêm ảnh mới vào array, update local state
@@ -348,7 +361,8 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
             | "imgPrinterClean"
             | "imgIssue"
             | "imgXray"
-            | "imgReflow";
+            | "imgReflow"
+            | "imgOCR";
           const currentArray = prev[fieldKey] || [];
           return {
             ...prev,
@@ -446,6 +460,14 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         case "imgReflow":
           await dispatch(
             deleteStandardVehicleReflowImage({
+              standardVehicleId: Number(standardVehicleId),
+              imageUrl,
+            }),
+          ).unwrap();
+          break;
+        case "imgOCR":
+          await dispatch(
+            deleteOCRImage({
               standardVehicleId: Number(standardVehicleId),
               imageUrl,
             }),
@@ -1141,7 +1163,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
             <tr className="pdf-section-aoi">
               <th
                 colSpan={1}
-                rowSpan={6}
+                rowSpan={7}
                 className="border border-gray-600 px-2 py-2 text-xs bg-gray-100"
               >
                 AOI
@@ -1248,11 +1270,38 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
               >
                 {t("aoi.imageAOI")}
               </th>
-              <td colSpan={11} className="border border-gray-600 px-2 py-2">
+              <td
+                colSpan={11}
+                className="border border-gray-600 px-2 py-2 text-xs"
+              >
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <ImageViewIcon
+                      imageUrl={form.imgAOI}
+                      title={t("aoi.imageAOI")}
+                      onView={openImagePreview}
+                    />
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            {/** OCR Section (Part of AOI) */}
+            <tr>
+              <th
+                colSpan={1}
+                className="border border-gray-600 px-2 py-2 text-xs bg-gray-100 text-left!"
+              >
+                {t("ocr.imageOCR")}
+              </th>
+              <td
+                colSpan={11}
+                className="border border-gray-600 px-2 py-2 text-xs"
+              >
                 <div className="flex items-center justify-center">
                   <ImageViewIcon
-                    imageUrl={form.imgAOI}
-                    title="Hình ảnh AOI"
+                    imageUrl={form.imgOCR}
+                    title={t("ocr.imageOCR")}
                     onView={openImagePreview}
                   />
                 </div>
@@ -1950,7 +1999,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
               </div>
             </div>
 
-            <div className="mb-0">
+            <div className="mb-3">
               <div className="text-xs font-semibold text-gray-600 mb-1">
                 {t("aoi.imageAOI")}
               </div>
@@ -1961,6 +2010,22 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
                 <ImageViewIcon
                   imageUrl={form.imgAOI}
                   title={t("aoi.imageAOI")}
+                  onView={openImagePreview}
+                />
+              </div>
+            </div>
+
+            <div className="mb-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">
+                {t("ocr.imageOCR")}
+              </div>
+              <div
+                className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ImageViewIcon
+                  imageUrl={form.imgOCR}
+                  title={t("ocr.imageOCR")}
                   onView={openImagePreview}
                 />
               </div>
@@ -2518,7 +2583,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
 
                 <div className="min-w-0">
                   <label className="text-xs block mb-1">Reflow Speed</label>
-                  <input
+                   <input
                     className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
                     value={form.reflowSpeed ?? ""}
                     onChange={(e) => set("reflowSpeed", e.target.value)}
@@ -2572,7 +2637,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
                 <label className="text-xs block mb-1">Chương trình mAoi</label>
                 <input
                   className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
-                  value={form.maoiProgram ?? ""}
+                  value={form.maoiProgram || ""}
                   onChange={(e) => set("maoiProgram", e.target.value)}
                   type="text"
                 />
@@ -2582,7 +2647,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
                 <label className="text-xs block mb-1">Chương trình sAoi</label>
                 <input
                   className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
-                  value={form.saoiProgram ?? ""}
+                  value={form.saoiProgram || ""}
                   onChange={(e) => set("saoiProgram", e.target.value)}
                   type="text"
                 />
@@ -2592,7 +2657,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
                 <label className="text-xs block mb-1">Point sAoi</label>
                 <input
                   className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
-                  value={form.pointSAOI ?? ""}
+                  value={form.pointSAOI || ""}
                   onChange={(e) => set("pointSAOI", e.target.value)}
                   type="text"
                 />
@@ -2618,7 +2683,23 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
                 }
                 onViewSingle={(url, title) => openImagePreview(url, title)}
               />
+              <MultiImageUpload
+                label="OCR"
+                images={form.imgOCR}
+                fieldName="imgOCR"
+                onUpload={handleImageUpload}
+                onRemove={(index) => handleRemoveImage("imgOCR", index)}
+                onViewAll={() =>
+                  openImagePreview(
+                    form.imgOCR || [],
+                    t("ocr.imageOCR"),
+                    0,
+                  )
+                }
+                onViewSingle={(url, title) => openImagePreview(url, title)}
+              />
             </section>
+
             {/* Output */}
             <section ref={sectionRefs.output} className="pb-3 border-b border-gray-200">
               <h4 className="text-sm font-semibold mb-3 text-gray-700">
@@ -2673,6 +2754,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
                 </div>
               </div>
             </section>
+
 
             {/* Worker */}
             <section ref={sectionRefs.worker}>

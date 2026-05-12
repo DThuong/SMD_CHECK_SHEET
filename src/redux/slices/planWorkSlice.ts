@@ -7,6 +7,8 @@ export interface Plan {
     setToWork: string
     status: string
     quantity: number
+    oper: string
+    sCode: string
 }
 
 export interface PlanByDate {

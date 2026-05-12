@@ -110,6 +110,7 @@ export interface StandardVehicleData {
   imgPrinterClean?: string[];
   imgXray?: string[];
   imgReflow?: string[];
+  imgOCR?: string[];
 }
 
 // PQCCheck
@@ -298,6 +299,24 @@ export const fetchTimeChangeModel = createAsyncThunk(
 );
 
 // ----------------------------------UPLOAD IMAGE ----------------------------------------
+// upload ocr image
+export const uploadOcrImage = createAsyncThunk(
+  'subTable/uploadOcrImage',
+  async ({ standardVehicleId, file }: { standardVehicleId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await smdApi.put(`StandardVehicle/image-ocr/${standardVehicleId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải lên hình ảnh OCR');
+    }
+  }
+)
 // upload standard product image
 export const uploadStandardProductionImage = createAsyncThunk(
   'subTable/uploadStandardProductionImage',
@@ -565,6 +584,19 @@ export const uploadXRayImage = createAsyncThunk(
 )
 
 // ---------------------------------- DELETE ----------------------------------------
+// Delete image-ocr StandardVehicle
+export const deleteOCRImage = createAsyncThunk(
+  'subTable/deleteOCRImage',
+  async ({ standardVehicleId, imageUrl }: { standardVehicleId: number; imageUrl: string }, { rejectWithValue }) => {
+    try {
+      const imageName = extractFileName(imageUrl);
+      const response = await smdApi.delete(`StandardVehicle/image-ocr/${standardVehicleId}/${imageName}`);
+      return { data: response.data, imageUrl };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh OCR của StandardVehicle');
+    }
+  }
+)
 // Delete checkModel issue image
 export const deleteCheckModelIssueImage = createAsyncThunk(
   'subTable/deleteCheckModelIssueImage',
@@ -1038,6 +1070,28 @@ const subTableSlice = createSlice({
         state.success = false;
       });
     // ----------------------------------- UPLOAD IMAGE -----------------------------------
+    // Upload image ocr
+    builder
+      .addCase(uploadOcrImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadOcrImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.standardVehicle && action.payload?.imageUrl) {
+          if (!Array.isArray(state.standardVehicle.imgOCR)) {
+            state.standardVehicle.imgOCR = [];
+          }
+          if (!state.standardVehicle.imgOCR.includes(action.payload.imageUrl)) {
+            state.standardVehicle.imgOCR.push(action.payload.imageUrl);
+          }
+        }
+        state.error = null;
+      })
+      .addCase(uploadOcrImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
     // Upload reflow image
     builder
       .addCase(uploadStandardVehicleReflowImage.pending, (state) => {
@@ -1348,6 +1402,24 @@ const subTableSlice = createSlice({
         state.error = action.payload as string;
       });
     // ----------------------------------- DELETE IMAGE -----------------------------------
+    // Delete image ocr StandardVehicle
+    builder
+      .addCase(deleteOCRImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteOCRImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.standardVehicle && state.standardVehicle.imgOCR) {
+          state.standardVehicle.imgOCR = state.standardVehicle.imgOCR.filter(
+            url => url !== action.payload.imageUrl //  giữ lại các hình ảnh không trùng với imageUrl đã xóa
+          );
+        }
+      })
+      .addCase(deleteOCRImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
     // Delete checkModel issue image
     builder
       .addCase(deleteCheckModelIssueImage.pending, (state) => {

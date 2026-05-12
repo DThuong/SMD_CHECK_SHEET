@@ -12,7 +12,12 @@
       "reflow": "리플로우",
       "aoi": "AOI",
       "output": "출력",
+      "ocr": "OCR",
       "worker": "작업자"
+    },
+    "ocr": {
+      "title": "OCR 이미지",
+      "imageOCR": "OCR 이미지"
     },
     "printer": {
       "title": "프린터",
@@ -109,10 +114,12 @@
       "noSheetId": "SMD Sheet ID를 찾을 수 없습니다",
       "updateFailed": "StandardVehicles 업데이트 중 오류가 발생했습니다",
       "uploadSPIFailed": "SPI 이미지를 업로드할 수 없습니다",
-      "uploadAOIFailed": "AOI 이미지를 업로드할 수 없습니다"
+      "uploadAOIFailed": "AOI 이미지를 업로드할 수 없습니다",
+      "uploadOCRFailed": "OCR 이미지를 업로드할 수 없습니다"
     },
     "success": {
       "uploadSPI": "SPI 이미지 업로드 성공",
-      "uploadAOI": "AOI 이미지 업로드 성공"
+      "uploadAOI": "AOI 이미지 업로드 성공",
+      "uploadOCR": "OCR 이미지 업로드 성공"
     }
 }

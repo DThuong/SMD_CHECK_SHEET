@@ -12,6 +12,7 @@
       "reflow": "Reflow",
       "aoi": "AOI",
       "output": "OUTPUT",
+      "ocr": "OCR",
       "worker": "Worker"
     },
     "printer": {
@@ -71,6 +72,10 @@
       "pointSAOI": "Point sAoi",
       "imageAOI": "AOI Image"
     },
+    "ocr": {
+      "title": "OCR Image",
+      "imageOCR": "OCR Image"
+    },
     "output": {
       "title": "Output",
       "magazineDistance": "Check setting condition, input magazine distance at uploader?",
@@ -109,10 +114,12 @@
       "noSheetId": "SMD Sheet ID not found",
       "updateFailed": "An error occurred while updating StandardVehicles",
       "uploadSPIFailed": "Cannot upload SPI image",
-      "uploadAOIFailed": "Cannot upload AOI image"
+      "uploadAOIFailed": "Cannot upload AOI image",
+      "uploadOCRFailed": "Cannot upload OCR image"
     },
     "success": {
       "uploadSPI": "SPI image uploaded successfully",
-      "uploadAOI": "AOI image uploaded successfully"
+      "uploadAOI": "AOI image uploaded successfully",
+      "uploadOCR": "OCR image uploaded successfully"
     }
 }

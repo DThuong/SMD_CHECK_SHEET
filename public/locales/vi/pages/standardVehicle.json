@@ -12,6 +12,7 @@
       "reflow": "Reflow",
       "aoi": "AOI",
       "output": "OUTPUT",
+      "ocr": "OCR",
       "worker": "Công nhân"
     },
     "printer": {
@@ -45,6 +46,10 @@
       "program": "SPI Program",
       "rev": "REV",
       "imageSPI": "Hình ảnh SPI"
+    },
+    "ocr": {
+      "title": "OCR Image",
+      "imageOCR": "Hình ảnh OCR"
     },
     "mount": {
       "title": "Mount",
@@ -109,10 +114,12 @@
       "noSheetId": "Không tìm thấy SMD Sheet ID",
       "updateFailed": "Có lỗi xảy ra khi cập nhật StandardVehicles",
       "uploadSPIFailed": "Không thể upload hình ảnh SPI",
-      "uploadAOIFailed": "Không thể upload hình ảnh AOI"
+      "uploadAOIFailed": "Không thể upload hình ảnh AOI",
+      "uploadOCRFailed": "Không thể upload hình ảnh OCR"
     },
     "success": {
       "uploadSPI": "Upload hình ảnh SPI thành công",
-      "uploadAOI": "Upload hình ảnh AOI thành công"
+      "uploadAOI": "Upload hình ảnh AOI thành công",
+      "uploadOCR": "Upload hình ảnh OCR thành công"
     }
 }

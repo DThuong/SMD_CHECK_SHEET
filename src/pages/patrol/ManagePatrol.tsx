@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaArrowLeft, FaPlus, FaTimes, FaTrash, FaEdit } from 'react-icons/fa';
+import { FaArrowLeft, FaPlus, FaTrash, FaEdit } from 'react-icons/fa';
 import type { PatrolSharedProps, PatrolItemType } from './types';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -205,6 +205,13 @@ const ManagePatrol: React.FC<PatrolSharedProps> = ({
       toast.error(pT('errorOccurred'));
       console.error("Save failed:", err);
     }
+  };
+
+  const handleSaveKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    if (!inputValue.trim() || loading) return;
+    handleConfirmSave();
   };
 
   if (loading && lineAreas.length === 0) {
@@ -460,6 +467,7 @@ const ManagePatrol: React.FC<PatrolSharedProps> = ({
               rows={itemModal.type === 'item' ? 2 : 1}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleSaveKeyDown}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               placeholder="..."
             />
@@ -472,6 +480,7 @@ const ManagePatrol: React.FC<PatrolSharedProps> = ({
                   rows={2}
                   value={inputSpec}
                   onChange={(e) => setInputSpec(e.target.value)}
+                  onKeyDown={handleSaveKeyDown}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                   placeholder={pT('colStandard')}
                 />
@@ -496,4 +505,3 @@ const ManagePatrol: React.FC<PatrolSharedProps> = ({
 };
 
 export default ManagePatrol;
-

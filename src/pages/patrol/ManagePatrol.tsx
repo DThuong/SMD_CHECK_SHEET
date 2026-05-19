@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaArrowLeft, FaPlus, FaTrash, FaEdit } from 'react-icons/fa';
+import { FaArrowLeft, FaPlus, FaTrash, FaEdit, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import type { PatrolSharedProps, PatrolItemType } from './types';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -52,6 +52,8 @@ const ManagePatrol: React.FC<PatrolSharedProps> = ({
   const [inputValue, setInputValue] = useState('');
   const [inputSpec, setInputSpec] = useState('');
   const [inputSpecType, setInputSpecType] = useState<'radio' | 'input'>('radio');
+  const [collapsedStages, setCollapsedStages] = useState<Record<string, boolean>>({});
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     dispatch(fetchStagesByPatrolType(manageTab === 'daily' ? "1" : "7"));
@@ -214,6 +216,66 @@ const ManagePatrol: React.FC<PatrolSharedProps> = ({
     handleConfirmSave();
   };
 
+  const toggleStage = (stageId: string) => {
+    setCollapsedStages(prev => ({ ...prev, [stageId]: !prev[stageId] }));
+  };
+
+  const toggleCategory = (categoryId: string) => {
+    setCollapsedCategories(prev => ({ ...prev, [categoryId]: !prev[categoryId] }));
+  };
+
+  const capitalizeWordBeforeCursor = (
+    value: string,
+    cursor: number
+  ) => {
+    const beforeCursor = value.slice(0, cursor);
+    const afterCursor = value.slice(cursor);
+    const wordMatch = beforeCursor.match(/(\S+)$/u);
+
+    if (!wordMatch?.[0]) {
+      return { value: `${beforeCursor} ${afterCursor}`, cursor: cursor + 1 };
+    }
+
+    const word = wordMatch[0];
+    const wordStart = cursor - word.length;
+    const firstLetterIndex = [...word].findIndex(char => /\p{L}/u.test(char));
+
+    if (firstLetterIndex === -1) {
+      return { value: `${beforeCursor} ${afterCursor}`, cursor: cursor + 1 };
+    }
+
+    const chars = [...word];
+    chars[firstLetterIndex] = chars[firstLetterIndex].toLocaleUpperCase();
+    const nextBeforeCursor = `${beforeCursor.slice(0, wordStart)}${chars.join('')}`;
+
+    return {
+      value: `${nextBeforeCursor} ${afterCursor}`,
+      cursor: cursor + 1,
+    };
+  };
+
+  const handleNameKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    handleSaveKeyDown(event);
+    if (
+      event.defaultPrevented ||
+      event.key !== ' ' ||
+      event.nativeEvent.isComposing ||
+      (itemModal.type !== 'stage' && itemModal.type !== 'category')
+    ) {
+      return;
+    }
+
+    const target = event.currentTarget;
+    if (target.selectionStart !== target.selectionEnd) return;
+
+    event.preventDefault();
+    const next = capitalizeWordBeforeCursor(target.value, target.selectionStart);
+    setInputValue(next.value);
+    requestAnimationFrame(() => {
+      target.setSelectionRange(next.cursor, next.cursor);
+    });
+  };
+
   if (loading && lineAreas.length === 0) {
     return <LoadingSpinner message={pT('loading') || 'Loading...'} />;
   }
@@ -300,39 +362,64 @@ const ManagePatrol: React.FC<PatrolSharedProps> = ({
       )}
 
       <div className="space-y-4! mt-4">
-        {currentTmpl.map((stage) => (
+        {currentTmpl.map((stage) => {
+          const isStageCollapsed = !!collapsedStages[stage.id];
+          return (
           <div key={stage.id} className="bg-white shadow-sm border border-gray-200 overflow-hidden rounded-lg">
-            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="font-bold text-lg text-gray-800">{pT('stagePrefix')}{stage.name}</h3>
+            <button
+              type="button"
+              onClick={() => toggleStage(stage.id)}
+              className="w-full bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center text-left hover:bg-gray-100 transition-colors"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-gray-500 shrink-0">
+                  {isStageCollapsed ? <FaChevronRight size={14} /> : <FaChevronDown size={14} />}
+                </span>
+                <h3 className="font-bold text-lg text-gray-800 mb-0 break-words">
+                  {pT('stagePrefix')}{stage.name}
+                </h3>
+              </div>
               {user?.role === 'PQCLeader' && (
-                <div className="flex items-center gap-2">
-                  <button onClick={() => openEditStage(Number(stage.id), stage.name)} className="text-blue-500 hover:text-blue-700 transition-colors p-1.5 hover:bg-white rounded-full">
+                <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <button type="button" onClick={() => openEditStage(Number(stage.id), stage.name)} className="text-blue-500 hover:text-blue-700 transition-colors p-1.5 hover:bg-white rounded-full">
                     <FaEdit size={16} />
                   </button>
-                  <button onClick={() => setDeleteModal({ isOpen: true, type: 'stage', id1: stage.id })} disabled={loading} className="text-red-500 hover:text-red-700 p-1.5 disabled:opacity-50 transition-colors hover:bg-white rounded-full">
+                  <button type="button" onClick={() => setDeleteModal({ isOpen: true, type: 'stage', id1: stage.id })} disabled={loading} className="text-red-500 hover:text-red-700 p-1.5 disabled:opacity-50 transition-colors hover:bg-white rounded-full">
                     <FaTrash size={16} />
                   </button>
                 </div>
               )}
-            </div>
+            </button>
 
+            {!isStageCollapsed && (
             <div className="p-4 space-y-4">
               {stage.categories.map(cat => (
-                <div key={cat.id} className="border border-blue-100 p-4 bg-blue-50/30 mb-3 rounded-xl">
-                  <div className="flex justify-between items-center mb-4">
-                    <h4 className="font-semibold text-blue-800 text-base">{pT('categoryPrefix')}{cat.name}</h4>
+                <div key={cat.id} className="border border-blue-100 bg-blue-50/30 mb-3 rounded-xl overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => toggleCategory(cat.id)}
+                    className="w-full flex justify-between items-center px-4 py-3 text-left hover:bg-blue-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-blue-500 shrink-0">
+                        {collapsedCategories[cat.id] ? <FaChevronRight size={13} /> : <FaChevronDown size={13} />}
+                      </span>
+                      <h4 className="font-semibold text-blue-800 text-base mb-0 break-words">{pT('categoryPrefix')}{cat.name}</h4>
+                    </div>
                     {user?.role === 'PQCLeader' && (
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => openEditCategory(Number(cat.id), cat.name)} className="text-blue-600 hover:text-blue-800 transition-colors p-1.5 hover:bg-blue-100/50 rounded-full">
+                      <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => openEditCategory(Number(cat.id), cat.name)} className="text-blue-600 hover:text-blue-800 transition-colors p-1.5 hover:bg-blue-100/50 rounded-full">
                           <FaEdit size={16} />
                         </button>
-                        <button onClick={() => setDeleteModal({ isOpen: true, type: 'category', id1: cat.id })} disabled={loading} className="text-red-500 hover:text-red-700 disabled:opacity-50 transition-colors p-1.5 hover:bg-blue-100/50 rounded-full">
+                        <button type="button" onClick={() => setDeleteModal({ isOpen: true, type: 'category', id1: cat.id })} disabled={loading} className="text-red-500 hover:text-red-700 disabled:opacity-50 transition-colors p-1.5 hover:bg-blue-100/50 rounded-full">
                           <FaTrash size={16} />
                         </button>
                       </div>
                     )}
-                  </div>
+                  </button>
 
+                  {!collapsedCategories[cat.id] && (
+                  <div className="px-4 pb-4">
                   {/* Desktop Table View */}
                   <div className="hidden md:block overflow-x-auto border border-gray-200 rounded-lg">
                     <table className="w-full text-left border-collapse">
@@ -415,6 +502,8 @@ const ManagePatrol: React.FC<PatrolSharedProps> = ({
                       <FaPlus /> {pT('addQuestion')}
                     </button>
                   )}
+                  </div>
+                  )}
                 </div>
               ))}
 
@@ -424,8 +513,10 @@ const ManagePatrol: React.FC<PatrolSharedProps> = ({
                 </button>
               )}
             </div>
+            )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <ConfirmModal
@@ -467,7 +558,7 @@ const ManagePatrol: React.FC<PatrolSharedProps> = ({
               rows={itemModal.type === 'item' ? 2 : 1}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleSaveKeyDown}
+              onKeyDown={handleNameKeyDown}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               placeholder="..."
             />

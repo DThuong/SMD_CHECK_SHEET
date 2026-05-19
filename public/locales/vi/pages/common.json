@@ -6,7 +6,12 @@
     "dashboard": "Dashboard",
     "smdSheet": "SMD Sheet",
     "settings": "Settings",
-    "plan": "Plan"
+    "plan": "Plan",
+    "patrolChecklist": "Patrol Checklist",
+    "patrolManage": "Quản lý Patrol",
+    "patrolDaily": "Patrol Ngày",
+    "patrolWeekly": "Patrol Tuần",
+    "patrolReport": "Báo cáo Patrol"
   },
   "roles": {
     "engineering": "Engineering",
@@ -14,7 +19,7 @@
     "manager": "Manager",
     "koreaManager": "Korea Manager"
   },
-   "button": {
+  "button": {
     "edit": "Chỉnh sửa",
     "viewDetail": "Xem chi tiết"
   },
@@ -75,5 +80,6 @@
     "detected_title": "Cập nhật ứng dụng",
     "detected_msg": "Đã có phiên bản mới được cập nhật. Vui lòng nhấn nút bên dưới để tải lại trang một lần nữa nhằm đảm bảo tính ổn định.",
     "reload_button": "Tải lại trang ngay"
-  }
+  },
+  "changePassword": "Đổi mật khẩu"
 }

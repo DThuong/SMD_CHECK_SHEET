@@ -455,7 +455,7 @@ const SmdTrendCard = ({
     <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-4 mt-4 transition-all duration-300 animate-fadeIn">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
         <h2 className="text-xl font-bold text-slate-800">
-          Xu hướng tạo SMD Sheet
+          {t("charts.timeline.title")}
         </h2>
         <div className="flex gap-2 flex-wrap">
           {(["week", "month", "all"] as const).map((r) => (
@@ -607,95 +607,6 @@ const SmdTrendCard = ({
   );
 };
 
-const getPatrolTranslation = (key: string, lang: string, options?: any) => {
-  const translations: Record<string, Record<string, string>> = {
-    vi: {
-      totalPatrolSheets: "Tổng PATROL Sheet",
-      patrolTrendTitle: "Xu hướng tạo PATROL Sheet",
-      patrolTrendSubtitle: "Theo dõi tổng số lượt tuần tra được thực hiện theo thời gian",
-      all: "Tất cả",
-      dailyPatrol: "Patrol Hàng Ngày",
-      weeklyPatrol: "Patrol Hàng Tuần",
-      showingPatrolSheets: "Đang hiển thị {count} patrol sheet cho: {info}",
-      noPatrolSheets: "Không có patrol sheet nào trong ngày này.",
-      clickPointToView: "Nhấp vào một điểm trên biểu đồ để xem chi tiết patrol sheets.",
-      stt: "STT",
-      sheetId: "Patrol ID",
-      lineArea: "Line / Khu vực",
-      creator: "Người tạo",
-      createdAt: "Thời gian tạo",
-      status: "Trạng thái",
-      action: "Hành động",
-      view: "Xem",
-      statusPending: "Đang chờ",
-      statusSubmitted: "Đã gửi",
-      statusApproved: "Đã duyệt",
-      prevPage: "Trước",
-      nextPage: "Sau",
-      pageIndicator: "Trang {current} / {total}"
-    },
-    en: {
-      totalPatrolSheets: "Total PATROL Sheets",
-      patrolTrendTitle: "PATROL Sheet Creation Trend",
-      patrolTrendSubtitle: "Track the total count of patrol sessions performed over time",
-      all: "All",
-      dailyPatrol: "Daily Patrol",
-      weeklyPatrol: "Weekly Patrol",
-      showingPatrolSheets: "Showing {count} patrol sheets for: {info}",
-      noPatrolSheets: "No patrol sheets found for this day.",
-      clickPointToView: "Click a point on the chart to view patrol sheet details.",
-      stt: "No.",
-      sheetId: "Patrol ID",
-      lineArea: "Line / Area",
-      creator: "Creator",
-      createdAt: "Creation Time",
-      status: "Status",
-      action: "Action",
-      view: "View",
-      statusPending: "Pending",
-      statusSubmitted: "Submitted",
-      statusApproved: "Approved",
-      prevPage: "Prev",
-      nextPage: "Next",
-      pageIndicator: "Page {current} of {total}"
-    },
-    ko: {
-      totalPatrolSheets: "총 PATROL 시트",
-      patrolTrendTitle: "PATROL 시트 생성 추세",
-      patrolTrendSubtitle: "시간에 따른 총 순찰 횟수 추적",
-      all: "전체",
-      dailyPatrol: "일일 순찰",
-      weeklyPatrol: "주간 순찰",
-      showingPatrolSheets: "{info}에 대한 {count}개의 순찰 시트를 표시 중",
-      noPatrolSheets: "이 날짜에 해당하는 순찰 시트가 없습니다.",
-      clickPointToView: "순찰 시트 상세 정보를 보려면 차트의 점을 클릭하십시오.",
-      stt: "번호",
-      sheetId: "순찰 ID",
-      lineArea: "라인 / 영역",
-      creator: "생성자",
-      createdAt: "생성 시간",
-      status: "상태",
-      action: "작업",
-      view: "보기",
-      statusPending: "대기 중",
-      statusSubmitted: "제출됨",
-      statusApproved: "승인됨",
-      prevPage: "이전",
-      nextPage: "다음",
-      pageIndicator: "{current} / {total} 페이지"
-    }
-  };
-
-  const currentLang = translations[lang] ? lang : "en";
-  let text = translations[currentLang][key] || key;
-  if (options) {
-    Object.keys(options).forEach((k) => {
-      text = text.replace(`{${k}}`, options[k]);
-    });
-  }
-  return text;
-};
-
 const PatrolTrendCard = ({
   patrolTimelineStats,
   patrolSessions,
@@ -703,7 +614,7 @@ const PatrolTrendCard = ({
   fontSize,
   userRole,
   navigate,
-  currentLanguage,
+  tPatrol,
   initialDate,
   initialPage = 0,
   initialHighlightId,
@@ -714,7 +625,7 @@ const PatrolTrendCard = ({
   fontSize: number;
   userRole?: string;
   navigate: ReturnType<typeof useNavigate>;
-  currentLanguage: string;
+  tPatrol: (key: string, opts?: any) => string;
   initialDate?: string | null;
   initialPage?: number;
   initialHighlightId?: number | null;
@@ -725,6 +636,7 @@ const PatrolTrendCard = ({
   const [_selectedDateLabel, setSelectedDateLabel] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"all" | "daily" | "weekly">("all");
   const patrolDetailRef = useRef<HTMLDivElement>(null);
+  const pT = (key: string, opts?: any) => tPatrol(key, opts);
 
   const handleChartPointClick = (payload: any) => {
     const pointData = payload?.payload ?? payload;
@@ -817,11 +729,11 @@ const PatrolTrendCard = ({
   const getStatusText = (status: string) => {
     switch (status) {
       case "Approved":
-        return getPatrolTranslation("statusApproved", currentLanguage);
+        return pT("statusApproved");
       case "Submitted":
-        return getPatrolTranslation("statusSubmitted", currentLanguage);
+        return pT("statusSubmitted");
       default:
-        return getPatrolTranslation("statusPending", currentLanguage);
+        return pT("statusPending");
     }
   };
 
@@ -855,15 +767,15 @@ const PatrolTrendCard = ({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
         <div>
           <h2 className="text-xl font-bold text-slate-800">
-            {getPatrolTranslation("patrolTrendTitle", currentLanguage)}
+            {pT("patrolTrendTitle")}
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            {getPatrolTranslation("patrolTrendSubtitle", currentLanguage)}
+            {pT("patrolTrendSubtitle")}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg border border-emerald-200 animate-pulse">
-            {getPatrolTranslation("totalPatrolSheets", currentLanguage)}: {patrolTimelineStats.reduce((sum, item) => sum + item.count, 0)}
+            {pT("totalPatrolSheets")}: {patrolTimelineStats.reduce((sum, item) => sum + item.count, 0)}
           </span>
         </div>
       </div>
@@ -893,7 +805,7 @@ const PatrolTrendCard = ({
             dataKey="count"
             stroke="#0d9488"
             strokeWidth={3}
-            name={getPatrolTranslation("totalPatrolSheets", currentLanguage)}
+            name={pT("totalPatrolSheets")}
             dot={(props: any) => {
               const { cx, cy, payload } = props;
               return (
@@ -937,7 +849,7 @@ const PatrolTrendCard = ({
               />
             </svg>
             <p className="text-sm font-medium text-slate-500 m-0">
-              {getPatrolTranslation("clickPointToView", currentLanguage)}
+              {pT("clickPointToView")}
             </p>
           </div>
         ) : (
@@ -945,7 +857,7 @@ const PatrolTrendCard = ({
             {/* Header thông tin chi tiết */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
               <span className="text-sm font-bold text-teal-600 bg-teal-50 px-3 py-1 rounded-full animate-fadeIn transition-all duration-300">
-                {getPatrolTranslation("showingPatrolSheets", currentLanguage, {
+                {pT("showingPatrolSheets", {
                   count: counts[activeTab],
                   info: formattedDateLabel,
                 })}
@@ -966,10 +878,10 @@ const PatrolTrendCard = ({
                       }`}
                   >
                     {tab === "all"
-                      ? `${getPatrolTranslation("all", currentLanguage)} (${counts.all})`
+                      ? `${pT("all")} (${counts.all})`
                       : tab === "daily"
-                        ? `${getPatrolTranslation("dailyPatrol", currentLanguage)} (${counts.daily})`
-                        : `${getPatrolTranslation("weeklyPatrol", currentLanguage)} (${counts.weekly})`}
+                        ? `${pT("dailyPatrol")} (${counts.daily})`
+                        : `${pT("weeklyPatrol")} (${counts.weekly})`}
                   </button>
                 ))}
               </div>
@@ -985,25 +897,25 @@ const PatrolTrendCard = ({
                       <thead>
                         <tr className="border-b border-slate-100 bg-slate-50/50 py-3">
                           <th className="py-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-left w-12">
-                            {getPatrolTranslation("stt", currentLanguage)}
+                            {pT("stt")}
                           </th>
                           <th className="py-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-left w-24">
-                            {getPatrolTranslation("sheetId", currentLanguage)}
+                            {pT("sheetId")}
                           </th>
                           <th className="py-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-left">
-                            {getPatrolTranslation("lineArea", currentLanguage)}
+                            {pT("lineArea")}
                           </th>
                           <th className="py-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-left">
-                            {getPatrolTranslation("creator", currentLanguage)}
+                            {pT("creator")}
                           </th>
                           <th className="py-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-left">
-                            {getPatrolTranslation("createdAt", currentLanguage)}
+                            {pT("createdAt")}
                           </th>
                           <th className="py-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-left w-28">
-                            {getPatrolTranslation("status", currentLanguage)}
+                            {pT("status")}
                           </th>
                           <th className="py-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-center w-20">
-                            {getPatrolTranslation("action", currentLanguage)}
+                            {pT("action")}
                           </th>
                         </tr>
                       </thead>
@@ -1052,7 +964,7 @@ const PatrolTrendCard = ({
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                   </svg>
-                                  <span>{getPatrolTranslation("view", currentLanguage)}</span>
+                                  <span>{pT("view")}</span>
                                 </button>
                               </td>
                             </tr>
@@ -1082,7 +994,7 @@ const PatrolTrendCard = ({
                               <p className="text-xs font-bold text-slate-400 mb-0.5">#{sheet.id}</p>
                               <p className="text-sm font-bold text-slate-800 mb-1">{sheet.fullName}</p>
                               <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-                                Line: {sheetLineName}
+                                {pT("lineLabel")}: {sheetLineName}
                               </span>
                             </div>
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusStyle(sheet.status)}`}>
@@ -1101,7 +1013,7 @@ const PatrolTrendCard = ({
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                               </svg>
-                              <span>{getPatrolTranslation("view", currentLanguage)}</span>
+                              <span>{pT("view")}</span>
                             </button>
                           </div>
                         </div>
@@ -1113,15 +1025,15 @@ const PatrolTrendCard = ({
                   {totalPages > 1 && (
                     <div className="flex flex-col sm:flex-row justify-between items-center mt-4 pt-3 border-t border-slate-100 gap-3">
                       <span className="text-xs text-slate-500 font-semibold">
-                        {getPatrolTranslation("pageIndicator", currentLanguage, {
+                        {pT("pageIndicator", {
                           current: detailPage + 1,
                           total: totalPages,
                         })}
                       </span>
                       <ReactPaginate
                         {...PAGINATE_PROPS}
-                        previousLabel={getPatrolTranslation("prevPage", currentLanguage)}
-                        nextLabel={getPatrolTranslation("nextPage", currentLanguage)}
+                        previousLabel={pT("prevPage")}
+                        nextLabel={pT("nextPage")}
                         activeLinkClassName="!bg-teal-600 !text-white !border-teal-600 font-bold"
                         pageCount={totalPages}
                         forcePage={detailPage}
@@ -1133,7 +1045,7 @@ const PatrolTrendCard = ({
               ) : (
                 <div className="text-center py-6">
                   <p className="text-sm font-semibold text-slate-400 m-0">
-                    {getPatrolTranslation("noPatrolSheets", currentLanguage)}
+                    {pT("noPatrolSheets")}
                   </p>
                 </div>
               )}
@@ -1181,7 +1093,8 @@ const Dashboard = () => {
   const [patrolInitialPage, setPatrolInitialPage] = useState(0);
   const [patrolInitialHighlight, setPatrolInitialHighlight] = useState<number | null>(null);
 
-  const { t, i18n } = useTranslation("dashboard");
+  const { t } = useTranslation("dashboard");
+  const { t: tPatrol } = useTranslation("patrol");
   const location = useLocation();
 
   const displaySheets = useMemo(
@@ -1673,24 +1586,24 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[
                 {
-                  label: 'Patrol Chờ Xử Lý',
-                  description: 'PQC chưa gửi phiếu',
+                  label: tPatrol('dashboardStatus.pendingTitle'),
+                  description: tPatrol('dashboardStatus.pendingDescription'),
                   status: 'Pending',
                   color: 'yellow',
                   count: patrolSessions.filter(s => s.status === 'Pending').length,
                   showBadge: false,
                 },
                 {
-                  label: 'Patrol Chờ Duyệt',
-                  description: 'PQC đã gửi, chờ PQCLeader ký duyệt',
+                  label: tPatrol('dashboardStatus.submittedTitle'),
+                  description: tPatrol('dashboardStatus.submittedDescription'),
                   status: 'Submitted',
                   color: 'blue',
                   count: patrolSessions.filter(s => s.status === 'Submitted').length,
                   showBadge: true, // ← chỉ card này
                 },
                 {
-                  label: 'Patrol Đã Duyệt',
-                  description: 'PQCLeader đã ký duyệt',
+                  label: tPatrol('dashboardStatus.approvedTitle'),
+                  description: tPatrol('dashboardStatus.approvedDescription'),
                   status: 'Approved',
                   color: 'green',
                   count: patrolSessions.filter(s => s.status === 'Approved').length,
@@ -1722,7 +1635,7 @@ const Dashboard = () => {
                       <div>
                         <p className={`text-3xl font-bold ${colors.text}`}>{card.count}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {card.count === 0 ? 'Không có sheet' : `${card.count} sheet${card.count > 1 ? 's' : ''}`}
+                          {card.count === 0 ? tPatrol('noSheets') : `${card.count} ${tPatrol('sheetUnit')}`}
                         </p>
                       </div>
                       <FaMicrochip className={`w-5 h-5 ${colors.text} opacity-60`} />
@@ -1734,90 +1647,91 @@ const Dashboard = () => {
           </div>
 
           {/* Quick Stats */}
-          <ResponsiveContainer width="100%" height={280}>
-            <ComposedChart
-              data={[
-                {
-                  label: "Tổng",
-                  smd: sheets?.length || 0,
-                  patrol: patrolSessions?.length || 0,
-                },
-                {
-                  label: "Chờ xử lý",
-                  smd: sheets?.filter(s => s.status === "pending").length || 0,
-                  patrol: patrolSessions?.filter(s => s.status === "Pending").length || 0,
-                },
-                {
-                  label: "Chờ duyệt",
-                  smd: sheets?.filter(s => s.status === "PQCDone").length || 0,
-                  patrol: patrolSessions?.filter(s => s.status === "Submitted").length || 0,
-                },
-                {
-                  label: "Hoàn thành",
-                  smd: sheets?.filter(s => s.status === "KoreaManagerDone").length || 0,
-                  patrol: patrolSessions?.filter(s => s.status === "Approved").length || 0,
-                },
-              ]}
-              style={{ outline: "none" }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-              <XAxis
-                dataKey="label"
-                tick={{ fontSize: 12, fill: "#64748b" }}
-                axisLine={{ stroke: "#e2e8f0" }}
-                tickLine={false}
-              />
-              {/* Trục Y trái — SMD */}
-              <YAxis
-                yAxisId="smd"
-                orientation="left"
-                tick={{ fontSize: 11, fill: "#3b82f6" }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}
-              />
-              {/* Trục Y phải — Patrol */}
-              <YAxis
-                yAxisId="patrol"
-                orientation="right"
-                tick={{ fontSize: 11, fill: "#10b981" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "rgba(255,255,255,0.96)",
-                  border: "none",
-                  borderRadius: "12px",
-                  boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-                }}
-                cursor={false}
-              />
-              <Legend verticalAlign="top" align="right" height={36} />
-
-              {/* Cột SMD — trục trái */}
-              <Bar
-                yAxisId="smd"
-                dataKey="smd"
-                name="SMD Sheet"
-                fill="#3b82f6"
-                radius={0}
-                barSize={36}
-              />
-
-              {/* Đường Patrol — trục phải */}
-              <Line
-                yAxisId="patrol"
-                type="monotone"
-                dataKey="patrol"
-                name="PATROL Sheet"
-                stroke="#10b981"
-                strokeWidth={3}
-                dot={{ r: 5, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }}
-                activeDot={{ r: 7 }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mt-6! mb-6!">
+            <h2 className="text-xl font-bold text-slate-800 mb-6">
+              {t("roleBasedDashboard.quickStats.title")}
+            </h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <ComposedChart
+                data={[
+                  {
+                    label: tPatrol('summaryTotal'),
+                    smd: sheets?.length || 0,
+                    patrol: patrolSessions?.length || 0,
+                  },
+                  {
+                    label: tPatrol('summaryPending'),
+                    smd: sheets?.filter(s => s.status === "pending").length || 0,
+                    patrol: patrolSessions?.filter(s => s.status === "Pending").length || 0,
+                  },
+                  {
+                    label: tPatrol('summarySubmitted'),
+                    smd: sheets?.filter(s => s.status === "PQCDone").length || 0,
+                    patrol: patrolSessions?.filter(s => s.status === "Submitted").length || 0,
+                  },
+                  {
+                    label: tPatrol('summaryCompleted'),
+                    smd: sheets?.filter(s => s.status === "KoreaManagerDone").length || 0,
+                    patrol: patrolSessions?.filter(s => s.status === "Approved").length || 0,
+                  },
+                ]}
+                barCategoryGap="30%"
+                margin={{ top: 10, right: 40, bottom: 10, left: 10 }}
+                style={{ outline: "none" }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 12, fill: "#64748b" }}
+                  axisLine={{ stroke: "#e2e8f0" }}
+                  tickLine={false}
+                />
+                <YAxis
+                  yAxisId="smd"
+                  orientation="left"
+                  tick={{ fontSize: 11, fill: "#3b82f6" }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}
+                />
+                <YAxis
+                  yAxisId="patrol"
+                  orientation="right"
+                  tick={{ fontSize: 11, fill: "#10b981" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "rgba(255,255,255,0.96)",
+                    border: "none",
+                    borderRadius: "12px",
+                    boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+                  }}
+                  cursor={false}
+                />
+                <Legend verticalAlign="top" align="right" height={36} />
+                <Bar
+                  yAxisId="smd"
+                  dataKey="smd"
+                  name="SMD Sheet"
+                  fill="#3b82f6"
+                  radius={0}
+                  barSize={24}
+                />
+                <Line
+                  yAxisId="patrol"
+                  type="monotone"
+                  dataKey="patrol"
+                  name="PATROL Sheet"
+                  stroke="#10b981"
+                  strokeWidth={3}
+                  dot={{ r: 5, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }}
+                  activeDot={{ r: 7 }}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
 
           {/* Combined SMD Sheet Trend and Details Card */}
           <SmdTrendCard
@@ -1828,7 +1742,6 @@ const Dashboard = () => {
             setShiftFilter={setShiftFilter}
             onPointClick={handlePointClick}
             fontSize={fontSize}
-            
             t={t}
             selectedSheets={selectedSheets}
             selectedPoint={selectedPoint}
@@ -1850,7 +1763,7 @@ const Dashboard = () => {
             fontSize={fontSize}
             userRole={user?.role}
             navigate={navigate}
-            currentLanguage={i18n.language}
+            tPatrol={tPatrol}
             initialDate={patrolInitialDate}
             initialPage={patrolInitialPage}
             initialHighlightId={patrolInitialHighlight}
@@ -2157,22 +2070,22 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               {
-                label: 'Patrol Chờ Xử Lý',
-                description: 'PQC chưa gửi phiếu',
+                label: tPatrol('dashboardStatus.pendingTitle'),
+                description: tPatrol('dashboardStatus.pendingDescription'),
                 status: 'Pending',
                 color: 'yellow',
                 count: patrolSessions.filter(s => s.status === 'Pending').length,
               },
               {
-                label: 'Patrol Chờ Duyệt',
-                description: 'PQC đã gửi, chờ PQCLeader ký duyệt',
+                label: tPatrol('dashboardStatus.submittedTitle'),
+                description: tPatrol('dashboardStatus.submittedDescription'),
                 status: 'Submitted',
                 color: 'blue',
                 count: patrolSessions.filter(s => s.status === 'Submitted').length,
               },
               {
-                label: 'Patrol Đã Duyệt',
-                description: 'PQCLeader đã ký duyệt',
+                label: tPatrol('dashboardStatus.approvedTitle'),
+                description: tPatrol('dashboardStatus.approvedDescription'),
                 status: 'Approved',
                 color: 'green',
                 count: patrolSessions.filter(s => s.status === 'Approved').length,
@@ -2196,7 +2109,7 @@ const Dashboard = () => {
                     <div>
                       <p className={`text-3xl font-bold ${colors.text}`}>{card.count}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {card.count === 0 ? 'Không có sheet' : `${card.count} sheet${card.count > 1 ? 's' : ''}`}
+                        {card.count === 0 ? tPatrol('noSheets') : `${card.count} ${tPatrol('sheetUnit')}`}
                       </p>
                     </div>
                     <FaMicrochip className={`w-5 h-5 ${colors.text} opacity-60`} />
@@ -2208,48 +2121,90 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="bg-white rounded-xl shadow-lg p-4 mb-6! mt-6! ">
-          <h2 className="text-xl font-bold text-slate-800 mb-4">
+        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mt-6! mb-6">
+          <h2 className="text-xl font-bold text-slate-800 mb-6">
             {t("roleBasedDashboard.quickStats.title")}
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              {
-                value: sheets?.length || 0,
-                label: t("roleBasedDashboard.quickStats.totalSheets"),
-                color: "text-blue-600",
-              },
-              {
-                value:
-                  sheets?.filter((s) => s.status === "pending").length || 0,
-                label: t("roleBasedDashboard.quickStats.pending"),
-                color: "text-orange-300",
-              },
-              {
-                value:
-                  sheets?.filter((s) => s.status === "KoreaManagerDone")
-                    .length || 0,
-                label: t("roleBasedDashboard.quickStats.completed"),
-                color: "text-green-600",
-              },
-              {
-                value: `${completionRate}%`,
-                label: t("roleBasedDashboard.quickStats.completionRate"),
-                color: "text-purple-600",
-              },
-            ].map((item, i) => (
-              <div key={i} className="text-center border">
-                <p
-                  className={`text-3xl font-bold ${item.color} mb-0 bg-blue-50 py-2`}
-                >
-                  {item.value}
-                </p>
-                <p className="text-sm text-gray-600 mt-1 py-2">
-                  {item.label}
-                </p>
-              </div>
-            ))}
-          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <ComposedChart
+              data={[
+                {
+                  label: tPatrol('summaryTotal'),
+                  smd: sheets?.length || 0,
+                  patrol: patrolSessions?.length || 0,
+                },
+                {
+                  label: tPatrol('summaryPending'),
+                  smd: sheets?.filter(s => s.status === "pending").length || 0,
+                  patrol: patrolSessions?.filter(s => s.status === "Pending").length || 0,
+                },
+                {
+                  label: tPatrol('summarySubmitted'),
+                  smd: sheets?.filter(s => s.status === "PQCDone").length || 0,
+                  patrol: patrolSessions?.filter(s => s.status === "Submitted").length || 0,
+                },
+                {
+                  label: tPatrol('summaryCompleted'),
+                  smd: sheets?.filter(s => s.status === "KoreaManagerDone").length || 0,
+                  patrol: patrolSessions?.filter(s => s.status === "Approved").length || 0,
+                },
+              ]}
+              barCategoryGap="30%"
+              margin={{ top: 10, right: 40, bottom: 10, left: 10 }}
+              style={{ outline: "none" }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 12, fill: "#64748b" }}
+                axisLine={{ stroke: "#e2e8f0" }}
+                tickLine={false}
+              />
+              <YAxis
+                yAxisId="smd"
+                orientation="left"
+                tick={{ fontSize: 11, fill: "#3b82f6" }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}
+              />
+              <YAxis
+                yAxisId="patrol"
+                orientation="right"
+                tick={{ fontSize: 11, fill: "#10b981" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "rgba(255,255,255,0.96)",
+                  border: "none",
+                  borderRadius: "12px",
+                  boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+                }}
+                cursor={false}
+              />
+              <Legend verticalAlign="top" align="right" height={36} />
+              <Bar
+                yAxisId="smd"
+                dataKey="smd"
+                name="SMD Sheet"
+                fill="#3b82f6"
+                radius={0}
+                barSize={24}
+              />
+              <Line
+                yAxisId="patrol"
+                type="monotone"
+                dataKey="patrol"
+                name="PATROL Sheet"
+                stroke="#10b981"
+                strokeWidth={3}
+                dot={{ r: 5, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }}
+                activeDot={{ r: 7 }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
         </div>
 
         {/* Combined SMD Sheet Trend and Details Card */}
@@ -2282,7 +2237,7 @@ const Dashboard = () => {
           fontSize={fontSize}
           userRole={user?.role}
           navigate={navigate}
-          currentLanguage={i18n.language}
+          tPatrol={tPatrol}
           initialDate={patrolInitialDate}
           initialPage={patrolInitialPage}
           initialHighlightId={patrolInitialHighlight}
@@ -2406,3 +2361,5 @@ const ChartCard = ({
 );
 
 export default Dashboard;
+
+

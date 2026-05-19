@@ -600,6 +600,7 @@ const patrolSlice = createSlice({
                 state.loading = false;
                 state.success = true;
                 state.sessions = state.sessions.filter(item => item.id !== action.payload);
+                state.filteredSessionsResult = state.filteredSessionsResult.filter(item => item.id !== action.payload);
             })
             .addCase(deletePatrolSession.rejected, handleRejected)
 

@@ -6,7 +6,12 @@
     "dashboard": "대시보드",
     "smdSheet": "SMD 시트",
     "settings": "설정",
-    "plan": "계획"
+    "plan": "계획",
+    "patrolChecklist": "순찰 체크리스트",
+    "patrolManage": "순찰 관리",
+    "patrolDaily": "일일 순찰",
+    "patrolWeekly": "주간 순찰",
+    "patrolReport": "순찰 보고서"
   },
   "roles": {
     "engineering": "엔지니어링",
@@ -75,5 +80,6 @@
     "detected_title": "앱 업데이트",
     "detected_msg": "새 버전이 배포되었습니다. 안정성을 위해 아래 버튼을 클릭하여 페이지를 한 번 더 새로고침해 주세요.",
     "reload_button": "지금 새로고침"
-  }
+  },
+  "changePassword": "비밀번호 변경"
 }

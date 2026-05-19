@@ -48,7 +48,7 @@ const RoleBasedLayout = () => {
   const handleLanguageChange = async (langCode: string) => {
     if (langCode === currentLang) return;
     try {
-      await i18n.reloadResources(langCode, ["settings", "dashboard", "logs", "common"]);
+      await i18n.reloadResources(langCode, ["settings", "dashboard", "logs", "common", "patrol"]);
       await i18n.changeLanguage(langCode);
       localStorage.setItem("appLanguage", langCode);
       setCurrentLang(langCode);
@@ -126,15 +126,15 @@ const RoleBasedLayout = () => {
     { name: t('menu.smdSheet'), path: `/${role}/smd-sheet-logs`, icon: <FaFileAlt />, shouldReload: true },
     { name: t('menu.plan'), path: `/${role}/plan`, icon: <PiPlantFill />, shouldReload: true },
     {
-      name: 'Patrol Check list',
+      name: t('menu.patrolChecklist'),
       path: 'patrol',
       icon: <FaMicrochip />,
       isDropdown: true,
       children: [
-        { name: 'Quản lý Patrol', path: `/${role}/patrol?view=manage`, shouldReload: false },
-        { name: 'Patrol Ngày', path: `/${role}/patrol?view=list&type=daily`, shouldReload: false },
-        { name: 'Patrol Tuần', path: `/${role}/patrol?view=list&type=weekly`, shouldReload: false },
-        { name: 'Báo cáo Patrol', path: `/${role}/patrol?view=report`, shouldReload: false },
+        { name: t('menu.patrolManage'), path: `/${role}/patrol?view=manage`, shouldReload: false },
+        { name: t('menu.patrolDaily'), path: `/${role}/patrol?view=list&type=daily`, shouldReload: false },
+        { name: t('menu.patrolWeekly'), path: `/${role}/patrol?view=list&type=weekly`, shouldReload: false },
+        { name: t('menu.patrolReport'), path: `/${role}/patrol?view=report`, shouldReload: false },
       ],
     },
     { name: t('menu.settings'), path: `/${role}/settings`, icon: <FaCog />, shouldReload: false },
@@ -350,14 +350,14 @@ const RoleBasedLayout = () => {
                     className="flex items-center gap-3 w-full px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-100 transition-colors"
                   >
                     <FaKey className="w-4 h-4 text-gray-400" />
-                    Đổi mật khẩu
+                    {t('changePassword')}
                   </button>
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-3 w-full px-3 py-2 text-sm font-bold text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors group"
                   >
                     <HiLogout className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
-                    Đăng xuất
+                    {t('logout')}
                   </button>
                 </div>
               </div>

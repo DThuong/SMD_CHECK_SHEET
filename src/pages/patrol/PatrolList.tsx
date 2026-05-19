@@ -22,6 +22,7 @@ import {
   clearPatrolNavState,
 } from '../../utils/patrolNavState';
 import { useSearchParams } from 'react-router-dom';
+import { ConfirmModal } from '../../components/general/ConfirmModal';
 
 interface PatrolListProps extends PatrolSharedProps {
   type: 'daily' | 'weekly';
@@ -46,6 +47,8 @@ const PatrolList: React.FC<PatrolListProps> = ({
     ...PATROL_FILTER_DEFAULT,
     status: statusFromUrl,
   });
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const patrolTypeCode = type === 'daily' ? '1' : '7';
   const isDaily = type === 'daily';
@@ -147,14 +150,16 @@ const PatrolList: React.FC<PatrolListProps> = ({
 
   // ======================== FILTER HANDLERS ========================
 
-  const dispatchFilter = (f: PatrolFilter) => {
-    dispatch(filterPatrolSessions({
+  const buildFilterParams = (f: PatrolFilter) => ({
       fullName: f.fullName || undefined,
       lineAreaName: f.lineAreaName || undefined,
       status: f.status || undefined,
       fromDate: f.fromDate ? new Date(f.fromDate).toISOString() : undefined,
       toDate: f.toDate ? new Date(f.toDate + 'T23:59:59').toISOString() : undefined,
-    }));
+  });
+
+  const dispatchFilter = (f: PatrolFilter) => {
+    dispatch(filterPatrolSessions(buildFilterParams(f)));
   };
 
   const handleFilterChange = (key: keyof PatrolFilter, value: string) => {
@@ -182,11 +187,26 @@ const PatrolList: React.FC<PatrolListProps> = ({
   // ======================== ACTION HANDLERS ========================
 
   const handleDelete = (id: number) => {
-    if (window.confirm(pT('deleteConfirm'))) {
-      dispatch(deletePatrolSession(id))
-        .unwrap()
-        .then(() => toast.success(pT('deleteSuccess')))
-        .catch((err) => toast.error(err));
+    setDeleteTargetId(id);
+  };
+
+  const handleCancelDelete = () => {
+    if (isDeleting) return;
+    setDeleteTargetId(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) return;
+    setIsDeleting(true);
+    try {
+      await dispatch(deletePatrolSession(deleteTargetId)).unwrap();
+      await dispatch(filterPatrolSessions(buildFilterParams(filter))).unwrap();
+      toast.success(pT('deleteSuccess'));
+      setDeleteTargetId(null);
+    } catch (err: any) {
+      toast.error(err || pT('errorOccurred'));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -299,11 +319,11 @@ const PatrolList: React.FC<PatrolListProps> = ({
           fullName: pT('colCreator'),
           lineArea: pT('colLine'),
           status: pT('colStatus'),
-          fromDate: `${pT('colTime')} từ`,
-          toDate: `${pT('colTime')} đến`,
-          search: pT('searchBtn') || 'Tìm kiếm',
-          searching: pT('searchingBtn') || 'Đang tìm...',
-          reset: pT('resetBtn') || 'Đặt lại',
+          fromDate: pT('fromDate'),
+          toDate: pT('toDate'),
+          search: pT('searchBtn'),
+          searching: pT('searchingBtn'),
+          reset: pT('resetBtn'),
           results: pT('colResult'),
         }}
       />
@@ -311,7 +331,7 @@ const PatrolList: React.FC<PatrolListProps> = ({
       {/* Empty state */}
       {currentSheets.length === 0 ? (
         <div className="text-center py-8 bg-white border border-dashed border-gray-300">
-          <p className="text-gray-500 font-medium m-0">
+          <p className="text-gray-500 font-medium m-0 p-4!">
             {isDaily ? pT('emptyDaily') : pT('emptyWeekly')}
           </p>
         </div>
@@ -328,7 +348,7 @@ const PatrolList: React.FC<PatrolListProps> = ({
                   <th className="border border-gray-300 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">{pT('colTime')}</th>
                   <th className="border border-gray-300 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">{pT('colStatus')}</th>
                   {/* Cột mới */}
-                  <th className="border border-gray-300 px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Ký Duyệt</th>
+                  <th className="border border-gray-300 px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">{pT('approval')}</th>
                   <th className="border border-gray-300 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">{pT('colActions')}</th>
                 </tr>
               </thead>
@@ -438,7 +458,7 @@ const PatrolList: React.FC<PatrolListProps> = ({
                       </div>
                       <p className="font-semibold text-gray-800 mb-0">{sheet.fullName}</p>
                       <p className="text-sm font-bold text-indigo-600 mb-0">
-                        Line: {lineAreas.find(l => l.id === sheet.lineAreaId)?.lineAreaName || 'N/A'}
+                        {pT('lineLabel')}: {lineAreas.find(l => l.id === sheet.lineAreaId)?.lineAreaName || 'N/A'}
                       </p>
                     </div>
                     <span className={`px-2 py-1 text-xs font-bold rounded-full ${getStatusStyle(sheet.status)}`}>
@@ -509,6 +529,16 @@ const PatrolList: React.FC<PatrolListProps> = ({
           )}
         </>
       )}
+      <ConfirmModal
+        open={deleteTargetId !== null}
+        title={pT('deleteTitle')}
+        message={pT('deleteConfirm')}
+        confirmText={isDeleting ? pT('deletingBtn') : pT('deleteBtn')}
+        cancelText={pT('cancelBtn')}
+        type="danger"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </div>
   );
 };

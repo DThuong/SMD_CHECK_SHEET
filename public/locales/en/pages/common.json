@@ -6,7 +6,12 @@
     "dashboard": "Dashboard",
     "smdSheet": "SMD Sheet",
     "settings": "Settings",
-    "plan": "Plan"
+    "plan": "Plan",
+    "patrolChecklist": "Patrol Checklist",
+    "patrolManage": "Manage Patrol",
+    "patrolDaily": "Daily Patrol",
+    "patrolWeekly": "Weekly Patrol",
+    "patrolReport": "Patrol Report"
   },
   "roles": {
     "engineering": "Engineering",
@@ -75,5 +80,6 @@
     "detected_title": "App Update",
     "detected_msg": "A new version has been deployed. Please click the button below to reload the page one more time to ensure stability.",
     "reload_button": "Reload Now"
-  }
+  },
+  "changePassword": "Change password"
 }

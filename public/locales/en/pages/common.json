@@ -67,8 +67,9 @@
     "updateStatusSuccess": "Status updated successfully!",
     "updateStatusFailed": "Update failed",
     "closeDate": "Finish Day",
-    "closeDateSuccess": "Plan for this day has been closed!",
-    "closeDateFailed": "Failed to close the day"
+    "closeDateSuccess": "workOrder closed!",
+    "closeDateFailed": "Failed to close the day",
+    "confirmCloseDateAllSigned": "Are you sure you want to close all workOrders signed by the Manager?"
   },
   "update": {
     "detected_title": "App Update",

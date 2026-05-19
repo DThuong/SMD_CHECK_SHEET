@@ -7,13 +7,10 @@ import {
   AiOutlineCheckCircle,
   AiOutlineClockCircle,
   AiOutlineCalendar,
-  AiOutlineEdit,
   AiOutlineClose,
-  AiOutlineHistory,
   AiOutlineLoading3Quarters,
 } from "react-icons/ai";
 import { MdKeyboardReturn } from "react-icons/md";
-import { FaRegUserCircle } from "react-icons/fa";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import ReactPaginate from "react-paginate";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -40,11 +37,9 @@ import {
   updateSheetStatus,
   returnSheetToPending,
   getSheetStatusHistory,
-  clearStatusHistory,
 } from "../../redux/slices/changeModelSlice";
 import type { ChangeModelResponse } from "../../redux/slices/changeModelSlice";
 import { useTranslation } from "react-i18next";
-import { getLcrFileData, clearLcrFile } from "../../redux/slices/FileSlice";
 
 // ==================== CONSTANTS ====================
 const ROLES = {
@@ -78,13 +73,13 @@ type SheetFilter = {
 };
 
   function saveLogsSession(data: object) {
-    try { sessionStorage.setItem('logs_filter_state', JSON.stringify(data)); } catch { }
+    try { sessionStorage.setItem('logs_filter_state', JSON.stringify(data)); } catch (e) { console.warn("saveLogsSession error:", e); }
   }
   function readLogsSession(): any {
     try { return JSON.parse(sessionStorage.getItem('logs_filter_state') || '{}'); } catch { return {}; }
   }
   function clearLogsSession() {
-    try { sessionStorage.removeItem('logs_filter_state'); } catch { }
+    try { sessionStorage.removeItem('logs_filter_state'); } catch (e) { console.warn("clearLogsSession error:", e); }
   }
 
 const Logs = () => {
@@ -95,15 +90,10 @@ const Logs = () => {
   const {
     filteredSheets,
     loadingList,
-    statusHistory,
-    loadingHistory,
     error: sheetError,
   } = useAppSelector((state) => state.changeModel);
 
   // ==================== STATE ====================
-  const [selectedSheet, setSelectedSheet] =
-    useState<ChangeModelResponse | null>(null);
-  const [showDetail, setShowDetail] = useState<boolean>(false);
   const resultsRef = useRef<HTMLDivElement>(null);
   const { notification, showNotification, hideNotification } =
     useNotification();
@@ -381,14 +371,6 @@ const Logs = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (selectedSheet && filteredSheets?.length) {
-      const updated = filteredSheets.find((s) => s.id === selectedSheet.id);
-      if (updated && updated.status !== selectedSheet.status) {
-        setSelectedSheet(updated);
-      }
-    }
-  }, [filteredSheets]);
 
   // Cập nhật candidates từ filteredSheets (chỉ khi không có text filter)
   useEffect(() => {
@@ -468,31 +450,22 @@ const Logs = () => {
   };
 
   // ==================== VIEW HANDLERS ====================
-  // Cập nhật handleViewDetail để save navigation
-  const handleViewDetail = async (sheet: ChangeModelResponse) => {
+  // Cập nhật handleViewDetail để save navigation và chuyển trang trực tiếp
+  const handleViewDetail = (sheet: ChangeModelResponse) => {
     // Save current state TRƯỚC KHI navigate
     saveFilterState(filter, currentPage);
     saveSelectedSheetId(sheet.id);
 
-    setSelectedSheet(sheet);
-    setShowDetail(true);
-
-    try {
-      await dispatch(getSheetStatusHistory(sheet.id)).unwrap();
-      if (sheet.excelFileUrl && sheet.excelFileUrl.trim() !== "") {
-        await dispatch(getLcrFileData(sheet.id)).unwrap();
-      }
-    } catch (error) {
-      console.error("❌ Lỗi khi tải history:", error);
-    }
-  };
-
-  // Cập nhật handleCloseDetail
-  const handleCloseDetail = () => {
-    setShowDetail(false);
-    setSelectedSheet(null);
-    dispatch(clearStatusHistory());
-    dispatch(clearLcrFile());
+    const currentPath = window.location.pathname;
+    const currentSearch = window.location.search;
+    const roleLower = user?.role?.toLowerCase();
+    navigate(`/${roleLower}/sheet-detail/${sheet.id}`, {
+      state: {
+        from: "logs",
+        returnPath: currentPath,
+        returnSearch: currentSearch,
+      },
+    });
   };
 
   // ==================== CONFIRMATION LOGIC ====================
@@ -646,42 +619,6 @@ const Logs = () => {
     return `${month}-${day}-${year} ${hours}:${minutes}`;
   };
 
-  const canEdit = (sheet: ChangeModelResponse): boolean => {
-    if (!user) return false;
-
-    const status = sheet.status?.toLowerCase();
-
-    // Chỉ check từng role riêng lẻ, không cần check !== các role khác
-    if (user.role === ROLES.PQC && status === STATUS.PENDING.toLowerCase()) {
-      return true;
-    }
-
-    // PQCLeader chỉ edit khi PQCDone
-    if (
-      user.role === ROLES.PQCLEADER &&
-      status === STATUS.PQC_DONE.toLowerCase()
-    ) {
-      return true;
-    }
-
-    // ENG chỉ edit khi PQCLeaderDone
-    if (
-      user.role === ROLES.ENG &&
-      status === STATUS.PQCLEADER_DONE.toLowerCase()
-    ) {
-      return true;
-    }
-
-    // SUPERVISOR chỉ edit khi ENGDone
-    if (
-      user.role === ROLES.SUPERVISOR &&
-      status === STATUS.ENG_DONE.toLowerCase()
-    ) {
-      return true;
-    }
-
-    return false;
-  };
 
   const canDelete = (sheet: ChangeModelResponse): boolean => {
     if (!user) return false;
@@ -856,205 +793,7 @@ const Logs = () => {
     }
   };
 
-  // ==================== DETAIL VIEW ====================
-  if (showDetail && selectedSheet) {
-    const getSignerInfo = (role: string) => {
-      const history = Array.isArray(statusHistory) ? statusHistory : [];
-      const historyItem = history?.find((item) => {
-        const status = item.status?.toLowerCase();
-        switch (role) {
-          case ROLES.PQC:
-            return status === STATUS.PQC_DONE.toLowerCase();
-          case ROLES.PQCLEADER:
-            return status === STATUS.PQCLEADER_DONE.toLowerCase();
-          case ROLES.ENG:
-            return status === STATUS.ENG_DONE.toLowerCase();
-          case ROLES.SUPERVISOR:
-            return status === STATUS.SUPERVISOR_DONE.toLowerCase();
-          case ROLES.MANAGER:
-            return status === STATUS.MANAGER_DONE.toLowerCase();
-          case ROLES.KOREA_MANAGER:
-            return status === STATUS.KOREA_MANAGER_DONE.toLowerCase();
-          default:
-            return false;
-        }
-      });
-      return historyItem || null;
-    };
 
-    const roles = [
-      { key: ROLES.PQC, label: "PQC" },
-      { key: ROLES.PQCLEADER, label: "PQC Leader" },
-      { key: ROLES.ENG, label: "Engineering" },
-      { key: ROLES.SUPERVISOR, label: "Supervisor" },
-      { key: ROLES.MANAGER, label: "Manager" },
-      { key: ROLES.KOREA_MANAGER, label: "Korea Manager" },
-    ];
-    {
-      /** DETAIL VIEW */
-    }
-    return (
-      <div className="min-h-screen bg-gray-50 select-none">
-        <Notification
-          show={notification.show}
-          type={notification.type}
-          title={notification.title}
-          message={notification.message}
-          onClose={hideNotification}
-        />
-
-        <div className="max-w-8xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg p-4">
-            <div className="flex flex-col items-center mb-4 gap-2">
-              <div className="text-3xl font-bold text-gray-800">
-                {t("detail.title")}: #{selectedSheet.id}
-              </div>
-            </div>
-
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center gap-2">
-                  <FaRegUserCircle className="w-5 h-5" />
-                  <span className="text-sm text-gray-700">
-                    <strong>{t("detail.createdBy")}:</strong>{" "}
-                    {selectedSheet.account?.fullName ||
-                      selectedSheet.account?.userName}{" "}
-                    ({selectedSheet.account?.role})
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <AiOutlineCalendar className="w-5 h-5" />
-                  <span className="text-sm text-gray-700">
-                    <strong>{t("detail.time")}:</strong>{" "}
-                    {formatDateTime(selectedSheet.createAt)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusBadge(selectedSheet)}
-                </div>
-              </div>
-
-              {/* Tiến trình ký xác nhận - CẬP NHẬT PHẦN NÀY */}
-              <div className="mt-4 pt-4 border-t border-blue-200">
-                <strong className="text-sm text-gray-700 mb-2 flex items-center gap-2">
-                  <AiOutlineHistory className="w-5 h-5" />
-                  {t("detail.signatureProgress")}:
-                </strong>
-
-                {loadingHistory ? (
-                  <LoadingSpinner size="sm" message={t("detail.loading")} />
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                    {roles.map((role) => {
-                      const signerInfo = getSignerInfo(role.key);
-                      const isConfirmed = !!signerInfo;
-                      const canConfirm = canConfirmAtStep(
-                        selectedSheet,
-                        role.key,
-                      );
-
-                      return (
-                        <div
-                          key={role.key}
-                          className={`p-3 rounded-lg border-2 h-32 ${isConfirmed
-                            ? "bg-green-50 border-green-300"
-                            : "bg-gray-50 border-gray-300"
-                            }`}
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            {isConfirmed ? (
-                              <AiOutlineCheckCircle className="w-5 h-5 text-green-600" />
-                            ) : (
-                              <AiOutlineClockCircle className="w-5 h-5 text-gray-400" />
-                            )}
-                            <span className="font-semibold text-xs">
-                              {role.label}
-                            </span>
-                          </div>
-
-                          {isConfirmed && signerInfo ? (
-                            <div className="text-xs text-gray-600 space-y-1">
-                              <div className="text-green-700 font-medium">
-                                ✓ {t("detail.confirmed")}
-                              </div>
-                              {/* HIỂN THỊ TÊN NGƯỜI KÝ */}
-                              <div className="text-gray-700">
-                                <strong>{t("detail.signer")}:</strong>
-                                <br />
-                                {signerInfo.account?.fullName ||
-                                  signerInfo.account?.userName ||
-                                  "N/A"}
-                              </div>
-                              {/* HIỂN THỊ THỜI GIAN KÝ */}
-                              <div className="text-gray-500">
-                                {formatDateTime(signerInfo.changedAt)}
-                              </div>
-                            </div>
-                          ) : canConfirm ? (
-                            <button
-                              onClick={() => handleConfirmStep(selectedSheet.id, role.key)}
-                              disabled={confirmingSheetId === selectedSheet.id}
-                              className="mt-2 w-full px-3 py-2 bg-blue-600 text-white rounded text-xs 
-                                        font-medium hover:bg-blue-700 transition-colors
-                                        disabled:opacity-60 disabled:cursor-not-allowed
-                                        inline-flex items-center justify-center gap-1">
-                              {confirmingSheetId === selectedSheet.id ? (
-                                <>
-                                  <AiOutlineLoading3Quarters className="w-3 h-3 animate-spin" />
-                                  <span>Signing...</span>
-                                </>
-                              ) : (
-                                t("detail.signButton")
-                              )}
-                            </button>
-                          ) : (
-                            <div className="text-xs text-gray-400">
-                              {t("detail.notConfirmed")}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Nút xem toàn bộ sheet */}
-            <div className="mt-4">
-              <div className="text-center mb-4 flex items-start gap-3 justify-start">
-                <button
-                  onClick={handleCloseDetail}
-                  className="px-4 py-3 bg-gray-500 text-white hover:bg-gray-600 transition-colors"
-                >
-                  {t("button.back")}
-                </button>
-                <button
-                  onClick={() => {
-                    const currentPath = window.location.pathname;
-                    const currentSearch = window.location.search;
-                    const roleLower = user?.role?.toLowerCase();
-                    saveFilterState(filter, currentPage);
-                    saveSelectedSheetId(selectedSheet.id);
-                    navigate(`/${roleLower}/sheet-detail/${selectedSheet.id}`, {
-                      state: {
-                        from: "logs",
-                        returnPath: currentPath,
-                        returnSearch: currentSearch,
-                      },
-                    });
-                  }}
-                  className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-                >
-                  {t("button.viewFullSheet")}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
 
 
@@ -1190,7 +929,8 @@ const Logs = () => {
                       <tr
                         key={sheet.id}
                         id={`sheet-row-${sheet.id}`}
-                        className={`transition-all duration-500 ${selectedSheetId === sheet.id
+                        onClick={() => handleViewDetail(sheet)}
+                        className={`cursor-pointer transition-all duration-500 ${selectedSheetId === sheet.id
                           ? "bg-blue-100 border-2 border-blue-400! shadow-lg" // Highlight style
                           : "hover:bg-gray-50 border-transparent"
                           }`}
@@ -1227,7 +967,10 @@ const Logs = () => {
                         <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center">
                           {getStatusBadge(sheet)}
                         </td>
-                        <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center select-none">
+                        <td 
+                          onClick={(e) => e.stopPropagation()}
+                          className="border border-gray-300 px-2 sm:px-4 py-3 text-center select-none"
+                        >
                           {canUserSignSheet(sheet) ? (
                             <button
                               onClick={() => {
@@ -1260,7 +1003,10 @@ const Logs = () => {
                             </span>
                           )}
                         </td>
-                        <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center select-none">
+                        <td 
+                          onClick={(e) => e.stopPropagation()}
+                          className="border border-gray-300 px-2 sm:px-4 py-3 text-center select-none"
+                        >
                           <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 justify-center">
                             <button
                               onClick={() => handleViewDetail(sheet)}
@@ -1269,32 +1015,7 @@ const Logs = () => {
                               <AiOutlineEye className="w-3 h-3 sm:w-4 sm:h-4" />
                               <span>{t("button.view")}</span>
                             </button>
-                            {canEdit(sheet) && (
-                              <button
-                                onClick={() => {
-                                  const currentPath = window.location.pathname;
-                                  const currentSearch = window.location.search;
-                                  const roleLower = user?.role?.toLowerCase();
-                                  // Save state TRƯỚC KHI navigate
-                                  saveFilterState(filter, currentPage);
-                                  saveSelectedSheetId(sheet.id);
-                                  navigate(
-                                    `/${roleLower}/sheet-detail/${sheet.id}`,
-                                    {
-                                      state: {
-                                        from: "logs",
-                                        returnPath: currentPath,
-                                        returnSearch: currentSearch,
-                                      },
-                                    },
-                                  );
-                                }}
-                                className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-medium whitespace-nowrap"
-                              >
-                                <AiOutlineEdit className="w-4 h-4" />
-                                <span>{t("button.edit")}</span>
-                              </button>
-                            )}
+
 
                             {canDelete(sheet) && (
                               <button
@@ -1333,7 +1054,8 @@ const Logs = () => {
                   <div
                     key={sheet.id}
                     id={`sheet-row-${sheet.id}`} // Thêm ID để scroll
-                    className={`border border-gray-200 rounded-lg shadow-sm p-4 mb-4 transition-all duration-500 ${selectedSheetId === sheet.id
+                    onClick={() => handleViewDetail(sheet)}
+                    className={`cursor-pointer border border-gray-200 rounded-lg shadow-sm p-4 mb-4 transition-all duration-500 ${selectedSheetId === sheet.id
                       ? "bg-yellow-50 border-yellow-400 shadow-xl ring-2 ring-yellow-300" // Mobile highlight
                       : "bg-white"
                       }`}
@@ -1378,7 +1100,10 @@ const Logs = () => {
                       </div>
                     </div>
 
-                    <div className="flex lg:flex-row md:flex-row flex-col gap-2 select-none">
+                    <div 
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex lg:flex-row md:flex-row flex-col gap-2 select-none"
+                    >
                       <button
                         onClick={() => handleViewDetail(sheet)}
                         className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
@@ -1412,27 +1137,7 @@ const Logs = () => {
                           )}
                         </button>
                       )}
-                      {canEdit(sheet) && (
-                        <button
-                          onClick={() => {
-                            const currentPath = window.location.pathname;
-                            const currentSearch = window.location.search;
-                            const roleLower = user?.role?.toLowerCase();
-                            saveSelectedSheetId(sheet.id);
-                            navigate(`/${roleLower}/sheet-detail/${sheet.id}`, {
-                              state: {
-                                from: "logs",
-                                returnPath: currentPath,
-                                returnSearch: currentSearch,
-                              }, // Truyền state
-                            });
-                          }}
-                          className="inline-flex items-center justify-center gap-1 px-2 py-3 bg-green-600 text-white hover:bg-green-700 transition-colors text-xs font-medium whitespace-nowrap"
-                        >
-                          <AiOutlineEdit className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <span>{t("button.edit")}</span>
-                        </button>
-                      )}
+
 
                       {canDelete(sheet) && (
                         <button

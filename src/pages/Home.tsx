@@ -648,6 +648,7 @@ const Home = () => {
                       <div
                         key={sheet.id}
                         id={`sheet-row-${sheet.id}`}
+                        onClick={() => handleViewDetail(sheet)}
                         className={`lg:p-4 p-3 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-500 bg-white cursor-pointer ${selectedSheetId === sheet.id
                           ? 'bg-yellow-50 border-yellow-400 shadow-xl ring-2 ring-yellow-300'
                           : ''
@@ -674,7 +675,10 @@ const Home = () => {
                           {/* View */}
                           <div className="w-full lg:w-auto">
                             <button
-                              onClick={() => handleViewDetail(sheet)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewDetail(sheet);
+                              }}
                               disabled={!canViewDetail(sheet)}
                               className={`
                                 w-full lg:min-w-[150px] whitespace-nowrap
@@ -691,7 +695,10 @@ const Home = () => {
                           {/* Delete */}
                           <div className="w-full lg:w-auto">
                             <button
-                              onClick={() => handleDeleteSheet(sheet)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteSheet(sheet);
+                              }}
                               disabled={!canDeleteSheet(sheet) || deletingSheetId === sheet.id}
                               className={`
                                 w-full lg:min-w-[150px] whitespace-nowrap

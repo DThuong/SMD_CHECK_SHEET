@@ -67,8 +67,9 @@
     "updateStatusSuccess": "상태가 성공적으로 업데이트되었습니다!",
     "updateStatusFailed": "업데이트 실패",
     "closeDate": "날짜 마감",
-    "closeDateSuccess": "해당 날짜의 계획이 마감되었습니다!",
-    "closeDateFailed": "날짜 마감 실패"
+    "closeDateSuccess": "workOrder가 마감되었습니다!",
+    "closeDateFailed": "날짜 마감 실패",
+    "confirmCloseDateAllSigned": "Manager가 서명한 모든 workOrder를 마감하시겠습니까?"
   },
   "update": {
     "detected_title": "앱 업데이트",

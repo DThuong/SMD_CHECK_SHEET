@@ -67,8 +67,9 @@
     "updateStatusSuccess": "Cập nhật trạng thái thành công!",
     "updateStatusFailed": "Cập nhật thất bại",
     "closeDate": "Đóng WorkOrder",
-    "closeDateSuccess": "Đã đóng kế hoạch cho ngày này!",
-    "closeDateFailed": "Đóng WorkOrder thất bại"
+    "closeDateSuccess": "Đã đóng workOrder",
+    "closeDateFailed": "Đóng WorkOrder thất bại",
+    "confirmCloseDateAllSigned": "Bạn có chắc muốn đóng tất cả workOrder mà Manager đã ký không ?"
   },
   "update": {
     "detected_title": "Cập nhật ứng dụng",

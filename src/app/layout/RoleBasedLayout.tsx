@@ -32,9 +32,30 @@ const RoleBasedLayout = () => {
       return false;
     }
   });
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const navigate = useNavigate();
   const location = useLocation();
+  const [currentLang, setCurrentLang] = useState(i18n.language || "vi");
+
+  useEffect(() => {
+    const handleLanguageChanged = (lng: string) => setCurrentLang(lng);
+    i18n.on("languageChanged", handleLanguageChanged);
+    return () => {
+      i18n.off("languageChanged", handleLanguageChanged);
+    };
+  }, [i18n]);
+
+  const handleLanguageChange = async (langCode: string) => {
+    if (langCode === currentLang) return;
+    try {
+      await i18n.reloadResources(langCode, ["settings", "dashboard", "logs", "common"]);
+      await i18n.changeLanguage(langCode);
+      localStorage.setItem("appLanguage", langCode);
+      setCurrentLang(langCode);
+    } catch (error) {
+      console.error("Error changing language:", error);
+    }
+  };
 
   useEffect(() => {
     if (!showNoti) return;
@@ -256,7 +277,10 @@ const RoleBasedLayout = () => {
       </aside>
 
       {/* Main container Area */}
-      <div className="flex-1 flex flex-col min-w-0 relative">
+      <div
+        className="flex-1 flex flex-col min-w-0 relative"
+        style={{ '--sidebar-width': isSidebarCollapsed ? '80px' : '384px' } as React.CSSProperties}
+      >
         {/* Header */}
         <header className="bg-white z-40 relative flex h-20 shrink-0 items-center px-4 md:px-6 lg:px-8">
           <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -280,6 +304,27 @@ const RoleBasedLayout = () => {
             <h1 className="text-lg font-bold text-gray-800! md:hidden truncate min-w-0 flex-1">
               {getRoleDisplayName(role || "")} {t('menu.dashboard')}
             </h1>
+          </div>
+
+          {/* Desktop Language Selector */}
+          <div className="hidden md:flex items-center gap-1 mr-4! px-1 py-1">
+            {[
+              { code: "vi", label: "VN" },
+              { code: "en", label: "US" },
+              { code: "ko", label: "KR" },
+            ].map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => handleLanguageChange(lang.code)}
+                className={`text-sm! font-bold px-3 py-1 rounded-full! transition-all duration-200 ${
+                  currentLang === lang.code
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "text-gray-500 hover:text-gray-800 hover:bg-gray-200"
+                }`}
+              >
+                {lang.label}
+              </button>
+            ))}
           </div>
 
           {/* User Menu */}
@@ -322,7 +367,7 @@ const RoleBasedLayout = () => {
 
         {/* Content area */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50">
-          <div className="p-4 md:p-6 lg:p-8 max-w-full">
+          <div className="p-6! md:p-6 lg:p-8 max-w-full">
             <Outlet />
           </div>
         </main>
@@ -399,6 +444,14 @@ const RoleBasedLayout = () => {
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        @media (min-width: 768px) {
+          .patrol-action-bar {
+            left: calc(var(--sidebar-width, 0px) + 1.5rem) !important;
+            right: 1.5rem !important;
+            bottom: 0px !important;
+            transition: left 0.3s ease-in-out;
+          }
+        }
         @keyframes fade-in-down {
           from { opacity: 0; transform: translateY(-10px); }
           to { opacity: 1; transform: translateY(0); }

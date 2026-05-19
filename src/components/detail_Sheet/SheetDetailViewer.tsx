@@ -16,11 +16,22 @@ import {
   returnSheetToPending,
   clearError,
   type ChangeModelResponse,
+  getSheetStatusHistory,
+  clearStatusHistory,
+  clearSheet,
 } from "../../redux/slices/changeModelSlice";
 import {
   getFilterState,
   getSelectedSheetId,
 } from "../../utils/navigationState";
+import {
+  AiOutlineCheckCircle,
+  AiOutlineClockCircle,
+  AiOutlineHistory,
+  AiOutlineLoading3Quarters,
+} from "react-icons/ai";
+import LoadingSpinner from "../general/LoadingSpinner";
+
 
 // Import các sub-components
 import CheckModels from "../smd_Sheet/CheckModels";
@@ -54,7 +65,7 @@ const SheetDetailViewer = () => {
   // Lấy saved state từ location
   const returnPath = (location.state as any)?.returnPath;
   // Lấy data từ Redux store
-  const { currentSheet, loading, error } = useAppSelector(
+  const { currentSheet, loading, error, statusHistory, loadingHistory } = useAppSelector(
     (state) => state.changeModel,
   );
   const { user } = useAppSelector((state) => state.auth);
@@ -62,6 +73,72 @@ const SheetDetailViewer = () => {
     useNotification();
   const [confirming, setConfirming] = useState(false);
   const { t } = useTranslation("sheetDetail");
+  const { t: tLogs } = useTranslation("logs");
+
+  const roles = [
+    { key: "PQC", label: "PQC" },
+    { key: "PQCLeader", label: "PQC Leader" },
+    { key: "ENG", label: "Engineering" },
+    { key: "Supervisior", label: "Supervisor" },
+    { key: "Manager", label: "Manager" },
+    { key: "KoreaManager", label: "Korea Manager" },
+  ];
+
+  const getSignerInfo = (roleKey: string) => {
+    const history = Array.isArray(statusHistory) ? statusHistory : [];
+    return history.find((item) => {
+      const status = item.status?.toLowerCase();
+      switch (roleKey) {
+        case "PQC":
+          return status === "pqcdone";
+        case "PQCLeader":
+          return status === "pqcleaderldone" || status === "pqcleaderdone";
+        case "ENG":
+          return status === "engdone";
+        case "Supervisior":
+          return status === "supervisiordone";
+        case "Manager":
+          return status === "managerdone";
+        case "KoreaManager":
+          return status === "koreamanagerdone";
+        default:
+          return false;
+      }
+    }) || null;
+  };
+
+  const canConfirmAtStep = (sheet: ChangeModelResponse, roleKey: string): boolean => {
+    if (!user || user.role !== roleKey) return false;
+    const status = sheet.status?.toLowerCase();
+    switch (roleKey) {
+      case "PQC":
+        return status === "pending";
+      case "PQCLeader":
+        return status === "pqcdone";
+      case "ENG":
+        return status === "pqcleaderdone";
+      case "Supervisior":
+        return status === "engdone";
+      case "Manager":
+        return status === "supervisiordone";
+      case "KoreaManager":
+        return status === "managerdone";
+      default:
+        return false;
+    }
+  };
+
+  const formatDateTime = (dateString?: string): string => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const contentRef = useRef<HTMLDivElement>(null);
   const { lcrValidation } = useAppSelector((state) => state.fileSlice);
@@ -266,6 +343,7 @@ const SheetDetailViewer = () => {
         });
 
         // LCR file giữ nguyên
+        // LCR file giữ nguyên
         if (result.excelFileUrl && result.excelFileUrl.trim() !== "") {
           try {
             await dispatch(getLcrFileData(Number(id))).unwrap();
@@ -273,6 +351,9 @@ const SheetDetailViewer = () => {
             console.error("❌ Lỗi khi load LCR data:", error);
           }
         }
+
+        // Tải lịch sử ký trạng thái của sheet
+        await dispatch(getSheetStatusHistory(Number(id))).unwrap();
       } catch (error: any) {
         console.error("❌ Error loading sheet:", error);
       }
@@ -284,6 +365,8 @@ const SheetDetailViewer = () => {
       dispatch(clearAllSubTableData());
       dispatch(clearError());
       dispatch(clearLcrFile());
+      dispatch(clearStatusHistory());
+      dispatch(clearSheet());
     };
   }, [id, dispatch]);
 
@@ -368,6 +451,8 @@ const SheetDetailViewer = () => {
             loadedFromSheetId: currentSheet.id!,
           }),
         );
+        // Tải lại lịch sử ký trạng thái của sheet
+        await dispatch(getSheetStatusHistory(currentSheet.id!)).unwrap();
       } catch (error: any) {
         console.error("Lỗi khi tải lại dữ liệu sau khi xác nhận:", error);
       }
@@ -795,6 +880,127 @@ const SheetDetailViewer = () => {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+        {/* Tiến trình ký xác nhận */}
+        <div className="pdf-section no-print mb-4">
+          <div className="bg-white p-4 rounded-lg border border-gray-300 shadow-sm">
+            <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <AiOutlineHistory className="w-5 h-5 text-gray-500" />
+              {tLogs("detail.signatureProgress") || "Tiến trình ký xác nhận"}:
+            </h3>
+
+            {loadingHistory ? (
+              <div className="py-4">
+                <LoadingSpinner size="sm" message={tLogs("detail.loading") || "Đang tải tiến trình..."} />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {roles.map((role) => {
+                  const signerInfo = getSignerInfo(role.key);
+                  const isConfirmed = !!signerInfo;
+                  const canConfirm = canConfirmAtStep(currentSheet, role.key);
+
+                  // Xác định màu sắc premium cho từng trạng thái
+                  let cardBg = "bg-gray-50/50 border-gray-200 text-gray-400";
+                  let roleTextColor = "text-gray-600";
+                  if (isConfirmed) {
+                    cardBg = "bg-emerald-50/60 border-emerald-200 text-emerald-800 shadow-sm hover:shadow transition-all";
+                    roleTextColor = "text-emerald-950 font-semibold";
+                  } else if (canConfirm) {
+                    cardBg = "bg-blue-50/70 border-blue-300 shadow-sm hover:shadow transition-all duration-300";
+                    roleTextColor = "text-blue-900 font-bold";
+                  }
+
+                  return (
+                    <div
+                      key={role.key}
+                      className={`p-3 rounded-lg border flex flex-col justify-between h-full transition-all duration-300 ${cardBg} shadow-sm`}
+                      style={{ minHeight: '140px' }}
+                    >
+                      {/* Tiêu đề vai trò (Header) */}
+                      <div className="flex items-center justify-between gap-2 pb-2 border-b border-gray-200 shrink-0">
+                        <span className={`text-[10px] font-bold ${roleTextColor} truncate uppercase tracking-wider`}>
+                          {role.label}
+                        </span>
+                        {isConfirmed ? (
+                          <AiOutlineCheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        ) : (
+                          <AiOutlineClockCircle className={`w-3.5 h-3.5 shrink-0 ${canConfirm ? "text-blue-500" : "text-gray-400"}`} />
+                        )}
+                      </div>
+
+                      {/* Nội dung chính (Body) */}
+                      <div className="flex-1 flex flex-col justify-center py-2 min-w-0">
+                        {isConfirmed && signerInfo ? (
+                          <div className="space-y-1">
+                            {/* Tên người ký (nổi bật, rõ ràng) */}
+                            <div 
+                              className="text-xs font-semibold text-gray-800 truncate" 
+                              title={signerInfo.account?.fullName || signerInfo.account?.userName}
+                            >
+                              {signerInfo.account?.fullName || signerInfo.account?.userName || "N/A"}
+                            </div>
+                            {/* Badge trạng thái "Đã ký" */}
+                            <div className="inline-flex items-center gap-1 !bg-emerald-100 !text-emerald-800 text-[9px] !px-2 !py-1 rounded font-bold uppercase tracking-wider whitespace-nowrap">
+                              <span>✓</span>
+                              <span>{tLogs("detail.confirmed") || "Đã ký"}</span>
+                            </div>
+                          </div>
+                        ) : canConfirm ? (
+                          <div className="space-y-1">
+                            <div className="inline-flex items-center gap-1 !bg-blue-100 !text-blue-800 text-[9px] !px-2 !py-1 rounded font-bold uppercase tracking-wider whitespace-nowrap">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping"></span>
+                              <span>{tLogs("status.pending") || "Chờ ký"}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            <div className="inline-flex items-center !bg-gray-100 !text-gray-500 text-[9px] !px-2 !py-1 rounded font-medium uppercase tracking-wider whitespace-nowrap">
+                              <span>{tLogs("detail.notConfirmed") || "Chưa ký"}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Ngày tháng hoặc Nút ký (Footer) */}
+                      <div className="pt-2 border-t border-gray-200 shrink-0">
+                        {isConfirmed && signerInfo ? (
+                          <div className="text-[9px] text-gray-500 font-medium flex items-center justify-between gap-1">
+                            <span className="opacity-80">Thời gian:</span>
+                            <span className="font-semibold text-gray-600">{formatDateTime(signerInfo.changedAt)}</span>
+                          </div>
+                        ) : canConfirm ? (
+                          <div className="relative select-none">
+                            {/* Khối nền phát sáng thở nhẹ */}
+                            <div className="absolute inset-0 bg-blue-500 rounded filter blur-[1px] animate-pulse opacity-60"></div>
+                            <button
+                              onClick={handleConfirm}
+                              disabled={confirming}
+                              className="relative z-10 w-full !py-2 bg-blue-600 text-white rounded text-[10px] 
+                                        font-bold hover:bg-blue-700 transition-all duration-300
+                                        disabled:opacity-60 disabled:cursor-not-allowed
+                                        flex items-center justify-center gap-1 shadow-sm
+                                        hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                              {confirming ? (
+                                <AiOutlineLoading3Quarters className="w-2.5 h-2.5 animate-spin" />
+                              ) : (
+                                tLogs("button.sign") || "Ký ngay"
+                              )}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="text-[9px] text-gray-400 italic text-center">
+                            Đang chờ...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 

@@ -9,6 +9,7 @@ interface MultiImageUploadProps {
   onUpload: (fieldName: string, event: React.ChangeEvent<HTMLInputElement>) => void | Promise<void>; // Support cả sync và async
   onRemove: (index: number) => void;
   onViewAll: () => void;
+  notes?: string[];
   onViewSingle: (imageUrl: string, title: string) => void;
   maxImages?: number;
   showDeleteButton?: boolean;
@@ -75,6 +76,7 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
   fieldName,
   onUpload,
   onRemove,
+  notes,
   onViewAll,
   onViewSingle,
   maxImages,
@@ -156,40 +158,44 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
           {/* Grid layout */}
           <div className="grid grid-cols-2 gap-3">
             {images.map((imageUrl, index) => (
-              <div key={index} className="relative">
-                <img
-                  src={imageUrl}
-                  alt={`${label} ${index + 1}`}
-                  className="w-full h-24 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => onViewSingle(imageUrl, `${label} ${index + 1}`)}
-                  style={{ pointerEvents: 'auto' }}
-                  data-view-image="true"
-                />
+              <div key={index} className="flex flex-col rounded-lg overflow-hidden border border-blue-500">
 
-                {/* Delete Button */}
-                {showDeleteButton && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemove(index);
-                    }}
-                    className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg"
-                  >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                {/* Phần ảnh + nút xóa + số thứ tự */}
+                <div className="relative">
+                  <img
+                    src={imageUrl}
+                    alt={`${label} ${index + 1}`}
+                    className="w-full h-auto object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => onViewSingle(imageUrl, `${label} ${index + 1}`)}
+                    style={{ pointerEvents: 'auto' }}
+                    data-view-image="true"
+                  />
+                  {showDeleteButton && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); onRemove(index); }}
+                      className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                  <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded">
+                    #{index + 1}
+                  </div>
+                </div>
+
+                {/* Note gắn với ảnh này */}
+                {notes?.[index] && (
+                  <div className="text-xs text-gray-600 px-2 py-1 bg-white border-t border-gray-200 italic truncate">
+                    {notes[index]}
+                  </div>
                 )}
 
-                {/* Label số thứ tự */}
-                <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded">
-                  #{index + 1}
-                </div>
               </div>
             ))}
           </div>
-
           {/* View All Button */}
           <button
             type="button"

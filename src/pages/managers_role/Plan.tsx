@@ -265,7 +265,7 @@ const PlanPage = () => {
   const confirmCloseDate = async () => {
     setConfirmModal({ type: null });
     setClosing(true);
-    const result = await dispatch(closePlanWorkByDate({ date: selectedDate }));
+    const result = await dispatch(closePlanWorkByDate());
     setClosing(false);
     if (closePlanWorkByDate.fulfilled.match(result)) {
       toast.success(t("plan.closeDateSuccess"));
@@ -636,11 +636,7 @@ const PlanPage = () => {
       <ConfirmActionModal
         open={confirmModal.type === "closeDate"}
         title={t("plan.closeDate")}
-        message={
-          <>
-            {t("plan.closeDate")} <strong>{fmtDate(selectedDate)}</strong>?
-          </>
-        }
+        message={t("plan.confirmCloseDateAllSigned")}
         confirmLabel={t("plan.closeDate")}
         confirmClass="bg-green-700 hover:bg-green-800"
         loading={closing}

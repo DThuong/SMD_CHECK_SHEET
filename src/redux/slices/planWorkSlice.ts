@@ -75,10 +75,10 @@ export const getPlanWorkByDate = createAsyncThunk(
 )
 
 export const closePlanWorkByDate = createAsyncThunk(
-    'PlanWork/close-date',
-    async ({ date }: { date: string }, { rejectWithValue }) => {
+    'PlanWork/close-alldate',
+    async (_, { rejectWithValue }) => {
         try {
-            const res = await smdApi.put(`/PlanWork/close-date/${date}`)
+            const res = await smdApi.put("/PlanWork/close-alldate/")
             return res.data
         } catch (error) {
             return rejectWithValue(error)

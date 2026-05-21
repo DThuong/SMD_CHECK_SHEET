@@ -212,6 +212,24 @@ const Home = () => {
     }
   }, [dispatch, showNotification]);
 
+    const handleSheetCompleted = useCallback(async () => {
+      dispatch(clearSheet());
+      dispatch(clearAllSubTableData());
+      dispatch(resetCompletedTables());
+
+      setShowSheets(false);
+      setActiveTab('list');
+      setSearchParams({ tab: 'list' }, { replace: true });
+
+      await loadSheetsWithFilter(filter);
+
+      showNotification(
+        'success',
+        'Hoàn thành!',
+        'Sheet đã được ký xác nhận thành công'
+      );
+    }, [dispatch, filter, loadSheetsWithFilter, setSearchParams, showNotification]);
+
   // ── Restore sheet khi có sheetId trong URL
   useEffect(() => {
     const restoreSheet = async () => {
@@ -574,9 +592,10 @@ const Home = () => {
               </div>
             )}
             {showSheets && currentSheet && (
-              <div className="mt-4">
-                <SmdSheetUser sheetData={currentSheet} />
-              </div>
+              <SmdSheetUser
+                sheetData={currentSheet}
+                onCompleted={handleSheetCompleted}
+              />
             )}
           </div>
         )}
@@ -711,7 +730,7 @@ const Home = () => {
                               `}
                             >
                               {deletingSheetId === sheet.id
-                                ? '⏳ Đang xóa...'
+                                ? 'Đang xóa...'
                                 : canDeleteSheet(sheet) ? 'Xóa Sheet' : 'Không thể xóa'}
                             </button>
                           </div>

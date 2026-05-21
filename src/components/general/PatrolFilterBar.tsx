@@ -50,6 +50,7 @@ const PatrolFilterBar: React.FC<PatrolFilterBarProps> = ({
   fullNameCandidates = [],
 }) => {
   const lineAreaNames = lineAreas.map(l => l.lineAreaName);
+  const inputCls = "h-10 w-full px-3 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 bg-white appearance-none";
   const hasActiveFilter = !!filter.fullName || !!filter.lineAreaName ||
     !!filter.status || !!filter.fromDate || !!filter.toDate;
 
@@ -73,6 +74,7 @@ const PatrolFilterBar: React.FC<PatrolFilterBarProps> = ({
             candidates={fullNameCandidates}
             placeholder={`${labels.fullName || 'Người tạo'}...`}
             className="w-full"
+            inputClassName="h-10"
             />
         </div>
         )}
@@ -93,7 +95,7 @@ const PatrolFilterBar: React.FC<PatrolFilterBarProps> = ({
           <select
             value={filter.status}
             onChange={e => onChange('status', e.target.value)}
-            className="w-full border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 rounded-lg! outline-none bg-white"
+            className={inputCls}
           >
             {statusOptions.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -103,14 +105,22 @@ const PatrolFilterBar: React.FC<PatrolFilterBarProps> = ({
 
         <div className="flex flex-col gap-1">
           <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{labels.fromDate}</label>
-          <input type="date" value={filter.fromDate} onChange={e => onChange('fromDate', e.target.value)}
-            className="w-full border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 rounded-lg! outline-none" />
+          <input
+            type="datetime-local"
+            value={filter.fromDate}
+            onChange={e => onChange('fromDate', e.target.value)}
+            className={`${inputCls} pr-8`}
+          />
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{labels.toDate}</label>
-          <input type="date" value={filter.toDate} onChange={e => onChange('toDate', e.target.value)}
-            className="w-full border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 rounded-lg! outline-none" />
+          <input
+            type="datetime-local"
+            value={filter.toDate}
+            onChange={e => onChange('toDate', e.target.value)}
+            className={`${inputCls} pr-8`}
+          />
         </div>
       </div>
 

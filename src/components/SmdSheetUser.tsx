@@ -16,10 +16,11 @@ import { ConfirmModal } from "./general/ConfirmModal";
 
 interface SmdSheetUserProps {
   sheetData?: ChangeModelResponse;
+  onCompleted?: () => void | Promise<void>;
 }
 
 // Component con - Nội dung sheet
-function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
+function SmdSheetContent({ sheetData, onCompleted }: SmdSheetUserProps) {
   const { user } = useAppSelector(state => state.auth);
   const { completedTables, success: subTableSuccess, lastUpdatedTable } = useAppSelector(state => state.subTable);
   // const currentSheet = useAppSelector(state => state.changeModel.currentSheet);
@@ -69,10 +70,8 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
 
       const res = await dispatch(updateSheetStatusToPQCDone(sheetData.id)).unwrap();
       if(res){
-        showNotification('success', 'Hoàn thành!', 'Sheet đã được ký xác nhận thành công');
-        setTimeout(() => {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }, 1000);
+        await onCompleted?.();
+        return;
       }else{
         showNotification('error', 'Lỗi', 'Không thể ký');
       }
@@ -154,7 +153,7 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
                   }`}
                 >
                   {isCompleting 
-                    ? '⏳ Đang hoàn thành...' 
+                    ? 'Đang hoàn thành...' 
                     : 'Ký xác nhận'}
                 </button>
               </div>
@@ -187,8 +186,8 @@ function SmdSheetContent({ sheetData }: SmdSheetUserProps) {
 }
 
 // Component chính - Wrap với Provider
-const SmdSheetUser = ({ sheetData }: SmdSheetUserProps) => {
-  return <SmdSheetContent sheetData={sheetData} />;
+const SmdSheetUser = ({ sheetData, onCompleted }: SmdSheetUserProps) => {
+  return <SmdSheetContent sheetData={sheetData} onCompleted={onCompleted} />;
 };
 
 export default SmdSheetUser;

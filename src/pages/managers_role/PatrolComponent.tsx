@@ -170,7 +170,7 @@ const PatrolComponent = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto pb-40 px-3 mb-[70px]!">
+    <div className="min-h-screen bg-white px-3 pt-3 pb-40 md:m-0 md:max-w-7xl md:mx-auto md:min-h-0 md:bg-transparent md:pt-0">
       {renderContent()}
 
       <ImagePreviewModal

@@ -150,12 +150,20 @@ const PatrolList: React.FC<PatrolListProps> = ({
 
   // ======================== FILTER HANDLERS ========================
 
+  const toFilterIso = (value: string, fallbackEndOfDay = false) => {
+    if (!value) return undefined;
+    const normalized = value.includes('T')
+      ? value
+      : `${value}${fallbackEndOfDay ? 'T23:59:59' : 'T00:00:00'}`;
+    return new Date(normalized).toISOString();
+  };
+
   const buildFilterParams = (f: PatrolFilter) => ({
       fullName: f.fullName || undefined,
       lineAreaName: f.lineAreaName || undefined,
       status: f.status || undefined,
-      fromDate: f.fromDate ? new Date(f.fromDate).toISOString() : undefined,
-      toDate: f.toDate ? new Date(f.toDate + 'T23:59:59').toISOString() : undefined,
+      fromDate: toFilterIso(f.fromDate),
+      toDate: toFilterIso(f.toDate, true),
   });
 
   const dispatchFilter = (f: PatrolFilter) => {
@@ -388,7 +396,7 @@ const PatrolList: React.FC<PatrolListProps> = ({
                         {user?.role === 'PQCLeader' && sheet.status === 'Submitted' ? (
                           <button
                             onClick={() => handleApprove(sheet.id)}
-                            className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-xs font-semibold shadow-sm transition-all active:scale-95"
+                            className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 !rounded-md text-xs font-semibold shadow-sm transition-all active:scale-95"
                           >
                             <FaCheck className="w-3.5 h-3.5" /> <span>{pT('approveBtn')}</span>
                           </button>
@@ -413,14 +421,14 @@ const PatrolList: React.FC<PatrolListProps> = ({
                         <div className="flex justify-start gap-2">
                           <button
                             onClick={() => handleGoToDetail(sheet.id)}
-                            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-semibold shadow-sm transition-all active:scale-95"
+                            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 !rounded-md text-xs font-semibold shadow-sm transition-all active:scale-95"
                           >
                             <FaEye className="w-3.5 h-3.5" /> <span>{pT('viewBtn')}</span>
                           </button>
                           {canEditOrDelete(sheet) && (
                             <button
                               onClick={() => handleDelete(sheet.id)}
-                              className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-xs font-semibold shadow-sm transition-all active:scale-95"
+                              className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-4 py-2 !rounded-md text-xs font-semibold shadow-sm transition-all active:scale-95"
                             >
                               <FaTrash className="w-3.5 h-3.5" /> <span>{pT('deleteBtn')}</span>
                             </button>
@@ -475,7 +483,7 @@ const PatrolList: React.FC<PatrolListProps> = ({
                     <div className="mb-2" onClick={e => e.stopPropagation()}>
                       <button
                         onClick={() => handleApprove(sheet.id)}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 text-xs font-semibold shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 !rounded-md text-xs font-semibold shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
                       >
                         <FaCheck className="w-3.5 h-3.5" /> {pT('approveBtn')}
                       </button>
@@ -486,14 +494,14 @@ const PatrolList: React.FC<PatrolListProps> = ({
                   <div className="flex gap-2" onClick={e => e.stopPropagation()}>
                     <button
                       onClick={() => handleGoToDetail(sheet.id)}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 text-xs font-semibold shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 !rounded-md text-xs font-semibold shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
                     >
                       <FaEye className="w-3.5 h-3.5" /> {pT('viewDetail')}
                     </button>
                     {canEditOrDelete(sheet) && (
                       <button
                         onClick={() => handleDelete(sheet.id)}
-                        className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 text-xs font-semibold shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 !rounded-md text-xs font-semibold shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
                       >
                         <FaTrash className="w-3.5 h-3.5" /> <span>{pT('deleteBtn')}</span>
                       </button>

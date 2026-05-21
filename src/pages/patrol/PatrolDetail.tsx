@@ -105,7 +105,10 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
 
 
 
-  const canEditResults = isNew || (session?.status === 'Pending' && user?.role === 'PQC');
+  const canEditResults =
+    isNew ||
+    (session?.status === 'Pending' && user?.role === 'PQC') ||
+    (user?.role === 'PQCLeader' && (session?.status === 'Pending' || session?.status === 'Submitted'));
   const canApprove = session?.status === 'Submitted' && user?.role === 'PQCLeader';
 
   // Cập nhật UI cục bộ ngay lập tức

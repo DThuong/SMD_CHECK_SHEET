@@ -21,11 +21,11 @@ import {
 } from "recharts";
 import {
   FaUsers,
-  FaFileAlt,
+  FaFile,
   FaChartLine,
-  FaCheckCircle,
-  FaMicrochip,
-} from "react-icons/fa";
+  FaCircleCheck,
+} from "react-icons/fa6";
+import { FaMicrochip } from "react-icons/fa6";
 import { AiOutlineEye } from "react-icons/ai";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchUsers } from "../../redux/slices/authSlice";
@@ -389,7 +389,7 @@ const SheetTable = ({
           </>
         ) : selectedPoint ? (
           <div className="flex flex-col items-center justify-center py-4! text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-300">
-            <FaFileAlt className="text-4xl mb-2 opacity-30" />
+            <FaFile className="text-4xl mb-2 opacity-30" />
             <p className="text-sm font-medium">
               {t("tables.sheetDetails.noSheets")}
             </p>
@@ -633,7 +633,6 @@ const PatrolTrendCard = ({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [detailPage, setDetailPage] = useState(0);
   const [highlightPatrolId, setHighlightPatrolId] = useState<number | null>(null);
-  const [_selectedDateLabel, setSelectedDateLabel] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"all" | "daily" | "weekly">("all");
   const patrolDetailRef = useRef<HTMLDivElement>(null);
   const pT = (key: string, opts?: any) => tPatrol(key, opts);
@@ -643,7 +642,6 @@ const PatrolTrendCard = ({
     if (!pointData?.fullDate) return;
 
     setSelectedDate(pointData.fullDate);
-    setSelectedDateLabel(pointData.date);
     setActiveTab("all");
     setDetailPage(0);
 
@@ -743,9 +741,6 @@ const PatrolTrendCard = ({
     if (!initialDate) return;
     setSelectedDate(initialDate);
     setDetailPage(initialPage);
-    // Label hiển thị
-    const [y, m, d] = initialDate.split('-');
-    setSelectedDateLabel(`${d}/${m}/${y}`);
   }, [initialDate, initialPage]);
 
   // Fix Bug #2: Scroll chỉ khi paginatedSheets đã có element cần highlight
@@ -1516,7 +1511,7 @@ const Dashboard = () => {
 
           {/* Status Cards */}
           <h2 className="text-lg font-bold text-slate-700 flex items-center gap-2 mt-6! my-3">
-            <FaFileAlt className="text-blue-600" /> SMD Sheets
+            <FaFile className="text-blue-600" /> SMD Sheets
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {roleCards.map((card, index) => {
@@ -1570,7 +1565,7 @@ const Dashboard = () => {
                     <div
                       className={`p-2 ${colors.bg} rounded-lg ${card.isUserCard && count > 0 ? "animate-pulse" : ""}`}
                     >
-                      <FaFileAlt className={`w-5 h-5 ${colors.text}`} />
+                      <FaFile className={`w-5 h-5 ${colors.text}`} />
                     </div>
                   </div>
                 </button>
@@ -1981,7 +1976,7 @@ const Dashboard = () => {
               sub: `${pendingSheets} ${t("adminDashboard.stats.pending")}`,
               subColor: "text-orange-400",
               icon: (
-                <FaFileAlt className="w-10 h-10 md:w-12 md:h-12 text-gray-500 shrink-0 ml-2" />
+                <FaFile className="w-10 h-10 md:w-12 md:h-12 text-gray-500 shrink-0 ml-2" />
               ),
             },
             {
@@ -1999,7 +1994,7 @@ const Dashboard = () => {
               sub: t("adminDashboard.stats.completion"),
               subColor: "text-green-600",
               icon: (
-                <FaCheckCircle className="w-10 h-10 md:w-12 md:h-12 text-gray-500 shrink-0 ml-2" />
+                <FaCircleCheck className="w-10 h-10 md:w-12 md:h-12 text-gray-500 shrink-0 ml-2" />
               ),
             },
           ].map((item, i) => (
@@ -2024,6 +2019,9 @@ const Dashboard = () => {
         </div>
 
         {/* Status Cards — Admin xem tất cả, có thể click navigate */}
+          <h2 className="text-lg font-bold text-slate-700 flex items-center gap-2 mt-6! my-3">
+            <FaFile className="text-blue-600" /> SMD Sheets
+          </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           {adminRoleCards.map((card, index) => {
             const count =
@@ -2054,7 +2052,7 @@ const Dashboard = () => {
                     </p>
                   </div>
                   <div className={`p-2 ${colors.bg} rounded-lg`}>
-                    <FaFileAlt className={`w-5 h-5 ${colors.text}`} />
+                    <FaFile className={`w-5 h-5 ${colors.text}`} />
                   </div>
                 </div>
               </button>

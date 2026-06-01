@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect, useRef} from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -20,14 +21,14 @@ import {
   uploadImage,
   deleteImage,
   fetchImagesBySession,
-  fetchCheckListResultsBySession,
   fetchPatrolSessionById,
   fetchStatusHistoryBySession,
   type StatusHistory,
   type ImageModel,
+  clearCurrentPatrolSession,
 } from '../../redux/slices/patrolSlice';
 import Modal from '../../components/general/Modal';
-import { clearPatrolNavState, readPatrolNavState, savePatrolDashboardState } from '../../utils/patrolNavState';
+import { clearPatrolNavState, readPatrolNavState, savePatrolDashboardState, savePatrolNavState } from '../../utils/patrolNavState';
 const PatrolDetail: React.FC<PatrolSharedProps> = ({
   user, goToView, setPreviewImage
 }) => {
@@ -44,44 +45,72 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
     return t(key, options) as any;
   };
 
-  const { sessions, stages, categories, checkLists, lineAreas, checkListResults, images, loading, statusHistories } = useAppSelector(state => state.patrol);
+  const { stages, categories, currentSession, checkLists, lineAreas, checkListResults, images, loading, statusHistories } = useAppSelector(state => state.patrol);
   const getImageUrl = (img: ImageModel) => img.imageUrl || '';
 
 
   const [formResults, setFormResults] = useState<Record<number, { id?: number, result: string, actualValue: string, note: string }>>({});
   const [formLineId, setFormLineId] = useState<number>(0);
-  const [formPatrolType, setFormPatrolType] = useState<string>('1'); // "1": Daily, "7": Weekly
+  const [formPatrolType, setFormPatrolType] = useState<string>(() => {
+    if (isNew) {
+      const saved = readPatrolNavState();
+      return saved?.type === 'weekly' ? '7' : '1';
+    }
+    return '1';
+  }); // "1": Daily, "7": Weekly
   const [isLineSelectOpen, setIsLineSelectOpen] = useState(false);
   const lineSelectRef = useRef<HTMLDivElement>(null);
   const [noteModal, setNoteModal] = useState<{ open: boolean; file: File | null }>({ open: false, file: null });
   const [pendingNote, setPendingNote] = useState('');
-  const session = useMemo(() => isNew ? null : sessions.find(s => s.id === Number(sheetId)), [sessions, sheetId, isNew]);
+  const session = isNew ? null : currentSession;
 
 
   useEffect(() => {
-    dispatch(fetchStages());
-    dispatch(fetchCategories());
-    dispatch(fetchCheckLists());
-    dispatch(fetchLineAreas());
-    if (isNew) {
-      const saved = readPatrolNavState();
-      if (saved?.type === 'weekly') {
-        setFormPatrolType('7');
-      }
-      // Không clear vì back button vẫn cần
+    if (stages.length === 0) {
+      dispatch(fetchStages());
     }
-    if (!isNew && sheetId) {
-      dispatch(fetchPatrolSessionById(Number(sheetId)));
-      dispatch(fetchCheckListResultsBySession(Number(sheetId)));
-      dispatch(fetchImagesBySession(Number(sheetId)));
-      dispatch(fetchStatusHistoryBySession(Number(sheetId)));
+
+    if (categories.length === 0) {
+      dispatch(fetchCategories());
     }
+
+    if (checkLists.length === 0) {
+      dispatch(fetchCheckLists());
+    }
+
+    if (lineAreas.length === 0) {
+      dispatch(fetchLineAreas());
+    }
+  }, [
+    dispatch,
+    stages.length,
+    categories.length,
+    checkLists.length,
+    lineAreas.length
+  ]);
+
+  useEffect(() => {
+    if (isNew || !sheetId) return;
+
+    const id = Number(sheetId);
+
+    dispatch(fetchPatrolSessionById(id));
+    dispatch(fetchImagesBySession(id));
+    dispatch(fetchStatusHistoryBySession(id));
+
+    return () => {
+      dispatch(clearCurrentPatrolSession());
+    };
   }, [dispatch, sheetId, isNew]);
 
   useEffect(() => {
     if (session) {
-      setFormLineId(session.lineAreaId);
-      setFormPatrolType(session.patrolType);
+      // avoid synchronous setState inside effect to prevent cascading renders
+      // schedule state updates asynchronously
+      setTimeout(() => {
+        setFormLineId(session.lineAreaId);
+        setFormPatrolType(session.patrolType);
+      }, 0);
     }
   }, [session]);
 
@@ -90,7 +119,9 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
     checkListResults.forEach(r => {
       resultsMap[r.checkListId] = { id: r.id, result: r.result, actualValue: r.actualValue, note: r.note };
     });
-    setFormResults(resultsMap);
+    setTimeout(() => {
+      setFormResults(resultsMap);
+    }, 0);
   }, [checkListResults]);
 
   useEffect(() => {
@@ -105,11 +136,21 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
 
 
 
+  const isPQC = user?.role === 'PQC';
+  const isPQCLeader = user?.role === 'PQCLeader';
+
+  const isOwner =
+    !!session &&
+    !!user?.id &&
+    Number(session.accountId) === Number(user.id);
+
   const canEditResults =
     isNew ||
-    (session?.status === 'Pending' && user?.role === 'PQC') ||
-    (user?.role === 'PQCLeader' && (session?.status === 'Pending' || session?.status === 'Submitted'));
-  const canApprove = session?.status === 'Submitted' && user?.role === 'PQCLeader';
+    (isPQC && isOwner && session?.status === 'Pending') ||
+    (isPQCLeader && (session?.status === 'Pending' || session?.status === 'Submitted'));
+
+const canApprove =
+  session?.status === 'Submitted' && isPQCLeader;
 
   // Cập nhật UI cục bộ ngay lập tức
   const handleLocalChange = (checkListId: number, field: 'result' | 'actualValue' | 'note', value: string) => {
@@ -148,8 +189,6 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
         note: data.note || '',
         checkAt: new Date().toISOString()
       })).unwrap();
-      // Sau khi tạo mới, cần lấy lại kết quả để có ID cho lần update sau
-      dispatch(fetchCheckListResultsBySession(Number(sheetId)));
     }
   };
 
@@ -179,7 +218,6 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
           note: current?.note || '',
           checkAt: new Date().toISOString()
         })).unwrap();
-        dispatch(fetchCheckListResultsBySession(Number(sheetId)));
       }
     }
   };
@@ -228,8 +266,8 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
       })).unwrap();
       toast.success(pT('createSuccess'));
       goToView('detail', res.id.toString());
-    } catch (err: any) {
-      toast.error(err);
+    } catch (err: unknown) {
+      toast.error(extractErrorMessage(err));
     }
   };
 
@@ -310,40 +348,14 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
         </div>
       </Modal>
       <div className="animate-fade-in space-y-4! mt-6! pb-20!">
-        <div className="flex flex-col sm:flex-row items-start justify-between mb-4 bg-white py-3 px-3 shadow-sm border border-gray-200 gap-3 text-center sm:text-left">
+        <div className="flex flex-row items-center justify-between mb-4 bg-white py-3 px-3 shadow-sm border border-gray-200 gap-3">
           <div className="flex items-center justify-start gap-3">
-            <button onClick={() => {
-              const saved = readPatrolNavState();
-              if (saved?.fromDashboard && saved.dashboardReturnPath) {
-                savePatrolDashboardState({
-                  date: saved.dashboardDate || '',
-                  page: saved.page,
-                  highlightId: saved.highlightId || 0,
-                });
-                clearPatrolNavState();
-                navigate(saved.dashboardReturnPath, {
-                  state: {
-                    from: 'sheetDetail',
-                    dashboardState: {
-                      sheetId: saved.highlightId,
-                      fullDate: saved.dashboardDate,
-                      date: saved.dashboardDate,
-                      detailTablePage: saved.page,
-                    },
-                  },
-                });
-              } else {
-                goToView('list', null, saved?.type || 'daily');
-              }
-            }} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <FaArrowLeft />
-            </button>
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
               {isNew ? pT('createBtn') : `${pT('detailTitle')} #${sheetId}`}
             </h2>
           </div>
           {!isNew && session && (
-            <span className={`w-fit px-3 py-1 rounded-full text-xs sm:text-sm font-bold self-center sm:self-center ${getStatusStyle(session.status)}`}>
+            <span className={`shrink-0 px-3 py-1 rounded-full text-xs font-bold ${getStatusStyle(session.status)}`}>
               {getStatusLabel(session.status)}
             </span>
           )}
@@ -421,21 +433,26 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
                 </h3>
                 <div className="space-y-2!">
                   {statusHistories.map((h: StatusHistory) => (
-                    <div key={h.id} className="flex items-center justify-between py-2 px-3 bg-gray-50 border border-gray-100 rounded text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${h.status === 'Approved' ? 'bg-green-100 text-green-700' :
-                            h.status === 'Submitted' ? 'bg-blue-100 text-blue-700' :
-                              'bg-yellow-100 text-yellow-700'
-                          }`}>
-                          {getStatusLabel(h.status)}
-                        </span>
-                        <span className="text-gray-700 font-medium">{h.fullName}</span>
+                    <div key={h.id} className="flex items-center gap-3 py-3 px-3 bg-gray-50 border border-gray-100 rounded text-sm min-h-[56px]">
+                    {/* Badge status */}
+                    <span className={`shrink-0 mt-0.5 px-2 py-0.5 rounded-full text-xs font-bold ${
+                      h.status === 'Approved' ? 'bg-green-100 text-green-700' :
+                      h.status === 'Submitted' ? 'bg-blue-100 text-blue-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {getStatusLabel(h.status)}
+                    </span>
+                    {/* Tên + role + thời gian xếp dọc */}
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-gray-800 font-semibold truncate">{h.fullName}</span>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
                         <span className="text-gray-400 text-xs">({h.role})</span>
+                        <span className="text-gray-400 text-xs">
+                          {new Date(h.createdAt).toLocaleString('vi-VN')}
+                        </span>
                       </div>
-                      <span className="text-gray-400 text-xs whitespace-nowrap">
-                        {new Date(h.createdAt).toLocaleString('vi-VN')}
-                      </span>
                     </div>
+                  </div>
                   ))}
                 </div>
               </div>
@@ -672,6 +689,12 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
                           },
                         });
                       } else {
+                        savePatrolNavState({
+                          type: saved?.type || 'daily',
+                          page: saved?.page || 0,
+                          highlightId: Number(sheetId),
+                          filter: saved?.filter,
+                        });
                         goToView('list', null, saved?.type || 'daily');
                       }
                     }}

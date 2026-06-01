@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AiOutlineSearch, AiOutlineClose } from "react-icons/ai";
 import FuzzySearchInput from "./FuzzySearchInput";
 

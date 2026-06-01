@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, NavLink, Outlet, useParams, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { HiMenu, HiX, HiLogout, HiChevronDown } from "react-icons/hi";
 import { FaAnglesLeft, FaAnglesRight } from "react-icons/fa6";
-import { FaKey, FaUser, FaChartPie, FaFileAlt, FaCog, FaMicrochip } from "react-icons/fa";
+import { FaKey, FaUser, FaChartPie, FaFile, FaC, FaMicrochip } from "react-icons/fa6";
 import logo from "../../assets/image/brand_image_3.webp";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { PiPlantFill } from "react-icons/pi";
@@ -123,7 +123,7 @@ const RoleBasedLayout = () => {
 
   const menuItems = [
     { name: t('menu.dashboard'), path: `/${role}/dashboard`, icon: <FaChartPie />, shouldReload: false },
-    { name: t('menu.smdSheet'), path: `/${role}/smd-sheet-logs`, icon: <FaFileAlt />, shouldReload: true },
+    { name: t('menu.smdSheet'), path: `/${role}/smd-sheet-logs`, icon: <FaFile />, shouldReload: true },
     { name: t('menu.plan'), path: `/${role}/plan`, icon: <PiPlantFill />, shouldReload: true },
     {
       name: t('menu.patrolChecklist'),
@@ -137,7 +137,7 @@ const RoleBasedLayout = () => {
         { name: t('menu.patrolReport'), path: `/${role}/patrol?view=report`, shouldReload: false },
       ],
     },
-    { name: t('menu.settings'), path: `/${role}/settings`, icon: <FaCog />, shouldReload: false },
+    { name: t('menu.settings'), path: `/${role}/settings`, icon: <FaC />, shouldReload: false },
   ];
 
   const handleLogout = () => {
@@ -160,7 +160,7 @@ const RoleBasedLayout = () => {
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
       {user && isAuthenticated && showNoti && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] animate-fade-in-down px-2 whitespace-nowrap flex-nowrap">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-100 animate-fade-in-down px-2 whitespace-nowrap flex-nowrap">
           <div className="bg-green-50 border border-green-200 rounded-full shadow-lg flex flex-row items-center gap-3 py-2 px-4 flex-nowrap">
             <span className="flex items-center justify-center w-5 h-5 bg-green-500 text-white rounded-full text-xs shrink-0">✓</span>
             <span className="font-bold text-green-800 text-sm shrink-0">
@@ -178,7 +178,7 @@ const RoleBasedLayout = () => {
 
       {/* SIDEBAR - DESKTOP */}
       <aside
-        className={`hidden md:flex flex-col bg-white flex-shrink-0 transition-all duration-300 ease-in-out z-40 ${isSidebarCollapsed ? 'w-20' : 'w-64 lg:w-96'
+        className={`hidden md:flex flex-col bg-white shrink-0 transition-all duration-300 ease-in-out z-40 ${isSidebarCollapsed ? 'w-20' : 'w-64 lg:w-96'
           }`}
       >
         {/* Sidebar Title */}
@@ -233,7 +233,7 @@ const RoleBasedLayout = () => {
                             <Link
                               key={child.path}
                               to={child.path}
-                              className={`flex items-center h-11 px-4 !text-white transition-all text-sm text-decoration-none ${isChildActive
+                              className={`flex items-center h-11 px-4 text-white! transition-all text-sm text-decoration-none ${isChildActive
                                 ? 'bg-gray-500 text-white font-semibold'
                                 : 'text-gray-300 hover:bg-gray-600 hover:text-white'
                                 }`}

@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAppSelector } from '../../redux/hooks';
@@ -170,7 +172,7 @@ const PatrolComponent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white px-3 pt-3 pb-40 md:m-0 md:max-w-7xl md:mx-auto md:min-h-0 md:bg-transparent md:pt-0">
+    <div className="min-h-screen bg-white px-3 pt-3 pb-40 md:m-0 md:mx-auto md:min-h-0 md:bg-transparent md:pt-0">
       {renderContent()}
 
       <ImagePreviewModal

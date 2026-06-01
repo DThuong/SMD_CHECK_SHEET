@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import patrolApi from "../services/patrolApi";
 
@@ -84,6 +85,9 @@ export interface PatrolSessionFilter {
 export interface PatrolState {
     loading: boolean;
     error: string | null;
+
+    // Detail hiện tại
+    currentSession: PatrolSession | null;
     
     // Arrays for data
     sessions: PatrolSession[];
@@ -108,6 +112,7 @@ export interface PatrolState {
 const initialState: PatrolState = {
     loading: false,
     error: null,
+    currentSession: null,
     sessions: [],
     categories: [],
     checkLists: [],
@@ -367,11 +372,20 @@ const patrolSlice = createSlice({
     initialState,
     reducers: {
         clearPatrolHistoryStatus(state) {
-            state.statusHistory = []
-            state.error = null
+            state.statusHistory = [];
+            state.error = null;
         },
+
         clearPatrolError(state) {
-            state.error = null
+            state.error = null;
+        },
+
+        clearCurrentPatrolSession(state) {
+            state.currentSession = null;
+            state.checkListResults = [];
+            state.images = [];
+            state.statusHistories = [];
+            state.error = null;
         }
     },
     extraReducers: (builder) => {
@@ -477,7 +491,18 @@ const patrolSlice = createSlice({
             .addCase(createCheckListResult.fulfilled, (state, action) => {
                 state.loading = false;
                 state.success = true;
+
                 state.checkListResults.push(action.payload);
+
+                if (
+                    state.currentSession &&
+                    state.currentSession.id === action.payload.patrolSessionId
+                ) {
+                    state.currentSession.checkListResults = [
+                        ...(state.currentSession.checkListResults || []),
+                        action.payload
+                    ];
+                }
             })
             .addCase(createCheckListResult.rejected, handleRejected)
 
@@ -493,9 +518,20 @@ const patrolSlice = createSlice({
             .addCase(updateCheckListResult.fulfilled, (state, action) => {
                 state.loading = false;
                 state.success = true;
+
                 const index = state.checkListResults.findIndex(item => item.id === action.payload.id);
                 if (index !== -1) {
                     state.checkListResults[index] = action.payload;
+                }
+
+                if (state.currentSession?.checkListResults) {
+                    const currentIndex = state.currentSession.checkListResults.findIndex(
+                        item => item.id === action.payload.id
+                    );
+
+                    if (currentIndex !== -1) {
+                        state.currentSession.checkListResults[currentIndex] = action.payload;
+                    }
                 }
             })
             .addCase(updateCheckListResult.rejected, handleRejected)
@@ -579,18 +615,31 @@ const patrolSlice = createSlice({
             .addCase(createPatrolSession.fulfilled, (state, action) => {
                 state.loading = false;
                 state.success = true;
-                state.sessions.push(action.payload);
+                state.currentSession = action.payload;
+
+                const exists = state.sessions.some(item => item.id === action.payload.id);
+                if (!exists) {
+                    state.sessions.push(action.payload);
+                }
             })
             .addCase(createPatrolSession.rejected, handleRejected)
             
-            .addCase(fetchPatrolSessionById.pending, handlePending)
+            .addCase(fetchPatrolSessionById.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+                state.currentSession = null;
+            })
             .addCase(fetchPatrolSessionById.fulfilled, (state, action) => {
                 state.loading = false;
+                state.currentSession = action.payload;
+
+                // Nếu API detail có trả checkListResults thì lưu luôn vào state riêng
+                state.checkListResults = action.payload?.checkListResults || [];
+
+                // Optional: đồng bộ lại item trong list nếu list đã có sẵn
                 const index = state.sessions.findIndex(item => item.id === action.payload.id);
                 if (index !== -1) {
                     state.sessions[index] = action.payload;
-                } else {
-                    state.sessions.push(action.payload);
                 }
             })
             .addCase(fetchPatrolSessionById.rejected, handleRejected)
@@ -599,8 +648,16 @@ const patrolSlice = createSlice({
             .addCase(deletePatrolSession.fulfilled, (state, action) => {
                 state.loading = false;
                 state.success = true;
+
                 state.sessions = state.sessions.filter(item => item.id !== action.payload);
                 state.filteredSessionsResult = state.filteredSessionsResult.filter(item => item.id !== action.payload);
+
+                if (state.currentSession?.id === action.payload) {
+                    state.currentSession = null;
+                    state.checkListResults = [];
+                    state.images = [];
+                    state.statusHistories = [];
+                }
             })
             .addCase(deletePatrolSession.rejected, handleRejected)
 
@@ -608,6 +665,9 @@ const patrolSlice = createSlice({
             .addCase(updatePatrolSession.fulfilled, (state, action) => {
                 state.loading = false;
                 state.success = true;
+
+                state.currentSession = action.payload;
+
                 const index = state.sessions.findIndex(item => item.id === action.payload.id);
                 if (index !== -1) {
                     state.sessions[index] = action.payload;
@@ -619,6 +679,9 @@ const patrolSlice = createSlice({
             .addCase(updatePatrolSessionStatus.fulfilled, (state, action) => {
                 state.loading = false;
                 state.success = true;
+
+                state.currentSession = action.payload;
+
                 const index = state.sessions.findIndex(item => item.id === action.payload.id);
                 if (index !== -1) {
                     state.sessions[index] = action.payload;
@@ -630,6 +693,9 @@ const patrolSlice = createSlice({
             .addCase(rejectPatrolSessionStatus.fulfilled, (state, action) => {
                 state.loading = false;
                 state.success = true;
+
+                state.currentSession = action.payload;
+
                 const index = state.sessions.findIndex(item => item.id === action.payload.id);
                 if (index !== -1) {
                     state.sessions[index] = action.payload;
@@ -697,6 +763,6 @@ const patrolSlice = createSlice({
                 }
             });
 
-export const { clearPatrolHistoryStatus, clearPatrolError } = patrolSlice.actions;
+export const { clearPatrolHistoryStatus, clearPatrolError, clearCurrentPatrolSession } = patrolSlice.actions;
 
 export default patrolSlice.reducer;

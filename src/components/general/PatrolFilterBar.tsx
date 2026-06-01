@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React from 'react';
 import { FaSearch, FaTimes } from 'react-icons/fa';
 import FuzzySearchInput from '../general/FuzzySearchInput';
@@ -124,19 +125,19 @@ const PatrolFilterBar: React.FC<PatrolFilterBarProps> = ({
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t border-gray-100">
         <span className="text-xs text-gray-500">
           {labels.results}: <span className="font-bold text-gray-700">{totalCount}</span>
         </span>
         <div className="flex gap-2">
           {hasActiveFilter && (
             <button type="button" onClick={onReset}
-              className="px-3 py-1.5 text-sm border border-gray-300 text-gray-600 hover:bg-gray-50 flex items-center gap-1.5">
+              className="flex-1 sm:flex-none px-3 py-2 text-sm border border-gray-300 text-gray-600 hover:bg-gray-50 rounded flex items-center justify-center gap-1.5">
               <FaTimes className="w-3 h-3" /> {labels.reset}
             </button>
           )}
           <button type="button" onClick={onSearch} disabled={loading}
-            className="px-4 py-2 text-sm bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
+            className="flex-1 sm:flex-none px-4 py-2 text-sm bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50 rounded flex items-center justify-center gap-2">
             <FaSearch className="w-3 h-3" />
             {loading ? (labels.searching || 'Đang tìm...') : labels.search}
           </button>

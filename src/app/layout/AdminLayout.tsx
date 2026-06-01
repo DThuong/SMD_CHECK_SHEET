@@ -1,13 +1,14 @@
 /* eslint-disable no-empty */
 import { useState, useEffect, useRef } from "react";
-import { Link, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { HiMenu, HiX, HiLogout, HiChevronDown } from "react-icons/hi";
 import { FaAnglesLeft, FaAnglesRight } from "react-icons/fa6";
-import { FaUser, FaChartPie, FaFileAlt, FaCog, FaMicrochip } from "react-icons/fa";
+import { FaUser, FaChartPie, FaFile, FaC, FaMicrochip } from "react-icons/fa6";
 import { PiPlantFill } from "react-icons/pi";
 import logo from "../../assets/image/brand_image_3.webp";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { logoutUser } from "../../redux/slices/authSlice";
+import { useTranslation } from "react-i18next";
 
 const AdminLayout = () => {
   // States
@@ -24,8 +25,40 @@ const AdminLayout = () => {
   const [isMobilePatrolOpen, setIsMobilePatrolOpen] = useState(false);
   const patrolMenuRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
   const location = useLocation();
+
+  const { i18n } = useTranslation("common");
+const [currentLang, setCurrentLang] = useState(i18n.language || "vi");
+
+useEffect(() => {
+  const handleLanguageChanged = (lng: string) => setCurrentLang(lng);
+
+  i18n.on("languageChanged", handleLanguageChanged);
+
+  return () => {
+    i18n.off("languageChanged", handleLanguageChanged);
+  };
+}, [i18n]);
+
+const handleLanguageChange = async (langCode: string) => {
+  if (langCode === currentLang) return;
+
+  try {
+    await i18n.reloadResources(langCode, [
+      "settings",
+      "dashboard",
+      "logs",
+      "common",
+      "patrol",
+    ]);
+
+    await i18n.changeLanguage(langCode);
+    localStorage.setItem("appLanguage", langCode);
+    setCurrentLang(langCode);
+  } catch (error) {
+    console.error("Error changing language:", error);
+  }
+};
 
   // Redux
   const { user, loading } = useAppSelector((state) => state.auth);
@@ -54,7 +87,7 @@ const AdminLayout = () => {
   const menuItems = [
     { name: "Dashboard", path: "/admin/dashboard", icon: <FaChartPie />, shouldReload: false },
     { name: "User", path: "/admin/user", icon: <FaUser />, shouldReload: false },
-    { name: "SMD SHEET", path: "/admin/smd-sheet-logs", icon: <FaFileAlt />, shouldReload: false },
+    { name: "SMD SHEET", path: "/admin/smd-sheet-logs", icon: <FaFile />, shouldReload: false },
     { name: "Plan", path: "/admin/plan", icon: <PiPlantFill />, shouldReload: false },
     {
       name: "Patrol Check list",
@@ -68,7 +101,7 @@ const AdminLayout = () => {
         { name: "Báo cáo Patrol", path: "/admin/patrol?view=report", shouldReload: false },
       ],
     },
-    { name: "Settings", path: "/admin/settings", icon: <FaCog />, shouldReload: false },
+    { name: "Settings", path: "/admin/settings", icon: <FaC />, shouldReload: false },
   ];
 
   // Handlers
@@ -98,17 +131,16 @@ const AdminLayout = () => {
 
       {/* ===================== DESKTOP SIDEBAR ===================== */}
       <aside
-        className={`hidden md:flex flex-col bg-white flex-shrink-0 transition-all duration-300 ease-in-out z-40 ${isSidebarCollapsed ? "w-20" : "w-64 lg:w-96"
+        className={`hidden md:flex flex-col bg-white shrink-0 transition-all duration-300 ease-in-out z-40 ${isSidebarCollapsed ? "w-20" : "w-64 lg:w-96"
           }`}
       >
         {/* Sidebar Title */}
-        <div className="h-20 flex items-center shrink-0 overflow-hidden">
-          {!isSidebarCollapsed && (
-            <h1 className="text-[30px]! font-bold text-gray-800 truncate px-10 ml-4!">
+        <div className="h-20 flex items-center shrink-0 overflow-hidden px-4">
+          {!isSidebarCollapsed ? (
+            <h1 className="text-lg font-bold text-gray-800 truncate">
               Admin Dashboard
             </h1>
-          )}
-          {isSidebarCollapsed && (
+          ) : (
             <div className="w-full flex justify-center text-gray-800 font-bold text-2xl">
               A
             </div>
@@ -160,7 +192,7 @@ const AdminLayout = () => {
                             <Link
                               key={child.path}
                               to={child.path}
-                              className={`flex items-center h-11 px-4 !text-white transition-all text-sm text-decoration-none ${isChildActive
+                              className={`flex items-center h-11 px-4 text-white! transition-all text-sm text-decoration-none ${isChildActive
                                   ? "bg-gray-500 text-white font-semibold"
                                   : "text-gray-300 hover:bg-gray-600 hover:text-white"
                                 }`}
@@ -205,7 +237,10 @@ const AdminLayout = () => {
       </aside>
 
       {/* ===================== MAIN CONTAINER ===================== */}
-      <div className="flex-1 flex flex-col min-w-0 relative">
+      <div
+        className="flex-1 flex flex-col min-w-0 relative"
+        style={{ '--sidebar-width': isSidebarCollapsed ? '80px' : '384px' } as React.CSSProperties}
+      >
 
         {/* Header */}
         <header className="bg-white z-40 relative flex h-20 shrink-0 items-center px-4 md:px-6 lg:px-8">
@@ -236,6 +271,27 @@ const AdminLayout = () => {
             <h1 className="text-lg font-bold text-gray-800! md:hidden truncate min-w-0 flex-1">
               Admin Dashboard
             </h1>
+          </div>
+
+          {/* Desktop Language Selector */}
+          <div className="hidden md:flex items-center gap-1 mr-4! px-1 py-1">
+            {[
+              { code: "vi", label: "VN" },
+              { code: "en", label: "US" },
+              { code: "ko", label: "KR" },
+            ].map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => handleLanguageChange(lang.code)}
+                className={`text-sm! font-bold px-3 py-1 rounded-full! transition-all duration-200 ${
+                  currentLang === lang.code
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "text-gray-500 hover:text-gray-800 hover:bg-gray-200"
+                }`}
+              >
+                {lang.label}
+              </button>
+            ))}
           </div>
 
           {/* User Menu */}
@@ -375,6 +431,14 @@ const AdminLayout = () => {
           to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in-down { animation: fade-in-down 0.2s ease-out forwards; }
+        @media (min-width: 768px) {
+          .patrol-action-bar {
+            left: calc(var(--sidebar-width, 0px) + 1.5rem) !important;
+            right: 1.5rem !important;
+            bottom: 0px !important;
+            transition: left 0.3s ease-in-out;
+          }
+        }
       `}</style>
     </div>
   );

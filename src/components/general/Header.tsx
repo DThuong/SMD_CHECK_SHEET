@@ -3,7 +3,7 @@ import logo from '../../assets/image/brand_image_3.webp';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logoutUser } from '../../redux/slices/authSlice';
-import { FaKey, FaListUl, FaChartPie, FaMicrochip, FaPencil } from 'react-icons/fa6';
+import { FaKey, FaChartPie, FaMicrochip, FaPencil } from 'react-icons/fa6';
 import { TbLogout } from "react-icons/tb";
 
 

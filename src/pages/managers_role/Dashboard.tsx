@@ -19,18 +19,16 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import {
-  FaUsers,
-  FaFile,
-  FaChartLine,
-  FaCircleCheck,
-} from "react-icons/fa6";
+import { FaUsers, FaFile, FaChartLine, FaCircleCheck } from "react-icons/fa6";
 import { FaMicrochip } from "react-icons/fa6";
 import { AiOutlineEye } from "react-icons/ai";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchUsers } from "../../redux/slices/authSlice";
 import { fetchChangeModel } from "../../redux/slices/changeModelSlice";
-import { fetchPatrolSessions, fetchLineAreas } from "../../redux/slices/patrolSlice";
+import {
+  fetchPatrolSessions,
+  fetchLineAreas,
+} from "../../redux/slices/patrolSlice";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -42,10 +40,10 @@ import {
 import ReactPaginate from "react-paginate";
 import LoadingSpinner from "../../components/general/LoadingSpinner";
 import {
-  savePatrolNavState,
   readPatrolDashboardState,
   clearPatrolDashboardState,
 } from "../../utils/patrolNavState";
+import PatrolTrendCard from "../../components/general/PatrolTrendCard";
 
 // ==================== CONSTANTS ====================
 const DETAIL_PAGE_SIZE = 10;
@@ -235,7 +233,7 @@ const SheetTable = ({
 }) => {
   const page = detailTablePage;
   const setPage = onDetailTablePageChange;
-
+  
   const pageCount = Math.ceil(selectedSheets.length / DETAIL_PAGE_SIZE);
   const paged = selectedSheets.slice(
     page * DETAIL_PAGE_SIZE,
@@ -246,20 +244,20 @@ const SheetTable = ({
   const handleViewSheet = (sheetId: number) => {
     const dashboardState = selectedPointInfo
       ? {
-        date: selectedPointInfo.date,
-        fullDate: selectedPointInfo.fullDate,
-        shift: selectedPointInfo.shift,
-        sheetId,
-        detailTablePage: page,
-        timeRange,
-        shiftFilter,
-      }
+          date: selectedPointInfo.date,
+          fullDate: selectedPointInfo.fullDate,
+          shift: selectedPointInfo.shift,
+          sheetId,
+          detailTablePage: page,
+          timeRange,
+          shiftFilter,
+        }
       : {
-        sheetId,
-        detailTablePage: page,
-        timeRange,
-        shiftFilter,
-      };
+          sheetId,
+          detailTablePage: page,
+          timeRange,
+          shiftFilter,
+        };
 
     saveDashboardReturnContext(dashboardState);
 
@@ -276,7 +274,11 @@ const SheetTable = ({
   return (
     <div
       ref={detailTableRef}
-      className={isInsideCard ? "transition-all duration-300" : "bg-white rounded-xl shadow-lg p-4 mb-4 transition-all duration-300"}
+      className={
+        isInsideCard
+          ? "transition-all duration-300"
+          : "bg-white rounded-xl shadow-lg p-4 mb-4 transition-all duration-300"
+      }
     >
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
@@ -323,10 +325,11 @@ const SheetTable = ({
                     key={sheet.id}
                     id={`dashboard-sheet-row-${sheet.id}`}
                     onClick={() => handleViewSheet(sheet.id)}
-                    className={`border-b border-slate-100 transition-all duration-500 cursor-pointer ${highlightedSheetId === sheet.id
-                      ? "bg-blue-100 ring-2 ring-blue-400 shadow-md scroll-mt-24"
-                      : "hover:bg-slate-50"
-                      }`}
+                    className={`border-b border-slate-100 transition-all duration-500 cursor-pointer ${
+                      highlightedSheetId === sheet.id
+                        ? "bg-blue-100 ring-2 ring-blue-400 shadow-md scroll-mt-24"
+                        : "hover:bg-slate-50"
+                    }`}
                   >
                     <td className="py-3 px-4 text-sm text-slate-600">
                       {page * DETAIL_PAGE_SIZE + index + 1}
@@ -350,18 +353,19 @@ const SheetTable = ({
                     <td className="py-3 px-4 text-sm text-slate-600">
                       {sheet.createAt
                         ? new Date(sheet.createAt).toLocaleString("vi-VN", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
                         : "N/A"}
                     </td>
-                    <td className="py-3 px-4">
-                      {getStatusBadge(sheet)}
-                    </td>
-                    <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-3 px-4">{getStatusBadge(sheet)}</td>
+                    <td
+                      className="py-3 px-4 text-center"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <button
                         onClick={() => handleViewSheet(sheet.id)}
                         className="inline-flex items-center gap-1 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md text-xs font-medium"
@@ -462,10 +466,11 @@ const SmdTrendCard = ({
             <button
               key={r}
               onClick={() => setTimeRange(r)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${timeRange === r
-                ? "bg-blue-500 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                timeRange === r
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
             >
               {t(
                 `charts.timeline.${r === "week" ? "7days" : r === "month" ? "30days" : "all"}`,
@@ -478,10 +483,11 @@ const SmdTrendCard = ({
               <button
                 key={s}
                 onClick={() => setShiftFilter(s)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${shiftFilter === s
-                  ? `text-white ${s === "morning" ? "bg-red-500" : s === "night" ? "bg-purple-600" : "bg-blue-500"}`
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  shiftFilter === s
+                    ? `text-white ${s === "morning" ? "bg-red-500" : s === "night" ? "bg-purple-600" : "bg-blue-500"}`
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
               >
                 {s === "both"
                   ? t("charts.timeline.both")
@@ -494,8 +500,16 @@ const SmdTrendCard = ({
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={250} className="[&_*:focus]:outline-none">
-        <LineChart data={timelineStats} accessibilityLayer={false} style={{ outline: "none" }}>
+      <ResponsiveContainer
+        width="100%"
+        height={250}
+        className="[&_*:focus]:outline-none"
+      >
+        <LineChart
+          data={timelineStats}
+          accessibilityLayer={false}
+          style={{ outline: "none" }}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
           <XAxis
             dataKey="date"
@@ -607,451 +621,6 @@ const SmdTrendCard = ({
   );
 };
 
-const PatrolTrendCard = ({
-  patrolTimelineStats,
-  patrolSessions,
-  lineAreas,
-  fontSize,
-  userRole,
-  navigate,
-  tPatrol,
-  initialDate,
-  initialPage = 0,
-  initialHighlightId,
-}: {
-  patrolTimelineStats: any[];
-  patrolSessions: any[];
-  lineAreas: any[];
-  fontSize: number;
-  userRole?: string;
-  navigate: ReturnType<typeof useNavigate>;
-  tPatrol: (key: string, opts?: any) => string;
-  initialDate?: string | null;
-  initialPage?: number;
-  initialHighlightId?: number | null;
-}) => {
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [detailPage, setDetailPage] = useState(0);
-  const [highlightPatrolId, setHighlightPatrolId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"all" | "daily" | "weekly">("all");
-  const patrolDetailRef = useRef<HTMLDivElement>(null);
-  const pT = (key: string, opts?: any) => tPatrol(key, opts);
-
-  const handleChartPointClick = (payload: any) => {
-    const pointData = payload?.payload ?? payload;
-    if (!pointData?.fullDate) return;
-
-    setSelectedDate(pointData.fullDate);
-    setActiveTab("all");
-    setDetailPage(0);
-
-    setTimeout(() => {
-      patrolDetailRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 100);
-  };
-
-  // 1. Lọc theo ngày được chọn
-  const daySessions = useMemo(() => {
-    if (!selectedDate || !patrolSessions?.length) return [];
-    return patrolSessions.filter((session) => {
-      if (!session.createdAt) return false;
-      const date = new Date(session.createdAt);
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      return key === selectedDate;
-    });
-  }, [selectedDate, patrolSessions]);
-
-  // 2. Tính toán số lượng cho các tab
-  const counts = useMemo(() => {
-    return {
-      all: daySessions.length,
-      daily: daySessions.filter((s) => s.patrolType === "1").length,
-      weekly: daySessions.filter((s) => s.patrolType === "7").length,
-    };
-  }, [daySessions]);
-
-  // 3. Lọc theo tab tích cực
-  const filteredSheets = useMemo(() => {
-    if (activeTab === "all") return daySessions;
-    if (activeTab === "daily") return daySessions.filter((s) => s.patrolType === "1");
-    if (activeTab === "weekly") return daySessions.filter((s) => s.patrolType === "7");
-    return daySessions;
-  }, [daySessions, activeTab]);
-
-  // 4. Phân trang
-  const itemsPerPage = 5;
-  const totalPages = Math.ceil(filteredSheets.length / itemsPerPage);
-  const paginatedSheets = useMemo(() => {
-    return filteredSheets.slice(detailPage * itemsPerPage, (detailPage + 1) * itemsPerPage);
-  }, [filteredSheets, detailPage]);
-
-  // 5. Định dạng ngày hiển thị trong tiêu đề chi tiết
-  const formattedDateLabel = useMemo(() => {
-    if (!selectedDate) return "";
-    const [y, m, d] = selectedDate.split("-");
-    return `${d}/${m}/${y}`;
-  }, [selectedDate]);
-
-  // 6. Xử lý chuyển hướng đến trang detail patrol
-  const handleGoToDetail = (sheetId: number) => {
-    const sheet = patrolSessions.find((s: any) => s.id === sheetId);
-    const sheetType = sheet?.patrolType === '7' ? 'weekly' : 'daily';
-
-    savePatrolNavState({
-      type: sheetType,
-      page: detailPage,
-      highlightId: sheetId,
-      fromDashboard: true,
-      dashboardDate: selectedDate || '',
-      dashboardReturnPath: window.location.pathname + window.location.search,
-    });
-
-    navigate(`/${userRole?.toLowerCase()}/patrol?view=detail&id=${sheetId}`);
-  };
-
-  // Helper styles cho trạng thái
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case "Approved":
-        return "bg-green-50 text-green-700 border border-green-200";
-      case "Submitted":
-        return "bg-blue-50 text-blue-700 border border-blue-200";
-      default:
-        return "bg-yellow-50 text-yellow-700 border border-yellow-200";
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "Approved":
-        return pT("statusApproved");
-      case "Submitted":
-        return pT("statusSubmitted");
-      default:
-        return pT("statusPending");
-    }
-  };
-
-
-  // Fix Bug #1: Sync restore state từ Dashboard sau khi mount
-  useEffect(() => {
-    if (!initialDate) return;
-    setSelectedDate(initialDate);
-    setDetailPage(initialPage);
-  }, [initialDate, initialPage]);
-
-  // Fix Bug #2: Scroll chỉ khi paginatedSheets đã có element cần highlight
-  useEffect(() => {
-    if (!initialHighlightId || !paginatedSheets.length) return;
-    const isInPage = paginatedSheets.some(s => s.id === initialHighlightId);
-    if (!isInPage) return;
-    setHighlightPatrolId(initialHighlightId);
-    const scrollTimer = setTimeout(() => {
-      const el = document.querySelector(`[data-patrol-id="${initialHighlightId}"]`);
-      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 150);
-    const clearTimer = setTimeout(() => setHighlightPatrolId(null), 2500);
-    return () => { clearTimeout(scrollTimer); clearTimeout(clearTimer); };
-  }, [initialHighlightId, paginatedSheets]);
-
-  return (
-    <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-4 mt-6 transition-all duration-300 animate-fadeIn">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-        <div>
-          <h2 className="text-xl font-bold text-slate-800">
-            {pT("patrolTrendTitle")}
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            {pT("patrolTrendSubtitle")}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg border border-emerald-200 animate-pulse">
-            {pT("totalPatrolSheets")}: {patrolTimelineStats.reduce((sum, item) => sum + item.count, 0)}
-          </span>
-        </div>
-      </div>
-
-      <ResponsiveContainer width="100%" height={250} className="[&_*:focus]:outline-none">
-        <LineChart data={patrolTimelineStats} accessibilityLayer={false} style={{ outline: "none" }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize }}
-            stroke="#64748b"
-            angle={-30}
-            textAnchor="end"
-            height={60}
-          />
-          <YAxis stroke="#64748b" />
-          <Tooltip
-            cursor={false}
-            contentStyle={{
-              backgroundColor: "#fff",
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-            }}
-          />
-          <Line
-            type="monotone"
-            dataKey="count"
-            stroke="#0d9488"
-            strokeWidth={3}
-            name={pT("totalPatrolSheets")}
-            dot={(props: any) => {
-              const { cx, cy, payload } = props;
-              return (
-                <circle
-                  key={`p-${payload.fullDate}`}
-                  cx={cx}
-                  cy={cy}
-                  r={5}
-                  fill="#0d9488"
-                  stroke="#fff"
-                  strokeWidth={2}
-                  style={{ cursor: "pointer", outline: "none" }}
-                  onClick={() => handleChartPointClick(payload)}
-                />
-              );
-            }}
-            activeDot={{
-              r: 7,
-              style: { cursor: "pointer", outline: "none" },
-              onClick: (_: any, p: any) => handleChartPointClick(p),
-            }}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-
-      {/* Chi tiết Patrol Sheets theo điểm chọn */}
-      <div ref={patrolDetailRef} className="mt-6 pt-4 border-t border-slate-100 scroll-mt-6">
-        {!selectedDate ? (
-          <div className="flex flex-col items-center justify-center py-4 px-4 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
-            <svg
-              className="w-10 h-10 text-slate-400 mb-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-              />
-            </svg>
-            <p className="text-sm font-medium text-slate-500 m-0">
-              {pT("clickPointToView")}
-            </p>
-          </div>
-        ) : (
-          <div>
-            {/* Header thông tin chi tiết */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-              <span className="text-sm font-bold text-teal-600 bg-teal-50 px-3 py-1 rounded-full animate-fadeIn transition-all duration-300">
-                {pT("showingPatrolSheets", {
-                  count: counts[activeTab],
-                  info: formattedDateLabel,
-                })}
-              </span>
-
-              {/* Tabs chọn loại tuần tra */}
-              <div className="flex gap-1.5 p-1 bg-slate-100 rounded-lg border border-slate-200/40">
-                {(["all", "daily", "weekly"] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => {
-                      setActiveTab(tab);
-                      setDetailPage(0);
-                    }}
-                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${activeTab === tab
-                      ? "bg-white text-slate-800 shadow-sm"
-                      : "text-slate-500 hover:text-slate-800"
-                      }`}
-                  >
-                    {tab === "all"
-                      ? `${pT("all")} (${counts.all})`
-                      : tab === "daily"
-                        ? `${pT("dailyPatrol")} (${counts.daily})`
-                        : `${pT("weeklyPatrol")} (${counts.weekly})`}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Bảng chi tiết */}
-            <div className="overflow-x-auto min-h-[120px]">
-              {paginatedSheets.length > 0 ? (
-                <>
-                  {/* Desktop Table View */}
-                  <div className="hidden md:block">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="border-b border-slate-100 bg-slate-50/50 py-3">
-                          <th className="py-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-left w-12">
-                            {pT("stt")}
-                          </th>
-                          <th className="py-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-left w-24">
-                            {pT("sheetId")}
-                          </th>
-                          <th className="py-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-left">
-                            {pT("lineArea")}
-                          </th>
-                          <th className="py-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-left">
-                            {pT("creator")}
-                          </th>
-                          <th className="py-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-left">
-                            {pT("createdAt")}
-                          </th>
-                          <th className="py-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-left w-28">
-                            {pT("status")}
-                          </th>
-                          <th className="py-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-center w-20">
-                            {pT("action")}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paginatedSheets.map((sheet, index) => {
-                          const sheetLineName =
-                            lineAreas.find((l) => l.id === sheet.lineAreaId)?.lineAreaName || "N/A";
-                          return (
-                            <tr
-                              key={sheet.id}
-                              data-patrol-id={sheet.id}
-                              onClick={() => handleGoToDetail(sheet.id)}
-                              className={`border-b border-slate-100 transition-all duration-500 cursor-pointer ${highlightPatrolId === sheet.id
-                                ? 'bg-blue-100 ring-2 ring-inset ring-blue-400 shadow-md'
-                                : 'hover:bg-slate-50/60'
-                                }`}
-                            >
-                              <td className="py-3 px-3 text-sm text-slate-500 font-medium">
-                                {detailPage * itemsPerPage + index + 1}
-                              </td>
-                              <td className="py-3 px-3 text-sm font-semibold text-slate-900">
-                                #{sheet.id}
-                              </td>
-                              <td className="py-3 px-3">
-                                <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
-                                  {sheetLineName}
-                                </span>
-                              </td>
-                              <td className="py-3 px-3 text-sm text-slate-700 font-medium">
-                                {sheet.fullName}
-                              </td>
-                              <td className="py-3 px-3 text-sm text-slate-500">
-                                {new Date(sheet.createdAt).toLocaleString("vi-VN")}
-                              </td>
-                              <td className="py-3 px-3">
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold inline-block whitespace-nowrap ${getStatusStyle(sheet.status)}`}>
-                                  {getStatusText(sheet.status)}
-                                </span>
-                              </td>
-                              <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
-                                <button
-                                  onClick={() => handleGoToDetail(sheet.id)}
-                                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-bold rounded-lg shadow-sm transition-all"
-                                >
-                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                  </svg>
-                                  <span>{pT("view")}</span>
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Mobile Cards View */}
-                  <div className="grid gap-3 md:hidden">
-                    {paginatedSheets.map((sheet) => {
-                      const sheetLineName =
-                        lineAreas.find((l) => l.id === sheet.lineAreaId)?.lineAreaName || "N/A";
-                      return (
-                        <div
-                          key={sheet.id}
-                          data-patrol-id={sheet.id}
-                          onClick={() => handleGoToDetail(sheet.id)}
-                          className={`bg-slate-50/40 border transition-all duration-500 cursor-pointer ${highlightPatrolId === sheet.id
-                            ? 'bg-blue-50 border-blue-400 ring-2 ring-blue-300'
-                            : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'
-                            }`}
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <p className="text-xs font-bold text-slate-400 mb-0.5">#{sheet.id}</p>
-                              <p className="text-sm font-bold text-slate-800 mb-1">{sheet.fullName}</p>
-                              <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-                                {pT("lineLabel")}: {sheetLineName}
-                              </span>
-                            </div>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusStyle(sheet.status)}`}>
-                              {getStatusText(sheet.status)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
-                            <span className="text-xs text-slate-450 text-slate-400">
-                              {new Date(sheet.createdAt).toLocaleString("vi-VN")}
-                            </span>
-                            <button
-                              onClick={() => handleGoToDetail(sheet.id)}
-                              className="inline-flex items-center gap-1.5 px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-lg transition-all"
-                            >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                              <span>{pT("view")}</span>
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Phân trang */}
-                  {totalPages > 1 && (
-                    <div className="flex flex-col sm:flex-row justify-between items-center mt-4 pt-3 border-t border-slate-100 gap-3">
-                      <span className="text-xs text-slate-500 font-semibold">
-                        {pT("pageIndicator", {
-                          current: detailPage + 1,
-                          total: totalPages,
-                        })}
-                      </span>
-                      <ReactPaginate
-                        {...PAGINATE_PROPS}
-                        previousLabel={pT("prevPage")}
-                        nextLabel={pT("nextPage")}
-                        activeLinkClassName="!bg-teal-600 !text-white !border-teal-600 font-bold"
-                        pageCount={totalPages}
-                        forcePage={detailPage}
-                        onPageChange={({ selected }) => setDetailPage(selected)}
-                      />
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-center py-6">
-                  <p className="text-sm font-semibold text-slate-400 m-0">
-                    {pT("noPatrolSheets")}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
 // ==================== MAIN COMPONENT ====================
 const Dashboard = () => {
   const dispatch = useAppDispatch();
@@ -1060,13 +629,14 @@ const Dashboard = () => {
   const { sheets, filteredSheets, loadingList } = useAppSelector(
     (state) => state.changeModel,
   );
-  const { sessions: patrolSessions, lineAreas } = useAppSelector((state) => state.patrol);
+  const { sessions: patrolSessions, lineAreas } = useAppSelector(
+    (state) => state.patrol,
+  );
 
   const [fontSize, setFontSize] = useState(12);
   const [timeRange, setTimeRange] = useState<"week" | "month" | "all">("week");
-  const [shiftFilter, setShiftFilter] = useState<"morning" | "night" | "both">(
-    "both",
-  );
+  const [smdShiftFilter, setSmdShiftFilter] = useState<"morning" | "night" | "both">("both");
+  const [patrolShiftFilter, setPatrolShiftFilter] = useState<"morning" | "night" | "both">("both");
   const [selectedSheets, setSelectedSheets] = useState<any[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<{
     date: string;
@@ -1084,10 +654,15 @@ const Dashboard = () => {
     null,
   );
   const [detailTablePage, setDetailTablePage] = useState(0);
-  const [patrolInitialDate, setPatrolInitialDate] = useState<string | null>(null);
+  const [patrolInitialDate, setPatrolInitialDate] = useState<string | null>(
+    null,
+  );
   const [patrolInitialPage, setPatrolInitialPage] = useState(0);
-  const [patrolInitialHighlight, setPatrolInitialHighlight] = useState<number | null>(null);
-
+  const [patrolInitialHighlight, setPatrolInitialHighlight] = useState<
+    number | null
+  >(null);
+  const [patrolInitialShift, setPatrolInitialShift] =
+  useState<"morning" | "night" | null>(null);
   const { t } = useTranslation("dashboard");
   const { t: tPatrol } = useTranslation("patrol");
   const location = useLocation();
@@ -1110,10 +685,10 @@ const Dashboard = () => {
         h >= 8 && h < 20
           ? date
           : (() => {
-            const s = new Date(date);
-            if (h < 8) s.setDate(s.getDate() - 1);
-            return s;
-          })();
+              const s = new Date(date);
+              if (h < 8) s.setDate(s.getDate() - 1);
+              return s;
+            })();
       const key = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, "0")}-${String(base.getDate()).padStart(2, "0")}`;
       return { shift: h >= 8 && h < 20 ? "morning" : "night", key };
     },
@@ -1141,8 +716,10 @@ const Dashboard = () => {
   useEffect(() => {
     // Luôn đọc patrol dashboard state TRƯỚC, bất kể from hay sheetId
     const patrolDs = readPatrolDashboardState();
+
     if (patrolDs?.date) {
       setPatrolInitialDate(patrolDs.date);
+      setPatrolInitialShift(patrolDs.shift || null);
       setPatrolInitialPage(patrolDs.page || 0);
       setPatrolInitialHighlight(patrolDs.highlightId || null);
       clearPatrolDashboardState();
@@ -1161,14 +738,19 @@ const Dashboard = () => {
       };
     } | null;
 
-    if (navState?.from !== "sheetDetail" || !navState?.dashboardState?.sheetId) {
+    if (
+      navState?.from !== "sheetDetail" ||
+      !navState?.dashboardState?.sheetId
+    ) {
       return;
     }
 
     const navDs = navState.dashboardState;
     const stored = getDashboardReturnContext();
     const ds =
-      stored && stored.sheetId === navDs.sheetId ? { ...stored, ...navDs } : navDs;
+      stored && stored.sheetId === navDs.sheetId
+        ? { ...stored, ...navDs }
+        : navDs;
 
     const needFilter = !!(ds.fullDate && ds.shift);
     if (needFilter && (displaySheets?.length ?? 0) === 0) {
@@ -1176,7 +758,7 @@ const Dashboard = () => {
     }
 
     if (ds.timeRange) setTimeRange(ds.timeRange);
-    if (ds.shiftFilter) setShiftFilter(ds.shiftFilter);
+    if (ds.shiftFilter) setSmdShiftFilter(ds.shiftFilter);
 
     let restoredRowCount = 0;
     if (ds.fullDate && ds.shift && displaySheets?.length) {
@@ -1308,42 +890,40 @@ const Dashboard = () => {
   }, [displaySheets, timeRange, getShiftDay]);
 
   const patrolTimelineStats = useMemo(() => {
-    if (!patrolSessions?.length) return [];
-    const now = new Date();
-    let cutoff: Date | null = null;
-    if (timeRange === "week") {
-      cutoff = new Date();
-      cutoff.setDate(now.getDate() - 7);
-      cutoff.setHours(0, 0, 0, 0);
-    } else if (timeRange === "month") {
-      cutoff = new Date();
-      cutoff.setMonth(now.getMonth() - 1);
-      cutoff.setHours(0, 0, 0, 0);
-    }
+  if (!patrolSessions?.length) return [];
+  const now = new Date();
+  let cutoff: Date | null = null;
+  if (timeRange === "week") {
+    cutoff = new Date(); cutoff.setDate(now.getDate() - 7); cutoff.setHours(0,0,0,0);
+  } else if (timeRange === "month") {
+    cutoff = new Date(); cutoff.setMonth(now.getMonth() - 1); cutoff.setHours(0,0,0,0);
+  }
 
-    const counts: Record<string, number> = {};
+  const morning: Record<string, number> = {};
+  const night: Record<string, number> = {};
 
-    patrolSessions.forEach((session) => {
-      if (!session.createdAt) return;
-      const date = new Date(session.createdAt);
-      if (cutoff && date < cutoff) return;
+  patrolSessions.forEach((session) => {
+    if (!session.createdAt) return;
+    const date = new Date(session.createdAt);
+    if (cutoff && date < cutoff) return;
+    const { shift, key } = getShiftDay(date); // ✅ dùng lại getShiftDay
+    if (shift === "morning") morning[key] = (morning[key] || 0) + 1;
+    else night[key] = (night[key] || 0) + 1;
+  });
 
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      counts[key] = (counts[key] || 0) + 1;
+  return [...new Set([...Object.keys(morning), ...Object.keys(night)])]
+    .sort()
+    .map((key) => {
+      const [, m, d] = key.split("-");
+      return {
+        date: `${parseInt(d)}/${parseInt(m)}`,
+        fullDate: key,
+        morning: morning[key] || 0,
+        night: night[key] || 0,
+        count: (morning[key] || 0) + (night[key] || 0),
+      };
     });
-
-    return Object.keys(counts)
-      .map((key) => {
-        const [, m, d] = key.split("-");
-        return {
-          date: `${parseInt(d)}/${parseInt(m)}`,
-          fullDate: key,
-          count: counts[key] || 0,
-        };
-      })
-      .sort((a, b) => a.fullDate.localeCompare(b.fullDate));
-  }, [patrolSessions, timeRange]);
-
+}, [patrolSessions, timeRange, getShiftDay]);
   const activeUsers = useMemo(
     () => users.filter((u) => u.isActive).length,
     [users],
@@ -1353,7 +933,7 @@ const Dashboard = () => {
     return Math.round(
       (sheets.filter((s) => s.status === "KoreaManagerDone").length /
         sheets.length) *
-      100,
+        100,
     );
   }, [sheets]);
   const pendingSheets = useMemo(
@@ -1535,10 +1115,11 @@ const Dashboard = () => {
                       `/${user?.role?.toLowerCase()}/smd-sheet-logs?status=${card.status}`,
                     );
                   }}
-                  className={`relative ${colors.bg} ${colors.hover} p-4 rounded-xl shadow-lg border-l-4 ${colors.border} transition-all duration-200 transform hover:scale-105 hover:shadow-xl text-left ${card.isUserCard && count > 0
-                    ? `ring-4 ring-offset-2 ring-opacity-50 ${ringColor}`
-                    : ""
-                    }`}
+                  className={`relative ${colors.bg} ${colors.hover} p-4 rounded-xl shadow-lg border-l-4 ${colors.border} transition-all duration-200 transform hover:scale-105 hover:shadow-xl text-left ${
+                    card.isUserCard && count > 0
+                      ? `ring-4 ring-offset-2 ring-opacity-50 ${ringColor}`
+                      : ""
+                  }`}
                 >
                   {card.isUserCard && count > 0 && (
                     <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce">
@@ -1581,59 +1162,96 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[
                 {
-                  label: tPatrol('dashboardStatus.pendingTitle'),
-                  description: tPatrol('dashboardStatus.pendingDescription'),
-                  status: 'Pending',
-                  color: 'yellow',
-                  count: patrolSessions.filter(s => s.status === 'Pending').length,
+                  label: tPatrol("dashboardStatus.pendingTitle"),
+                  description: tPatrol("dashboardStatus.pendingDescription"),
+                  status: "Pending",
+                  color: "yellow",
+                  count: patrolSessions.filter((s) => s.status === "Pending")
+                    .length,
                   showBadge: false,
                 },
                 {
-                  label: tPatrol('dashboardStatus.submittedTitle'),
-                  description: tPatrol('dashboardStatus.submittedDescription'),
-                  status: 'Submitted',
-                  color: 'blue',
-                  count: patrolSessions.filter(s => s.status === 'Submitted').length,
+                  label: tPatrol("dashboardStatus.submittedTitle"),
+                  description: tPatrol("dashboardStatus.submittedDescription"),
+                  status: "Submitted",
+                  color: "blue",
+                  count: patrolSessions.filter((s) => s.status === "Submitted")
+                    .length,
                   showBadge: true, // ← chỉ card này
                 },
                 {
-                  label: tPatrol('dashboardStatus.approvedTitle'),
-                  description: tPatrol('dashboardStatus.approvedDescription'),
-                  status: 'Approved',
-                  color: 'green',
-                  count: patrolSessions.filter(s => s.status === 'Approved').length,
+                  label: tPatrol("dashboardStatus.approvedTitle"),
+                  description: tPatrol("dashboardStatus.approvedDescription"),
+                  status: "Approved",
+                  color: "green",
+                  count: patrolSessions.filter((s) => s.status === "Approved")
+                    .length,
                   showBadge: false,
                 },
               ].map((card, i) => {
-                const colorMap: Record<string, { bg: string; hover: string; border: string; text: string }> = {
-                  yellow: { bg: 'bg-yellow-50', hover: 'hover:bg-yellow-100', border: 'border-yellow-400', text: 'text-yellow-700' },
-                  blue: { bg: 'bg-blue-50', hover: 'hover:bg-blue-100', border: 'border-blue-400', text: 'text-blue-700' },
-                  green: { bg: 'bg-green-50', hover: 'hover:bg-green-100', border: 'border-green-400', text: 'text-green-700' },
+                const colorMap: Record<
+                  string,
+                  { bg: string; hover: string; border: string; text: string }
+                > = {
+                  yellow: {
+                    bg: "bg-yellow-50",
+                    hover: "hover:bg-yellow-100",
+                    border: "border-yellow-400",
+                    text: "text-yellow-700",
+                  },
+                  blue: {
+                    bg: "bg-blue-50",
+                    hover: "hover:bg-blue-100",
+                    border: "border-blue-400",
+                    text: "text-blue-700",
+                  },
+                  green: {
+                    bg: "bg-green-50",
+                    hover: "hover:bg-green-100",
+                    border: "border-green-400",
+                    text: "text-green-700",
+                  },
                 };
                 const colors = colorMap[card.color];
                 return (
                   <button
                     key={i}
-                    onClick={() => navigate(`/${user?.role?.toLowerCase()}/patrol?view=list&type=daily&status=${card.status}`)}
+                    onClick={() =>
+                      navigate(
+                        `/${user?.role?.toLowerCase()}/patrol?view=list&type=daily&status=${card.status}`,
+                      )
+                    }
                     className={`relative ${colors.bg} ${colors.hover} p-4 rounded-xl shadow-lg border-l-4 ${colors.border} transition-all duration-200 transform hover:scale-105 hover:shadow-xl text-left`}
                   >
                     {/* Badge chỉ hiện với PQCLeader + card Submitted + count > 0 */}
-                    {card.showBadge && card.count > 0 && user?.role === 'PQCLeader' && (
-                      <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce">
-                        {t("roleBasedDashboard.needProcess")}
-                      </div>
-                    )}
+                    {card.showBadge &&
+                      card.count > 0 &&
+                      user?.role === "PQCLeader" && (
+                        <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce">
+                          {t("roleBasedDashboard.needProcess")}
+                        </div>
+                      )}
 
-                    <h3 className={`text-sm font-bold ${colors.text} mb-1`}>{card.label}</h3>
-                    <p className="text-xs text-gray-600 mb-3">{card.description}</p>
+                    <h3 className={`text-sm font-bold ${colors.text} mb-1`}>
+                      {card.label}
+                    </h3>
+                    <p className="text-xs text-gray-600 mb-3">
+                      {card.description}
+                    </p>
                     <div className="flex items-end justify-between">
                       <div>
-                        <p className={`text-3xl font-bold ${colors.text}`}>{card.count}</p>
+                        <p className={`text-3xl font-bold ${colors.text}`}>
+                          {card.count}
+                        </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {card.count === 0 ? tPatrol('noSheets') : `${card.count} ${tPatrol('sheetUnit')}`}
+                          {card.count === 0
+                            ? tPatrol("noSheets")
+                            : `${card.count} ${tPatrol("sheetUnit")}`}
                         </p>
                       </div>
-                      <FaMicrochip className={`w-5 h-5 ${colors.text} opacity-60`} />
+                      <FaMicrochip
+                        className={`w-5 h-5 ${colors.text} opacity-60`}
+                      />
                     </div>
                   </button>
                 );
@@ -1650,31 +1268,45 @@ const Dashboard = () => {
               <ComposedChart
                 data={[
                   {
-                    label: tPatrol('summaryTotal'),
+                    label: tPatrol("summaryTotal"),
                     smd: sheets?.length || 0,
                     patrol: patrolSessions?.length || 0,
                   },
                   {
-                    label: tPatrol('summaryPending'),
-                    smd: sheets?.filter(s => s.status === "pending").length || 0,
-                    patrol: patrolSessions?.filter(s => s.status === "Pending").length || 0,
+                    label: tPatrol("summaryPending"),
+                    smd:
+                      sheets?.filter((s) => s.status === "pending").length || 0,
+                    patrol:
+                      patrolSessions?.filter((s) => s.status === "Pending")
+                        .length || 0,
                   },
                   {
-                    label: tPatrol('summarySubmitted'),
-                    smd: sheets?.filter(s => s.status === "PQCDone").length || 0,
-                    patrol: patrolSessions?.filter(s => s.status === "Submitted").length || 0,
+                    label: tPatrol("summarySubmitted"),
+                    smd:
+                      sheets?.filter((s) => s.status === "PQCDone").length || 0,
+                    patrol:
+                      patrolSessions?.filter((s) => s.status === "Submitted")
+                        .length || 0,
                   },
                   {
-                    label: tPatrol('summaryCompleted'),
-                    smd: sheets?.filter(s => s.status === "KoreaManagerDone").length || 0,
-                    patrol: patrolSessions?.filter(s => s.status === "Approved").length || 0,
+                    label: tPatrol("summaryCompleted"),
+                    smd:
+                      sheets?.filter((s) => s.status === "KoreaManagerDone")
+                        .length || 0,
+                    patrol:
+                      patrolSessions?.filter((s) => s.status === "Approved")
+                        .length || 0,
                   },
                 ]}
                 barCategoryGap="30%"
                 margin={{ top: 10, right: 40, bottom: 10, left: 10 }}
                 style={{ outline: "none" }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#f1f5f9"
+                  vertical={false}
+                />
                 <XAxis
                   dataKey="label"
                   tick={{ fontSize: 12, fill: "#64748b" }}
@@ -1687,7 +1319,9 @@ const Dashboard = () => {
                   tick={{ fontSize: 11, fill: "#3b82f6" }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}
+                  tickFormatter={(v) =>
+                    v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v
+                  }
                 />
                 <YAxis
                   yAxisId="patrol"
@@ -1721,7 +1355,12 @@ const Dashboard = () => {
                   name="PATROL Sheet"
                   stroke="#10b981"
                   strokeWidth={3}
-                  dot={{ r: 5, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }}
+                  dot={{
+                    r: 5,
+                    fill: "#10b981",
+                    stroke: "#fff",
+                    strokeWidth: 2,
+                  }}
                   activeDot={{ r: 7 }}
                 />
               </ComposedChart>
@@ -1733,8 +1372,8 @@ const Dashboard = () => {
             timelineStats={timelineStats}
             timeRange={timeRange}
             setTimeRange={setTimeRange}
-            shiftFilter={shiftFilter}
-            setShiftFilter={setShiftFilter}
+            shiftFilter={smdShiftFilter}       
+            setShiftFilter={setSmdShiftFilter}  
             onPointClick={handlePointClick}
             fontSize={fontSize}
             t={t}
@@ -1759,7 +1398,11 @@ const Dashboard = () => {
             userRole={user?.role}
             navigate={navigate}
             tPatrol={tPatrol}
+            shiftFilter={patrolShiftFilter} 
+            setShiftFilter={setPatrolShiftFilter} 
+            getShiftDay={getShiftDay}        
             initialDate={patrolInitialDate}
+            initialShift={patrolInitialShift}
             initialPage={patrolInitialPage}
             initialHighlightId={patrolInitialHighlight}
           />
@@ -1769,18 +1412,26 @@ const Dashboard = () => {
             {/* Phân bổ Users theo Role */}
             <ChartCard title={t("charts.roleDistribution.title")}>
               <div className="h-[350px] outline-none">
-                <ResponsiveContainer width="100%" height="100%" style={{ outline: 'none' }}>
-                  <ComposedChart data={roleStats} style={{ outline: 'none' }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <ResponsiveContainer
+                  width="100%"
+                  height="100%"
+                  style={{ outline: "none" }}
+                >
+                  <ComposedChart data={roleStats} style={{ outline: "none" }}>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#f1f5f9"
+                      vertical={false}
+                    />
                     <XAxis
                       dataKey="name"
-                      tick={{ fontSize: 11, fill: '#64748b' }}
-                      axisLine={{ stroke: '#e2e8f0' }}
+                      tick={{ fontSize: 11, fill: "#64748b" }}
+                      axisLine={{ stroke: "#e2e8f0" }}
                       tickLine={false}
                       interval={0}
                     />
                     <YAxis
-                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      tick={{ fontSize: 11, fill: "#64748b" }}
                       axisLine={false}
                       tickLine={false}
                     />
@@ -1793,7 +1444,8 @@ const Dashboard = () => {
                       }}
                       cursor={false}
                       formatter={(value, name) => {
-                        if (name === "value" || name === "Trend") return [null, null];
+                        if (name === "value" || name === "Trend")
+                          return [null, null];
                         return [value, name];
                       }}
                     />
@@ -1810,8 +1462,14 @@ const Dashboard = () => {
                       dataKey="value"
                       stroke="#94a3b8"
                       strokeWidth={3}
-                      dot={{ r: 4, fill: '#fff', stroke: '#94a3b8', strokeWidth: 2, cursor: 'pointer' }}
-                      activeDot={{ r: 6, strokeWidth: 0, cursor: 'pointer' }}
+                      dot={{
+                        r: 4,
+                        fill: "#fff",
+                        stroke: "#94a3b8",
+                        strokeWidth: 2,
+                        cursor: "pointer",
+                      }}
+                      activeDot={{ r: 6, strokeWidth: 0, cursor: "pointer" }}
                       legendType="none" // ẨN KHỎI LEGEND
                       tooltipType="none"
                     />
@@ -1823,14 +1481,26 @@ const Dashboard = () => {
             {/* Trạng thái SMD Sheets - Đã đổi sang ComposedChart */}
             <ChartCard title={t("charts.sheetStatus.title")}>
               <div className="h-[350px] outline-none">
-                <ResponsiveContainer width="100%" height="100%" style={{ outline: 'none' }}>
-                  <ComposedChart data={statusStats} layout="vertical" style={{ outline: 'none' }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                <ResponsiveContainer
+                  width="100%"
+                  height="100%"
+                  style={{ outline: "none" }}
+                >
+                  <ComposedChart
+                    data={statusStats}
+                    layout="vertical"
+                    style={{ outline: "none" }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#f1f5f9"
+                      horizontal={false}
+                    />
                     <XAxis type="number" hide />
                     <YAxis
                       dataKey="name"
                       type="category"
-                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      tick={{ fontSize: 11, fill: "#64748b" }}
                       width={120}
                       axisLine={false}
                       tickLine={false}
@@ -1851,7 +1521,7 @@ const Dashboard = () => {
                       fill="#374151"
                       radius={0} // KHÔNG BO GÓC THEO YÊU CẦU
                       barSize={30}
-                      style={{ cursor: 'pointer' }}
+                      style={{ cursor: "pointer" }}
                     />
                   </ComposedChart>
                 </ResponsiveContainer>
@@ -2019,9 +1689,9 @@ const Dashboard = () => {
         </div>
 
         {/* Status Cards — Admin xem tất cả, có thể click navigate */}
-          <h2 className="text-lg font-bold text-slate-700 flex items-center gap-2 mt-6! my-3">
-            <FaFile className="text-blue-600" /> SMD Sheets
-          </h2>
+        <h2 className="text-lg font-bold text-slate-700 flex items-center gap-2 mt-6! my-3">
+          <FaFile className="text-blue-600" /> SMD Sheets
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           {adminRoleCards.map((card, index) => {
             const count =
@@ -2068,49 +1738,84 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               {
-                label: tPatrol('dashboardStatus.pendingTitle'),
-                description: tPatrol('dashboardStatus.pendingDescription'),
-                status: 'Pending',
-                color: 'yellow',
-                count: patrolSessions.filter(s => s.status === 'Pending').length,
+                label: tPatrol("dashboardStatus.pendingTitle"),
+                description: tPatrol("dashboardStatus.pendingDescription"),
+                status: "Pending",
+                color: "yellow",
+                count: patrolSessions.filter((s) => s.status === "Pending")
+                  .length,
               },
               {
-                label: tPatrol('dashboardStatus.submittedTitle'),
-                description: tPatrol('dashboardStatus.submittedDescription'),
-                status: 'Submitted',
-                color: 'blue',
-                count: patrolSessions.filter(s => s.status === 'Submitted').length,
+                label: tPatrol("dashboardStatus.submittedTitle"),
+                description: tPatrol("dashboardStatus.submittedDescription"),
+                status: "Submitted",
+                color: "blue",
+                count: patrolSessions.filter((s) => s.status === "Submitted")
+                  .length,
               },
               {
-                label: tPatrol('dashboardStatus.approvedTitle'),
-                description: tPatrol('dashboardStatus.approvedDescription'),
-                status: 'Approved',
-                color: 'green',
-                count: patrolSessions.filter(s => s.status === 'Approved').length,
+                label: tPatrol("dashboardStatus.approvedTitle"),
+                description: tPatrol("dashboardStatus.approvedDescription"),
+                status: "Approved",
+                color: "green",
+                count: patrolSessions.filter((s) => s.status === "Approved")
+                  .length,
               },
             ].map((card, i) => {
-              const colorMap: Record<string, { bg: string; hover: string; border: string; text: string }> = {
-                yellow: { bg: 'bg-yellow-50', hover: 'hover:bg-yellow-100', border: 'border-yellow-400', text: 'text-yellow-700' },
-                blue: { bg: 'bg-blue-50', hover: 'hover:bg-blue-100', border: 'border-blue-400', text: 'text-blue-700' },
-                green: { bg: 'bg-green-50', hover: 'hover:bg-green-100', border: 'border-green-400', text: 'text-green-700' },
+              const colorMap: Record<
+                string,
+                { bg: string; hover: string; border: string; text: string }
+              > = {
+                yellow: {
+                  bg: "bg-yellow-50",
+                  hover: "hover:bg-yellow-100",
+                  border: "border-yellow-400",
+                  text: "text-yellow-700",
+                },
+                blue: {
+                  bg: "bg-blue-50",
+                  hover: "hover:bg-blue-100",
+                  border: "border-blue-400",
+                  text: "text-blue-700",
+                },
+                green: {
+                  bg: "bg-green-50",
+                  hover: "hover:bg-green-100",
+                  border: "border-green-400",
+                  text: "text-green-700",
+                },
               };
               const colors = colorMap[card.color];
               return (
                 <button
                   key={i}
-                  onClick={() => navigate(`/${user?.role?.toLowerCase()}/patrol?view=list&type=daily&status=${card.status}`)}
+                  onClick={() =>
+                    navigate(
+                      `/${user?.role?.toLowerCase()}/patrol?view=list&type=daily&status=${card.status}`,
+                    )
+                  }
                   className={`${colors.bg} ${colors.hover} p-4 rounded-xl shadow-lg border-l-4 ${colors.border} transition-all duration-200 transform hover:scale-105 hover:shadow-xl text-left`}
                 >
-                  <h3 className={`text-sm font-bold ${colors.text} mb-1`}>{card.label}</h3>
-                  <p className="text-xs text-gray-600 mb-3">{card.description}</p>
+                  <h3 className={`text-sm font-bold ${colors.text} mb-1`}>
+                    {card.label}
+                  </h3>
+                  <p className="text-xs text-gray-600 mb-3">
+                    {card.description}
+                  </p>
                   <div className="flex items-end justify-between">
                     <div>
-                      <p className={`text-3xl font-bold ${colors.text}`}>{card.count}</p>
+                      <p className={`text-3xl font-bold ${colors.text}`}>
+                        {card.count}
+                      </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {card.count === 0 ? tPatrol('noSheets') : `${card.count} ${tPatrol('sheetUnit')}`}
+                        {card.count === 0
+                          ? tPatrol("noSheets")
+                          : `${card.count} ${tPatrol("sheetUnit")}`}
                       </p>
                     </div>
-                    <FaMicrochip className={`w-5 h-5 ${colors.text} opacity-60`} />
+                    <FaMicrochip
+                      className={`w-5 h-5 ${colors.text} opacity-60`}
+                    />
                   </div>
                 </button>
               );
@@ -2127,31 +1832,45 @@ const Dashboard = () => {
             <ComposedChart
               data={[
                 {
-                  label: tPatrol('summaryTotal'),
+                  label: tPatrol("summaryTotal"),
                   smd: sheets?.length || 0,
                   patrol: patrolSessions?.length || 0,
                 },
                 {
-                  label: tPatrol('summaryPending'),
-                  smd: sheets?.filter(s => s.status === "pending").length || 0,
-                  patrol: patrolSessions?.filter(s => s.status === "Pending").length || 0,
+                  label: tPatrol("summaryPending"),
+                  smd:
+                    sheets?.filter((s) => s.status === "pending").length || 0,
+                  patrol:
+                    patrolSessions?.filter((s) => s.status === "Pending")
+                      .length || 0,
                 },
                 {
-                  label: tPatrol('summarySubmitted'),
-                  smd: sheets?.filter(s => s.status === "PQCDone").length || 0,
-                  patrol: patrolSessions?.filter(s => s.status === "Submitted").length || 0,
+                  label: tPatrol("summarySubmitted"),
+                  smd:
+                    sheets?.filter((s) => s.status === "PQCDone").length || 0,
+                  patrol:
+                    patrolSessions?.filter((s) => s.status === "Submitted")
+                      .length || 0,
                 },
                 {
-                  label: tPatrol('summaryCompleted'),
-                  smd: sheets?.filter(s => s.status === "KoreaManagerDone").length || 0,
-                  patrol: patrolSessions?.filter(s => s.status === "Approved").length || 0,
+                  label: tPatrol("summaryCompleted"),
+                  smd:
+                    sheets?.filter((s) => s.status === "KoreaManagerDone")
+                      .length || 0,
+                  patrol:
+                    patrolSessions?.filter((s) => s.status === "Approved")
+                      .length || 0,
                 },
               ]}
               barCategoryGap="30%"
               margin={{ top: 10, right: 40, bottom: 10, left: 10 }}
               style={{ outline: "none" }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#f1f5f9"
+                vertical={false}
+              />
               <XAxis
                 dataKey="label"
                 tick={{ fontSize: 12, fill: "#64748b" }}
@@ -2164,7 +1883,9 @@ const Dashboard = () => {
                 tick={{ fontSize: 11, fill: "#3b82f6" }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}
+                tickFormatter={(v) =>
+                  v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v
+                }
               />
               <YAxis
                 yAxisId="patrol"
@@ -2210,8 +1931,8 @@ const Dashboard = () => {
           timelineStats={timelineStats}
           timeRange={timeRange}
           setTimeRange={setTimeRange}
-          shiftFilter={shiftFilter}
-          setShiftFilter={setShiftFilter}
+          shiftFilter={smdShiftFilter}        
+          setShiftFilter={setSmdShiftFilter} 
           onPointClick={handlePointClick}
           fontSize={fontSize}
           t={t}
@@ -2228,36 +1949,48 @@ const Dashboard = () => {
         />
 
         {/* Combined PATROL Sheet Trend Card */}
-        <PatrolTrendCard
-          patrolTimelineStats={patrolTimelineStats}
-          patrolSessions={patrolSessions}
-          lineAreas={lineAreas}
-          fontSize={fontSize}
-          userRole={user?.role}
-          navigate={navigate}
-          tPatrol={tPatrol}
-          initialDate={patrolInitialDate}
-          initialPage={patrolInitialPage}
-          initialHighlightId={patrolInitialHighlight}
-        />
+          <PatrolTrendCard
+            patrolTimelineStats={patrolTimelineStats}
+            patrolSessions={patrolSessions}
+            lineAreas={lineAreas}
+            fontSize={fontSize}
+            userRole={user?.role}
+            navigate={navigate}
+            tPatrol={tPatrol}
+            shiftFilter={patrolShiftFilter} 
+            setShiftFilter={setPatrolShiftFilter} 
+            getShiftDay={getShiftDay}        
+            initialDate={patrolInitialDate}
+            initialShift={patrolInitialShift}
+            initialPage={patrolInitialPage}
+            initialHighlightId={patrolInitialHighlight}
+          />
 
         {/* Charts Grid - Chuyển sang 1 cột mỗi biểu đồ 1 row */}
         <div className="flex flex-col gap-6 mb-6">
           {/* Phân bổ Users theo Role */}
           <ChartCard title={t("charts.roleDistribution.title")}>
             <div className="h-[350px] outline-none">
-              <ResponsiveContainer width="100%" height="100%" style={{ outline: 'none' }}>
-                <ComposedChart data={roleStats} style={{ outline: 'none' }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+                style={{ outline: "none" }}
+              >
+                <ComposedChart data={roleStats} style={{ outline: "none" }}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#f1f5f9"
+                    vertical={false}
+                  />
                   <XAxis
                     dataKey="name"
-                    tick={{ fontSize: 11, fill: '#64748b' }}
-                    axisLine={{ stroke: '#e2e8f0' }}
+                    tick={{ fontSize: 11, fill: "#64748b" }}
+                    axisLine={{ stroke: "#e2e8f0" }}
                     tickLine={false}
                     interval={0}
                   />
                   <YAxis
-                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    tick={{ fontSize: 11, fill: "#64748b" }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -2270,7 +2003,8 @@ const Dashboard = () => {
                     }}
                     cursor={false}
                     formatter={(value, name) => {
-                      if (name === "value" || name === "Trend") return [null, null];
+                      if (name === "value" || name === "Trend")
+                        return [null, null];
                       return [value, name];
                     }}
                   />
@@ -2287,8 +2021,14 @@ const Dashboard = () => {
                     dataKey="value"
                     stroke="#94a3b8"
                     strokeWidth={3}
-                    dot={{ r: 4, fill: '#fff', stroke: '#94a3b8', strokeWidth: 2, cursor: 'pointer' }}
-                    activeDot={{ r: 6, strokeWidth: 0, cursor: 'pointer' }}
+                    dot={{
+                      r: 4,
+                      fill: "#fff",
+                      stroke: "#94a3b8",
+                      strokeWidth: 2,
+                      cursor: "pointer",
+                    }}
+                    activeDot={{ r: 6, strokeWidth: 0, cursor: "pointer" }}
                     legendType="none" // ẨN KHỎI LEGEND
                     tooltipType="none"
                   />
@@ -2300,14 +2040,26 @@ const Dashboard = () => {
           {/* Trạng thái SMD Sheets - Đã đổi sang ComposedChart */}
           <ChartCard title={t("charts.sheetStatus.title")}>
             <div className="h-[350px] outline-none">
-              <ResponsiveContainer width="100%" height="100%" style={{ outline: 'none' }}>
-                <ComposedChart data={statusStats} layout="vertical" style={{ outline: 'none' }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+                style={{ outline: "none" }}
+              >
+                <ComposedChart
+                  data={statusStats}
+                  layout="vertical"
+                  style={{ outline: "none" }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#f1f5f9"
+                    horizontal={false}
+                  />
                   <XAxis type="number" hide />
                   <YAxis
                     dataKey="name"
                     type="category"
-                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    tick={{ fontSize: 11, fill: "#64748b" }}
                     width={120}
                     axisLine={false}
                     tickLine={false}
@@ -2328,7 +2080,7 @@ const Dashboard = () => {
                     fill="#374151"
                     radius={0}
                     barSize={30}
-                    style={{ cursor: 'pointer' }} // THÊM CURSOR POINTER
+                    style={{ cursor: "pointer" }} // THÊM CURSOR POINTER
                   />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -2359,5 +2111,3 @@ const ChartCard = ({
 );
 
 export default Dashboard;
-
-

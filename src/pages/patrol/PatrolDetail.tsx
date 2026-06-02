@@ -1,13 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useRef} from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { FaArrowLeft, FaCheck, FaImage, FaPen, FaTrash, FaPlus, FaHistory, FaUndo } from 'react-icons/fa';
-import MultiImageUpload from '../../components/files/MultiImageUpload';
-import type { PatrolSharedProps } from './types';
-import { useTranslation } from 'react-i18next';
-import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import {
+  FaArrowLeft,
+  FaCheck,
+  FaImage,
+  FaPen,
+  FaTrash,
+  FaPlus,
+  FaUpload,
+  FaHistory,
+  FaUndo,
+} from "react-icons/fa";
+import MultiImageUpload from "../../components/files/MultiImageUpload";
+import type { PatrolSharedProps } from "./types";
+import { useTranslation } from "react-i18next";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import {
   createPatrolSession,
   updatePatrolSessionStatus,
@@ -26,44 +36,79 @@ import {
   type StatusHistory,
   type ImageModel,
   clearCurrentPatrolSession,
-} from '../../redux/slices/patrolSlice';
-import Modal from '../../components/general/Modal';
-import { clearPatrolNavState, readPatrolNavState, savePatrolDashboardState, savePatrolNavState } from '../../utils/patrolNavState';
+} from "../../redux/slices/patrolSlice";
+import Modal from "../../components/general/Modal";
+import {
+  clearPatrolNavState,
+  readPatrolNavState,
+  savePatrolDashboardState,
+  savePatrolNavState,
+} from "../../utils/patrolNavState";
+import { FaCamera } from "react-icons/fa6";
 const PatrolDetail: React.FC<PatrolSharedProps> = ({
-  user, goToView, setPreviewImage
+  user,
+  goToView,
+  setPreviewImage,
 }) => {
-  const { t } = useTranslation('patrol');
+  const { t } = useTranslation("patrol");
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
-  const sheetId = searchParams.get('id');
+  const sheetId = searchParams.get("id");
   const navigate = useNavigate();
-  const isNew = sheetId === 'new';
+  const isNew = sheetId === "new";
 
   // Force Vietnamese for PQC role
   const pT = (key: string, options?: any) => {
-    if (user?.role === 'PQC') return t(key, { ...options, lng: 'vi' }) as any;
+    if (user?.role === "PQC") return t(key, { ...options, lng: "vi" }) as any;
     return t(key, options) as any;
   };
 
-  const { stages, categories, currentSession, checkLists, lineAreas, checkListResults, images, loading, statusHistories } = useAppSelector(state => state.patrol);
-  const getImageUrl = (img: ImageModel) => img.imageUrl || '';
+  const {
+    stages,
+    categories,
+    currentSession,
+    checkLists,
+    lineAreas,
+    checkListResults,
+    images,
+    loading,
+    statusHistories,
+  } = useAppSelector((state) => state.patrol);
+  const getImageUrl = (img: ImageModel) => img.imageUrl || "";
 
+  const currentSheetId = Number(sheetId || 0);
 
-  const [formResults, setFormResults] = useState<Record<number, { id?: number, result: string, actualValue: string, note: string }>>({});
+  const sessionImages = useMemo(() => {
+    if (!currentSheetId) return [];
+
+    return (images || []).filter(
+      (img) => Number(img.patrolSessionId) === currentSheetId,
+    );
+  }, [images, currentSheetId]);
+
+  const [formResults, setFormResults] = useState<
+    Record<
+      number,
+      { id?: number; result: string; actualValue: string; note: string }
+    >
+  >({});
   const [formLineId, setFormLineId] = useState<number>(0);
   const [formPatrolType, setFormPatrolType] = useState<string>(() => {
     if (isNew) {
       const saved = readPatrolNavState();
-      return saved?.type === 'weekly' ? '7' : '1';
+      return saved?.type === "weekly" ? "7" : "1";
     }
-    return '1';
+    return "1";
   }); // "1": Daily, "7": Weekly
   const [isLineSelectOpen, setIsLineSelectOpen] = useState(false);
   const lineSelectRef = useRef<HTMLDivElement>(null);
-  const [noteModal, setNoteModal] = useState<{ open: boolean; file: File | null }>({ open: false, file: null });
-  const [pendingNote, setPendingNote] = useState('');
+  const [noteModal, setNoteModal] = useState<{
+    open: boolean;
+    file: File | null;
+    queue: File[];
+  }>({ open: false, file: null, queue: [] });
+  const [pendingNote, setPendingNote] = useState("");
   const session = isNew ? null : currentSession;
-
 
   useEffect(() => {
     if (stages.length === 0) {
@@ -86,7 +131,7 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
     stages.length,
     categories.length,
     checkLists.length,
-    lineAreas.length
+    lineAreas.length,
   ]);
 
   useEffect(() => {
@@ -105,8 +150,6 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
 
   useEffect(() => {
     if (session) {
-      // avoid synchronous setState inside effect to prevent cascading renders
-      // schedule state updates asynchronously
       setTimeout(() => {
         setFormLineId(session.lineAreaId);
         setFormPatrolType(session.patrolType);
@@ -115,9 +158,17 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
   }, [session]);
 
   useEffect(() => {
-    const resultsMap: Record<number, { id?: number, result: string, actualValue: string, note: string }> = {};
-    checkListResults.forEach(r => {
-      resultsMap[r.checkListId] = { id: r.id, result: r.result, actualValue: r.actualValue, note: r.note };
+    const resultsMap: Record<
+      number,
+      { id?: number; result: string; actualValue: string; note: string }
+    > = {};
+    checkListResults.forEach((r) => {
+      resultsMap[r.checkListId] = {
+        id: r.id,
+        result: r.result,
+        actualValue: r.actualValue,
+        note: r.note,
+      };
     });
     setTimeout(() => {
       setFormResults(resultsMap);
@@ -126,7 +177,10 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (lineSelectRef.current && !lineSelectRef.current.contains(e.target as Node)) {
+      if (
+        lineSelectRef.current &&
+        !lineSelectRef.current.contains(e.target as Node)
+      ) {
         setIsLineSelectOpen(false);
       }
     };
@@ -134,32 +188,46 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const isPQC = user?.role === "PQC";
+  const isPQCLeader = user?.role === "PQCLeader";
 
+  const openImageNoteModal = (files: File[]) => {
+    if (!canEditResults || isNew || !sheetId) return;
 
-  const isPQC = user?.role === 'PQC';
-  const isPQCLeader = user?.role === 'PQCLeader';
+    const validFiles = files.filter((file) => file.type.startsWith("image/"));
+    if (validFiles.length === 0) return;
+
+    setPendingNote("");
+    setNoteModal({
+      open: true,
+      file: validFiles[0],
+      queue: validFiles.slice(1),
+    });
+  };
 
   const isOwner =
-    !!session &&
-    !!user?.id &&
-    Number(session.accountId) === Number(user.id);
+    !!session && !!user?.id && Number(session.accountId) === Number(user.id);
 
   const canEditResults =
     isNew ||
-    (isPQC && isOwner && session?.status === 'Pending') ||
-    (isPQCLeader && (session?.status === 'Pending' || session?.status === 'Submitted'));
+    (isPQC && isOwner && session?.status === "Pending") ||
+    (isPQCLeader &&
+      (session?.status === "Pending" || session?.status === "Submitted"));
 
-const canApprove =
-  session?.status === 'Submitted' && isPQCLeader;
+  const canApprove = session?.status === "Submitted" && isPQCLeader;
 
   // Cập nhật UI cục bộ ngay lập tức
-  const handleLocalChange = (checkListId: number, field: 'result' | 'actualValue' | 'note', value: string) => {
-    setFormResults(prev => ({
+  const handleLocalChange = (
+    checkListId: number,
+    field: "result" | "actualValue" | "note",
+    value: string,
+  ) => {
+    setFormResults((prev) => ({
       ...prev,
       [checkListId]: {
         ...prev[checkListId],
-        [field]: value
-      }
+        [field]: value,
+      },
     }));
   };
 
@@ -171,78 +239,106 @@ const canApprove =
     if (!data) return;
 
     if (data.id) {
-      await dispatch(updateCheckListResult({
-        id: data.id,
-        data: {
+      await dispatch(
+        updateCheckListResult({
+          id: data.id,
+          data: {
+            result: data.result,
+            actualValue: data.actualValue,
+            note: data.note || "",
+            checkAt: new Date().toISOString(),
+          },
+        }),
+      ).unwrap();
+    } else {
+      await dispatch(
+        createCheckListResult({
+          patrolSessionId: Number(sheetId),
+          checkListId,
           result: data.result,
           actualValue: data.actualValue,
-          note: data.note || '',
-          checkAt: new Date().toISOString()
-        }
-      })).unwrap();
-    } else {
-      await dispatch(createCheckListResult({
-        patrolSessionId: Number(sheetId),
-        checkListId,
-        result: data.result,
-        actualValue: data.actualValue,
-        note: data.note || '',
-        checkAt: new Date().toISOString()
-      })).unwrap();
+          note: data.note || "",
+          checkAt: new Date().toISOString(),
+        }),
+      ).unwrap();
     }
   };
 
   // Xử lý khi nhấn OK/NG (Cập nhật UI + Sync luôn)
-  const handleResultButtonClick = async (checkListId: number, value: string) => {
+  const handleResultButtonClick = async (
+    checkListId: number,
+    value: string,
+  ) => {
     if (!canEditResults) return;
-    handleLocalChange(checkListId, 'result', value);
+    handleLocalChange(checkListId, "result", value);
     if (!isNew) {
       // Đợi local state cập nhật xong hoặc truyền giá trị trực tiếp vào sync
       const current = formResults[checkListId];
       if (current?.id) {
-        await dispatch(updateCheckListResult({
-          id: current.id,
-          data: {
-            result: value,
-            actualValue: current.actualValue,
-            note: current.note || '',
-            checkAt: new Date().toISOString()
-          }
-        })).unwrap();
+        await dispatch(
+          updateCheckListResult({
+            id: current.id,
+            data: {
+              result: value,
+              actualValue: current.actualValue,
+              note: current.note || "",
+              checkAt: new Date().toISOString(),
+            },
+          }),
+        ).unwrap();
       } else {
-        await dispatch(createCheckListResult({
-          patrolSessionId: Number(sheetId),
-          checkListId,
-          result: value,
-          actualValue: current?.actualValue || '',
-          note: current?.note || '',
-          checkAt: new Date().toISOString()
-        })).unwrap();
+        await dispatch(
+          createCheckListResult({
+            patrolSessionId: Number(sheetId),
+            checkListId,
+            result: value,
+            actualValue: current?.actualValue || "",
+            note: current?.note || "",
+            checkAt: new Date().toISOString(),
+          }),
+        ).unwrap();
       }
     }
   };
 
-  const handleImageUpload = async (_fieldName: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!canEditResults || isNew || !sheetId) return;
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPendingNote('');
-    setNoteModal({ open: true, file });
+  const handleImageUpload = async (
+    _fieldName: string,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    openImageNoteModal(Array.from(e.target.files || []));
+    e.target.value = "";
   };
 
   const handleConfirmUpload = async () => {
     const file = noteModal.file;
     if (!file || !sheetId) return;
-    setNoteModal({ open: false, file: null });
+
     try {
       const formData = new FormData();
-      formData.append('image', file);
-      formData.append('note', pendingNote);
-      await dispatch(uploadImage({ sessionId: Number(sheetId), formData })).unwrap();
-      dispatch(fetchImagesBySession(Number(sheetId)));
-      toast.success(pT('msgUploadSuccess'));
+      formData.append("image", file);
+      formData.append("note", pendingNote);
+
+      await dispatch(
+        uploadImage({ sessionId: Number(sheetId), formData }),
+      ).unwrap();
+
+      await dispatch(fetchImagesBySession(Number(sheetId)));
+
+      const nextFile = noteModal.queue[0];
+
+      if (nextFile) {
+        setPendingNote("");
+        setNoteModal({
+          open: true,
+          file: nextFile,
+          queue: noteModal.queue.slice(1),
+        });
+      } else {
+        setNoteModal({ open: false, file: null, queue: [] });
+        toast.success(pT("msgUploadSuccess"));
+      }
     } catch (err: any) {
-      toast.error(err);
+      toast.error(extractErrorMessage(err));
     }
   };
 
@@ -254,35 +350,39 @@ const canApprove =
 
   const handleCreateSession = async (status: string) => {
     if (!formLineId) {
-      toast.error(pT('selectLineError'));
+      toast.error(pT("selectLineError"));
       return;
     }
     try {
-      const res = await dispatch(createPatrolSession({
-        patrolType: formPatrolType,
-        lineAreaId: formLineId,
-        status: status,
-        note: ''
-      })).unwrap();
-      toast.success(pT('createSuccess'));
-      goToView('detail', res.id.toString());
+      const res = await dispatch(
+        createPatrolSession({
+          patrolType: formPatrolType,
+          lineAreaId: formLineId,
+          status: status,
+          note: "",
+        }),
+      ).unwrap();
+      toast.success(pT("createSuccess"));
+      goToView("detail", res.id.toString());
     } catch (err: unknown) {
       toast.error(extractErrorMessage(err));
     }
   };
 
   const extractErrorMessage = (err: any): string => {
-    if (typeof err === 'string') return err;
+    if (typeof err === "string") return err;
     if (err?.message) return err.message;
     if (err?.detail) return err.detail;
-    return 'Đã xảy ra lỗi, vui lòng thử lại.';
+    return "Đã xảy ra lỗi, vui lòng thử lại.";
   };
 
   const handleUpdateStatus = async (status: string) => {
     if (!sheetId) return;
     try {
-      await dispatch(updatePatrolSessionStatus({ id: Number(sheetId), status })).unwrap();
-      toast.success(pT('statusUpdated'));
+      await dispatch(
+        updatePatrolSessionStatus({ id: Number(sheetId), status }),
+      ).unwrap();
+      toast.success(pT("statusUpdated"));
       // Reload current sheet
       dispatch(fetchPatrolSessionById(Number(sheetId)));
       dispatch(fetchStatusHistoryBySession(Number(sheetId)));
@@ -294,8 +394,10 @@ const canApprove =
   const handleRejectStatus = async () => {
     if (!sheetId) return;
     try {
-      await dispatch(rejectPatrolSessionStatus({ id: Number(sheetId) })).unwrap();
-      toast.success(pT('statusRejected'));
+      await dispatch(
+        rejectPatrolSessionStatus({ id: Number(sheetId) }),
+      ).unwrap();
+      toast.success(pT("statusRejected"));
       // Reload current sheet
       dispatch(fetchPatrolSessionById(Number(sheetId)));
       dispatch(fetchStatusHistoryBySession(Number(sheetId)));
@@ -304,43 +406,149 @@ const canApprove =
     }
   };
 
-  const activeStages = stages.filter(s => s.patrolType === formPatrolType && s.isActive);
+const isFreshReturnState = (savedAt?: number) => {
+  if (!savedAt) return false;
+  return Date.now() - Number(savedAt) < 30 * 60 * 1000;
+};
+
+const handleBackToSource = () => {
+  if (!sheetId) {
+    goToView("list");
+    return;
+  }
+
+  const currentId = Number(sheetId);
+
+  const rawReportState = localStorage.getItem("patrolReportReturnState");
+
+  if (rawReportState) {
+    try {
+      const saved = JSON.parse(rawReportState);
+
+      const isReportState =
+        saved?.source === "report" &&
+        Number(saved.highlightId) === currentId &&
+        saved.returnPath &&
+        isFreshReturnState(saved.savedAt);
+
+      if (isReportState) {
+        navigate(saved.returnPath, {
+          state: {
+            from: "sheetDetail",
+            reportState: {
+              sheetId: saved.highlightId,
+              type: saved.type || "daily",
+              reportTab: saved.reportTab || "table",
+            },
+          },
+        });
+        return;
+      }
+
+      localStorage.removeItem("patrolReportReturnState");
+    } catch {
+      localStorage.removeItem("patrolReportReturnState");
+    }
+  }
+
+  const saved = readPatrolNavState();
+  const source = saved?.source;
+  const savedType = saved?.type === "weekly" ? "weekly" : "daily";
+
+  if (
+    source === "dashboard" &&
+    saved?.dashboardReturnPath &&
+    isFreshReturnState(saved.savedAt)
+  ) {
+    savePatrolDashboardState({
+      date: saved.dashboardDate || "",
+      shift: saved.dashboardShift,
+      page: saved.page || 0,
+      highlightId: currentId,
+    });
+
+    clearPatrolNavState();
+
+    navigate(saved.dashboardReturnPath, {
+      state: {
+        from: "patrolDetail",
+        dashboardState: {
+          sheetId: currentId,
+          date: saved.dashboardDate,
+          fullDate: saved.dashboardDate,
+          shift: saved.dashboardShift,
+          detailTablePage: saved.page || 0,
+        },
+      },
+    });
+
+    return;
+  }
+
+  savePatrolNavState({
+    ...(saved || {}),
+    source: source || "list",
+    type: savedType,
+    page: saved?.page || 0,
+    highlightId: currentId,
+    filter: saved?.filter,
+    savedAt: Date.now(),
+  });
+
+  goToView("list", null, savedType);
+};
+
+  const activeStages = stages.filter(
+    (s) => s.patrolType === formPatrolType && s.isActive,
+  );
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'Approved': return 'bg-green-100 text-green-700';
-      case 'Submitted': return 'bg-blue-100 text-blue-700';
-      default: return 'bg-yellow-100 text-yellow-700';
+      case "Approved":
+        return "bg-green-100 text-green-700";
+      case "Submitted":
+        return "bg-blue-100 text-blue-700";
+      default:
+        return "bg-yellow-100 text-yellow-700";
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'Approved': return pT('statusApproved');
-      case 'Submitted': return pT('statusSubmitted');
-      default: return pT('statusPending');
+      case "Approved":
+        return pT("statusApproved");
+      case "Submitted":
+        return pT("statusSubmitted");
+      default:
+        return pT("statusPending");
     }
   };
   return (
     <>
       <Modal
         open={noteModal.open}
-        title={pT('imageNoteTitle')}
-        onClose={() => setNoteModal({ open: false, file: null })}
+        title={pT("imageNoteTitle")}
+        onClose={() => setNoteModal({ open: false, file: null, queue: [] })}
         onSave={handleConfirmUpload}
       >
         <div className="space-y-3">
           <p className="text-sm text-gray-500">
-            File: <span className="font-medium text-gray-700">{noteModal.file?.name}</span>
+            File:{" "}
+            <span className="font-medium text-gray-700">
+              {noteModal.file?.name}
+            </span>
           </p>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {pT('imageNote')} <span className="text-gray-400 font-normal">{pT('optional')}</span>
+              {pT("imageNote")}{" "}
+              <span className="text-gray-400 font-normal">
+                {pT("optional")}
+              </span>
             </label>
             <input
               type="text"
               value={pendingNote}
               onChange={(e) => setPendingNote(e.target.value)}
-              placeholder={pT('placeholderImageNote')}
+              placeholder={pT("placeholderImageNote")}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               autoFocus
             />
@@ -351,11 +559,13 @@ const canApprove =
         <div className="flex flex-row items-center justify-between mb-4 bg-white py-3 px-3 shadow-sm border border-gray-200 gap-3">
           <div className="flex items-center justify-start gap-3">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
-              {isNew ? pT('createBtn') : `${pT('detailTitle')} #${sheetId}`}
+              {isNew ? pT("createBtn") : `${pT("detailTitle")} #${sheetId}`}
             </h2>
           </div>
           {!isNew && session && (
-            <span className={`shrink-0 px-3 py-1 rounded-full text-xs font-bold ${getStatusStyle(session.status)}`}>
+            <span
+              className={`shrink-0 px-3 py-1 rounded-full text-xs font-bold ${getStatusStyle(session.status)}`}
+            >
               {getStatusLabel(session.status)}
             </span>
           )}
@@ -364,45 +574,57 @@ const canApprove =
         {isNew ? (
           <div className="bg-white shadow-sm border border-gray-200 p-4 space-y-4">
             <div>
-              <label className="block text-gray-700 font-bold mb-2">{pT('selectType')} <span className="text-red-500">*</span></label>
+              <label className="block text-gray-700 font-bold mb-2">
+                {pT("selectType")} <span className="text-red-500">*</span>
+              </label>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setFormPatrolType('1')}
-                  className={`flex-1 py-3 border font-bold transition-all ${formPatrolType === '1' ? 'bg-gray-600 text-white border-gray-600 shadow-sm' : 'bg-white border-gray-200 text-gray-500'}`}
+                  onClick={() => setFormPatrolType("1")}
+                  className={`flex-1 py-3 border font-bold transition-all ${formPatrolType === "1" ? "bg-gray-600 text-white border-gray-600 shadow-sm" : "bg-white border-gray-200 text-gray-500"}`}
                 >
-                  {pT('dailyTab')}
+                  {pT("dailyTab")}
                 </button>
                 <button
-                  onClick={() => setFormPatrolType('7')}
-                  className={`flex-1 py-3 border font-bold transition-all ${formPatrolType === '7' ? 'bg-gray-600 text-white border-gray-600 shadow-sm' : 'bg-white border-gray-200 text-gray-500'}`}
+                  onClick={() => setFormPatrolType("7")}
+                  className={`flex-1 py-3 border font-bold transition-all ${formPatrolType === "7" ? "bg-gray-600 text-white border-gray-600 shadow-sm" : "bg-white border-gray-200 text-gray-500"}`}
                 >
-                  {pT('weeklyTab')}
+                  {pT("weeklyTab")}
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="block text-gray-700 font-bold mb-2">{pT('colLine')} <span className="text-red-500">*</span></label>
+              <label className="block text-gray-700 font-bold mb-2">
+                {pT("colLine")} <span className="text-red-500">*</span>
+              </label>
               <div className="relative w-full" ref={lineSelectRef}>
                 <button
                   type="button"
                   onClick={() => setIsLineSelectOpen(!isLineSelectOpen)}
                   className="w-full border border-gray-200 px-4 py-2 bg-gray-50 text-left flex justify-between items-center focus:ring-2 focus:ring-blue-100 transition-all font-medium"
                 >
-                  <span className={formLineId ? "text-gray-800" : "text-gray-400"}>
-                    {formLineId ? lineAreas.find(l => l.id === formLineId)?.lineAreaName : `-- ${pT('colLine')} --`}
+                  <span
+                    className={formLineId ? "text-gray-800" : "text-gray-400"}
+                  >
+                    {formLineId
+                      ? lineAreas.find((l) => l.id === formLineId)?.lineAreaName
+                      : `-- ${pT("colLine")} --`}
                   </span>
-                  <svg className={`fill-current h-4 w-4 text-gray-500 transition-transform ${isLineSelectOpen ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <svg
+                    className={`fill-current h-4 w-4 text-gray-500 transition-transform ${isLineSelectOpen ? "rotate-180" : ""}`}
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                   </svg>
                 </button>
 
                 {isLineSelectOpen && (
                   <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-100 shadow-lg z-50 overflow-hidden">
-                    {lineAreas.map(line => (
+                    {lineAreas.map((line) => (
                       <div
                         key={line.id}
-                        className={`px-4 py-2 hover:bg-blue-50 cursor-pointer transition-colors ${formLineId === line.id ? 'bg-blue-50 text-blue-600 font-bold' : 'text-gray-700'}`}
+                        className={`px-4 py-2 hover:bg-blue-50 cursor-pointer transition-colors ${formLineId === line.id ? "bg-blue-50 text-blue-600 font-bold" : "text-gray-700"}`}
                         onClick={() => {
                           setFormLineId(line.id);
                           setIsLineSelectOpen(false);
@@ -416,11 +638,11 @@ const canApprove =
               </div>
             </div>
             <button
-              onClick={() => handleCreateSession('Pending')}
+              onClick={() => handleCreateSession("Pending")}
               disabled={loading || !formLineId}
               className="my-4! cursor-pointer w-full bg-blue-700 text-white py-3 font-bold flex items-center justify-center gap-2 hover:bg-blue-600 disabled:opacity-50"
             >
-              <FaPlus /> {pT('createBtn')}
+              <FaPlus /> {pT("createBtn")}
             </button>
           </div>
         ) : (
@@ -429,184 +651,312 @@ const canApprove =
             {!isNew && statusHistories.length > 0 && (
               <div className="bg-white shadow-sm border border-gray-200 p-4">
                 <h3 className="font-bold text-base text-gray-800 mb-3 flex items-center gap-2">
-                  <FaHistory className="text-gray-600 text-sm" /> {pT('signHistory')}
+                  <FaHistory className="text-gray-600 text-sm" />{" "}
+                  {pT("signHistory")}
                 </h3>
                 <div className="space-y-2!">
                   {statusHistories.map((h: StatusHistory) => (
-                    <div key={h.id} className="flex items-center gap-3 py-3 px-3 bg-gray-50 border border-gray-100 rounded text-sm min-h-[56px]">
-                    {/* Badge status */}
-                    <span className={`shrink-0 mt-0.5 px-2 py-0.5 rounded-full text-xs font-bold ${
-                      h.status === 'Approved' ? 'bg-green-100 text-green-700' :
-                      h.status === 'Submitted' ? 'bg-blue-100 text-blue-700' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {getStatusLabel(h.status)}
-                    </span>
-                    {/* Tên + role + thời gian xếp dọc */}
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-gray-800 font-semibold truncate">{h.fullName}</span>
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
-                        <span className="text-gray-400 text-xs">({h.role})</span>
-                        <span className="text-gray-400 text-xs">
-                          {new Date(h.createdAt).toLocaleString('vi-VN')}
+                    <div
+                      key={h.id}
+                      className="flex items-center gap-3 py-3 px-3 bg-gray-50 border border-gray-100 rounded text-sm min-h-[56px]"
+                    >
+                      {/* Badge status */}
+                      <span
+                        className={`shrink-0 mt-0.5 px-2 py-0.5 rounded-full text-xs font-bold ${
+                          h.status === "Approved"
+                            ? "bg-green-100 text-green-700"
+                            : h.status === "Submitted"
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {getStatusLabel(h.status)}
+                      </span>
+                      {/* Tên + role + thời gian xếp dọc */}
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-gray-800 font-semibold truncate">
+                          {h.fullName}
                         </span>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                          <span className="text-gray-400 text-xs">
+                            ({h.role})
+                          </span>
+                          <span className="text-gray-400 text-xs">
+                            {new Date(h.createdAt).toLocaleString("vi-VN")}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
                   ))}
                 </div>
               </div>
             )}
             <div className="space-y-4">
-              {activeStages.map(stage => (
-                <div key={stage.id} className="bg-white shadow-sm border border-gray-200 overflow-hidden">
+              {activeStages.map((stage) => (
+                <div
+                  key={stage.id}
+                  className="bg-white shadow-sm border border-gray-200 overflow-hidden"
+                >
                   <div className="bg-gray-800 px-4 py-3 border-b border-gray-700">
-                    <h3 className="font-bold text-lg text-white">{stage.name}</h3>
+                    <h3 className="font-bold text-lg text-white">
+                      {stage.name}
+                    </h3>
                   </div>
                   <div className="p-3 sm:p-4 space-y-4">
-                    {categories.filter(c => c.stageId === stage.id).map(cat => (
-                      <div key={cat.id} className="border border-gray-200 overflow-hidden">
-                        <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
-                          <h4 className="font-semibold text-gray-700">{cat.name}</h4>
-                        </div>
-                        <div className="md:hidden divide-y divide-gray-100">
-                          {checkLists.filter(cl => cl.categoryId === cat.id).map(item => (
-                            <div key={item.id} className="p-4 flex flex-col gap-4 hover:bg-gray-50 transition-colors">
-                              {/* 1. Câu hỏi */}
-                              <div>
-                                <p className="text-sm font-bold text-gray-800 leading-relaxed">{item.questionCheck}</p>
-                              </div>
-
-                              {/* 2. Tiêu chuẩn */}
-                              <div className="flex items-center gap-2">
-                                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">{pT('colStandard')}:</span>
-                                <div className={`text-xs px-2 py-1 rounded border font-medium italic w-fit ${item.spec ? 'text-blue-700 bg-blue-50 border-blue-100' : 'text-gray-400 bg-gray-50 border-gray-200'}`}>
-                                  {item.spec || pT('noStandard')}
-                                </div>
-                              </div>
-
-                              {/* 3. Kết quả */}
-                              <div className="flex flex-col gap-2">
-                                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">{pT('colResult')}</span>
-                                {item.specType !== 'input' ? (
-                                  <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                      onClick={() => handleResultButtonClick(item.id, 'OK')}
-                                      disabled={!canEditResults}
-                                      className={`py-3 text-sm font-bold border transition-all rounded-lg flex items-center justify-center ${formResults[item.id]?.result === 'OK'
-                                        ? 'bg-green-600 text-white border-green-600 shadow-md scale-[1.02]'
-                                        : 'bg-white text-gray-500 border-gray-300 active:bg-gray-100'
-                                        }`}
-                                    >OK</button>
-                                    <button
-                                      onClick={() => handleResultButtonClick(item.id, 'NG')}
-                                      disabled={!canEditResults}
-                                      className={`py-3 text-sm font-bold border transition-all rounded-lg flex items-center justify-center ${formResults[item.id]?.result === 'NG'
-                                        ? 'bg-red-600 text-white border-red-600 shadow-md scale-[1.02]'
-                                        : 'bg-white text-gray-500 border-gray-300 active:bg-gray-100'
-                                        }`}
-                                    >NG</button>
+                    {categories
+                      .filter((c) => c.stageId === stage.id)
+                      .map((cat) => (
+                        <div
+                          key={cat.id}
+                          className="border border-gray-200 overflow-hidden"
+                        >
+                          <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
+                            <h4 className="font-semibold text-gray-700">
+                              {cat.name}
+                            </h4>
+                          </div>
+                          <div className="md:hidden divide-y divide-gray-100">
+                            {checkLists
+                              .filter((cl) => cl.categoryId === cat.id)
+                              .map((item) => (
+                                <div
+                                  key={item.id}
+                                  className="p-4 flex flex-col gap-4 hover:bg-gray-50 transition-colors"
+                                >
+                                  {/* 1. Câu hỏi */}
+                                  <div>
+                                    <p className="text-sm font-bold text-gray-800 leading-relaxed">
+                                      {item.questionCheck}
+                                    </p>
                                   </div>
-                                ) : (
-                                  <input
-                                    type="text"
-                                    value={formResults[item.id]?.actualValue || ''}
-                                    onChange={(e) => handleLocalChange(item.id, 'actualValue', e.target.value)}
-                                    onBlur={() => handleSyncResult(item.id)}
-                                    disabled={!canEditResults}
-                                    placeholder={pT('typeInput')}
-                                    className="w-full text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none p-3 bg-gray-50"
-                                  />
-                                )}
-                              </div>
 
-                              {/* 4. Ghi chú */}
-                              <div className="flex flex-col gap-1">
-                                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">{pT('colNote')}</span>
-                                <input
-                                  type="text"
-                                  value={formResults[item.id]?.note || ''}
-                                  onChange={(e) => handleLocalChange(item.id, 'note', e.target.value)}
-                                  onBlur={() => handleSyncResult(item.id)}
-                                  disabled={!canEditResults}
-                                  placeholder={pT('placeholderNote')}
-                                  className="w-full text-sm border-b border-gray-200 focus:border-blue-500 outline-none py-2 italic text-gray-600"
-                                />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Desktop Table View */}
-                        <div className="hidden md:block overflow-x-auto">
-                          <table className="w-full text-left border-collapse">
-                            <thead>
-                              <tr className="bg-gray-50 border-b border-gray-200">
-                                <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[40%]">{pT('colQuestion')}</th>
-                                <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[15%]">{pT('colStandard')}</th>
-                                <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[20%]">{pT('colResult')}</th>
-                                <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[25%]">{pT('colNote')}</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                              {checkLists.filter(cl => cl.categoryId === cat.id).map(item => (
-                                <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                                  <td className="p-3 text-sm text-gray-800">{item.questionCheck}</td>
-                                  <td className="p-3 text-sm text-gray-600">
-                                    <span className={`px-2 py-1 rounded text-xs border font-medium ${item.spec ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
-                                      {item.spec || pT('noStandard')}
+                                  {/* 2. Tiêu chuẩn */}
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                                      {pT("colStandard")}:
                                     </span>
-                                  </td>
-                                  <td className="p-3">
-                                    {item.specType !== 'input' ? (
-                                      <div className="flex gap-1.5">
+                                    <div
+                                      className={`text-xs px-2 py-1 rounded border font-medium italic w-fit ${item.spec ? "text-blue-700 bg-blue-50 border-blue-100" : "text-gray-400 bg-gray-50 border-gray-200"}`}
+                                    >
+                                      {item.spec || pT("noStandard")}
+                                    </div>
+                                  </div>
+
+                                  {/* 3. Kết quả */}
+                                  <div className="flex flex-col gap-2">
+                                    <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                                      {pT("colResult")}
+                                    </span>
+                                    {item.specType !== "input" ? (
+                                      <div className="grid grid-cols-2 gap-3">
                                         <button
-                                          onClick={() => handleResultButtonClick(item.id, 'OK')}
+                                          onClick={() =>
+                                            handleResultButtonClick(
+                                              item.id,
+                                              "OK",
+                                            )
+                                          }
                                           disabled={!canEditResults}
-                                          className={`px-3 py-1 text-xs font-bold border transition-all rounded ${formResults[item.id]?.result === 'OK'
-                                            ? 'bg-green-600 text-white border-green-600 shadow-sm'
-                                            : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
-                                            }`}
-                                        >OK</button>
+                                          className={`py-3 text-sm font-bold border transition-all rounded-lg flex items-center justify-center ${
+                                            formResults[item.id]?.result ===
+                                            "OK"
+                                              ? "bg-green-600 text-white border-green-600 shadow-md scale-[1.02]"
+                                              : "bg-white text-gray-500 border-gray-300 active:bg-gray-100"
+                                          }`}
+                                        >
+                                          OK
+                                        </button>
                                         <button
-                                          onClick={() => handleResultButtonClick(item.id, 'NG')}
+                                          onClick={() =>
+                                            handleResultButtonClick(
+                                              item.id,
+                                              "NG",
+                                            )
+                                          }
                                           disabled={!canEditResults}
-                                          className={`px-3 py-1 text-xs font-bold border transition-all rounded ${formResults[item.id]?.result === 'NG'
-                                            ? 'bg-red-600 text-white border-red-600 shadow-sm'
-                                            : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
-                                            }`}
-                                        >NG</button>
+                                          className={`py-3 text-sm font-bold border transition-all rounded-lg flex items-center justify-center ${
+                                            formResults[item.id]?.result ===
+                                            "NG"
+                                              ? "bg-red-600 text-white border-red-600 shadow-md scale-[1.02]"
+                                              : "bg-white text-gray-500 border-gray-300 active:bg-gray-100"
+                                          }`}
+                                        >
+                                          NG
+                                        </button>
                                       </div>
                                     ) : (
                                       <input
                                         type="text"
-                                        value={formResults[item.id]?.actualValue || ''}
-                                        onChange={(e) => handleLocalChange(item.id, 'actualValue', e.target.value)}
+                                        value={
+                                          formResults[item.id]?.actualValue ||
+                                          ""
+                                        }
+                                        onChange={(e) =>
+                                          handleLocalChange(
+                                            item.id,
+                                            "actualValue",
+                                            e.target.value,
+                                          )
+                                        }
                                         onBlur={() => handleSyncResult(item.id)}
                                         disabled={!canEditResults}
-                                        placeholder={pT('typeInput')}
-                                        className="w-full text-xs border-b border-gray-300 focus:border-blue-500 outline-none py-1"
+                                        placeholder={pT("typeInput")}
+                                        className="w-full text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none p-3 bg-gray-50"
                                       />
                                     )}
-                                  </td>
-                                  <td className="p-3">
+                                  </div>
+
+                                  {/* 4. Ghi chú */}
+                                  <div className="flex flex-col gap-1">
+                                    <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                                      {pT("colNote")}
+                                    </span>
                                     <input
                                       type="text"
-                                      value={formResults[item.id]?.note || ''}
-                                      onChange={(e) => handleLocalChange(item.id, 'note', e.target.value)}
+                                      value={formResults[item.id]?.note || ""}
+                                      onChange={(e) =>
+                                        handleLocalChange(
+                                          item.id,
+                                          "note",
+                                          e.target.value,
+                                        )
+                                      }
                                       onBlur={() => handleSyncResult(item.id)}
                                       disabled={!canEditResults}
-                                      placeholder={pT('placeholderNote')}
-                                      className="w-full text-xs border-b border-gray-300 focus:border-blue-500 outline-none py-1 italic"
+                                      placeholder={pT("placeholderNote")}
+                                      className="w-full text-sm border-b border-gray-200 focus:border-blue-500 outline-none py-2 italic text-gray-600"
                                     />
-                                  </td>
-                                </tr>
+                                  </div>
+                                </div>
                               ))}
-                            </tbody>
-                          </table>
+                          </div>
+
+                          {/* Desktop Table View */}
+                          <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                              <thead>
+                                <tr className="bg-gray-50 border-b border-gray-200">
+                                  <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[40%]">
+                                    {pT("colQuestion")}
+                                  </th>
+                                  <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[15%]">
+                                    {pT("colStandard")}
+                                  </th>
+                                  <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[20%]">
+                                    {pT("colResult")}
+                                  </th>
+                                  <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[25%]">
+                                    {pT("colNote")}
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100">
+                                {checkLists
+                                  .filter((cl) => cl.categoryId === cat.id)
+                                  .map((item) => (
+                                    <tr
+                                      key={item.id}
+                                      className="hover:bg-gray-50 transition-colors"
+                                    >
+                                      <td className="p-3 text-sm text-gray-800">
+                                        {item.questionCheck}
+                                      </td>
+                                      <td className="p-3 text-sm text-gray-600">
+                                        <span
+                                          className={`px-2 py-1 rounded text-xs border font-medium ${item.spec ? "bg-blue-50 text-blue-700 border-blue-100" : "bg-gray-50 text-gray-400 border-gray-200"}`}
+                                        >
+                                          {item.spec || pT("noStandard")}
+                                        </span>
+                                      </td>
+                                      <td className="p-3">
+                                        {item.specType !== "input" ? (
+                                          <div className="flex gap-1.5">
+                                            <button
+                                              onClick={() =>
+                                                handleResultButtonClick(
+                                                  item.id,
+                                                  "OK",
+                                                )
+                                              }
+                                              disabled={!canEditResults}
+                                              className={`px-3 py-1 text-xs font-bold border transition-all rounded ${
+                                                formResults[item.id]?.result ===
+                                                "OK"
+                                                  ? "bg-green-600 text-white border-green-600 shadow-sm"
+                                                  : "bg-white text-gray-500 border-gray-300 hover:bg-gray-50"
+                                              }`}
+                                            >
+                                              OK
+                                            </button>
+                                            <button
+                                              onClick={() =>
+                                                handleResultButtonClick(
+                                                  item.id,
+                                                  "NG",
+                                                )
+                                              }
+                                              disabled={!canEditResults}
+                                              className={`px-3 py-1 text-xs font-bold border transition-all rounded ${
+                                                formResults[item.id]?.result ===
+                                                "NG"
+                                                  ? "bg-red-600 text-white border-red-600 shadow-sm"
+                                                  : "bg-white text-gray-500 border-gray-300 hover:bg-gray-50"
+                                              }`}
+                                            >
+                                              NG
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <input
+                                            type="text"
+                                            value={
+                                              formResults[item.id]
+                                                ?.actualValue || ""
+                                            }
+                                            onChange={(e) =>
+                                              handleLocalChange(
+                                                item.id,
+                                                "actualValue",
+                                                e.target.value,
+                                              )
+                                            }
+                                            onBlur={() =>
+                                              handleSyncResult(item.id)
+                                            }
+                                            disabled={!canEditResults}
+                                            placeholder={pT("typeInput")}
+                                            className="w-full text-xs border-b border-gray-300 focus:border-blue-500 outline-none py-1"
+                                          />
+                                        )}
+                                      </td>
+                                      <td className="p-3">
+                                        <input
+                                          type="text"
+                                          value={
+                                            formResults[item.id]?.note || ""
+                                          }
+                                          onChange={(e) =>
+                                            handleLocalChange(
+                                              item.id,
+                                              "note",
+                                              e.target.value,
+                                            )
+                                          }
+                                          onBlur={() =>
+                                            handleSyncResult(item.id)
+                                          }
+                                          disabled={!canEditResults}
+                                          placeholder={pT("placeholderNote")}
+                                          className="w-full text-xs border-b border-gray-300 focus:border-blue-500 outline-none py-1 italic"
+                                        />
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               ))}
@@ -614,50 +964,103 @@ const canApprove =
 
             <div className="bg-white shadow-sm border border-gray-200 p-4">
               <h3 className="font-bold text-lg text-gray-800 mb-3 flex items-center gap-2">
-                <FaImage className="text-blue-500" /> {pT('imageSection')}
+                <FaImage className="text-blue-500" /> {pT("imageSection")} (
+                {sessionImages.length})
               </h3>
+
+              {canEditResults && !isNew && (
+                <div className="mb-4 grid grid-cols-2 gap-2 md:hidden">
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-3 text-sm font-bold text-white active:scale-[0.98]">
+                    <div className="flex items-center justify-center gap-1">
+                      <FaCamera size={10} />
+                      <p className="text-sm font-medium mb-0">Chụp ảnh</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) =>
+                        openImageNoteModal(Array.from(e.target.files || []))
+                      }
+                    />
+                  </label>
+
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-800 px-3 py-3 text-sm font-bold text-white active:scale-[0.98]">
+                    <div className="flex items-center justify-center gap-1">
+                      <FaUpload size={10} />
+                      <p className="text-sm font-medium mb-0">Tải từ thư viện</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) =>
+                        openImageNoteModal(Array.from(e.target.files || []))
+                      }
+                    />
+                  </label>
+                </div>
+              )}
 
               {canEditResults && (
                 <MultiImageUpload
-                  label={pT('uploadLabel')}
+                  label={pT("uploadLabel")}
                   fieldName="patrolImages"
-                  images={images.map(img => getImageUrl(img))}
-                  notes={images.map(img => img.note || '')}
+                  images={sessionImages.map((img) => getImageUrl(img))}
+                  notes={sessionImages.map((img) => img.note || "")}
                   onUpload={handleImageUpload}
-                  onRemove={(idx) => handleRemoveImage(images[idx].id)}
-                  onViewAll={() => { }}
-                  onViewSingle={(url) => setPreviewImage({ isOpen: true, url, title: pT('imageSection') as any })}
-                  maxImages={5}
+                  onRemove={(idx) => handleRemoveImage(sessionImages[idx].id)}
+                  onViewAll={() => {}}
+                  onViewSingle={(url) =>
+                    setPreviewImage({
+                      isOpen: true,
+                      url,
+                      title: pT("imageSection") as any,
+                    })
+                  }
+                  maxImages={20}
                 />
               )}
 
-              {images.length > 0 && (session?.status !== 'Pending' || user?.role !== 'PQC') && (
-                <div className="grid sm:grid-cols-2 gap-4 mt-4">
-                  {images.map((img, index) => (
-                    <div key={img.id} className="border border-gray-200 overflow-hidden flex flex-col relative group">
-                      <img
-                        src={getImageUrl(img)}
-                        alt="Current state"
-                        className="w-full h-48 object-cover cursor-pointer bg-gray-100"
-                        onClick={() => setPreviewImage({ isOpen: true, url: getImageUrl(img), title: `${pT('imageSection')} ${index + 1}` })}
-                      />
-                      {img.note && (
-                        <div className="text-xs text-gray-600 px-3 py-2 bg-gray-50 border-t border-gray-200 italic">
-                          {img.note}
-                        </div>
-                      )}
-                      {canEditResults && (
-                        <button
-                          onClick={() => handleRemoveImage(img.id)}
-                          className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <FaTrash size={12} />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+              {sessionImages.length > 0 &&
+                (session?.status !== "Pending" || user?.role !== "PQC") && (
+                  <div className="grid sm:grid-cols-2 gap-4 mt-4">
+                    {sessionImages.map((img, index) => (
+                      <div
+                        key={img.id}
+                        className="border border-gray-200 overflow-hidden flex flex-col relative group"
+                      >
+                        <img
+                          src={getImageUrl(img)}
+                          alt="Current state"
+                          className="w-full h-48 object-cover cursor-pointer bg-gray-100"
+                          onClick={() =>
+                            setPreviewImage({
+                              isOpen: true,
+                              url: getImageUrl(img),
+                              title: `${pT("imageSection")} ${index + 1}`,
+                            })
+                          }
+                        />
+                        {img.note && (
+                          <div className="text-xs text-gray-600 px-3 py-2 bg-gray-50 border-t border-gray-200 italic">
+                            {img.note}
+                          </div>
+                        )}
+                        {canEditResults && (
+                          <button
+                            onClick={() => handleRemoveImage(img.id)}
+                            className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <FaTrash size={12} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
             </div>
 
             {/* Action Bar */}
@@ -665,71 +1068,43 @@ const canApprove =
             {!isNew && (
               <div className="patrol-action-bar fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-30 px-4 py-3">
                 <div className="flex flex-row gap-3 w-full">
-
                   {/* Back — luôn hiển thị */}
                   <button
-                    onClick={() => {
-                      const saved = readPatrolNavState();
-                      if (saved?.fromDashboard && saved.dashboardReturnPath) {
-                        savePatrolDashboardState({
-                          date: saved.dashboardDate || '',
-                          page: saved.page,
-                          highlightId: saved.highlightId || 0,
-                        });
-                        clearPatrolNavState();
-                        navigate(saved.dashboardReturnPath, {
-                          state: {
-                            from: 'sheetDetail',
-                            dashboardState: {
-                              sheetId: saved.highlightId,
-                              date: saved.dashboardDate,
-                              fullDate: saved.dashboardDate,
-                              detailTablePage: saved.page,
-                            },
-                          },
-                        });
-                      } else {
-                        savePatrolNavState({
-                          type: saved?.type || 'daily',
-                          page: saved?.page || 0,
-                          highlightId: Number(sheetId),
-                          filter: saved?.filter,
-                        });
-                        goToView('list', null, saved?.type || 'daily');
-                      }
-                    }}
+                    onClick={handleBackToSource}
                     className="flex-1! px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors"
                   >
-                    <FaArrowLeft /> {pT('backBtn') || 'Quay lại'}
+                    <FaArrowLeft /> {pT("backBtn") || "Quay lại"}
                   </button>
 
                   {/* Gửi phiếu */}
-                  {canEditResults && session?.status === 'Pending' && user?.role === 'PQC' && (
-                    <button
-                      onClick={() => handleUpdateStatus('Submitted')}
-                      disabled={loading}
-                      className="flex-1! px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 disabled:opacity-50"
-                    >
-                      <FaPen /> {pT('submitBtn')}
-                    </button>
-                  )}
+                  {canEditResults &&
+                    session?.status === "Pending" &&
+                    user?.role === "PQC" && (
+                      <button
+                        onClick={() => handleUpdateStatus("Submitted")}
+                        disabled={loading}
+                        className="flex-1! px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 disabled:opacity-50"
+                      >
+                        <FaPen /> {pT("submitBtn")}
+                      </button>
+                    )}
 
                   {/* Duyệt */}
                   {canApprove && (
                     <>
                       <button
-                        onClick={() => handleUpdateStatus('Approved')}
+                        onClick={() => handleUpdateStatus("Approved")}
                         disabled={loading}
                         className="flex-1! px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 disabled:opacity-50"
                       >
-                        <FaCheck /> {pT('approveBtn')}
+                        <FaCheck /> {pT("approveBtn")}
                       </button>
                       <button
                         onClick={handleRejectStatus}
                         disabled={loading}
                         className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 disabled:opacity-50"
                       >
-                        <FaUndo /> {pT('rejectBtn')}
+                        <FaUndo /> {pT("rejectBtn")}
                       </button>
                     </>
                   )}
@@ -737,10 +1112,12 @@ const canApprove =
                   {/* Không thể thao tác */}
                   {!canEditResults && !canApprove && (
                     <div className="flex-1! px-6 py-3 bg-gray-100 text-gray-500 font-semibold text-sm flex items-center justify-center gap-2 border border-gray-200">
-                      🔒 {session?.status === 'Approved' ? pT('statusApproved') : pT('statusSubmitted')}
+                      🔒{" "}
+                      {session?.status === "Approved"
+                        ? pT("statusApproved")
+                        : pT("statusSubmitted")}
                     </div>
                   )}
-
                 </div>
               </div>
             )}

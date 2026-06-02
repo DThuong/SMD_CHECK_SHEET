@@ -86,6 +86,8 @@ export interface PatrolState {
     loading: boolean;
     error: string | null;
 
+    loadedImageSessionIds: number[];
+
     // Detail hiện tại
     currentSession: PatrolSession | null;
     
@@ -110,6 +112,7 @@ export interface PatrolState {
 }
 
 const initialState: PatrolState = {
+    loadedImageSessionIds: [],
     loading: false,
     error: null,
     currentSession: null,
@@ -382,8 +385,6 @@ const patrolSlice = createSlice({
 
         clearCurrentPatrolSession(state) {
             state.currentSession = null;
-            state.checkListResults = [];
-            state.images = [];
             state.statusHistories = [];
             state.error = null;
         }
@@ -537,10 +538,33 @@ const patrolSlice = createSlice({
             .addCase(updateCheckListResult.rejected, handleRejected)
 
             // --- Image ---
-            .addCase(fetchImagesBySession.pending, handlePending)
+            .addCase(fetchImagesBySession.pending, (state) => {
+                state.error = null;
+            })
             .addCase(fetchImagesBySession.fulfilled, (state, action) => {
                 state.loading = false;
-                state.images = action.payload;
+
+                const payload = Array.isArray(action.payload) ? action.payload : [];
+
+                // Nếu API trả [] thì vẫn nên đánh dấu session đã load,
+                // tránh dashboard gọi đi gọi lại mãi một API rỗng.
+                const requestedSessionId =
+                    Number(action.meta.arg) ||
+                    Number(payload[0]?.patrolSessionId);
+
+                if (requestedSessionId) {
+                    if (!state.loadedImageSessionIds.includes(requestedSessionId)) {
+                        state.loadedImageSessionIds.push(requestedSessionId);
+                    }
+
+                    state.images = state.images.filter(
+                        img => Number(img.patrolSessionId) !== requestedSessionId
+                    );
+                }
+
+                if (payload.length > 0) {
+                    state.images.push(...payload);
+                }
             })
             .addCase(fetchImagesBySession.rejected, handleRejected)
 
@@ -549,10 +573,9 @@ const patrolSlice = createSlice({
                 state.error = null;
                 state.success = false;
             })
-            .addCase(uploadImage.fulfilled, (state, action) => {
+            .addCase(uploadImage.fulfilled, (state) => {
                 state.uploadLoading = false;
                 state.success = true;
-                state.images.push(action.payload);
             })
             .addCase(uploadImage.rejected, (state, action) => {
                 state.uploadLoading = false;

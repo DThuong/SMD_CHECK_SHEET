@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type PatrolItemType = 'radio' | 'input';
 
 export interface PatrolItem {

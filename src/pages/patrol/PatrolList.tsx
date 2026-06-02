@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -25,9 +26,9 @@ import PatrolFilterBar, {
   PATROL_FILTER_DEFAULT,
 } from "../../components/general/PatrolFilterBar";
 import {
-  savePatrolNavState,
   readPatrolNavState,
   clearPatrolNavState,
+  savePatrolNavStateWithTimestamp,
 } from "../../utils/patrolNavState";
 import { useSearchParams } from "react-router-dom";
 import { ConfirmModal } from "../../components/general/ConfirmModal";
@@ -103,12 +104,8 @@ const PatrolList: React.FC<PatrolListProps> = ({
             fullName: saved.filter.fullName || undefined,
             lineAreaName: saved.filter.lineAreaName || undefined,
             status: saved.filter.status || undefined,
-            fromDate: saved.filter.fromDate
-              ? new Date(saved.filter.fromDate).toISOString()
-              : undefined,
-            toDate: saved.filter.toDate
-              ? new Date(saved.filter.toDate + "T23:59:59").toISOString()
-              : undefined,
+            fromDate: parseFilterDate(saved.filter.fromDate),
+            toDate: parseFilterDate(saved.filter.toDate, true),
           }),
         );
       } else {
@@ -233,33 +230,57 @@ const PatrolList: React.FC<PatrolListProps> = ({
   // ======================== NAVIGATE TO DETAIL ========================
 
   const handleGoToDetail = (sheetId: number) => {
-    // Lưu state trước khi navigate
-    savePatrolNavState({
+    savePatrolNavStateWithTimestamp({
       type,
       page: currentPage,
       highlightId: sheetId,
       filter,
+      source: type === "weekly" ? "weekly" : "list",
     });
-    goToView("detail", sheetId.toString());
+
+    goToView("detail", sheetId.toString(), type);
   };
 
   // ======================== FILTER HANDLERS ========================
 
-  const toFilterIso = (value: string, fallbackEndOfDay = false) => {
-    if (!value) return undefined;
-    const normalized = value.includes("T")
-      ? value
-      : `${value}${fallbackEndOfDay ? "T23:59:59" : "T00:00:00"}`;
-    return new Date(normalized).toISOString();
-  };
+  const isValidDate = (date: Date) => !Number.isNaN(date.getTime());
 
-  const buildFilterParams = (f: PatrolFilter) => ({
-    fullName: f.fullName || undefined,
-    lineAreaName: f.lineAreaName || undefined,
-    status: f.status || undefined,
-    fromDate: toFilterIso(f.fromDate),
-    toDate: toFilterIso(f.toDate, true),
-  });
+const parseFilterDate = (value: string, fallbackEndOfDay = false) => {
+  if (!value) return undefined;
+
+  let dateStr = "";
+
+  // input type="date": YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const time = fallbackEndOfDay ? "23:59:59" : "00:00:00";
+    dateStr = `${value}T${time}`;
+  }
+  // datetime-local: YYYY-MM-DDTHH:mm
+  else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) {
+    dateStr = value.slice(0, 19);
+  }
+  else {
+    const slashDate = new Date(value);
+    if (!isValidDate(slashDate)) return undefined;
+    // Lấy local time components
+    const y = slashDate.getFullYear();
+    const mo = String(slashDate.getMonth() + 1).padStart(2, "0");
+    const d = String(slashDate.getDate()).padStart(2, "0");
+    const h = String(slashDate.getHours()).padStart(2, "0");
+    const mi = String(slashDate.getMinutes()).padStart(2, "0");
+    const s = String(slashDate.getSeconds()).padStart(2, "0");
+    dateStr = `${y}-${mo}-${d}T${h}:${mi}:${s}`;
+  }
+  return `${dateStr}`;
+};
+
+const buildFilterParams = (f: PatrolFilter) => ({
+  fullName: f.fullName || undefined,
+  lineAreaName: f.lineAreaName || undefined,
+  status: f.status || undefined,
+  fromDate: parseFilterDate(f.fromDate),
+  toDate: parseFilterDate(f.toDate, true),
+});
 
   const dispatchFilter = (f: PatrolFilter) => {
     dispatch(filterPatrolSessions(buildFilterParams(f)));
@@ -393,13 +414,15 @@ const PatrolList: React.FC<PatrolListProps> = ({
           {user?.role === "PQC" && (
             <button
               onClick={() => {
-                savePatrolNavState({
+                savePatrolNavStateWithTimestamp({
                   type,
                   page: currentPage,
                   highlightId: null,
                   filter,
+                  source: type === "weekly" ? "weekly" : "list",
                 });
-                goToView("detail", "new");
+
+                goToView("detail", "new", type);
               }}
               className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 font-medium flex items-center justify-center gap-2 transition-all active:scale-95"
             >

@@ -1,182 +1,169 @@
-import React, { useMemo, useEffect } from 'react';
-import { toast } from 'sonner';
-import { FaArrowLeft, FaChartBar } from 'react-icons/fa';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, ComposedChart
-} from 'recharts';
+  FaArrowLeft,
+  FaChartBar,
+  FaCalendarDay,
+  FaCalendarWeek,
+  FaMobileAlt,
+} from 'react-icons/fa';
+import { toast } from 'sonner';
 import type { PatrolSharedProps } from './types';
 import { useTranslation } from 'react-i18next';
-import { useAppSelector } from '../../redux/hooks';
+import NGDefectAnalyticsChart from '../../components/general/NGDefectAnalyticsChart';
 
-const ReportPatrol: React.FC<PatrolSharedProps> = ({ user, goToView }) => {
-  const { t, i18n } = useTranslation('patrol');
-  const { sessions, stages, categories, checkLists } = useAppSelector(state => state.patrol);
+type PatrolReportType = 'daily' | 'weekly';
 
-  // Force Vietnamese for PQC role
+const ReportPatrol: React.FC<PatrolSharedProps> = (props) => {
+  const {
+    user,
+    goToView,
+    activeTab,
+    type,
+    setSearchParams,
+  } = props;
+
+  const { t } = useTranslation('patrol');
+  const [isMobileReportBlocked, setIsMobileReportBlocked] = useState(false);
+
   const pT = (key: string, options?: any) => {
-    if (user?.role === 'PQC') return t(key, { ...options, lng: 'vi' }) as any;
+    if (user?.role === 'PQC') {
+      return t(key, { ...options, lng: 'vi' }) as any;
+    }
+
     return t(key, options) as any;
   };
 
-  // Redirect mobile users to list view
   useEffect(() => {
-    if (window.innerWidth < 768) {
-      toast.error(pT('msgDeviceNotSupportedForReport'));
-      goToView('list');
-    }
-  }, [goToView]);
+    const checkDevice = () => {
+      const isMobile =
+        window.innerWidth < 768 ||
+        /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(
+          navigator.userAgent,
+        );
 
-  // Only analyze Approved sessions
-  const approvedSessions = useMemo(() => {
-    return sessions.filter(s => s.status === 'Approved');
-  }, [sessions]);
+      setIsMobileReportBlocked(isMobile);
 
-  // --- Analytics Algorithms ---
-
-  // 1. Trend Analysis (Last 7 Days)
-  const trendData = useMemo(() => {
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      return d.toISOString().split('T')[0];
-    }).reverse();
-
-    return last7Days.map(date => {
-      const daySessions = approvedSessions.filter(s => s.createdAt.startsWith(date));
-      const totalChecked = daySessions.length;
-      const totalNG = daySessions.reduce((acc, s) => {
-        return acc + (s.checkListResults?.filter(r => r.result === 'NG').length || 0);
-      }, 0);
-
-      return {
-        name: new Date(date).toLocaleDateString(
-          user?.role === 'PQC' ? 'vi-VN' : (i18n.language === 'ko' ? 'ko-KR' : i18n.language === 'en' ? 'en-US' : 'vi-VN'),
-          { weekday: 'short' }
-        ),
-        totalChecked,
-        totalNG
-      };
-    });
-  }, [approvedSessions]);
-
-  // 2. Stage Distribution
-  const stageDistribution = useMemo(() => {
-    return stages.map(stage => {
-      const stageCategories = categories.filter(c => c.stageId === stage.id).map(c => c.id);
-      const stageCheckLists = checkLists.filter(cl => stageCategories.includes(cl.categoryId)).map(cl => cl.id);
-      
-      let okCount = 0;
-      let ngCount = 0;
-
-      approvedSessions.forEach(s => {
-        s.checkListResults?.forEach(r => {
-          if (stageCheckLists.includes(r.checkListId)) {
-            if (r.result === 'OK') okCount++;
-            else if (r.result === 'NG') ngCount++;
-          }
-        });
-      });
-
-      const total = okCount + ngCount;
-      const ngRate = total > 0 ? (ngCount / total) * 100 : 0;
-
-      return {
-        name: stage.name,
-        OK: okCount,
-        NG: parseFloat(ngRate.toFixed(1))
-      };
-    });
-  }, [approvedSessions, stages, categories, checkLists]);
-
-  // 3. PQC Performance
-  const performanceData = useMemo(() => {
-    const users: Record<string, { sheets: number, ngFound: number }> = {};
-    approvedSessions.forEach(s => {
-      if (!users[s.fullName]) {
-        users[s.fullName] = { sheets: 0, ngFound: 0 };
+      if (isMobile) {
+        toast.error('Thiết bị của bạn không hỗ trợ để xem báo cáo.');
       }
-      users[s.fullName].sheets++;
-      users[s.fullName].ngFound += (s.checkListResults?.filter(r => r.result === 'NG').length || 0);
-    });
+    };
 
-    return Object.entries(users).map(([name, data]) => ({
-      name,
-      sheets: data.sheets,
-      foundNG: data.ngFound
-    }));
-  }, [approvedSessions]);
+    checkDevice();
+
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
+
+  const currentType = useMemo<PatrolReportType>(() => {
+    if (type === 'weekly' || activeTab === 'weekly') return 'weekly';
+    return 'daily';
+  }, [type, activeTab]);
+
+  const handleChangeType = (nextType: PatrolReportType) => {
+    if (setSearchParams) {
+      setSearchParams({
+        view: 'report',
+        type: nextType,
+      });
+      return;
+    }
+
+    goToView('report', null, nextType);
+  };
+
+  if (isMobileReportBlocked) {
+    return (
+      <div className="animate-fade-in mt-6 px-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
+            <FaMobileAlt size={24} />
+          </div>
+
+          <h2 className="mt-4 text-lg font-extrabold text-slate-900">
+            Thiết bị của bạn không hỗ trợ để xem báo cáo
+          </h2>
+
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Báo cáo Patrol có nhiều biểu đồ và bảng dữ liệu lớn, vui lòng sử dụng
+            máy tính hoặc màn hình tablet/desktop để xem đầy đủ.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => goToView("list", null, currentType)}
+            className="mt-5 inline-flex items-center justify-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
+          >
+            Quay lại danh sách
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="animate-fade-in space-y-4! mt-6!">
-      <div className="flex items-center gap-3 mb-4">
-        <button onClick={() => goToView('list')} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
-          <FaArrowLeft />
-        </button>
-        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-          <FaChartBar className="hidden sm:block md:block text-gray-700" /> {pT('reportDashboard')}
-        </h2>
-      </div>
+    <div className="animate-fade-in mt-6 space-y-4">
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-slate-100 p-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => goToView("list", null, currentType)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+            >
+              <FaArrowLeft />
+            </button>
 
-      <div className="grid grid-cols-1 gap-6 w-full">
-        {/* Chart 1: Trends */}
-        <div className="bg-white p-4 shadow-sm border border-gray-200 rounded-lg">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">{pT('chartTrend')}</h3>
-          <div className="h-72 sm:h-80 lg:h-96">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                <YAxis yAxisId="left" orientation="left" stroke="#1e293b" axisLine={false} tickLine={false} />
-                <YAxis yAxisId="right" orientation="right" stroke="#b91c1c" axisLine={false} tickLine={false} />
-                <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Legend iconType="circle" />
-                <Bar yAxisId="left" dataKey="totalChecked" name={pT('totalChecked')} fill="#1e293b" radius={[4, 4, 0, 0]} barSize={40} />
-                <Line yAxisId="right" type="monotone" dataKey="totalNG" name={pT('totalNG')} stroke="#b91c1c" strokeWidth={3} dot={{ r: 5, fill: '#b91c1c', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} />
-              </ComposedChart>
-            </ResponsiveContainer>
+            <div>
+              <h2 className="flex items-center gap-2 text-xl font-extrabold text-slate-900">
+                <FaChartBar className="text-slate-700" />
+                {pT('reportDashboard') || 'Patrol Report Dashboard'}
+              </h2>
+
+              <p className="mt-1 text-xs text-slate-500">
+                Theo dõi lỗi NG theo line, công đoạn, nội dung lỗi, người tạo và hình ảnh.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex w-full rounded-xl bg-slate-100 p-1 md:w-auto">
+            <button
+              type="button"
+              onClick={() => handleChangeType('daily')}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition md:flex-none ${
+                currentType === 'daily'
+                  ? 'bg-slate-950 text-white shadow-sm'
+                  : 'text-slate-500 hover:bg-white hover:text-slate-900'
+              }`}
+            >
+              <FaCalendarDay size={12} />
+              Daily
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleChangeType('weekly')}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition md:flex-none ${
+                currentType === 'weekly'
+                  ? 'bg-slate-950 text-white shadow-sm'
+                  : 'text-slate-500 hover:bg-white hover:text-slate-900'
+              }`}
+            >
+              <FaCalendarWeek size={12} />
+              Weekly
+            </button>
           </div>
         </div>
 
-        {/* Chart 2: Stage Distribution */}
-        <div className="bg-white p-4 shadow-sm border border-gray-200 rounded-lg">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">{pT('chartStage')}</h3>
-          <div className="h-72 sm:h-80 lg:h-96">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={stageDistribution}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 12 }} />
-                <YAxis yAxisId="left" orientation="left" stroke="#1e293b" axisLine={false} tickLine={false} />
-                <YAxis yAxisId="right" orientation="right" stroke="#b91c1c" axisLine={false} tickLine={false} unit="%" />
-                <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Legend iconType="circle" />
-                <Bar yAxisId="left" dataKey="OK" name={pT('okCount')} fill="#1e293b" radius={[4, 4, 0, 0]} barSize={40} />
-                <Line yAxisId="right" type="monotone" dataKey="NG" name={pT('ratioNG')} stroke="#b91c1c" strokeWidth={3} dot={{ r: 5, fill: '#b91c1c', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Chart 3: Performance */}
-        <div className="bg-white p-4 shadow-sm border border-gray-200 rounded-lg">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">{pT('chartPerformance')}</h3>
-          <div className="h-72 sm:h-80 lg:h-96">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 12 }} />
-                <YAxis yAxisId="left" orientation="left" stroke="#1e293b" axisLine={false} tickLine={false} />
-                <YAxis yAxisId="right" orientation="right" stroke="#b91c1c" axisLine={false} tickLine={false} />
-                <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Legend iconType="circle" />
-                <Bar yAxisId="left" dataKey="sheets" name={pT('totalChecked')} fill="#0f172a" radius={[4, 4, 0, 0]} barSize={40} />
-                <Line yAxisId="right" type="step" dataKey="foundNG" name={pT('foundNG')} stroke="#b91c1c" strokeWidth={3} dot={{ r: 5, fill: '#b91c1c', strokeWidth: 2, stroke: '#fff' }} />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="p-4">
+          <NGDefectAnalyticsChart
+            {...props}
+            type={currentType}
+          />
         </div>
       </div>
     </div>
   );
 };
 
-export default ReportPatrol;
+export default React.memo(ReportPatrol);

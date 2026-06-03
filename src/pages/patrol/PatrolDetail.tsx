@@ -13,6 +13,8 @@ import {
   FaUpload,
   FaHistory,
   FaUndo,
+  FaChevronDown,
+  FaChevronRight,
 } from "react-icons/fa";
 import MultiImageUpload from "../../components/files/MultiImageUpload";
 import type { PatrolSharedProps } from "./types";
@@ -108,6 +110,12 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
     queue: File[];
   }>({ open: false, file: null, queue: [] });
   const [pendingNote, setPendingNote] = useState("");
+  const [collapsedStages, setCollapsedStages] = useState<
+    Record<string, boolean>
+  >({});
+  const [collapsedCategories, setCollapsedCategories] = useState<
+    Record<string, boolean>
+  >({});
   const session = isNew ? null : currentSession;
 
   useEffect(() => {
@@ -406,111 +414,124 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
     }
   };
 
-const isFreshReturnState = (savedAt?: number) => {
-  if (!savedAt) return false;
-  return Date.now() - Number(savedAt) < 30 * 60 * 1000;
-};
+  const isFreshReturnState = (savedAt?: number) => {
+    if (!savedAt) return false;
+    return Date.now() - Number(savedAt) < 30 * 60 * 1000;
+  };
 
-const handleBackToSource = () => {
-  if (!sheetId) {
-    goToView("list");
-    return;
-  }
-
-  const currentId = Number(sheetId);
-
-  const rawReportState = localStorage.getItem("patrolReportReturnState");
-
-  if (rawReportState) {
-    try {
-      const saved = JSON.parse(rawReportState);
-
-      const isReportState =
-        saved?.source === "report" &&
-        Number(saved.highlightId) === currentId &&
-        saved.returnPath &&
-        isFreshReturnState(saved.savedAt);
-
-      if (isReportState) {
-        navigate(saved.returnPath, {
-          state: {
-            from: "sheetDetail",
-            reportState: {
-              sheetId: saved.highlightId,
-              type: saved.type || "daily",
-              reportTab: saved.reportTab || "table",
-              returnMode: saved.returnMode,
-              drillPoint: saved.drillPoint,
-              trendDetailPage: saved.trendDetailPage,
-              rangeMode: saved.rangeMode,
-              offset: saved.offset,
-              statusMode: saved.statusMode,
-              shiftFilter: saved.shiftFilter,
-              keyword: saved.keyword,
-              fromDateTime: saved.fromDateTime,
-              toDateTime: saved.toDateTime,
-            },
-          },
-        });
-        return;
-      }
-
-      localStorage.removeItem("patrolReportReturnState");
-    } catch {
-      localStorage.removeItem("patrolReportReturnState");
+  const handleBackToSource = () => {
+    if (!sheetId) {
+      goToView("list");
+      return;
     }
-  }
 
-  const saved = readPatrolNavState();
-  const source = saved?.source;
-  const savedType = saved?.type === "weekly" ? "weekly" : "daily";
+    const currentId = Number(sheetId);
 
-  if (
-    source === "dashboard" &&
-    saved?.dashboardReturnPath &&
-    isFreshReturnState(saved.savedAt)
-  ) {
-    savePatrolDashboardState({
-      date: saved.dashboardDate || "",
-      shift: saved.dashboardShift,
-      page: saved.page || 0,
-      highlightId: currentId,
-    });
+    const rawReportState = localStorage.getItem("patrolReportReturnState");
 
-    clearPatrolNavState();
+    if (rawReportState) {
+      try {
+        const saved = JSON.parse(rawReportState);
 
-    navigate(saved.dashboardReturnPath, {
-      state: {
-        from: "patrolDetail",
-        dashboardState: {
-          sheetId: currentId,
-          date: saved.dashboardDate,
-          fullDate: saved.dashboardDate,
-          shift: saved.dashboardShift,
-          detailTablePage: saved.page || 0,
+        const isReportState =
+          saved?.source === "report" &&
+          Number(saved.highlightId) === currentId &&
+          saved.returnPath &&
+          isFreshReturnState(saved.savedAt);
+
+        if (isReportState) {
+          navigate(saved.returnPath, {
+            state: {
+              from: "sheetDetail",
+              reportState: {
+                sheetId: saved.highlightId,
+                type: saved.type || "daily",
+                reportTab: saved.reportTab || "table",
+                returnMode: saved.returnMode,
+                drillPoint: saved.drillPoint,
+                trendDetailPage: saved.trendDetailPage,
+                detailPage: saved.detailPage,
+                rangeMode: saved.rangeMode,
+                offset: saved.offset,
+                statusMode: saved.statusMode,
+                shiftFilter: saved.shiftFilter,
+                keyword: saved.keyword,
+                fromDateTime: saved.fromDateTime,
+                toDateTime: saved.toDateTime,
+              },
+            },
+          });
+          return;
+        }
+
+        localStorage.removeItem("patrolReportReturnState");
+      } catch {
+        localStorage.removeItem("patrolReportReturnState");
+      }
+    }
+
+    const saved = readPatrolNavState();
+    const source = saved?.source;
+    const savedType = saved?.type === "weekly" ? "weekly" : "daily";
+
+    if (
+      source === "dashboard" &&
+      saved?.dashboardReturnPath &&
+      isFreshReturnState(saved.savedAt)
+    ) {
+      savePatrolDashboardState({
+        date: saved.dashboardDate || "",
+        shift: saved.dashboardShift,
+        page: saved.page || 0,
+        highlightId: currentId,
+      });
+
+      clearPatrolNavState();
+
+      navigate(saved.dashboardReturnPath, {
+        state: {
+          from: "patrolDetail",
+          dashboardState: {
+            sheetId: currentId,
+            date: saved.dashboardDate,
+            fullDate: saved.dashboardDate,
+            shift: saved.dashboardShift,
+            detailTablePage: saved.page || 0,
+          },
         },
-      },
+      });
+
+      return;
+    }
+
+    savePatrolNavState({
+      ...(saved || {}),
+      source: source || "list",
+      type: savedType,
+      page: saved?.page || 0,
+      highlightId: currentId,
+      filter: saved?.filter,
+      savedAt: Date.now(),
     });
 
-    return;
-  }
-
-  savePatrolNavState({
-    ...(saved || {}),
-    source: source || "list",
-    type: savedType,
-    page: saved?.page || 0,
-    highlightId: currentId,
-    filter: saved?.filter,
-    savedAt: Date.now(),
-  });
-
-  goToView("list", null, savedType);
-};
+    goToView("list", null, savedType);
+  };
 
   const activeStages = stages.filter(
     (s) => s.patrolType === formPatrolType && s.isActive,
   );
+
+  const toggleStage = (stageId: string) => {
+    setCollapsedStages((prev) => ({ ...prev, [stageId]: !prev[stageId] }));
+  };
+
+  const toggleCategory = (categoryId: string) => {
+    setCollapsedCategories((prev) => ({
+      ...prev,
+      [categoryId]: !prev[categoryId],
+    }));
+  };
+
   const getStatusStyle = (status: string) => {
     switch (status) {
       case "Approved":
@@ -582,7 +603,7 @@ const handleBackToSource = () => {
         </div>
 
         {isNew ? (
-          <div className="bg-white shadow-sm border border-gray-200 p-4 space-y-4">
+          <div className="bg-white shadow-sm border border-gray-200 p-4 space-y-4!">
             <div>
               <label className="block text-gray-700 font-bold mb-2">
                 {pT("selectType")} <span className="text-red-500">*</span>
@@ -668,7 +689,7 @@ const handleBackToSource = () => {
                   {statusHistories.map((h: StatusHistory) => (
                     <div
                       key={h.id}
-                      className="flex items-center gap-3 py-3 px-3 bg-gray-50 border border-gray-100 rounded text-sm min-h-[56px]"
+                      className="flex items-center gap-3 py-3 px-3 bg-gray-50 border border-gray-100 rounded text-sm min-h-14"
                     >
                       {/* Badge status */}
                       <span
@@ -701,275 +722,345 @@ const handleBackToSource = () => {
                 </div>
               </div>
             )}
-            <div className="space-y-4">
-              {activeStages.map((stage) => (
-                <div
-                  key={stage.id}
-                  className="bg-white shadow-sm border border-gray-200 overflow-hidden"
-                >
-                  <div className="bg-gray-800 px-4 py-3 border-b border-gray-700">
-                    <h3 className="font-bold text-lg text-white">
-                      {stage.name}
-                    </h3>
-                  </div>
-                  <div className="p-3 sm:p-4 space-y-4">
-                    {categories
-                      .filter((c) => c.stageId === stage.id)
-                      .map((cat) => (
-                        <div
-                          key={cat.id}
-                          className="border border-gray-200 overflow-hidden"
-                        >
-                          <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
-                            <h4 className="font-semibold text-gray-700">
-                              {cat.name}
-                            </h4>
-                          </div>
-                          <div className="md:hidden divide-y divide-gray-100">
-                            {checkLists
-                              .filter((cl) => cl.categoryId === cat.id)
-                              .map((item) => (
-                                <div
-                                  key={item.id}
-                                  className="p-4 flex flex-col gap-4 hover:bg-gray-50 transition-colors"
+            <div className="space-y-4!">
+              {activeStages.map((stage) => {
+                const stageKey = stage.id.toString();
+                const isStageCollapsed = !!collapsedStages[stageKey];
+
+                return (
+                  <div
+                    key={stage.id}
+                    className="bg-white shadow-sm border border-gray-200 overflow-hidden rounded-lg"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleStage(stageKey)}
+                      className="w-full bg-gray-800 px-4 py-3 border-b border-gray-700 flex items-center justify-between gap-3 text-left hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-white/80 shrink-0">
+                          {isStageCollapsed ? (
+                            <FaChevronRight size={14} />
+                          ) : (
+                            <FaChevronDown size={14} />
+                          )}
+                        </span>
+                        <h3 className="font-bold text-lg text-white mb-0 wrap-break-words">
+                          {stage.name}
+                        </h3>
+                      </div>
+                    </button>
+
+                    {!isStageCollapsed && (
+                      <div className="p-3 sm:p-4 space-y-4!">
+                        {categories
+                          .filter((c) => c.stageId === stage.id)
+                          .map((cat) => {
+                            const categoryKey = cat.id.toString();
+                            const isCategoryCollapsed =
+                              !!collapsedCategories[categoryKey];
+
+                            return (
+                              <div
+                                key={cat.id}
+                                className="border border-gray-200 overflow-hidden rounded-lg"
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => toggleCategory(categoryKey)}
+                                  className="w-full bg-gray-50 px-3 py-2 border-b border-gray-200 flex items-center justify-between gap-3 text-left hover:bg-gray-100 transition-colors"
                                 >
-                                  {/* 1. Câu hỏi */}
-                                  <div>
-                                    <p className="text-sm font-bold text-gray-800 leading-relaxed">
-                                      {item.questionCheck}
-                                    </p>
-                                  </div>
-
-                                  {/* 2. Tiêu chuẩn */}
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">
-                                      {pT("colStandard")}:
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className="text-gray-500 shrink-0">
+                                      {isCategoryCollapsed ? (
+                                        <FaChevronRight size={13} />
+                                      ) : (
+                                        <FaChevronDown size={13} />
+                                      )}
                                     </span>
-                                    <div
-                                      className={`text-xs px-2 py-1 rounded border font-medium italic w-fit ${item.spec ? "text-blue-700 bg-blue-50 border-blue-100" : "text-gray-400 bg-gray-50 border-gray-200"}`}
-                                    >
-                                      {item.spec || pT("noStandard")}
-                                    </div>
+                                    <h4 className="font-semibold text-gray-700 mb-0 wrap-break-words">
+                                      {cat.name}
+                                    </h4>
                                   </div>
+                                </button>
 
-                                  {/* 3. Kết quả */}
-                                  <div className="flex flex-col gap-2">
-                                    <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                                      {pT("colResult")}
-                                    </span>
-                                    {item.specType !== "input" ? (
-                                      <div className="grid grid-cols-2 gap-3">
-                                        <button
-                                          onClick={() =>
-                                            handleResultButtonClick(
-                                              item.id,
-                                              "OK",
-                                            )
-                                          }
-                                          disabled={!canEditResults}
-                                          className={`py-3 text-sm font-bold border transition-all rounded-lg flex items-center justify-center ${
-                                            formResults[item.id]?.result ===
-                                            "OK"
-                                              ? "bg-green-600 text-white border-green-600 shadow-md scale-[1.02]"
-                                              : "bg-white text-gray-500 border-gray-300 active:bg-gray-100"
-                                          }`}
-                                        >
-                                          OK
-                                        </button>
-                                        <button
-                                          onClick={() =>
-                                            handleResultButtonClick(
-                                              item.id,
-                                              "NG",
-                                            )
-                                          }
-                                          disabled={!canEditResults}
-                                          className={`py-3 text-sm font-bold border transition-all rounded-lg flex items-center justify-center ${
-                                            formResults[item.id]?.result ===
-                                            "NG"
-                                              ? "bg-red-600 text-white border-red-600 shadow-md scale-[1.02]"
-                                              : "bg-white text-gray-500 border-gray-300 active:bg-gray-100"
-                                          }`}
-                                        >
-                                          NG
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <input
-                                        type="text"
-                                        value={
-                                          formResults[item.id]?.actualValue ||
-                                          ""
-                                        }
-                                        onChange={(e) =>
-                                          handleLocalChange(
-                                            item.id,
-                                            "actualValue",
-                                            e.target.value,
-                                          )
-                                        }
-                                        onBlur={() => handleSyncResult(item.id)}
-                                        disabled={!canEditResults}
-                                        placeholder={pT("typeInput")}
-                                        className="w-full text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none p-3 bg-gray-50"
-                                      />
-                                    )}
-                                  </div>
-
-                                  {/* 4. Ghi chú */}
-                                  <div className="flex flex-col gap-1">
-                                    <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                                      {pT("colNote")}
-                                    </span>
-                                    <input
-                                      type="text"
-                                      value={formResults[item.id]?.note || ""}
-                                      onChange={(e) =>
-                                        handleLocalChange(
-                                          item.id,
-                                          "note",
-                                          e.target.value,
+                                {!isCategoryCollapsed && (
+                                  <>
+                                    <div className="md:hidden divide-y divide-gray-100">
+                                      {checkLists
+                                        .filter(
+                                          (cl) => cl.categoryId === cat.id,
                                         )
-                                      }
-                                      onBlur={() => handleSyncResult(item.id)}
-                                      disabled={!canEditResults}
-                                      placeholder={pT("placeholderNote")}
-                                      className="w-full text-sm border-b border-gray-200 focus:border-blue-500 outline-none py-2 italic text-gray-600"
-                                    />
-                                  </div>
-                                </div>
-                              ))}
-                          </div>
+                                        .map((item) => (
+                                          <div
+                                            key={item.id}
+                                            className="p-4 flex flex-col gap-4 hover:bg-gray-50 transition-colors"
+                                          >
+                                            {/* 1. Câu hỏi */}
+                                            <div>
+                                              <p className="text-sm font-bold text-gray-800 leading-relaxed">
+                                                {item.questionCheck}
+                                              </p>
+                                            </div>
 
-                          {/* Desktop Table View */}
-                          <div className="hidden md:block overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                              <thead>
-                                <tr className="bg-gray-50 border-b border-gray-200">
-                                  <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[40%]">
-                                    {pT("colQuestion")}
-                                  </th>
-                                  <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[15%]">
-                                    {pT("colStandard")}
-                                  </th>
-                                  <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[20%]">
-                                    {pT("colResult")}
-                                  </th>
-                                  <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[25%]">
-                                    {pT("colNote")}
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-100">
-                                {checkLists
-                                  .filter((cl) => cl.categoryId === cat.id)
-                                  .map((item) => (
-                                    <tr
-                                      key={item.id}
-                                      className="hover:bg-gray-50 transition-colors"
-                                    >
-                                      <td className="p-3 text-sm text-gray-800">
-                                        {item.questionCheck}
-                                      </td>
-                                      <td className="p-3 text-sm text-gray-600">
-                                        <span
-                                          className={`px-2 py-1 rounded text-xs border font-medium ${item.spec ? "bg-blue-50 text-blue-700 border-blue-100" : "bg-gray-50 text-gray-400 border-gray-200"}`}
-                                        >
-                                          {item.spec || pT("noStandard")}
-                                        </span>
-                                      </td>
-                                      <td className="p-3">
-                                        {item.specType !== "input" ? (
-                                          <div className="flex gap-1.5">
-                                            <button
-                                              onClick={() =>
-                                                handleResultButtonClick(
-                                                  item.id,
-                                                  "OK",
-                                                )
-                                              }
-                                              disabled={!canEditResults}
-                                              className={`px-3 py-1 text-xs font-bold border transition-all rounded ${
-                                                formResults[item.id]?.result ===
-                                                "OK"
-                                                  ? "bg-green-600 text-white border-green-600 shadow-sm"
-                                                  : "bg-white text-gray-500 border-gray-300 hover:bg-gray-50"
-                                              }`}
-                                            >
-                                              OK
-                                            </button>
-                                            <button
-                                              onClick={() =>
-                                                handleResultButtonClick(
-                                                  item.id,
-                                                  "NG",
-                                                )
-                                              }
-                                              disabled={!canEditResults}
-                                              className={`px-3 py-1 text-xs font-bold border transition-all rounded ${
-                                                formResults[item.id]?.result ===
-                                                "NG"
-                                                  ? "bg-red-600 text-white border-red-600 shadow-sm"
-                                                  : "bg-white text-gray-500 border-gray-300 hover:bg-gray-50"
-                                              }`}
-                                            >
-                                              NG
-                                            </button>
+                                            {/* 2. Tiêu chuẩn */}
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                                                {pT("colStandard")}:
+                                              </span>
+                                              <div
+                                                className={`text-xs px-2 py-1 rounded border font-medium italic w-fit ${item.spec ? "text-blue-700 bg-blue-50 border-blue-100" : "text-gray-400 bg-gray-50 border-gray-200"}`}
+                                              >
+                                                {item.spec || pT("noStandard")}
+                                              </div>
+                                            </div>
+
+                                            {/* 3. Kết quả */}
+                                            <div className="flex flex-col gap-2">
+                                              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                                                {pT("colResult")}
+                                              </span>
+                                              {item.specType !== "input" ? (
+                                                <div className="grid grid-cols-2 gap-3">
+                                                  <button
+                                                    onClick={() =>
+                                                      handleResultButtonClick(
+                                                        item.id,
+                                                        "OK",
+                                                      )
+                                                    }
+                                                    disabled={!canEditResults}
+                                                    className={`py-3 text-sm font-bold border transition-all rounded-lg flex items-center justify-center ${
+                                                      formResults[item.id]
+                                                        ?.result === "OK"
+                                                        ? "bg-green-600 text-white border-green-600 shadow-md scale-[1.02]"
+                                                        : "bg-white text-gray-500 border-gray-300 active:bg-gray-100"
+                                                    }`}
+                                                  >
+                                                    OK
+                                                  </button>
+                                                  <button
+                                                    onClick={() =>
+                                                      handleResultButtonClick(
+                                                        item.id,
+                                                        "NG",
+                                                      )
+                                                    }
+                                                    disabled={!canEditResults}
+                                                    className={`py-3 text-sm font-bold border transition-all rounded-lg flex items-center justify-center ${
+                                                      formResults[item.id]
+                                                        ?.result === "NG"
+                                                        ? "bg-red-600 text-white border-red-600 shadow-md scale-[1.02]"
+                                                        : "bg-white text-gray-500 border-gray-300 active:bg-gray-100"
+                                                    }`}
+                                                  >
+                                                    NG
+                                                  </button>
+                                                </div>
+                                              ) : (
+                                                <input
+                                                  type="text"
+                                                  value={
+                                                    formResults[item.id]
+                                                      ?.actualValue || ""
+                                                  }
+                                                  onChange={(e) =>
+                                                    handleLocalChange(
+                                                      item.id,
+                                                      "actualValue",
+                                                      e.target.value,
+                                                    )
+                                                  }
+                                                  onBlur={() =>
+                                                    handleSyncResult(item.id)
+                                                  }
+                                                  disabled={!canEditResults}
+                                                  placeholder={pT("typeInput")}
+                                                  className="w-full text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none p-3 bg-gray-50"
+                                                />
+                                              )}
+                                            </div>
+
+                                            {/* 4. Ghi chú */}
+                                            <div className="flex flex-col gap-1">
+                                              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                                                {pT("colNote")}
+                                              </span>
+                                              <input
+                                                type="text"
+                                                value={
+                                                  formResults[item.id]?.note ||
+                                                  ""
+                                                }
+                                                onChange={(e) =>
+                                                  handleLocalChange(
+                                                    item.id,
+                                                    "note",
+                                                    e.target.value,
+                                                  )
+                                                }
+                                                onBlur={() =>
+                                                  handleSyncResult(item.id)
+                                                }
+                                                disabled={!canEditResults}
+                                                placeholder={pT(
+                                                  "placeholderNote",
+                                                )}
+                                                className="w-full text-sm border-b border-gray-200 focus:border-blue-500 outline-none py-2 italic text-gray-600"
+                                              />
+                                            </div>
                                           </div>
-                                        ) : (
-                                          <input
-                                            type="text"
-                                            value={
-                                              formResults[item.id]
-                                                ?.actualValue || ""
-                                            }
-                                            onChange={(e) =>
-                                              handleLocalChange(
-                                                item.id,
-                                                "actualValue",
-                                                e.target.value,
-                                              )
-                                            }
-                                            onBlur={() =>
-                                              handleSyncResult(item.id)
-                                            }
-                                            disabled={!canEditResults}
-                                            placeholder={pT("typeInput")}
-                                            className="w-full text-xs border-b border-gray-300 focus:border-blue-500 outline-none py-1"
-                                          />
-                                        )}
-                                      </td>
-                                      <td className="p-3">
-                                        <input
-                                          type="text"
-                                          value={
-                                            formResults[item.id]?.note || ""
-                                          }
-                                          onChange={(e) =>
-                                            handleLocalChange(
-                                              item.id,
-                                              "note",
-                                              e.target.value,
+                                        ))}
+                                    </div>
+
+                                    {/* Desktop Table View */}
+                                    <div className="hidden md:block overflow-x-auto">
+                                      <table className="w-full text-left border-collapse">
+                                        <thead>
+                                          <tr className="bg-gray-50 border-b border-gray-200">
+                                            <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[40%]">
+                                              {pT("colQuestion")}
+                                            </th>
+                                            <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[15%]">
+                                              {pT("colStandard")}
+                                            </th>
+                                            <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[20%]">
+                                              {pT("colResult")}
+                                            </th>
+                                            <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[25%]">
+                                              {pT("colNote")}
+                                            </th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                          {checkLists
+                                            .filter(
+                                              (cl) => cl.categoryId === cat.id,
                                             )
-                                          }
-                                          onBlur={() =>
-                                            handleSyncResult(item.id)
-                                          }
-                                          disabled={!canEditResults}
-                                          placeholder={pT("placeholderNote")}
-                                          className="w-full text-xs border-b border-gray-300 focus:border-blue-500 outline-none py-1 italic"
-                                        />
-                                      </td>
-                                    </tr>
-                                  ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      ))}
+                                            .map((item) => (
+                                              <tr
+                                                key={item.id}
+                                                className="hover:bg-gray-50 transition-colors"
+                                              >
+                                                <td className="p-3 text-sm text-gray-800">
+                                                  {item.questionCheck}
+                                                </td>
+                                                <td className="p-3 text-sm text-gray-600">
+                                                  <span
+                                                    className={`px-2 py-1 rounded text-xs border font-medium ${item.spec ? "bg-blue-50 text-blue-700 border-blue-100" : "bg-gray-50 text-gray-400 border-gray-200"}`}
+                                                  >
+                                                    {item.spec ||
+                                                      pT("noStandard")}
+                                                  </span>
+                                                </td>
+                                                <td className="p-3">
+                                                  {item.specType !== "input" ? (
+                                                    <div className="flex gap-1.5">
+                                                      <button
+                                                        onClick={() =>
+                                                          handleResultButtonClick(
+                                                            item.id,
+                                                            "OK",
+                                                          )
+                                                        }
+                                                        disabled={
+                                                          !canEditResults
+                                                        }
+                                                        className={`px-3 py-1 text-xs font-bold border transition-all rounded ${
+                                                          formResults[item.id]
+                                                            ?.result === "OK"
+                                                            ? "bg-green-600 text-white border-green-600 shadow-sm"
+                                                            : "bg-white text-gray-500 border-gray-300 hover:bg-gray-50"
+                                                        }`}
+                                                      >
+                                                        OK
+                                                      </button>
+                                                      <button
+                                                        onClick={() =>
+                                                          handleResultButtonClick(
+                                                            item.id,
+                                                            "NG",
+                                                          )
+                                                        }
+                                                        disabled={
+                                                          !canEditResults
+                                                        }
+                                                        className={`px-3 py-1 text-xs font-bold border transition-all rounded ${
+                                                          formResults[item.id]
+                                                            ?.result === "NG"
+                                                            ? "bg-red-600 text-white border-red-600 shadow-sm"
+                                                            : "bg-white text-gray-500 border-gray-300 hover:bg-gray-50"
+                                                        }`}
+                                                      >
+                                                        NG
+                                                      </button>
+                                                    </div>
+                                                  ) : (
+                                                    <input
+                                                      type="text"
+                                                      value={
+                                                        formResults[item.id]
+                                                          ?.actualValue || ""
+                                                      }
+                                                      onChange={(e) =>
+                                                        handleLocalChange(
+                                                          item.id,
+                                                          "actualValue",
+                                                          e.target.value,
+                                                        )
+                                                      }
+                                                      onBlur={() =>
+                                                        handleSyncResult(
+                                                          item.id,
+                                                        )
+                                                      }
+                                                      disabled={!canEditResults}
+                                                      placeholder={pT(
+                                                        "typeInput",
+                                                      )}
+                                                      className="w-full text-xs border-b border-gray-300 focus:border-blue-500 outline-none py-1"
+                                                    />
+                                                  )}
+                                                </td>
+                                                <td className="p-3">
+                                                  <input
+                                                    type="text"
+                                                    value={
+                                                      formResults[item.id]
+                                                        ?.note || ""
+                                                    }
+                                                    onChange={(e) =>
+                                                      handleLocalChange(
+                                                        item.id,
+                                                        "note",
+                                                        e.target.value,
+                                                      )
+                                                    }
+                                                    onBlur={() =>
+                                                      handleSyncResult(item.id)
+                                                    }
+                                                    disabled={!canEditResults}
+                                                    placeholder={pT(
+                                                      "placeholderNote",
+                                                    )}
+                                                    className="w-full text-xs border-b border-gray-300 focus:border-blue-500 outline-none py-1 italic"
+                                                  />
+                                                </td>
+                                              </tr>
+                                            ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            );
+                          })}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="bg-white shadow-sm border border-gray-200 p-4">
@@ -999,7 +1090,9 @@ const handleBackToSource = () => {
                   <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-800 px-3 py-3 text-sm font-bold text-white active:scale-[0.98]">
                     <div className="flex items-center justify-center gap-1">
                       <FaUpload size={10} />
-                      <p className="text-sm font-medium mb-0">Tải từ thư viện</p>
+                      <p className="text-sm font-medium mb-0">
+                        Tải từ thư viện
+                      </p>
                     </div>
                     <input
                       type="file"

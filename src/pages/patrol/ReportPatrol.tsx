@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   FaArrowLeft,
   FaChartBar,
@@ -26,13 +26,16 @@ const ReportPatrol: React.FC<PatrolSharedProps> = (props) => {
   const { t } = useTranslation('patrol');
   const [isMobileReportBlocked, setIsMobileReportBlocked] = useState(false);
 
-  const pT = (key: string, options?: any) => {
-    if (user?.role === 'PQC') {
-      return t(key, { ...options, lng: 'vi' }) as any;
-    }
+  const pT = useCallback(
+    (key: string, options?: any) => {
+      if (user?.role === 'PQC') {
+        return t(key, { ...options, lng: 'vi' }) as any;
+      }
 
-    return t(key, options) as any;
-  };
+      return t(key, options) as any;
+    },
+    [t, user?.role],
+  );
 
   useEffect(() => {
     const checkDevice = () => {

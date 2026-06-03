@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, {
@@ -28,19 +29,18 @@ import {
   FaExternalLinkAlt,
   FaEye,
   FaImage,
+  FaUndo,
   FaLayerGroup,
   FaTimes,
 } from "react-icons/fa";
 import { MdOutlineTableChart } from "react-icons/md";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import {
-  fetchImagesBySession,
   fetchPatrolSessions,
   fetchStages,
   fetchCategories,
   fetchCheckLists,
   fetchLineAreas,
-  fetchCheckListResults,
 } from "../../redux/slices/patrolSlice";
 import type { PatrolSharedProps } from "../../pages/patrol/types";
 import ReactPaginate from "react-paginate";
@@ -66,7 +66,6 @@ interface NGErrorItem {
   checkAt: string;
   checkAtText: string;
   shift: ShiftType;
-  shiftText: string;
 }
 
 interface SheetNGRecord {
@@ -82,13 +81,13 @@ interface SheetNGRecord {
   detectedBy: string;
   note: string;
   shift: ShiftType;
-  shiftText: string;
   errors: NGErrorItem[];
   images: PatrolImageView[];
   imageCount: number;
   firstErrorName: string;
   stageSummary: string;
   categorySummary: string;
+  hasImages: boolean;
 }
 
 interface PatrolImageView {
@@ -121,6 +120,7 @@ const EMPTY = "—";
 const DAY_START_HOUR = 8;
 const NIGHT_START_HOUR = 20;
 const TREND_DETAIL_PAGE_SIZE = 10;
+const DETAIL_TABLE_PAGE_SIZE = 20;
 
 const PAGINATE_PROPS = {
   previousLabel: "←",
@@ -139,6 +139,17 @@ const PAGINATE_PROPS = {
     "flex items-center justify-center w-8 h-8 text-xs text-gray-400 no-underline",
   disabledClassName: "opacity-40 cursor-not-allowed",
 };
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debounced;
+}
 
 function truncateText(value: any, max = 28) {
   const text = String(value || EMPTY)
@@ -247,6 +258,43 @@ function getDateTimeFilter(value: string) {
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? null : d;
 }
+
+function normalizeDateTimeLocalByDefaultTime(
+  value: string,
+  defaultTime: "08:00" | "07:59",
+  previousValue: string,
+) {
+  if (!value) return "";
+
+  const [nextDate, nextTimeRaw] = value.split("T");
+  const [, previousTimeRaw] = previousValue.split("T");
+
+  const nextTime = nextTimeRaw?.slice(0, 5);
+  const previousTime = previousTimeRaw?.slice(0, 5);
+
+  if (!nextDate) return "";
+
+  // Khi browser chỉ đổi ngày, thường nó giữ lại giờ cũ nếu đã có.
+  // Nếu chưa có giờ cũ thì set giờ mặc định theo ca.
+  if (!nextTime) {
+    return `${nextDate}T${defaultTime}`;
+  }
+
+  // Nếu trước đó chưa có value, lần đầu chọn sẽ dùng giờ mặc định.
+  // Trường hợp user thật sự muốn đổi giờ, lần đổi tiếp theo sẽ được giữ.
+  if (!previousValue) {
+    return `${nextDate}T${defaultTime}`;
+  }
+
+  // Nếu giờ đang là giờ mặc định cũ, đổi ngày thì tiếp tục giữ default.
+  // Nếu user đã chỉnh giờ khác, giữ giờ user chọn.
+  if (!previousTime || previousTime === defaultTime) {
+    return `${nextDate}T${defaultTime}`;
+  }
+
+  return `${nextDate}T${nextTime}`;
+}
+
 
 function addDays(date: Date, days: number) {
   const d = new Date(date);
@@ -395,17 +443,15 @@ const NGDefectAnalyticsChart: React.FC<
     stages,
     categories,
     checkLists,
-    checkListResults,
     lineAreas,
-    images,
     loading,
-    loadedImageSessionIds,
   } = useAppSelector((state: any) => state.patrol);
 
   const patrolType: PatrolKind = type || activeTab || "daily";
 
   const [rangeMode, setRangeMode] = useState<RangeMode>("7d");
   const [offset, setOffset] = useState(0);
+  const isRestoringReportStateRef = useRef(false);
   const [statusMode, setStatusMode] = useState<StatusMode>("all");
   const [shiftFilter, setShiftFilter] = useState<ShiftFilter>("both");
   const [viewTab, setViewTab] = useState<ViewTab>("trend");
@@ -413,6 +459,7 @@ const NGDefectAnalyticsChart: React.FC<
   const [selectedRecord, setSelectedRecord] = useState<SheetNGRecord | null>(
     null,
   );
+  const [detailPage, setDetailPage] = useState(0);
   const [highlightSessionId, setHighlightSessionId] = useState<number | null>(
     null,
   );
@@ -427,12 +474,17 @@ const NGDefectAnalyticsChart: React.FC<
   const [trendDetailPage, setTrendDetailPage] = useState(0);
   const [fromDateTime, setFromDateTime] = useState("");
   const [toDateTime, setToDateTime] = useState("");
+  const debouncedKeyword = useDebounce(keyword, 250);
+  const debouncedFromDateTime = useDebounce(fromDateTime, 400);
+  const debouncedToDateTime = useDebounce(toDateTime, 400);
   const dispatch = useAppDispatch();
+  const bootstrapRequestedKeysRef = useRef(new Set<string>());
   const { t } = useTranslation("patrol");
 
   const pT = useCallback(
     (key: string, options?: any) => {
-      if (user?.role === "PQC") return t(key, { ...options, lng: "vi" }) as string;
+      if (user?.role === "PQC")
+        return t(key, { ...options, lng: "vi" }) as string;
       return t(key, options) as string;
     },
     [t, user?.role],
@@ -458,8 +510,16 @@ const NGDefectAnalyticsChart: React.FC<
 
   const chartTabs = useMemo(
     () => [
-      { key: "trend" as ViewTab, label: pT("reportTabTrend"), icon: <FaBug size={12} /> },
-      { key: "breakdown" as ViewTab, label: pT("reportTabBreakdown"), icon: <FaLayerGroup size={12} /> },
+      {
+        key: "trend" as ViewTab,
+        label: pT("reportTabTrend"),
+        icon: <FaBug size={12} />,
+      },
+      {
+        key: "breakdown" as ViewTab,
+        label: pT("reportTabBreakdown"),
+        icon: <FaLayerGroup size={12} />,
+      },
       {
         key: "table" as ViewTab,
         label: pT("reportTabTable"),
@@ -512,22 +572,34 @@ const NGDefectAnalyticsChart: React.FC<
   );
 
   useEffect(() => {
-    if (!sessions?.length) dispatch(fetchPatrolSessions());
-    if (!stages?.length) dispatch(fetchStages());
-    if (!categories?.length) dispatch(fetchCategories());
-    if (!checkLists?.length) dispatch(fetchCheckLists());
-    if (!lineAreas?.length) dispatch(fetchLineAreas());
-    if (!checkListResults?.length) dispatch(fetchCheckListResults());
-  }, [
-    dispatch,
-    sessions?.length,
-    stages?.length,
-    categories?.length,
-    checkLists?.length,
-    lineAreas?.length,
-    checkListResults?.length,
-  ]);
+  const requestOnce = (
+    key: string,
+    hasData: boolean,
+    actionCreator: () => any,
+  ) => {
+    if (hasData || bootstrapRequestedKeysRef.current.has(key)) return;
 
+    bootstrapRequestedKeysRef.current.add(key);
+    dispatch(actionCreator())
+      .unwrap()
+      .catch(() => {
+        bootstrapRequestedKeysRef.current.delete(key);
+      });
+  };
+
+  requestOnce("sessions", Boolean(sessions?.length), fetchPatrolSessions);
+  requestOnce("stages", Boolean(stages?.length), fetchStages);
+  requestOnce("categories", Boolean(categories?.length), fetchCategories);
+  requestOnce("checkLists", Boolean(checkLists?.length), fetchCheckLists);
+  requestOnce("lineAreas", Boolean(lineAreas?.length), fetchLineAreas);
+}, [
+  dispatch,
+  sessions?.length,
+  stages?.length,
+  categories?.length,
+  checkLists?.length,
+  lineAreas?.length,
+]);
   type CheckListLookup = {
     id: number;
     categoryId: number;
@@ -616,124 +688,182 @@ const NGDefectAnalyticsChart: React.FC<
     );
   }, [checkLists]);
 
-  const imagesBySession = useMemo(() => {
-    return groupBy(images || [], (img: any) =>
-      String(Number(img?.patrolSessionId || 0)),
-    );
-  }, [images]);
+  const getSessionImages = useCallback((session: any): PatrolImageView[] => {
+    const rawImages =
+      Array.isArray(session?.images) && session.images.length > 0
+        ? session.images
+        : Array.isArray(session?.patrolImages) && session.patrolImages.length > 0
+          ? session.patrolImages
+          : Array.isArray(session?.sessionImages) && session.sessionImages.length > 0
+            ? session.sessionImages
+            : Array.isArray(session?.patrolSessionImages) &&
+                session.patrolSessionImages.length > 0
+              ? session.patrolSessionImages
+              : [];
 
-  const resultsBySession = useMemo(() => {
-    return groupBy(checkListResults || [], (result: any) =>
-      String(Number(result?.patrolSessionId || 0)),
-    );
-  }, [checkListResults]);
+    return rawImages.map(buildImageView).filter((img) => Boolean(img.url));
+  }, []);
 
-  const allSheetRecords = useMemo<SheetNGRecord[]>(() => {
-    return (sessions || [])
-      .filter(
-        (session: any) =>
-          normalizePatrolKind(session?.patrolType) === patrolType,
-      )
-      .filter((session: any) => {
-        if (statusMode === "all") return true;
-        return String(session?.status || "") === statusMode;
-      })
-      .map((session: any) => {
-        const sessionId = Number(session?.id || 0);
-        const line = lineMap.get(Number(session?.lineAreaId));
-        const sessionImages = (imagesBySession[String(sessionId)] || []).map(
-          buildImageView,
-        );
+  const getLineName = useCallback(
+    (session: any) => {
+      const line = lineMap.get(Number(session?.lineAreaId));
+      return (
+        session?.lineArea?.lineAreaName ||
+        session?.lineAreaName ||
+        session?.lineName ||
+        line?.lineAreaName ||
+        EMPTY
+      );
+    },
+    [lineMap],
+  );
 
-        const sessionResults =
-          Array.isArray(session?.checkListResults) &&
-          session.checkListResults.length > 0
-            ? session.checkListResults
-            : resultsBySession[String(sessionId)] || [];
+  // allSheetRecords
+const allSheetRecords = useMemo<SheetNGRecord[]>(() => {
+  return (sessions || [])
+    .filter(
+      (session: any) =>
+        normalizePatrolKind(session?.patrolType) === patrolType,
+    )
+    .filter((session: any) => {
+      if (statusMode === "all") return true;
+      return String(session?.status || "") === statusMode;
+    })
+    .map((session: any) => {
+      const sessionId = Number(session?.id || 0);
+      const sessionImages = getSessionImages(session);
+      const fallbackImageCount = Number(
+        session?.imageCount ||
+          session?.imagesCount ||
+          session?.totalImages ||
+          session?.patrolImageCount ||
+          0,
+      );
 
-        // Report phải gom sheet theo thời gian tạo sheet/session giống Dashboard.
-        // Không dùng checkAt của từng lỗi để tính ngày/ca vì checkAt có thể lệch thời điểm nhập kết quả.
-        const sheetTime = session?.createdAt || session?.createAt || "";
-        const sheetShiftInfo = getShiftDay(sheetTime);
+      // API get patrolSession hiện đã trả về checkListResults + images theo từng sheet.
+      // Không dùng fetch riêng ảnh/result theo session nữa để giảm request và response thừa.
+      const sessionResults = Array.isArray(session?.checkListResults)
+        ? session.checkListResults
+        : [];
+      const lineName = getLineName(session);
 
-        const errors: NGErrorItem[] = sessionResults
-          .filter((result: any) => isNG(result?.result))
-          .map((result: any, index: number) => {
-            const checkList = checkListMap.get(Number(result?.checkListId));
-            const category = checkList
-              ? categoryMap.get(Number(checkList.categoryId))
-              : undefined;
-            const stage = category
-              ? stageMap.get(Number(category.stageId))
-              : undefined;
+      const sheetTime = session?.createdAt || session?.createAt || "";
+      const sheetShiftInfo = getShiftDay(sheetTime);
 
-            const checkAt = result?.checkAt || sheetTime;
-            const errorShiftInfo = getShiftDay(checkAt);
+      const errors: NGErrorItem[] = sessionResults
+        .filter((result: any) => isNG(result?.result))
+        .map((result: any, index: number) => {
+          const nestedCheckList = result?.checkList;
+          const nestedCategory = nestedCheckList?.category;
+          const nestedStage = nestedCategory?.stage;
 
-            return {
-              id: `${sessionId}-${result?.id || result?.checkListId || index}`,
-              resultId: Number(result?.id || 0),
-              checkListId: Number(result?.checkListId || 0),
-              stageName: stage?.name || EMPTY,
-              categoryName: category?.name || EMPTY,
-              errorName:
-                checkList?.questionCheck ||
-                String(result?.checkListId || EMPTY),
-              actualValue: result?.actualValue || EMPTY,
-              note: result?.note || EMPTY,
-              checkAt,
-              checkAtText: fmtDateTime(checkAt),
-              shift: errorShiftInfo.shift,
-              shiftText: getShiftText(errorShiftInfo.shift, pT),
-            };
-          });
+          const checkList =
+            checkListMap.get(Number(result?.checkListId)) ||
+            (nestedCheckList
+              ? {
+                  id: Number(nestedCheckList.id || result?.checkListId || 0),
+                  categoryId: Number(nestedCheckList.categoryId || 0),
+                  questionCheck: nestedCheckList.questionCheck || "",
+                  spec: nestedCheckList.spec || "",
+                  specType: nestedCheckList.specType,
+                  isActive: nestedCheckList.isActive,
+                }
+              : undefined);
 
-        if (!errors.length || !sheetShiftInfo.key) return null;
+          const category =
+            (checkList ? categoryMap.get(Number(checkList.categoryId)) : undefined) ||
+            (nestedCategory
+              ? {
+                  id: Number(nestedCategory.id || 0),
+                  stageId: Number(nestedCategory.stageId || 0),
+                  name: nestedCategory.name || "",
+                  isActive: nestedCategory.isActive,
+                }
+              : undefined);
 
-        const dateKey = sheetShiftInfo.key;
-        const sheetShift = sheetShiftInfo.shift;
-        const sheetNote = [
-          session?.note,
-          ...errors.map((x) => x.note).filter((x) => x && x !== EMPTY),
-        ]
-          .filter(Boolean)
-          .join("\n");
+          const stage =
+            (category ? stageMap.get(Number(category.stageId)) : undefined) ||
+            (nestedStage
+              ? {
+                  id: Number(nestedStage.id || 0),
+                  name: nestedStage.name || "",
+                  patrolType: String(nestedStage.patrolType || ""),
+                  isActive: nestedStage.isActive,
+                }
+              : undefined);
 
-        return {
-          id: String(sessionId),
-          date: dateKey,
-          dateText: fmtDateKey(dateKey),
-          sheetTime,
-          sheetTimeText: fmtTime(sheetTime),
-          patrolType: session?.patrolType || "",
-          sessionId,
-          lineName: line?.lineAreaName || EMPTY,
-          status: session?.status || EMPTY,
-          detectedBy: session?.fullName || EMPTY,
-          note: sheetNote || EMPTY,
-          shift: sheetShift,
-          shiftText: getShiftText(sheetShift, pT),
-          errors,
-          images: sessionImages,
-          imageCount: sessionImages.length,
-          firstErrorName: errors[0]?.errorName || EMPTY,
-          stageSummary: uniqText(errors.map((x) => x.stageName)),
-          categorySummary: uniqText(errors.map((x) => x.categoryName)),
-        } as SheetNGRecord;
-      })
-      .filter(Boolean) as SheetNGRecord[];
-  }, [
-    sessions,
-    patrolType,
-    statusMode,
-    imagesBySession,
-    resultsBySession,
-    lineMap,
-    checkListMap,
-    categoryMap,
-    stageMap,
-    pT,
-  ]);
+          const checkAt = result?.checkAt || sheetTime;
+          const errorShiftInfo = getShiftDay(checkAt);
+
+          return {
+            id: `${sessionId}-${result?.id || result?.checkListId || index}`,
+            resultId: Number(result?.id || 0),
+            checkListId: Number(result?.checkListId || 0),
+            stageName: stage?.name || EMPTY,
+            categoryName: category?.name || EMPTY,
+            errorName:
+              checkList?.questionCheck ||
+              String(result?.checkListId || EMPTY),
+            actualValue: result?.actualValue || EMPTY,
+            note: result?.note || EMPTY,
+            checkAt,
+            checkAtText: fmtDateTime(checkAt),
+            shift: errorShiftInfo.shift,
+            // ✅ bỏ shiftText — tính lúc render
+          };
+        });
+
+      if (!errors.length || !sheetShiftInfo.key) return null;
+
+      const dateKey = sheetShiftInfo.key;
+      const sheetShift = sheetShiftInfo.shift;
+      const sheetNote = [
+        session?.note,
+        ...errors.map((x) => x.note).filter((x) => x && x !== EMPTY),
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      return {
+        id: String(sessionId),
+        date: dateKey,
+        dateText: fmtDateKey(dateKey),
+        sheetTime,
+        sheetTimeText: fmtTime(sheetTime),
+        patrolType: session?.patrolType || "",
+        sessionId,
+        lineName,
+        status: session?.status || EMPTY,
+        detectedBy: session?.fullName || EMPTY,
+        note: sheetNote || EMPTY,
+        shift: sheetShift,
+        // ✅ bỏ shiftText — tính lúc render
+        errors,
+        images: sessionImages,
+        imageCount: sessionImages.length || fallbackImageCount,
+        firstErrorName: errors[0]?.errorName || EMPTY,
+        stageSummary: uniqText(errors.map((x) => x.stageName)),
+        categorySummary: uniqText(errors.map((x) => x.categoryName)),
+        hasImages: sessionImages.length > 0 || fallbackImageCount > 0,
+      } as SheetNGRecord;
+    })
+    .filter(Boolean) as SheetNGRecord[];
+}, [
+  sessions,
+  patrolType,
+  statusMode,
+  getSessionImages,
+  getLineName,
+  checkListMap,
+  categoryMap,
+  stageMap,
+  // ✅ KHÔNG có pT
+]);
+
+const getShiftLabel = useCallback(
+  (shift: ShiftType) => getShiftText(shift, pT),
+  [pT],
+);
 
   const firstDateKey = useMemo(() => {
     return allSheetRecords
@@ -754,9 +884,9 @@ const NGDefectAnalyticsChart: React.FC<
   );
 
   const rangeRecords = useMemo(() => {
-    const kw = keyword.trim().toLowerCase();
-    const customFrom = getDateTimeFilter(fromDateTime);
-    const customTo = getDateTimeFilter(toDateTime);
+    const kw = debouncedKeyword.trim().toLowerCase();
+    const customFrom = getDateTimeFilter(debouncedFromDateTime);
+    const customTo = getDateTimeFilter(debouncedToDateTime);
 
     return allSheetRecords.filter((record) => {
       if (customFrom || customTo) {
@@ -799,18 +929,18 @@ const NGDefectAnalyticsChart: React.FC<
         .includes(kw);
     });
   }, [
-    allSheetRecords,
-    start,
-    end,
-    keyword,
-    shiftFilter,
-    fromDateTime,
-    toDateTime,
+      allSheetRecords,
+      start,
+      end,
+      debouncedKeyword,    
+      shiftFilter,
+      debouncedFromDateTime, 
+      debouncedToDateTime,  
   ]);
 
   const effectiveTrendRange = useMemo(() => {
-    const customFrom = getDateTimeFilter(fromDateTime);
-    const customTo = getDateTimeFilter(toDateTime);
+    const customFrom = getDateTimeFilter(debouncedFromDateTime);
+    const customTo = getDateTimeFilter(debouncedToDateTime); 
 
     if (!customFrom && !customTo) {
       return { startKey, endKey };
@@ -826,7 +956,7 @@ const NGDefectAnalyticsChart: React.FC<
       startKey: formatLocalDateKey(fromBusiness),
       endKey: formatLocalDateKey(toBusiness),
     };
-  }, [fromDateTime, toDateTime, startKey, endKey]);
+  }, [debouncedFromDateTime, debouncedToDateTime, startKey, endKey]);
 
   const trendBuckets = useMemo<PeriodBucket[]>(() => {
     const fromKey = effectiveTrendRange.startKey;
@@ -872,13 +1002,33 @@ const NGDefectAnalyticsChart: React.FC<
   );
 
   const lineData = useMemo(() => {
-    return Object.entries(groupBy(activeRecords, (x) => x.lineName))
-      .map(([name, rows]) => ({
+    const lineCounter = new Map<
+      string,
+      { name: string; value: number; sheetCount: number; records: SheetNGRecord[] }
+    >();
+
+    activeRecords.forEach((record) => {
+      const name = record.lineName || EMPTY;
+      const current = lineCounter.get(name) || {
         name,
-        value: rows.length,
-        records: rows,
-      }))
-      .sort((a, b) => b.value - a.value);
+        value: 0,
+        sheetCount: 0,
+        records: [],
+      };
+
+      // Mỗi sheet NG có thể có nhiều lỗi NG. Các sheet trùng line sẽ được cộng dồn số lỗi
+      // để lọc đúng line có tổng lỗi lớn nhất, không chỉ đếm số sheet.
+      current.value += record.errors.length;
+      current.sheetCount += 1;
+      current.records.push(record);
+      lineCounter.set(name, current);
+    });
+
+    return Array.from(lineCounter.values()).sort((a, b) => {
+      if (b.value !== a.value) return b.value - a.value;
+      if (b.sheetCount !== a.sheetCount) return b.sheetCount - a.sheetCount;
+      return a.name.localeCompare(b.name);
+    });
   }, [activeRecords]);
 
   const errorData = useMemo(
@@ -905,17 +1055,46 @@ const NGDefectAnalyticsChart: React.FC<
     return trendBuckets.map((bucket) => {
       const row: any = { label: bucket.label, total: bucket.total };
       const byLine = groupBy(bucket.records, (record) => record.lineName);
+
       topLineKeys.forEach((line) => {
-        row[line.key] = byLine[line.name]?.length || 0;
+        row[line.key] =
+          byLine[line.name]?.reduce(
+            (sum, record) => sum + record.errors.length,
+            0,
+          ) || 0;
       });
+
       return row;
     });
   }, [trendBuckets, topLineKeys]);
 
-  const detailRows = useMemo(
-    () => activeRecords.slice(0, compact ? 20 : 300),
-    [activeRecords, compact],
-  );
+  const detailTablePageSize = compact ? 20 : DETAIL_TABLE_PAGE_SIZE;
+
+  const sortedDetailRecords = useMemo(() => {
+    return [...activeRecords].sort((a, b) => {
+      const timeA = parseDate(a.sheetTime)?.getTime() || 0;
+      const timeB = parseDate(b.sheetTime)?.getTime() || 0;
+
+      // Ngày mới nhất / giờ mới nhất lên đầu
+      return timeB - timeA;
+    });
+  }, [activeRecords]);
+
+  const detailPageCount = useMemo(() => {
+    return Math.ceil(sortedDetailRecords.length / detailTablePageSize);
+  }, [sortedDetailRecords.length, detailTablePageSize]);
+
+  const detailRows = useMemo(() => {
+    const safePage =
+      detailPageCount > 0 ? Math.min(detailPage, detailPageCount - 1) : 0;
+
+    const startIndex = safePage * detailTablePageSize;
+
+    return sortedDetailRecords.slice(
+      startIndex,
+      startIndex + detailTablePageSize,
+    );
+  }, [sortedDetailRecords, detailPage, detailPageCount, detailTablePageSize]);
 
   const trendSelectedRows = useMemo(() => {
     if (!drillPoint) return [];
@@ -930,13 +1109,13 @@ const NGDefectAnalyticsChart: React.FC<
 
   const trendSelectedLabel = useMemo(() => {
     if (!drillPoint) return "";
-    return `${fmtDateKey(drillPoint.dateKey)} - ${getShiftText(drillPoint.shift, pT)}`;
-  }, [drillPoint, pT]);
+    return `${fmtDateKey(drillPoint.dateKey)} - ${getShiftLabel(drillPoint.shift)}`;
+  }, [drillPoint, getShiftLabel]);
 
   const totalSheetNG = activeRecords.length;
   const totalErrorNG = activeErrors.length;
   const topLine = lineData[0]?.name || EMPTY;
-  const imageLinkedCount = activeRecords.filter((x) => x.imageCount > 0).length;
+  const imageLinkedCount = activeRecords.filter((x) => x.hasImages).length;
 
   const openImage = useCallback(
     (img: PatrolImageView, title: string) => {
@@ -950,17 +1129,24 @@ const NGDefectAnalyticsChart: React.FC<
     [setPreviewImage],
   );
 
-  const goToSheetDetailFromReport = useCallback(
-    (row: SheetNGRecord, returnMode: ReportReturnMode = "table") => {
-      const state = {
+  const buildReportState = useCallback(
+    (
+      override?: Partial<{
+        highlightId: number | null;
+        returnMode: ReportReturnMode;
+        reportTab: ViewTab;
+      }>,
+    ) => {
+      return {
         source: "report",
         returnPath: `${window.location.pathname}${window.location.search}`,
-        highlightId: row.sessionId,
+        highlightId: override?.highlightId ?? null,
         type: patrolType,
-        reportTab: returnMode === "trend-dot" ? "trend" : "table",
-        returnMode,
+        reportTab: override?.reportTab ?? viewTab,
+        returnMode: override?.returnMode ?? "table",
         drillPoint,
         trendDetailPage,
+        detailPage,
         rangeMode,
         offset,
         statusMode,
@@ -970,15 +1156,13 @@ const NGDefectAnalyticsChart: React.FC<
         toDateTime,
         savedAt: Date.now(),
       };
-
-      localStorage.setItem("patrolReportReturnState", JSON.stringify(state));
-      goToView?.("detail", String(row.sessionId), patrolType);
     },
     [
-      goToView,
       patrolType,
+      viewTab,
       drillPoint,
       trendDetailPage,
+      detailPage,
       rangeMode,
       offset,
       statusMode,
@@ -989,26 +1173,115 @@ const NGDefectAnalyticsChart: React.FC<
     ],
   );
 
-  const handleShiftDotClick = useCallback(
-    (payload: any, shift: ShiftType) => {
-      if (!payload?.dateKey) return;
-
-      // Không đổi shiftFilter ở đây. Nếu đang chọn "Cả 2 ca", cả 2 line phải luôn hiển thị.
-      // Dot chỉ dùng để drill xuống danh sách sheet NG của đúng ngày + đúng ca.
-      setDrillPoint((prev) => {
-        const isSame =
-          prev?.dateKey === payload.dateKey && prev?.shift === shift;
-
-        return isSame ? null : { dateKey: payload.dateKey, shift };
-      });
-      setTrendDetailPage(0);
-    },
-    [],
-  );
+  const isFreshReportReturnState = (savedAt?: number) => {
+    if (!savedAt) return false;
+    return Date.now() - Number(savedAt) < 30 * 60 * 1000;
+  };
 
   useEffect(() => {
+    if (isRestoringReportStateRef.current) return;
+
+    const oldRaw = localStorage.getItem("patrolReportReturnState");
+
+    let oldState: any = null;
+
+    try {
+      oldState = oldRaw ? JSON.parse(oldRaw) : null;
+    } catch {
+      oldState = null;
+    }
+
+    const hasPendingReturnState =
+      oldState?.source === "report" &&
+      oldState?.highlightId &&
+      isFreshReportReturnState(oldState?.savedAt);
+
+    if (hasPendingReturnState) return;
+
+    const currentState = buildReportState();
+
+    localStorage.setItem(
+      "patrolReportReturnState",
+      JSON.stringify({
+        ...currentState,
+        highlightId: null,
+        returnMode: currentState.returnMode,
+        reportTab: currentState.reportTab,
+      }),
+    );
+  }, [buildReportState]);
+
+  const goToSheetDetailFromReport = useCallback(
+    (row: SheetNGRecord, returnMode: ReportReturnMode = "table") => {
+      const state = buildReportState({
+        highlightId: row.sessionId,
+        returnMode,
+        reportTab: returnMode === "trend-dot" ? "trend" : "table",
+      });
+
+      localStorage.setItem("patrolReportReturnState", JSON.stringify(state));
+      goToView?.("detail", String(row.sessionId), patrolType);
+    },
+    [buildReportState, goToView, patrolType],
+  );
+
+  const handleShiftDotClick = useCallback((payload: any, shift: ShiftType) => {
+    if (!payload?.dateKey) return;
+
+    // Không đổi shiftFilter ở đây. Nếu đang chọn "Cả 2 ca", cả 2 line phải luôn hiển thị.
+    // Dot chỉ dùng để drill xuống danh sách sheet NG của đúng ngày + đúng ca.
+    setDrillPoint((prev) => {
+      const isSame = prev?.dateKey === payload.dateKey && prev?.shift === shift;
+
+      return isSame ? null : { dateKey: payload.dateKey, shift };
+    });
     setTrendDetailPage(0);
-  }, [drillPoint, keyword, statusMode, rangeMode, offset, shiftFilter, fromDateTime, toDateTime]);
+  }, []);
+
+  const handleResetFilters = useCallback(() => {
+    setKeyword("");
+    setFromDateTime("");
+    setToDateTime("");
+    setStatusMode("all");
+    setShiftFilter("both");
+    setRangeMode("7d");
+    setOffset(0);
+    setDrillPoint(null);
+    setHoveredTrendPoint(null);
+    setTrendDetailPage(0);
+    setDetailPage(0);
+    setSelectedRecord(null);
+    setHighlightSessionId(null);
+
+    localStorage.removeItem("patrolReportReturnState");
+  }, []);
+
+  useEffect(() => {
+    if (isRestoringReportStateRef.current) return;
+
+    setTrendDetailPage(0);
+    setDetailPage(0);
+  }, [
+  drillPoint,
+  debouncedKeyword,      
+  statusMode,
+  rangeMode,
+  offset,
+  shiftFilter,
+  debouncedFromDateTime, 
+  debouncedToDateTime,  
+  patrolType,
+]);
+
+  useEffect(() => {
+    if (detailPageCount > 0 && detailPage > detailPageCount - 1) {
+      setDetailPage(detailPageCount - 1);
+    }
+
+    if (detailPageCount === 0 && detailPage !== 0) {
+      setDetailPage(0);
+    }
+  }, [detailPage, detailPageCount]);
 
   useEffect(() => {
     if (!selectedRecord) return;
@@ -1022,14 +1295,45 @@ const NGDefectAnalyticsChart: React.FC<
   }, [selectedRecord]);
 
   useEffect(() => {
+  if (!selectedRecord) return;
+
+  const latestRecord = activeRecords.find(
+    (record) => record.sessionId === selectedRecord.sessionId,
+  );
+
+  if (!latestRecord) return;
+
+  if (latestRecord === selectedRecord) return;
+
+  const hasChanged =
+    latestRecord.imageCount !== selectedRecord.imageCount ||
+    latestRecord.images.length !== selectedRecord.images.length ||
+    latestRecord.errors.length !== selectedRecord.errors.length;
+
+  if (hasChanged) {
+    setSelectedRecord(latestRecord);
+  }
+}, [activeRecords]);
+
+  useEffect(() => {
     const raw = localStorage.getItem("patrolReportReturnState");
     if (!raw) return;
 
     try {
       const saved = JSON.parse(raw);
 
-      if (saved?.source !== "report" || !saved?.highlightId) return;
-      if (saved.type && saved.type !== patrolType) return;
+      const canRestore =
+        saved?.source === "report" &&
+        saved?.highlightId &&
+        isFreshReportReturnState(saved?.savedAt) &&
+        (!saved.type || saved.type === patrolType);
+
+      if (!canRestore) {
+        isRestoringReportStateRef.current = false;
+        return;
+      }
+
+      isRestoringReportStateRef.current = true;
 
       setViewTab(saved.reportTab || "table");
       setHighlightSessionId(Number(saved.highlightId));
@@ -1039,15 +1343,28 @@ const NGDefectAnalyticsChart: React.FC<
       if (saved.statusMode) setStatusMode(saved.statusMode);
       if (saved.shiftFilter) setShiftFilter(saved.shiftFilter);
       if (typeof saved.keyword === "string") setKeyword(saved.keyword);
-      if (typeof saved.fromDateTime === "string") setFromDateTime(saved.fromDateTime);
+      if (typeof saved.fromDateTime === "string")
+        setFromDateTime(saved.fromDateTime);
       if (typeof saved.toDateTime === "string") setToDateTime(saved.toDateTime);
 
-      if (saved.returnMode === "trend-dot" && saved.drillPoint) {
+      if (saved.drillPoint) {
         setDrillPoint(saved.drillPoint);
+      }
+
+      if (saved.returnMode === "trend-dot") {
         setTrendDetailPage(Number(saved.trendDetailPage || 0));
       }
 
-      const timer = window.setTimeout(() => {
+      if (typeof saved.detailPage === "number") {
+        setDetailPage(saved.detailPage);
+      }
+      window.setTimeout(() => {
+        isRestoringReportStateRef.current = false;
+      }, 300);
+
+      let retryCount = 0;
+
+      const timer = window.setInterval(() => {
         const rowId =
           saved.returnMode === "trend-dot"
             ? `patrol-report-trend-row-${Number(saved.highlightId)}`
@@ -1057,8 +1374,16 @@ const NGDefectAnalyticsChart: React.FC<
 
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "center" });
+          window.clearInterval(timer);
+          return;
         }
-      }, 500);
+
+        retryCount += 1;
+
+        if (retryCount >= 20) {
+          window.clearInterval(timer);
+        }
+      }, 250);
 
       const clearTimer = window.setTimeout(() => {
         setHighlightSessionId(null);
@@ -1066,7 +1391,7 @@ const NGDefectAnalyticsChart: React.FC<
       }, 5000);
 
       return () => {
-        window.clearTimeout(timer);
+        window.clearInterval(timer);
         window.clearTimeout(clearTimer);
       };
     } catch {
@@ -1074,37 +1399,6 @@ const NGDefectAnalyticsChart: React.FC<
     }
   }, [patrolType]);
 
-  const visibleSessionIds = useMemo(() => {
-    return Array.from(
-      new Set(
-        activeRecords.map((record) => Number(record.sessionId)).filter(Boolean),
-      ),
-    ).slice(0, 20);
-  }, [activeRecords]);
-
-  const imageRequestingRef = useRef<Set<number>>(new Set());
-
-  useEffect(() => {
-    if (!visibleSessionIds.length) return;
-
-    const loadedSet = new Set(
-      (loadedImageSessionIds || []).map((id: any) => Number(id)),
-    );
-
-    visibleSessionIds.forEach((sessionId) => {
-      if (!sessionId) return;
-      const alreadyLoaded = loadedSet.has(sessionId);
-      const alreadyRequesting = imageRequestingRef.current.has(sessionId);
-      if (alreadyLoaded || alreadyRequesting) return;
-
-      imageRequestingRef.current.add(sessionId);
-      dispatch(fetchImagesBySession(sessionId))
-        .unwrap()
-        .catch(() => {
-          imageRequestingRef.current.delete(sessionId);
-        });
-    });
-  }, [dispatch, visibleSessionIds, loadedImageSessionIds]);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none [&_.recharts-layer]:outline-none [&_.recharts-sector]:outline-none [&_.recharts-rectangle]:outline-none [&_.recharts-dot]:outline-none [&_*:focus]:outline-none">
@@ -1118,15 +1412,18 @@ const NGDefectAnalyticsChart: React.FC<
             <div>
               <h3 className="text-base font-bold text-white">
                 {pT("reportNGDashboardTitle", {
-                  type: patrolType === "daily" ? pT("dailyPatrol") : pT("weeklyPatrol"),
+                  type:
+                    patrolType === "daily"
+                      ? pT("dailyPatrol")
+                      : pT("weeklyPatrol"),
                 })}
               </h3>
               <p className="text-xs text-slate-400">
                 {rangeLabel} • {pT("businessDayTimeNote")}
                 {drillPoint ? (
                   <span className="ml-2 text-amber-300">
-                    • {pT("reportFiltering")}: {fmtDateKey(drillPoint.dateKey)} -{" "}
-                    {getShiftText(drillPoint.shift, pT)}
+                    • {pT("reportFiltering")}: {fmtDateKey(drillPoint.dateKey)}{" "}
+                    - {getShiftLabel(drillPoint.shift)}
                   </span>
                 ) : null}
               </p>
@@ -1251,18 +1548,31 @@ const NGDefectAnalyticsChart: React.FC<
               ))}
             </div>
 
-            {drillPoint ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setDrillPoint(null);
-                  setTrendDetailPage(0);
-                }}
-                className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-bold text-amber-700 hover:bg-amber-100"
-              >
-                {pT("reportClearSelectedPoint")}
-              </button>
-            ) : null}
+             <div className="flex gap-2 items-center justify-center">
+                  <div>
+                    <button
+                      type="button"
+                      onClick={handleResetFilters}
+                      className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 active:scale-[0.98]"
+                    >
+                      <FaUndo size={12} />
+                      Reset
+                    </button>
+                  </div>
+
+                {drillPoint ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDrillPoint(null);
+                      setTrendDetailPage(0);
+                    }}
+                    className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-bold text-amber-700 hover:bg-amber-100"
+                  >
+                    {pT("reportClearSelectedPoint")}
+                  </button>
+                ) : null}
+             </div>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
@@ -1290,10 +1600,13 @@ const NGDefectAnalyticsChart: React.FC<
                   type="datetime-local"
                   value={fromDateTime}
                   onChange={(e) => {
-                    setFromDateTime(e.target.value);
+                    setFromDateTime((prev) =>
+                      normalizeDateTimeLocalByDefaultTime(e.target.value, "08:00", prev),
+                    );
                     setOffset(0);
                     setDrillPoint(null);
                     setTrendDetailPage(0);
+                    setDetailPage(0);
                   }}
                   className="h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-100"
                 />
@@ -1307,10 +1620,13 @@ const NGDefectAnalyticsChart: React.FC<
                   type="datetime-local"
                   value={toDateTime}
                   onChange={(e) => {
-                    setToDateTime(e.target.value);
+                    setToDateTime((prev) =>
+                      normalizeDateTimeLocalByDefaultTime(e.target.value, "07:59", prev),
+                    );
                     setOffset(0);
                     setDrillPoint(null);
                     setTrendDetailPage(0);
+                    setDetailPage(0);
                   }}
                   className="h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-100"
                 />
@@ -1496,10 +1812,15 @@ const NGDefectAnalyticsChart: React.FC<
                 <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h4 className="text-sm font-bold text-slate-800">
-                      {pT("reportSelectedSheets", { label: trendSelectedLabel })}
+                      {pT("reportSelectedSheets", {
+                        label: trendSelectedLabel,
+                      })}
                     </h4>
                     <p className="mt-1 text-xs text-slate-500">
-                      {pT("reportShowingTrendSheets", { pageSize: TREND_DETAIL_PAGE_SIZE, count: activeRecords.length })}
+                      {pT("reportShowingTrendSheets", {
+                        pageSize: TREND_DETAIL_PAGE_SIZE,
+                        count: activeRecords.length,
+                      })}
                     </p>
                   </div>
                   <button
@@ -1530,7 +1851,9 @@ const NGDefectAnalyticsChart: React.FC<
                         <tr
                           key={`trend-${row.id}`}
                           id={`patrol-report-trend-row-${row.sessionId}`}
-                          onClick={() => goToSheetDetailFromReport(row, "trend-dot")}
+                          onClick={() =>
+                            goToSheetDetailFromReport(row, "trend-dot")
+                          }
                           className={`cursor-pointer border-b border-slate-100 transition-colors last:border-b-0 ${
                             highlightSessionId === row.sessionId
                               ? "bg-red-50 [&>td]:border-y-2 [&>td]:border-red-300 [&>td:first-child]:border-l-2 [&>td:last-child]:border-r-2"
@@ -1547,7 +1870,7 @@ const NGDefectAnalyticsChart: React.FC<
                             <span
                               className={`rounded-full px-2 py-1 text-[11px] font-bold ${row.shift === "morning" ? "bg-amber-50 text-amber-700" : "bg-indigo-50 text-indigo-700"}`}
                             >
-                              {row.shiftText}
+                              {getShiftLabel(row.shift)}
                             </span>
                           </td>
                           <td className="whitespace-nowrap px-3 py-3 font-bold text-slate-900">
@@ -1557,12 +1880,18 @@ const NGDefectAnalyticsChart: React.FC<
                             {row.lineName}
                           </td>
                           <td className="px-3 py-3 text-slate-600">
-                            <span className="block max-w-[160px] truncate" title={row.stageSummary}>
+                            <span
+                              className="block max-w-40 truncate"
+                              title={row.stageSummary}
+                            >
                               {row.stageSummary}
                             </span>
                           </td>
                           <td className="px-3 py-3 text-slate-600">
-                            <span className="block max-w-[180px] truncate" title={row.categorySummary}>
+                            <span
+                              className="block max-w-[180px] truncate"
+                              title={row.categorySummary}
+                            >
                               {row.categorySummary}
                             </span>
                           </td>
@@ -1575,7 +1904,9 @@ const NGDefectAnalyticsChart: React.FC<
                               }}
                               className="rounded-lg bg-red-50 px-2 py-1 text-left font-bold text-red-600 hover:underline"
                             >
-                              {pT("reportErrorUnit", { count: row.errors.length })}
+                              {pT("reportErrorUnit", {
+                                count: row.errors.length,
+                              })}
                             </button>
                           </td>
                           <td className="px-3 py-3 text-left">
@@ -1596,7 +1927,10 @@ const NGDefectAnalyticsChart: React.FC<
 
                       {trendSelectedRows.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="px-3 py-10 text-center text-sm text-slate-400">
+                          <td
+                            colSpan={8}
+                            className="px-3 py-10 text-center text-sm text-slate-400"
+                          >
                             {pT("reportNoData")}
                           </td>
                         </tr>
@@ -1610,21 +1944,28 @@ const NGDefectAnalyticsChart: React.FC<
                     <div
                       key={`trend-mobile-${row.id}`}
                       id={`patrol-report-trend-row-${row.sessionId}`}
-                      onClick={() => goToSheetDetailFromReport(row, "trend-dot")}
+                      onClick={() =>
+                        goToSheetDetailFromReport(row, "trend-dot")
+                      }
                       className={`rounded-xl border border-slate-200 p-3 shadow-sm ${
-                        highlightSessionId === row.sessionId ? "bg-red-50 ring-2 ring-red-300 ring-inset" : ""
+                        highlightSessionId === row.sessionId
+                          ? "bg-red-50 ring-2 ring-red-300 ring-inset"
+                          : ""
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-xs text-slate-400">
-                            {row.dateText} • {row.sheetTimeText} • {row.shiftText}
+                            {row.dateText} • {row.sheetTimeText} •{" "}
+                            {getShiftLabel(row.shift)}
                           </p>
                           <h4 className="mt-1 text-sm font-extrabold text-slate-900">
                             Sheet #{row.sessionId} • {row.lineName}
                           </h4>
                           <p className="mt-1 text-sm font-bold text-red-600">
-                            {pT("reportErrorUnit", { count: row.errors.length })}
+                            {pT("reportErrorUnit", {
+                              count: row.errors.length,
+                            })}
                           </p>
                         </div>
                         <button
@@ -1648,7 +1989,9 @@ const NGDefectAnalyticsChart: React.FC<
                       {...PAGINATE_PROPS}
                       pageCount={trendDetailPageCount}
                       forcePage={trendDetailPage}
-                      onPageChange={({ selected }) => setTrendDetailPage(selected)}
+                      onPageChange={({ selected }) =>
+                        setTrendDetailPage(selected)
+                      }
                     />
                   </div>
                 ) : null}
@@ -1795,7 +2138,10 @@ const NGDefectAnalyticsChart: React.FC<
               </h4>
               <div className="h-72 min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart accessibilityLayer={false} style={{ outline: "none" }}>
+                  <PieChart
+                    accessibilityLayer={false}
+                    style={{ outline: "none" }}
+                  >
                     <Pie
                       data={stageData}
                       dataKey="value"
@@ -1927,10 +2273,19 @@ const NGDefectAnalyticsChart: React.FC<
         ) : null}
 
         {!loading && viewTab === "table" ? (
-          <div className="space-y-4!">
+          <div id="patrol-report-detail-table" className="space-y-4!">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs text-slate-500">
-                {pT("reportShowingDetailSheets", { shown: detailRows.length, total: activeRecords.length })} 
+                {pT("reportShowingDetailSheets", {
+                  shown: detailRows.length,
+                  total: sortedDetailRecords.length,
+                })}
+                {activeRecords.length > 0 ? (
+                  <span className="ml-1! text-slate-400">
+                    ({pT("page") || "Trang"} {detailPage + 1}/
+                    {Math.max(detailPageCount, 1)})
+                  </span>
+                ) : null}
                 <span className="ml-1! text-red-500">
                   {pT("reportOneSheetOneRowNote")}
                 </span>
@@ -1973,7 +2328,7 @@ const NGDefectAnalyticsChart: React.FC<
                         <span
                           className={`rounded-full px-2 py-1 text-[11px] font-bold ${row.shift === "morning" ? "bg-amber-50 text-amber-700" : "bg-indigo-50 text-indigo-700"}`}
                         >
-                          {row.shiftText}
+                          {getShiftLabel(row.shift)}
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-3 py-3 font-bold text-slate-900">
@@ -2052,6 +2407,11 @@ const NGDefectAnalyticsChart: React.FC<
                               </span>
                             ) : null}
                           </div>
+                        ) : row.hasImages ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-600">
+                            <FaImage size={10} /> {pT("loading")} (
+                            {row.imageCount})
+                          </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-400">
                             <FaImage size={10} /> {pT("reportNoImage")}
@@ -2103,7 +2463,7 @@ const NGDefectAnalyticsChart: React.FC<
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs text-slate-400">
-                        {row.dateText} • {row.sheetTimeText} • {row.shiftText}
+                        {row.dateText} • {row.sheetTimeText} • {getShiftLabel(row.shift)}
                       </p>
                       <h4 className="mt-1 text-sm font-extrabold text-slate-900">
                         Sheet #{row.sessionId} • {row.lineName}
@@ -2132,7 +2492,9 @@ const NGDefectAnalyticsChart: React.FC<
                       </p>
                     </div>
                     <div className="rounded-lg bg-slate-50 p-2">
-                      <p className="text-slate-400">{pT("reportColCategory")}</p>
+                      <p className="text-slate-400">
+                        {pT("reportColCategory")}
+                      </p>
                       <p className="font-bold text-slate-700">
                         {row.categorySummary}
                       </p>
@@ -2172,6 +2534,31 @@ const NGDefectAnalyticsChart: React.FC<
                 </div>
               ) : null}
             </div>
+
+            {detailPageCount > 1 ? (
+              <div className="mt-4 flex justify-center border-t border-slate-100 pt-4">
+                <div className="w-full max-w-full overflow-x-auto">
+                  <ReactPaginate
+                    {...PAGINATE_PROPS}
+                    pageCount={detailPageCount}
+                    forcePage={detailPage}
+                    onPageChange={({ selected }) => {
+                      setDetailPage(selected);
+
+                      const el = document.getElementById(
+                        "patrol-report-detail-table",
+                      );
+                      if (el) {
+                        el.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -2195,7 +2582,7 @@ const NGDefectAnalyticsChart: React.FC<
                 </h3>
                 <p className="mt-1 text-xs text-slate-500">
                   {selectedRecord.dateText} • {selectedRecord.sheetTimeText} •{" "}
-                  {selectedRecord.shiftText} • {selectedRecord.lineName} •{" "}
+                  {getShiftLabel(selectedRecord.shift)} • {selectedRecord.lineName} •{" "}
                   {selectedRecord.detectedBy}
                 </p>
               </div>
@@ -2212,7 +2599,9 @@ const NGDefectAnalyticsChart: React.FC<
             <div className="max-h-[calc(90vh-86px)] overflow-y-auto p-5">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
                 <div className="rounded-xl bg-slate-50 p-3">
-                  <p className="text-xs text-slate-400">{pT("reportColProductionDate")}</p>
+                  <p className="text-xs text-slate-400">
+                    {pT("reportColProductionDate")}
+                  </p>
                   <p className="mt-1 font-bold text-slate-800">
                     {selectedRecord.dateText}
                   </p>
@@ -2221,19 +2610,25 @@ const NGDefectAnalyticsChart: React.FC<
                   </p>
                 </div>
                 <div className="rounded-xl bg-slate-50 p-3">
-                  <p className="text-xs text-slate-400">{pT("reportColShift")}</p>
+                  <p className="text-xs text-slate-400">
+                    {pT("reportColShift")}
+                  </p>
                   <p className="mt-1 font-bold text-slate-800">
-                    {selectedRecord.shiftText}
+                    {getShiftLabel(selectedRecord.shift)}
                   </p>
                 </div>
                 <div className="rounded-xl bg-slate-50 p-3">
-                  <p className="text-xs text-slate-400">{pT("reportColLine")}</p>
+                  <p className="text-xs text-slate-400">
+                    {pT("reportColLine")}
+                  </p>
                   <p className="mt-1 font-bold text-slate-800">
                     {selectedRecord.lineName}
                   </p>
                 </div>
                 <div className="rounded-xl bg-slate-50 p-3">
-                  <p className="text-xs text-slate-400">{pT("reportSheetStatus")}</p>
+                  <p className="text-xs text-slate-400">
+                    {pT("reportSheetStatus")}
+                  </p>
                   <p className="mt-1 font-bold text-slate-800">
                     {getStatusText(selectedRecord.status, pT)}
                   </p>
@@ -2251,7 +2646,9 @@ const NGDefectAnalyticsChart: React.FC<
                       setSelectedRecord(null);
                       goToSheetDetailFromReport(
                         selectedRecord,
-                        viewTab === "trend" && drillPoint ? "trend-dot" : "table",
+                        viewTab === "trend" && drillPoint
+                          ? "trend-dot"
+                          : "table",
                       );
                     }}
                     className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:border-red-300 hover:text-red-600"
@@ -2287,7 +2684,7 @@ const NGDefectAnalyticsChart: React.FC<
                             {error.checkAtText}
                           </td>
                           <td className="whitespace-nowrap px-3 py-3 text-slate-600">
-                            {error.shiftText}
+                            {getShiftLabel(error.shift)}
                           </td>
                           <td className="px-3 py-3 font-semibold text-slate-800">
                             {error.stageName}
@@ -2350,6 +2747,11 @@ const NGDefectAnalyticsChart: React.FC<
                         </div>
                       </button>
                     ))}
+                  </div>
+                ) : selectedRecord.hasImages ? (
+                  <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50 py-8 text-center text-sm font-semibold text-amber-700 p-3">
+                    {pT("loading")} {pT("imageSection")} (
+                    {selectedRecord.imageCount})
                   </div>
                 ) : (
                   <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-400 p-3">

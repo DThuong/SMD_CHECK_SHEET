@@ -95,6 +95,8 @@ const Logs = () => {
 
   // ==================== STATE ====================
   const resultsRef = useRef<HTMLDivElement>(null);
+  const pendingRestoreHighlightRef = useRef<number | null>(null);
+  const isNavigatingToDetailRef = useRef(false);
   const { notification, showNotification, hideNotification } =
     useNotification();
   const [searchParams] = useSearchParams();
@@ -191,33 +193,35 @@ const Logs = () => {
   // EFFECT 1: Load initial data hoặc restore saved state
   useEffect(() => {
     const savedState = getFilterState();
-    const savedSheetId = getSelectedSheetId();
+    const navigationState = (location.state as any) || {};
+    const comingFromSheetDetail = navigationState?.from === "sheetDetail";
 
-    // Restore highlight nếu có
+    const highlightFromState = Number(navigationState?.highlightSheetId || 0);
+    const savedSheetId = highlightFromState || getSelectedSheetId();
+
+    // Restore highlight nếu có. Khi back từ SheetDetail, chỉ đánh dấu pending để effect
+    // bên dưới tự tìm đúng page + scroll sau khi table render xong.
     if (savedSheetId) {
-      setSelectedSheetId(savedSheetId);
+      setSelectedSheetId(Number(savedSheetId));
+      pendingRestoreHighlightRef.current = Number(savedSheetId);
     }
 
     // Kiểm tra xem có status và workOrder từ URL không
     const statusFromUrl = searchParams.get("status");
-    const workOrderFromUrl = searchParams.get('workOrder')
+    const workOrderFromUrl = searchParams.get("workOrder");
 
-    // CHECK navigation state
-    const navigationState = (location.state as any) || {};
-    const comingFromSheetDetail = navigationState?.from === "sheetDetail";
-
-    // check workOrder
+    // Priority 1: workOrder URL param
     if (workOrderFromUrl && !comingFromSheetDetail) {
-      const newFilter = { ...filter, workOrder: workOrderFromUrl }
-      setFilter(newFilter)
-      setCurrentPage(0)
+      const newFilter = { ...filter, workOrder: workOrderFromUrl };
+      setFilter(newFilter);
+      setCurrentPage(0);
       setTimeout(() => {
-        dispatch(getSheetByFilter({ workOrder: workOrderFromUrl })).unwrap()
-      }, 100)
-      return
+        dispatch(getSheetByFilter({ workOrder: workOrderFromUrl })).unwrap();
+      }, 100);
+      return;
     }
 
-    // Priority 1: URL params (từ Dashboard)
+    // Priority 2: URL params từ Dashboard
     if (statusFromUrl && !comingFromSheetDetail) {
       const newFilter = {
         ...filter,
@@ -237,17 +241,6 @@ const Logs = () => {
           .unwrap()
           .then(() => {
             saveFilterState(newFilter, 0);
-
-            if (savedSheetId) {
-              setTimeout(() => {
-                const row = document.getElementById(
-                  `sheet-row-${savedSheetId}`,
-                );
-                if (row) {
-                  row.scrollIntoView({ behavior: "smooth", block: "center" });
-                }
-              }, 300);
-            }
           })
           .catch((error: any) => {
             console.error("❌ Lỗi khi fetch sheets:", error);
@@ -262,31 +255,33 @@ const Logs = () => {
       return;
     }
 
-    // Priority 2: Back từ SheetDetail (QUAN TRỌNG)
-    if (comingFromSheetDetail && savedState.filter) {
-      console.log("🔄 Restoring from SheetDetail:", savedState);
+    // Priority 3: Back từ SheetDetail
+    if (comingFromSheetDetail) {
+      const restoreFilter = savedState.filter || navigationState?.savedFilter;
+      const restorePage =
+        typeof savedState.currentPage === "number"
+          ? savedState.currentPage
+          : typeof navigationState?.savedPage === "number"
+            ? navigationState.savedPage
+            : 0;
 
-      setFilter(savedState.filter);
-      setCurrentPage(savedState.currentPage);
+      if (restoreFilter) {
+        console.log("🔄 Restoring from SheetDetail:", {
+          filter: restoreFilter,
+          currentPage: restorePage,
+          highlightSheetId: savedSheetId,
+        });
 
-      setTimeout(() => {
-        loadSheetsWithFilter(savedState.filter);
-
-        // Highlight và scroll đến sheet
-        if (savedSheetId) {
-          setTimeout(() => {
-            const row = document.getElementById(`sheet-row-${savedSheetId}`);
-            if (row) {
-              row.scrollIntoView({ behavior: "smooth", block: "center" });
-            }
-          }, 500);
-        }
-      }, 100);
-
-      return;
+        setFilter(restoreFilter);
+        setCurrentPage(restorePage);
+        setTimeout(() => {
+          loadSheetsWithFilter(restoreFilter);
+        }, 100);
+        return;
+      }
     }
 
-    // Priority 3: Reload trang (F5)
+    // Priority 4: Reload trang (F5)
     const hasSavedState =
       savedState.filter && Object.keys(savedState.filter).length > 0;
 
@@ -294,25 +289,16 @@ const Logs = () => {
       console.log("🔄 Restoring from reload:", savedState);
 
       setFilter(savedState.filter);
-      setCurrentPage(savedState.currentPage);
+      setCurrentPage(savedState.currentPage || 0);
 
       setTimeout(() => {
         loadSheetsWithFilter(savedState.filter);
-
-        if (savedSheetId) {
-          setTimeout(() => {
-            const row = document.getElementById(`sheet-row-${savedSheetId}`);
-            if (row) {
-              row.scrollIntoView({ behavior: "smooth", block: "center" });
-            }
-          }, 500);
-        }
       }, 100);
 
       return;
     }
 
-    // Priority 4: check workOrder
+    // Priority 5: restore session khi user quay lại Logs bình thường
     const logsSession = readLogsSession();
     if (logsSession.filter && Object.keys(logsSession.filter).length > 0) {
       setFilter(logsSession.filter);
@@ -321,26 +307,8 @@ const Logs = () => {
       return;
     }
 
-    // Priority 5: Load all
+    // Priority 6: Load all
     loadSheets();
-
-    if (savedSheetId) {
-      setTimeout(() => {
-        const row = document.getElementById(`sheet-row-${savedSheetId}`);
-        if (row) {
-          row.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 500);
-    }
-
-    // Clear highlight sau 2 giây
-    if (savedSheetId) {
-      const timer = setTimeout(() => {
-        setSelectedSheetId(null);
-        clearSelectedSheetId();
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
   }, []);
 
   // clear state khi reload hoặc close tab
@@ -364,7 +332,7 @@ const Logs = () => {
         window.location.pathname.includes(route),
       );
 
-      if (!shouldKeepState) {
+      if (!isNavigatingToDetailRef.current && !shouldKeepState) {
         clearFilterState();
         clearSelectedSheetId();
       }
@@ -452,6 +420,8 @@ const Logs = () => {
   // ==================== VIEW HANDLERS ====================
   // Cập nhật handleViewDetail để save navigation và chuyển trang trực tiếp
   const handleViewDetail = (sheet: ChangeModelResponse) => {
+    isNavigatingToDetailRef.current = true;
+
     // Save current state TRƯỚC KHI navigate
     saveFilterState(filter, currentPage);
     saveSelectedSheetId(sheet.id);
@@ -782,7 +752,67 @@ const Logs = () => {
   const offset = currentPage * itemsPerPage;
   const currentSheets = sortedSheets.slice(offset, offset + itemsPerPage);
 
+  // Restore highlight sau khi back từ SheetDetailViewer.
+  // Chỉ chạy một lần, sau khi list đã load và DOM đã render đúng page.
+  useEffect(() => {
+    const targetId = pendingRestoreHighlightRef.current;
+    if (!targetId || loadingList || sortedSheets.length === 0) return;
+
+    const targetIndex = sortedSheets.findIndex(
+      (sheet) => Number(sheet.id) === Number(targetId),
+    );
+
+    if (targetIndex === -1) return;
+
+    const targetPage = Math.floor(targetIndex / itemsPerPage);
+
+    if (currentPage !== targetPage) {
+      setCurrentPage(targetPage);
+      return;
+    }
+
+    let attempt = 0;
+    const maxAttempts = 30;
+    let timer: number | null = null;
+
+    const tryScroll = () => {
+      const row = document.getElementById(`sheet-row-${targetId}`);
+
+      if (row) {
+        row.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        // Tắt restore ngay sau khi scroll xong để pagination hoạt động bình thường.
+        pendingRestoreHighlightRef.current = null;
+
+        window.setTimeout(() => {
+          setSelectedSheetId(null);
+          clearSelectedSheetId();
+        }, 2500);
+
+        return;
+      }
+
+      attempt += 1;
+      if (attempt < maxAttempts) {
+        timer = window.setTimeout(tryScroll, 80);
+      } else {
+        pendingRestoreHighlightRef.current = null;
+      }
+    };
+
+    timer = window.setTimeout(tryScroll, 80);
+
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [loadingList, sortedSheets, currentPage]);
+
   const handlePageChange = (selectedItem: { selected: number }) => {
+    // User tự chuyển page thì dừng restore highlight, tránh bị ép quay lại page cũ.
+    pendingRestoreHighlightRef.current = null;
+    setSelectedSheetId(null);
+    clearSelectedSheetId();
+
     setCurrentPage(selectedItem.selected);
 
     if (resultsRef.current) {

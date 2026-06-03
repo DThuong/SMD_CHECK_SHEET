@@ -254,9 +254,10 @@ const SheetDetailViewer = () => {
     return;
   }
  
-  // Back về Logs (giữ nguyên logic cũ)
+  // Back về Logs (giữ nguyên logic cũ, chỉ đảm bảo luôn có highlightSheetId)
   const savedState = getFilterState();
   const savedSheetId = getSelectedSheetId();
+  const highlightSheetId = Number(savedSheetId || id || 0) || null;
   const returnPath = navState?.returnPath;
   const returnSearch = navState?.returnSearch;
  
@@ -267,7 +268,7 @@ const SheetDetailViewer = () => {
         from: "sheetDetail",
         savedFilter: savedState.filter,
         savedPage: savedState.currentPage,
-        highlightSheetId: savedSheetId,
+        highlightSheetId,
       },
     });
   } else {

@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -14,7 +15,9 @@ import {
   FaHistory,
   FaUndo,
   FaChevronDown,
+  FaChevronLeft,
   FaChevronRight,
+  FaTimes,
 } from "react-icons/fa";
 import MultiImageUpload from "../../components/files/MultiImageUpload";
 import type { PatrolSharedProps } from "./types";
@@ -47,10 +50,362 @@ import {
   savePatrolNavState,
 } from "../../utils/patrolNavState";
 import { FaCamera } from "react-icons/fa6";
+
+type PreviewCarouselItem = {
+  id: string | number;
+  url: string;
+  title: string;
+  note?: string;
+};
+
+type PreviewCarouselState = {
+  open: boolean;
+  items: PreviewCarouselItem[];
+  index: number;
+  title: string;
+};
+
+const EMPTY_PREVIEW_CAROUSEL: PreviewCarouselState = {
+  open: false,
+  items: [],
+  index: 0,
+  title: "",
+};
+
+const ImagePreviewCarousel = React.memo(
+  ({
+    preview,
+    onClose,
+    accentClass = "blue",
+  }: {
+    preview: PreviewCarouselState;
+    onClose: () => void;
+    accentClass?: "blue" | "red";
+  }) => {
+    const [currentIndex, setCurrentIndex] = useState(preview.index || 0);
+    const [scale, setScale] = useState(1);
+    const [rotation, setRotation] = useState(0);
+    const [flipX, setFlipX] = useState(false);
+    const [flipY, setFlipY] = useState(false);
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const dragRef = useRef({
+      active: false,
+      pointerId: 0,
+      startX: 0,
+      startY: 0,
+      baseX: 0,
+      baseY: 0,
+    });
+
+    const total = preview.items.length;
+    const currentItem = preview.items[currentIndex];
+    const activeRing =
+      accentClass === "red"
+        ? "border-red-400 ring-2 ring-red-400"
+        : "border-blue-400 ring-2 ring-blue-400";
+
+    const resetTransform = useCallback(() => {
+      setScale(1);
+      setRotation(0);
+      setFlipX(false);
+      setFlipY(false);
+      setPosition({ x: 0, y: 0 });
+    }, []);
+
+    useEffect(() => {
+      if (!preview.open) return;
+      setCurrentIndex(preview.index || 0);
+      resetTransform();
+    }, [preview.index, preview.open, resetTransform]);
+
+    useEffect(() => {
+      if (!preview.open) return;
+      resetTransform();
+    }, [currentIndex, preview.open, resetTransform]);
+
+    useEffect(() => {
+      if (!preview.open) return;
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = previousOverflow;
+      };
+    }, [preview.open]);
+
+    const goPrev = useCallback(() => {
+      if (total <= 1) return;
+      setCurrentIndex((prev) => (prev - 1 + total) % total);
+    }, [total]);
+
+    const goNext = useCallback(() => {
+      if (total <= 1) return;
+      setCurrentIndex((prev) => (prev + 1) % total);
+    }, [total]);
+
+    const zoomIn = useCallback(() => {
+      setScale((prev) => Math.min(6, Number((prev + 0.25).toFixed(2))));
+    }, []);
+
+    const zoomOut = useCallback(() => {
+      setScale((prev) => {
+        const next = Math.max(0.25, Number((prev - 0.25).toFixed(2)));
+        if (next <= 1) setPosition({ x: 0, y: 0 });
+        return next;
+      });
+    }, []);
+
+    const rotateLeft = useCallback(() => {
+      setRotation((prev) => prev - 90);
+    }, []);
+
+    const rotateRight = useCallback(() => {
+      setRotation((prev) => prev + 90);
+    }, []);
+
+    useEffect(() => {
+      if (!preview.open) return;
+
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape") onClose();
+        if (event.key === "ArrowLeft") goPrev();
+        if (event.key === "ArrowRight") goNext();
+        if (event.key === "+" || event.key === "=") zoomIn();
+        if (event.key === "-" || event.key === "_") zoomOut();
+        if (event.key.toLowerCase() === "r") rotateRight();
+        if (event.key === "0") resetTransform();
+      };
+
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [goNext, goPrev, onClose, preview.open, resetTransform, rotateRight, zoomIn, zoomOut]);
+
+    if (!preview.open || !currentItem) return null;
+
+    const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      dragRef.current = {
+        active: true,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        baseX: position.x,
+        baseY: position.y,
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
+    };
+
+    const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+      const drag = dragRef.current;
+      if (!drag.active || drag.pointerId !== event.pointerId) return;
+      const nextX = drag.baseX + event.clientX - drag.startX;
+      const nextY = drag.baseY + event.clientY - drag.startY;
+      setPosition({ x: nextX, y: nextY });
+    };
+
+    const handlePointerEnd = (event: React.PointerEvent<HTMLDivElement>) => {
+      const drag = dragRef.current;
+      if (drag.pointerId === event.pointerId) {
+        dragRef.current = {
+          active: false,
+          pointerId: 0,
+          startX: 0,
+          startY: 0,
+          baseX: 0,
+          baseY: 0,
+        };
+      }
+    };
+
+    const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      if (event.deltaY < 0) zoomIn();
+      else zoomOut();
+    };
+
+    return (
+      <div
+        className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/85 p-2 sm:p-4"
+        onClick={onClose}
+      >
+        <div
+          className="relative flex h-full max-h-[96vh] w-full max-w-7xl flex-col overflow-hidden rounded-2xl bg-slate-950 shadow-2xl"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="flex flex-col gap-3 border-b border-white/10 bg-slate-950 px-3 py-3 text-white md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold md:text-base">
+                {currentItem.title || preview.title}
+              </p>
+              <p className="text-xs text-white/60">
+                {currentIndex + 1}/{total} • Zoom {Math.round(scale * 100)}% • Rotate {((rotation % 360) + 360) % 360}°
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={zoomOut}
+                className="rounded-lg bg-white/10 px-3 py-2 text-xs font-bold hover:bg-white/20"
+                title="Zoom out"
+              >
+                −
+              </button>
+              <button
+                type="button"
+                onClick={zoomIn}
+                className="rounded-lg bg-white/10 px-3 py-2 text-xs font-bold hover:bg-white/20"
+                title="Zoom in"
+              >
+                +
+              </button>
+              <button
+                type="button"
+                onClick={rotateLeft}
+                className="rounded-lg bg-white/10 px-3 py-2 text-xs font-bold hover:bg-white/20"
+                title="Rotate left"
+              >
+                ↺
+              </button>
+              <button
+                type="button"
+                onClick={rotateRight}
+                className="rounded-lg bg-white/10 px-3 py-2 text-xs font-bold hover:bg-white/20"
+                title="Rotate right"
+              >
+                ↻
+              </button>
+              <button
+                type="button"
+                onClick={() => setFlipX((prev) => !prev)}
+                className="rounded-lg bg-white/10 px-3 py-2 text-xs font-bold hover:bg-white/20"
+                title="Flip horizontal"
+              >
+                Flip X
+              </button>
+              <button
+                type="button"
+                onClick={() => setFlipY((prev) => !prev)}
+                className="rounded-lg bg-white/10 px-3 py-2 text-xs font-bold hover:bg-white/20"
+                title="Flip vertical"
+              >
+                Flip Y
+              </button>
+              <button
+                type="button"
+                onClick={resetTransform}
+                className="rounded-lg bg-white/10 px-3 py-2 text-xs font-bold hover:bg-white/20"
+                title="Reset"
+              >
+                Reset
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                title="Close"
+              >
+                <FaTimes />
+              </button>
+            </div>
+          </div>
+
+          <div
+            className="relative flex min-h-0 flex-1 touch-none select-none items-center justify-center overflow-hidden bg-black"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerEnd}
+            onPointerCancel={handlePointerEnd}
+            onWheel={handleWheel}
+            onDoubleClick={resetTransform}
+          >
+            {total > 1 ? (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  goPrev();
+                }}
+                className="absolute left-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65"
+              >
+                <FaChevronLeft />
+              </button>
+            ) : null}
+
+            <img
+              key={currentItem.url}
+              src={currentItem.url}
+              alt={currentItem.title || preview.title || "preview"}
+              draggable={false}
+              className="max-h-[86%] max-w-[92%] object-contain will-change-transform"
+              style={{
+                transform: `translate3d(${position.x}px, ${position.y}px, 0) scale(${scale}) rotate(${rotation}deg) scaleX(${flipX ? -1 : 1}) scaleY(${flipY ? -1 : 1})`,
+                transition: dragRef.current.active ? "none" : "transform 120ms ease-out",
+                cursor: dragRef.current.active ? "grabbing" : "grab",
+              }}
+            />
+
+            {total > 1 ? (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  goNext();
+                }}
+                className="absolute right-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65"
+              >
+                <FaChevronRight />
+              </button>
+            ) : null}
+
+            <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/45 px-3 py-1 text-[11px] font-semibold text-white/80">
+              Kéo để di chuyển • Lăn chuột để zoom • Double click để reset
+            </div>
+          </div>
+
+          {currentItem.note ? (
+            <div className="border-t border-white/10 bg-slate-900 px-4 py-2 text-xs italic text-white/70">
+              {currentItem.note}
+            </div>
+          ) : null}
+
+          {total > 1 ? (
+            <div className="border-t border-white/10 bg-slate-900/95 px-3 py-3">
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {preview.items.map((item, index) => (
+                  <button
+                    key={`${item.id}-${index}`}
+                    type="button"
+                    onClick={() => setCurrentIndex(index)}
+                    className={`relative h-16 w-20 shrink-0 overflow-hidden rounded-lg border transition-all ${
+                      index === currentIndex
+                        ? activeRing
+                        : "border-white/15 opacity-70 hover:opacity-100"
+                    }`}
+                    title={item.title}
+                  >
+                    <img
+                      src={item.url}
+                      alt={item.title || "thumbnail"}
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                    <span className="absolute bottom-1 right-1 rounded bg-black/65 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                      {index + 1}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  },
+);
+
 const PatrolDetail: React.FC<PatrolSharedProps> = ({
   user,
   goToView,
-  setPreviewImage,
 }) => {
   const { t } = useTranslation("patrol");
   const dispatch = useAppDispatch();
@@ -88,6 +443,33 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
     );
   }, [images, currentSheetId]);
 
+  const [imagePreview, setImagePreview] = useState<PreviewCarouselState>(
+    EMPTY_PREVIEW_CAROUSEL,
+  );
+
+  const openSessionImagePreview = useCallback(
+    (startIndex: number) => {
+      const items = sessionImages
+        .map((img, index) => ({
+          id: img.id || index,
+          url: getImageUrl(img),
+          title: `${pT("imageSection")} ${index + 1}`,
+          note: img.note || "",
+        }))
+        .filter((item) => Boolean(item.url));
+
+      if (!items.length) return;
+
+      setImagePreview({
+        open: true,
+        items,
+        index: Math.max(0, Math.min(startIndex, items.length - 1)),
+        title: pT("imageSection") as string,
+      });
+    },
+    [sessionImages],
+  );
+
   const [formResults, setFormResults] = useState<
     Record<
       number,
@@ -104,10 +486,15 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
   }); // "1": Daily, "7": Weekly
   const [isLineSelectOpen, setIsLineSelectOpen] = useState(false);
   const lineSelectRef = useRef<HTMLDivElement>(null);
+  type PendingUploadImage = {
+    file: File;
+    capturedAt: string;
+  };
+
   const [noteModal, setNoteModal] = useState<{
     open: boolean;
-    file: File | null;
-    queue: File[];
+    file: PendingUploadImage | null;
+    queue: PendingUploadImage[];
   }>({ open: false, file: null, queue: [] });
   const [pendingNote, setPendingNote] = useState("");
   const [collapsedStages, setCollapsedStages] = useState<
@@ -199,17 +586,112 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
   const isPQC = user?.role === "PQC";
   const isPQCLeader = user?.role === "PQCLeader";
 
+  const formatImageTimestamp = (date: Date) => {
+    const pad = (value: number) => String(value).padStart(2, "0");
+
+    return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  };
+
+  const loadImageFromFile = (file: File): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      const objectUrl = URL.createObjectURL(file);
+
+      image.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve(image);
+      };
+
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Không thể đọc ảnh để đóng timestamp."));
+      };
+
+      image.src = objectUrl;
+    });
+  };
+
+  const drawTimestampOnImage = async (
+    file: File,
+    timestampText: string,
+  ): Promise<File> => {
+    const image = await loadImageFromFile(file);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+      throw new Error("Không thể khởi tạo canvas.");
+    }
+
+    canvas.width = image.naturalWidth || image.width;
+    canvas.height = image.naturalHeight || image.height;
+
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    const fontSize = Math.max(22, Math.round(canvas.width * 0.028));
+    const paddingX = Math.round(fontSize * 0.7);
+    const paddingY = Math.round(fontSize * 0.45);
+    const margin = Math.round(fontSize * 0.8);
+
+    ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+    ctx.textBaseline = "top";
+
+    const textWidth = ctx.measureText(timestampText).width;
+    const boxWidth = textWidth + paddingX * 2;
+    const boxHeight = fontSize + paddingY * 2;
+    const x = Math.max(margin, canvas.width - boxWidth - margin);
+    const y = Math.max(margin, canvas.height - boxHeight - margin);
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.58)";
+    ctx.fillRect(x, y, boxWidth, boxHeight);
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
+    ctx.lineWidth = Math.max(1, Math.round(fontSize * 0.06));
+    ctx.strokeRect(x, y, boxWidth, boxHeight);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(timestampText, x + paddingX, y + paddingY);
+
+    const mimeType = file.type === "image/png" ? "image/png" : "image/jpeg";
+    const stampedBlob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error("Không thể tạo ảnh sau khi đóng timestamp."));
+        },
+        mimeType,
+        0.92,
+      );
+    });
+
+    return new File([stampedBlob], file.name, {
+      type: stampedBlob.type || mimeType,
+      lastModified: Date.now(),
+    });
+  };
+
+  const buildPendingUploadImages = (files: File[]): PendingUploadImage[] => {
+    const baseTime = Date.now();
+
+    return files
+      .filter((file) => file.type.startsWith("image/"))
+      .map((file, index) => ({
+        file,
+        capturedAt: new Date(baseTime + index).toISOString(),
+      }));
+  };
+
   const openImageNoteModal = (files: File[]) => {
     if (!canEditResults || isNew || !sheetId) return;
 
-    const validFiles = files.filter((file) => file.type.startsWith("image/"));
-    if (validFiles.length === 0) return;
+    const uploadImages = buildPendingUploadImages(files);
+    if (uploadImages.length === 0) return;
 
     setPendingNote("");
     setNoteModal({
       open: true,
-      file: validFiles[0],
-      queue: validFiles.slice(1),
+      file: uploadImages[0],
+      queue: uploadImages.slice(1),
     });
   };
 
@@ -318,13 +800,18 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
   };
 
   const handleConfirmUpload = async () => {
-    const file = noteModal.file;
-    if (!file || !sheetId) return;
+    const currentUpload = noteModal.file;
+    if (!currentUpload || !sheetId) return;
 
     try {
+      const stampedFile = await drawTimestampOnImage(
+        currentUpload.file,
+        formatImageTimestamp(new Date(currentUpload.capturedAt)),
+      );
+
       const formData = new FormData();
-      formData.append("image", file);
-      formData.append("note", pendingNote);
+      formData.append("image", stampedFile);
+      formData.append("note", pendingNote || "");
 
       await dispatch(
         uploadImage({ sessionId: Number(sheetId), formData }),
@@ -555,6 +1042,11 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
   };
   return (
     <>
+      <ImagePreviewCarousel
+        preview={imagePreview}
+        onClose={() => setImagePreview(EMPTY_PREVIEW_CAROUSEL)}
+      />
+
       <Modal
         open={noteModal.open}
         title={pT("imageNoteTitle")}
@@ -565,7 +1057,7 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
           <p className="text-sm text-gray-500">
             File:{" "}
             <span className="font-medium text-gray-700">
-              {noteModal.file?.name}
+              {noteModal.file?.file.name}
             </span>
           </p>
           <div>
@@ -1116,13 +1608,12 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
                   onUpload={handleImageUpload}
                   onRemove={(idx) => handleRemoveImage(sessionImages[idx].id)}
                   onViewAll={() => {}}
-                  onViewSingle={(url) =>
-                    setPreviewImage({
-                      isOpen: true,
-                      url,
-                      title: pT("imageSection") as any,
-                    })
-                  }
+                  onViewSingle={(url) => {
+                    const index = sessionImages.findIndex(
+                      (img) => getImageUrl(img) === url,
+                    );
+                    openSessionImagePreview(index >= 0 ? index : 0);
+                  }}
                   maxImages={20}
                 />
               )}
@@ -1139,13 +1630,7 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
                           src={getImageUrl(img)}
                           alt="Current state"
                           className="w-full h-48 object-cover cursor-pointer bg-gray-100"
-                          onClick={() =>
-                            setPreviewImage({
-                              isOpen: true,
-                              url: getImageUrl(img),
-                              title: `${pT("imageSection")} ${index + 1}`,
-                            })
-                          }
+                          onClick={() => openSessionImagePreview(index)}
                         />
                         {img.note && (
                           <div className="text-xs text-gray-600 px-3 py-2 bg-gray-50 border-t border-gray-200 italic">

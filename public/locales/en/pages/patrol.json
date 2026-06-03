@@ -225,5 +225,19 @@
   "reportSheetErrorNote": "Sheet / defect note",
   "reportSheetImage": "Sheet image",
   "reportNoImageForSheet": "No images for this sheet.",
-  "reportNoImage": "No image"
+  "reportNoImage": "No image",
+  "charts": {
+    "timeline": {
+      "title": "Sheet Creation Trend",
+      "7days": "7 days",
+      "30days": "30 days",
+      "all": "All",
+      "count": "Sheets created",
+      "dayshift": "Day Shift",
+      "nightshift": "Night Shift",
+      "both": "Both Shifts",
+      "morningLegend": "Day Shift (08:00–19:59)",
+      "nightLegend": "Night Shift (20:00–07:59)"
+    }
+  }
 }

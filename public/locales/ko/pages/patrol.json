@@ -225,5 +225,19 @@
   "reportSheetErrorNote": "시트 / 불량 비고",
   "reportSheetImage": "시트 이미지",
   "reportNoImageForSheet": "이 시트에는 이미지가 없습니다.",
-  "reportNoImage": "이미지 없음"
+  "reportNoImage": "이미지 없음",
+  "charts": {
+    "timeline": {
+      "title": "시트 생성 추세",
+      "7days": "7일",
+      "30days": "30일",
+      "all": "전체",
+      "count": "생성된 시트",
+      "dayshift": "주간 근무",
+      "nightshift": "야간 근무",
+      "both": "전체",
+      "morningLegend": "주간 (08:00–19:59)",
+      "nightLegend": "야간 (20:00–07:59)"
+    }
+  }
 }

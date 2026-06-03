@@ -226,5 +226,19 @@
   "reportSheetErrorNote": "Note của sheet / lỗi",
   "reportSheetImage": "Ảnh sheet",
   "reportNoImageForSheet": "Chưa có hình ảnh cho sheet này.",
-  "reportNoImage": "Chưa có"
+  "reportNoImage": "Chưa có",
+  "charts": {
+    "timeline": {
+      "title": "Xu hướng tạo Sheet",
+      "7days": "7 ngày",
+      "30days": "30 ngày",
+      "all": "Tất cả",
+      "count": "Số sheet tạo",
+      "dayshift": "Ca ngày",
+      "nightshift": "Ca tối",
+      "both": "Cả 2 ca",
+      "morningLegend": "Ca sáng (08:00–19:59)",
+      "nightLegend": "Ca tối (20:00–07:59)"
+    }
+  }
 }

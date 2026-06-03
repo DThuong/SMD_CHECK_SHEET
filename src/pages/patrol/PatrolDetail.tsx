@@ -182,7 +182,15 @@ const ImagePreviewCarousel = React.memo(
     if (!preview.open || !currentItem) return null;
 
     const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+      const target = event.target as HTMLElement;
+
+      // Không cho vùng drag nuốt click của button, thumbnail, icon.
+      if (target.closest("button")) {
+        return;
+      }
+
       event.preventDefault();
+
       dragRef.current = {
         active: true,
         pointerId: event.pointerId,
@@ -191,6 +199,7 @@ const ImagePreviewCarousel = React.memo(
         baseX: position.x,
         baseY: position.y,
       };
+
       event.currentTarget.setPointerCapture(event.pointerId);
     };
 
@@ -321,11 +330,12 @@ const ImagePreviewCarousel = React.memo(
             {total > 1 ? (
               <button
                 type="button"
+                onPointerDown={(event) => event.stopPropagation()}
                 onClick={(event) => {
                   event.stopPropagation();
                   goPrev();
                 }}
-                className="absolute left-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65"
+                className="absolute left-3 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65"
               >
                 <FaChevronLeft />
               </button>
@@ -347,11 +357,12 @@ const ImagePreviewCarousel = React.memo(
             {total > 1 ? (
               <button
                 type="button"
+                onPointerDown={(event) => event.stopPropagation()}
                 onClick={(event) => {
                   event.stopPropagation();
                   goNext();
                 }}
-                className="absolute right-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65"
+                className="absolute right-3 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65"
               >
                 <FaChevronRight />
               </button>
@@ -375,7 +386,11 @@ const ImagePreviewCarousel = React.memo(
                   <button
                     key={`${item.id}-${index}`}
                     type="button"
-                    onClick={() => setCurrentIndex(index)}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setCurrentIndex(index);
+                    }}
                     className={`relative h-16 w-20 shrink-0 overflow-hidden rounded-lg border transition-all ${
                       index === currentIndex
                         ? activeRing

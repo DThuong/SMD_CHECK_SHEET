@@ -59,7 +59,7 @@ interface FileState {
 }
 
 const initialState: FileState = {
-   lcrFileUrl: null,
+  lcrFileUrl: null,
   lcrFileBlob: null,
   lcrFileData: null,
   lcrValidation: null,

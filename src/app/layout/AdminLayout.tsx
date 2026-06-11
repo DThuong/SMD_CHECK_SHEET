@@ -27,7 +27,7 @@ const AdminLayout = () => {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
-  const { i18n } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
 const [currentLang, setCurrentLang] = useState(i18n.language || "vi");
 
 useEffect(() => {
@@ -95,10 +95,10 @@ const handleLanguageChange = async (langCode: string) => {
       icon: <FaMicrochip />,
       isDropdown: true,
       children: [
-        { name: "Quản lý Patrol", path: "/admin/patrol?view=manage", shouldReload: false },
-        { name: "Patrol Ngày", path: "/admin/patrol?view=list&type=daily", shouldReload: false },
-        { name: "Patrol Tuần", path: "/admin/patrol?view=list&type=weekly", shouldReload: false },
-        { name: "Báo cáo Patrol", path: "/admin/patrol?view=report", shouldReload: false },
+        { name: t('menu.patrolManage'), path: "/admin/patrol?view=manage", shouldReload: false },
+        { name: t('menu.patrolDaily'), path: "/admin/patrol?view=list&type=daily", shouldReload: false },
+        { name: t('menu.patrolWeekly'), path: "/admin/patrol?view=list&type=weekly", shouldReload: false },
+        { name: t('menu.patrolReport'), path: "/admin/patrol?view=report", shouldReload: false },
       ],
     },
     { name: "Settings", path: "/admin/settings", icon: <FaC />, shouldReload: false },

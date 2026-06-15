@@ -598,8 +598,10 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const isPQC = user?.role === "PQC";
-  const isPQCLeader = user?.role === "PQCLeader";
+  const normalizedRole = String(user?.role || "").trim().toLowerCase();
+
+  const isPQC = normalizedRole === "pqc";
+  const isPQCLeader = normalizedRole === "pqcleader";
 
   const formatImageTimestamp = (date: Date) => {
     const pad = (value: number) => String(value).padStart(2, "0");
@@ -697,7 +699,7 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
   };
 
   const openImageNoteModal = (files: File[]) => {
-    if (!canEditResults || isNew || !sheetId) return;
+    if (!canEditImages || !sheetId) return;
 
     const uploadImages = buildPendingUploadImages(files);
     if (uploadImages.length === 0) return;
@@ -713,13 +715,34 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
   const isOwner =
     !!session && !!user?.id && Number(session.accountId) === Number(user.id);
 
-  const canEditResults =
-    isNew ||
-    (isPQC && isOwner && session?.status === "Pending") ||
-    (isPQCLeader &&
-      (session?.status === "Pending" || session?.status === "Submitted"));
+  const isPending = session?.status === "Pending";
+const isSubmitted = session?.status === "Submitted";
 
-  const canApprove = session?.status === "Submitted" && isPQCLeader;
+/**
+ * Quyền sửa checklist:
+ * - PQC: chỉ sửa phiếu Pending của chính mình
+ * - PQCLeader: sửa được Pending + Submitted
+ */
+const canEditResults =
+  isNew ||
+  (isPQC && isOwner && isPending) ||
+  (isPQCLeader && (isPending || isSubmitted));
+
+  /**
+   * Quyền sửa hình:
+   * - PQC: chỉ upload/xoá hình phiếu Pending của chính mình
+   * - PQCLeader: upload/xoá hình sheet Pending
+   *
+   * Nếu muốn PQCLeader sửa hình cả Submitted thì đổi:
+   * isPQCLeader && isPending
+   * thành:
+   * isPQCLeader && (isPending || isSubmitted)
+   */
+  const canEditImages =
+    !isNew &&
+    ((isPQC && isOwner && isPending) || (isPQCLeader && isPending));
+
+  const canApprove = isSubmitted && isPQCLeader;
 
   // Cập nhật UI cục bộ ngay lập tức
   const handleLocalChange = (
@@ -853,9 +876,15 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
   };
 
   const handleRemoveImage = async (imgId: number) => {
-    if (!canEditResults || isNew) return;
-    await dispatch(deleteImage(imgId)).unwrap();
-    dispatch(fetchImagesBySession(Number(sheetId)));
+    if (!canEditImages || !sheetId) return;
+
+    try {
+      await dispatch(deleteImage(imgId)).unwrap();
+      await dispatch(fetchImagesBySession(Number(sheetId)));
+      toast.success("Đã xoá hình thành công.");
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err));
+    }
   };
 
   const handleCreateSession = async (status: string) => {
@@ -1576,7 +1605,7 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
                 {sessionImages.length})
               </h3>
 
-              {canEditResults && !isNew && (
+              {canEditImages && (
                 <div className="mb-4 grid grid-cols-2 gap-2 md:hidden">
                   <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-3 text-sm font-bold text-white active:scale-[0.98]">
                     <div className="flex items-center justify-center gap-1">
@@ -1614,7 +1643,7 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
                 </div>
               )}
 
-              {canEditResults && (
+              {canEditImages && (
                 <MultiImageUpload
                   label={pT("uploadLabel")}
                   fieldName="patrolImages"
@@ -1633,8 +1662,7 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
                 />
               )}
 
-              {sessionImages.length > 0 &&
-                (session?.status !== "Pending" || user?.role !== "PQC") && (
+              {sessionImages.length > 0 && (
                   <div className="grid sm:grid-cols-2 gap-4 mt-4">
                     {sessionImages.map((img, index) => (
                       <div
@@ -1652,7 +1680,7 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
                             {img.note}
                           </div>
                         )}
-                        {canEditResults && (
+                        {canEditImages && (
                           <button
                             onClick={() => handleRemoveImage(img.id)}
                             className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"

@@ -44,7 +44,7 @@
   },
   "charts": {
     "timeline": {
-      "title": "Sheet Creation Trend",
+      "title": "SMD Sheet Status",
       "7days": "7 days",
       "30days": "30 days",
       "all": "All",

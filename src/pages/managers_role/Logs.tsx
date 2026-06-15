@@ -946,7 +946,10 @@ const Logs = () => {
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">
                         {t("table.status")}
                       </th>
-                      <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">
+                      <th
+                        onMouseDown={(e) => e.preventDefault()}
+                        className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700 select-none"
+                      >
                         {t("button.signConfirm")}
                       </th>
                       <th className="border border-gray-300 px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-semibold text-gray-700">
@@ -997,8 +1000,9 @@ const Logs = () => {
                         <td className="border border-gray-300 px-2 sm:px-4 py-3 text-center">
                           {getStatusBadge(sheet)}
                         </td>
-                        <td 
+                        <td
                           onClick={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.preventDefault()}
                           className="border border-gray-300 px-2 sm:px-4 py-3 text-center select-none"
                         >
                           {canUserSignSheet(sheet) ? (
@@ -1148,8 +1152,9 @@ const Logs = () => {
                               handleConfirmStep(sheet.id, user.role as any);
                             }
                           }}
+                          onMouseDown={(e) => e.preventDefault()}
                           disabled={confirmingSheetId === sheet.id}
-                          className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 
+                          className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 select-none
                           bg-orange-600 text-white rounded-lg hover:bg-orange-700 
                           transition-colors text-sm font-semibold shadow-md
                           disabled:opacity-60 disabled:cursor-not-allowed"

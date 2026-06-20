@@ -29,6 +29,7 @@ import {
   fetchPatrolSessions,
   fetchLineAreas,
 } from "../../redux/slices/patrolSlice";
+import { getAllPlan } from "../../redux/slices/planWorkSlice";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -411,6 +412,56 @@ const SheetTable = ({
   );
 };
 
+/** Tooltip biểu đồ SMD: ngày + số sheet tạo + plan (đã tạo/tổng) + ✅/(-thiếu). */
+const SmdTimelineTooltip = ({ active, payload, label, t }: any) => {
+  if (!active || !payload?.length) return null;
+  const d = payload[0]?.payload || {};
+  const planTotal = Number(d.planTotal || 0);
+  const deficit = Number(d.planDeficit || 0);
+  const planCreated = planTotal - deficit;
+  const count = Number(
+    d.count ?? (Number(d.morning) || 0) + (Number(d.night) || 0),
+  );
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-lg">
+      <div className="mb-1.5 text-sm font-bold text-slate-800">{label}</div>
+
+      <div className="flex items-center justify-between gap-6 py-0.5">
+        <span className="text-slate-500">{t("charts.timeline.count")}</span>
+        <span className="font-bold text-slate-800">{count}</span>
+      </div>
+
+      {planTotal > 0 && (
+        <div className="flex items-center justify-between gap-6 py-0.5">
+          <span className="text-slate-500">{t("charts.timeline.plan")}</span>
+          <span className="font-bold">
+            <span className="text-slate-800">
+              {planCreated}/{planTotal}
+            </span>{" "}
+            <span className={deficit > 0 ? "text-red-600" : "text-emerald-600"}>
+              {deficit > 0 ? `(-${deficit})` : "✅"}
+            </span>
+          </span>
+        </div>
+      )}
+
+      <div className="my-1 border-t border-slate-100" />
+
+      {payload.map((item: any, i: number) =>
+        item.value ? (
+          <div
+            key={i}
+            className="flex items-center justify-between gap-6 py-0.5"
+          >
+            <span style={{ color: item.color }}>{item.name}</span>
+            <span className="font-bold text-slate-800">{item.value}</span>
+          </div>
+        ) : null,
+      )}
+    </div>
+  );
+};
+
 /** Timeline chart — dùng chung */
 const SmdTrendCard = ({
   timelineStats,
@@ -520,14 +571,7 @@ const SmdTrendCard = ({
             height={60}
           />
           <YAxis stroke="#64748b" />
-          <Tooltip
-            cursor={false}
-            contentStyle={{
-              backgroundColor: "#fff",
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-            }}
-          />
+          <Tooltip cursor={false} content={<SmdTimelineTooltip t={t} />} />
           <Legend />
 
           {(shiftFilter === "morning" || shiftFilter === "both") && (
@@ -632,9 +676,13 @@ const Dashboard = () => {
   const { sessions: patrolSessions, lineAreas } = useAppSelector(
     (state) => state.patrol,
   );
+  // Kế hoạch (PlanWork) — để đối chiếu số sheet đã tạo với plan theo ngày.
+  const { plans } = useAppSelector((state) => state.planSlice);
 
   const [fontSize, setFontSize] = useState(12);
   const [timeRange, setTimeRange] = useState<"week" | "month" | "all">("week");
+  // Khoảng thời gian RIÊNG cho biểu đồ patrol (độc lập với biểu đồ SMD).
+  const [patrolTimeRange, setPatrolTimeRange] = useState<"week" | "month" | "all">("week");
   const [smdShiftFilter, setSmdShiftFilter] = useState<"morning" | "night" | "both">("both");
   const [patrolShiftFilter, setPatrolShiftFilter] = useState<"morning" | "night" | "both">("both");
   const [selectedSheets, setSelectedSheets] = useState<any[]>([]);
@@ -701,6 +749,7 @@ const Dashboard = () => {
     dispatch(fetchChangeModel());
     dispatch(fetchPatrolSessions());
     dispatch(fetchLineAreas());
+    dispatch(getAllPlan());
   }, [dispatch]);
 
   useEffect(() => {
@@ -850,6 +899,21 @@ const Dashboard = () => {
     [displaySheets],
   );
 
+  // Gom kế hoạch theo ngày (setToWork): tổng plan + số đã tạo (status != Pending).
+  const planByDay = useMemo(() => {
+    const map: Record<string, { total: number; created: number }> = {};
+    (plans || []).forEach((pl) => {
+      if (!pl?.setToWork) return;
+      const dt = new Date(pl.setToWork);
+      if (Number.isNaN(dt.getTime())) return;
+      const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+      if (!map[key]) map[key] = { total: 0, created: 0 };
+      map[key].total += 1;
+      if (pl.status !== "Pending") map[key].created += 1;
+    });
+    return map;
+  }, [plans]);
+
   const timelineStats = useMemo(() => {
     if (!displaySheets?.length) return [];
     const now = new Date();
@@ -880,22 +944,28 @@ const Dashboard = () => {
       .sort()
       .map((key) => {
         const [, m, d] = key.split("-");
+        const mo = morning[key] || 0;
+        const ni = night[key] || 0;
+        const plan = planByDay[key];
         return {
           date: `${parseInt(d)}/${parseInt(m)}`,
           fullDate: key,
-          morning: morning[key] || 0,
-          night: night[key] || 0,
+          morning: mo,
+          night: ni,
+          count: mo + ni,
+          planTotal: plan?.total ?? 0,
+          planDeficit: plan ? plan.total - plan.created : 0,
         };
       });
-  }, [displaySheets, timeRange, getShiftDay]);
+  }, [displaySheets, timeRange, getShiftDay, planByDay]);
 
   const patrolTimelineStats = useMemo(() => {
   if (!patrolSessions?.length) return [];
   const now = new Date();
   let cutoff: Date | null = null;
-  if (timeRange === "week") {
+  if (patrolTimeRange === "week") {
     cutoff = new Date(); cutoff.setDate(now.getDate() - 7); cutoff.setHours(0,0,0,0);
-  } else if (timeRange === "month") {
+  } else if (patrolTimeRange === "month") {
     cutoff = new Date(); cutoff.setMonth(now.getMonth() - 1); cutoff.setHours(0,0,0,0);
   }
 
@@ -923,7 +993,7 @@ const Dashboard = () => {
         count: (morning[key] || 0) + (night[key] || 0),
       };
     });
-}, [patrolSessions, timeRange, getShiftDay]);
+}, [patrolSessions, patrolTimeRange, getShiftDay]);
   const activeUsers = useMemo(
     () => users.filter((u) => u.isActive).length,
     [users],
@@ -1398,6 +1468,8 @@ const Dashboard = () => {
             userRole={user?.role}
             navigate={navigate}
             tPatrol={tPatrol}
+            timeRange={patrolTimeRange}
+            setTimeRange={setPatrolTimeRange}
             shiftFilter={patrolShiftFilter} 
             setShiftFilter={setPatrolShiftFilter} 
             getShiftDay={getShiftDay}        
@@ -1957,6 +2029,8 @@ const Dashboard = () => {
             userRole={user?.role}
             navigate={navigate}
             tPatrol={tPatrol}
+            timeRange={patrolTimeRange}
+            setTimeRange={setPatrolTimeRange}
             shiftFilter={patrolShiftFilter} 
             setShiftFilter={setPatrolShiftFilter} 
             getShiftDay={getShiftDay}        

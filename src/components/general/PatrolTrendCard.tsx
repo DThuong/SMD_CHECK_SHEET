@@ -52,6 +52,8 @@ export interface PatrolTrendCardProps {
   tPatrol: (key: string, opts?: any) => string;
   shiftFilter: "morning" | "night" | "both";
   setShiftFilter: (v: "morning" | "night" | "both") => void;
+  timeRange: "week" | "month" | "all";
+  setTimeRange: (v: "week" | "month" | "all") => void;
   getShiftDay: (date: Date) => { shift: "morning" | "night"; key: string };
   initialDate?: string | null;
   initialShift?: "morning" | "night" | null;
@@ -69,6 +71,8 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
   tPatrol,
   shiftFilter,
   setShiftFilter,
+  timeRange,
+  setTimeRange,
   getShiftDay,
   initialDate,
   initialShift,
@@ -212,6 +216,25 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
             {pT("totalPatrolSheets")}:{" "}
             {patrolTimelineStats.reduce((sum, item) => sum + item.count, 0)}
           </span>
+
+          {/* Time range filter (7 ngày / 30 ngày / Tất cả) */}
+          <div className="flex gap-2 flex-wrap">
+            {(["week", "month", "all"] as const).map((r) => (
+              <button
+                key={r}
+                onClick={() => setTimeRange(r)}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  timeRange === r
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {pT(
+                  `charts.timeline.${r === "week" ? "7days" : r === "month" ? "30days" : "all"}`,
+                )}
+              </button>
+            ))}
+          </div>
 
           {/* Shift filter */}
           <div className="flex gap-1 border-l pl-2">

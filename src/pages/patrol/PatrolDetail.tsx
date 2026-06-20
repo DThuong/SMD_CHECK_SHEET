@@ -1374,7 +1374,7 @@ const canEditResults =
                       className="shrink-0 flex items-center gap-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <FaChevronLeft size={12} />
-                      <span>Trước</span>
+                      <span>{pT("prevPage")}</span>
                     </button>
 
                     <select
@@ -1395,7 +1395,7 @@ const canEditResults =
                       disabled={currentStageIndex >= activeStages.length - 1}
                       className="shrink-0 flex items-center gap-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      <span>Sau</span>
+                      <span>{pT("nextPage")}</span>
                       <FaChevronRight size={12} />
                     </button>
                   </div>
@@ -1771,7 +1771,7 @@ const canEditResults =
                     disabled={currentStageIndex === 0}
                     className="flex flex-1 items-center justify-center gap-1 px-3 py-3 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    <FaChevronLeft size={12} /> Trước
+                    <FaChevronLeft size={12} /> {pT("prevPage")}
                   </button>
                   <span className="shrink-0 text-xs font-semibold text-gray-500 whitespace-nowrap">
                     {currentStageIndex + 1}/{activeStages.length}
@@ -1782,7 +1782,7 @@ const canEditResults =
                     disabled={currentStageIndex >= activeStages.length - 1}
                     className="flex flex-1 items-center justify-center gap-1 px-3 py-3 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    Sau <FaChevronRight size={12} />
+                    {pT("nextPage")} <FaChevronRight size={12} />
                   </button>
                 </div>
               )}

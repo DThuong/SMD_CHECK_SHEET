@@ -32,6 +32,7 @@ import {
 } from "../../utils/patrolNavState";
 import { useSearchParams } from "react-router-dom";
 import { ConfirmModal } from "../../components/general/ConfirmModal";
+import LoadingSpinner from "../../components/general/LoadingSpinner";
 
 interface PatrolListProps extends PatrolSharedProps {
   type: "daily" | "weekly";
@@ -47,9 +48,27 @@ const PatrolList: React.FC<PatrolListProps> = ({
 }) => {
   const { t } = useTranslation("patrol");
   const dispatch = useAppDispatch();
-  const { filteredSessionsResult, lineAreas, loading } = useAppSelector(
+  const { filteredSessionsResult, lineAreas } = useAppSelector(
     (state) => state.patrol,
   );
+
+  // Loading riêng cho danh sách session. Trước đây dùng chung cờ `loading` với
+  // fetchLineAreas() => lineAreas tải xong trước làm tắt loading sớm, gây "nháy"
+  // trạng thái rỗng trước khi danh sách kịp về. Tách riêng để tránh việc đó.
+  const [listLoading, setListLoading] = useState(true);
+
+  // Cache-first: nếu store đã có dữ liệu thì làm mới ở chế độ nền (silent) —
+  // không bật spinner chặn. Chỉ hiện spinner khi chưa có gì để hiển thị (lần đầu).
+  const runFilter = (params: any, options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) setListLoading(true);
+    return dispatch(filterPatrolSessions(params))
+      .unwrap()
+      .catch(() => {})
+      .finally(() => {
+        if (!silent) setListLoading(false);
+      });
+  };
 
   const [currentPage, setCurrentPage] = useState(0);
   const [highlightId, setHighlightId] = useState<number | null>(null);
@@ -86,6 +105,10 @@ const PatrolList: React.FC<PatrolListProps> = ({
 
     const saved = readPatrolNavState();
 
+    // Cache-first: đã có dữ liệu trong store thì hiển thị ngay, refetch chạy nền.
+    const hasCache = filteredSessionsResult.length > 0;
+    if (hasCache) setListLoading(false);
+
     if (saved && saved.type === type) {
       setCurrentPage(saved.page);
 
@@ -99,24 +122,32 @@ const PatrolList: React.FC<PatrolListProps> = ({
 
       if (saved.filter) {
         setFilter(saved.filter);
-        dispatch(
-          filterPatrolSessions({
+        runFilter(
+          {
             fullName: saved.filter.fullName || undefined,
             lineAreaName: saved.filter.lineAreaName || undefined,
             status: saved.filter.status || undefined,
             fromDate: parseFilterDate(saved.filter.fromDate),
             toDate: parseFilterDate(saved.filter.toDate, true),
-          }),
+          },
+          { silent: hasCache },
         );
       } else {
-        dispatch(filterPatrolSessions({}));
+        runFilter({}, { silent: hasCache });
       }
     } else {
       if (statusFromUrl) {
         setFilter((prev) => ({ ...prev, status: statusFromUrl }));
-        dispatch(filterPatrolSessions({ status: statusFromUrl }));
+        runFilter({ status: statusFromUrl }, { silent: hasCache });
       } else {
-        dispatch(filterPatrolSessions({}));
+        // Daily & weekly dùng chung filteredSessionsResult (lọc theo patrolType ở
+        // client). Khi chỉ đổi tab mà store đã có dữ liệu thì không cần gọi lại API
+        // => tránh phải đợi tải lại toàn bộ danh sách.
+        if (filteredSessionsResult.length === 0) {
+          runFilter({});
+        } else {
+          setListLoading(false);
+        }
       }
     }
 
@@ -211,12 +242,16 @@ const PatrolList: React.FC<PatrolListProps> = ({
 
   // ======================== DATA ========================
 
-  const filteredSheets = [...filteredSessionsResult]
-    .filter((s) => s.patrolType === patrolTypeCode)
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
+  const filteredSheets = useMemo(
+    () =>
+      [...filteredSessionsResult]
+        .filter((s) => s.patrolType === patrolTypeCode)
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        ),
+    [filteredSessionsResult, patrolTypeCode],
+  );
 
   const pageCount = Math.ceil(filteredSheets.length / ITEMS_PER_PAGE);
   const offset = currentPage * ITEMS_PER_PAGE;
@@ -283,7 +318,7 @@ const buildFilterParams = (f: PatrolFilter) => ({
 });
 
   const dispatchFilter = (f: PatrolFilter) => {
-    dispatch(filterPatrolSessions(buildFilterParams(f)));
+    runFilter(buildFilterParams(f));
   };
 
   const handleFilterChange = (key: keyof PatrolFilter, value: string) => {
@@ -308,7 +343,7 @@ const buildFilterParams = (f: PatrolFilter) => ({
   const handleReset = () => {
     setFilter(PATROL_FILTER_DEFAULT);
     setCurrentPage(0);
-    dispatch(filterPatrolSessions({}));
+    runFilter({});
   };
 
   // ======================== ACTION HANDLERS ========================
@@ -327,7 +362,7 @@ const buildFilterParams = (f: PatrolFilter) => ({
     setIsDeleting(true);
     try {
       await dispatch(deletePatrolSession(deleteTargetId)).unwrap();
-      await dispatch(filterPatrolSessions(buildFilterParams(filter))).unwrap();
+      await runFilter(buildFilterParams(filter));
       toast.success(pT("deleteSuccess"));
       setDeleteTargetId(null);
     } catch (err: any) {
@@ -457,7 +492,7 @@ const buildFilterParams = (f: PatrolFilter) => ({
         lineAreas={lineAreas}
         fullNameCandidates={fullNameCandidates}
         totalCount={filteredSheets.length}
-        loading={loading}
+        loading={listLoading}
         showFullName={user?.role === "PQCLeader"}
         statusOptions={[
           { value: "", label: `${pT("colStatus")}` },
@@ -478,8 +513,12 @@ const buildFilterParams = (f: PatrolFilter) => ({
         }}
       />
 
-      {/* Empty state */}
-      {currentSheets.length === 0 ? (
+      {/* Loading state */}
+      {listLoading ? (
+        <div className="bg-white border border-gray-200 shadow-sm">
+          <LoadingSpinner size="sm" message={pT("searchingBtn")} />
+        </div>
+      ) : currentSheets.length === 0 ? (
         <div className="text-center py-8 bg-white border border-dashed border-gray-300">
           <p className="text-gray-500 font-medium m-0 p-4!">
             {isDaily ? pT("emptyDaily") : pT("emptyWeekly")}

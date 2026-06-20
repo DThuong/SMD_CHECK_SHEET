@@ -274,9 +274,14 @@ const Logs = () => {
 
         setFilter(restoreFilter);
         setCurrentPage(restorePage);
-        setTimeout(() => {
-          loadSheetsWithFilter(restoreFilter);
-        }, 100);
+        // Dữ liệu danh sách vẫn còn trong Redux store khi quay lại từ SheetDetail.
+        // Với ~4000 sheet, gọi lại API rất chậm => chỉ fetch khi store rỗng.
+        // Effect highlight/scroll bên dưới tự chạy dựa trên dữ liệu sẵn có.
+        if (!filteredSheets || filteredSheets.length === 0) {
+          setTimeout(() => {
+            loadSheetsWithFilter(restoreFilter);
+          }, 100);
+        }
         return;
       }
     }

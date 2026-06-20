@@ -8,7 +8,7 @@
     "sections": {
       "printer": "Printer",
       "spi": "SPI",
-      "mount": "Mount",
+      "mount": "Mounter",
       "reflow": "Reflow",
       "aoi": "AOI",
       "output": "OUTPUT",

@@ -285,6 +285,11 @@ const SheetDetailViewer = () => {
     const loadSheetData = async () => {
       if (!id) return;
 
+      // Tải lịch sử ký SONG SONG với sheet (call nhẹ) — không để bị chặn
+      // sau bước parse Excel LCR vốn rất chậm. Nhờ vậy phần "Tiến trình ký
+      // xác nhận" hiển thị gần như ngay khi trang load xong.
+      dispatch(getSheetStatusHistory(Number(id)));
+
       try {
         const result = await dispatch(
           getSheetWithFullObject(Number(id)),
@@ -343,18 +348,16 @@ const SheetDetailViewer = () => {
           }
         });
 
-        // LCR file giữ nguyên
-        // LCR file giữ nguyên
+        // LCR file: parse Excel ở backend rất chậm => chạy nền (không await),
+        // không chặn render trang cũng như phần lịch sử ký. UI dùng cờ
+        // lcrLoading/lcrValidation riêng nên vẫn cập nhật đúng khi xong.
         if (result.excelFileUrl && result.excelFileUrl.trim() !== "") {
-          try {
-            await dispatch(getLcrFileData(Number(id))).unwrap();
-          } catch (error) {
-            console.error("❌ Lỗi khi load LCR data:", error);
-          }
+          dispatch(getLcrFileData(Number(id)))
+            .unwrap()
+            .catch((error) => {
+              console.error("❌ Lỗi khi load LCR data:", error);
+            });
         }
-
-        // Tải lịch sử ký trạng thái của sheet
-        await dispatch(getSheetStatusHistory(Number(id))).unwrap();
       } catch (error: any) {
         console.error("❌ Error loading sheet:", error);
       }
@@ -575,7 +578,7 @@ const SheetDetailViewer = () => {
 
       const sections = Array.from(
         contentRef.current.querySelectorAll(".pdf-section"),
-      );
+      ).filter((el) => !el.classList.contains("no-print"));
 
       if (sections.length === 0) {
         showNotification("error", "Lỗi", "Không tìm thấy sections để export");
@@ -943,21 +946,21 @@ const SheetDetailViewer = () => {
                               {signerInfo.account?.fullName || signerInfo.account?.userName || "N/A"}
                             </div>
                             {/* Badge trạng thái "Đã ký" */}
-                            <div className="inline-flex items-center gap-1 !bg-emerald-100 !text-emerald-800 text-[9px] !px-2 !py-1 rounded font-bold uppercase tracking-wider whitespace-nowrap">
+                            <div className="inline-flex items-center gap-1 bg-emerald-100! text-emerald-800! text-[9px] px-2! py-1! rounded font-bold uppercase tracking-wider whitespace-nowrap">
                               <span>✓</span>
                               <span>{tLogs("detail.confirmed") || "Đã ký"}</span>
                             </div>
                           </div>
                         ) : canConfirm ? (
                           <div className="space-y-1">
-                            <div className="inline-flex items-center gap-1 !bg-blue-100 !text-blue-800 text-[9px] !px-2 !py-1 rounded font-bold uppercase tracking-wider whitespace-nowrap">
+                            <div className="inline-flex items-center gap-1 bg-blue-100! text-blue-800! text-[9px] px-2! py-1! rounded font-bold uppercase tracking-wider whitespace-nowrap">
                               <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping"></span>
                               <span>{tLogs("status.pending") || "Chờ ký"}</span>
                             </div>
                           </div>
                         ) : (
                           <div className="space-y-1">
-                            <div className="inline-flex items-center !bg-gray-100 !text-gray-500 text-[9px] !px-2 !py-1 rounded font-medium uppercase tracking-wider whitespace-nowrap">
+                            <div className="inline-flex items-center bg-gray-100! text-gray-500! text-[9px] px-2! py-1! rounded font-medium uppercase tracking-wider whitespace-nowrap">
                               <span>{tLogs("detail.notConfirmed") || "Chưa ký"}</span>
                             </div>
                           </div>
@@ -978,7 +981,7 @@ const SheetDetailViewer = () => {
                             <button
                               onClick={handleConfirm}
                               disabled={confirming}
-                              className="relative z-10 w-full !py-2 bg-blue-600 text-white rounded text-[10px] 
+                              className="relative z-10 w-full py-2! bg-blue-600 text-white rounded text-[10px] 
                                         font-bold hover:bg-blue-700 transition-all duration-300
                                         disabled:opacity-60 disabled:cursor-not-allowed
                                         flex items-center justify-center gap-1 shadow-sm

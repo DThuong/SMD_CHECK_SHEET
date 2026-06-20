@@ -26,6 +26,7 @@ import FileDetailViewer from '../pages/FileDetailViewer';
 import ChangePassword from '../pages/ChangePassword';
 import Plan from '../pages/managers_role/Plan';
 import PatrolComponent from '../pages/managers_role/PatrolComponent';
+import EngCheckSheet from '../pages/managers_role/EngCheckSheet';
 
 // ========================================
 // Component bảo vệ route cho PQC
@@ -169,6 +170,7 @@ const App = () => {
         {/* ========== DYNAMIC ROLE ROUTES (ENG, SUPERVISOR, MANAGER, MANAGER_KOREA) ========== */}
         <Route path="/:role" element={<RoleBasedRoute><RoleBasedLayout /></RoleBasedRoute>}>
           <Route path="/:role/smd-sheet-logs" element={<Logs />} />
+          <Route path="/:role/engCheckSheet" element={<EngCheckSheet />} />
           <Route path="/:role/dashboard" element={<Dashboard />} />
           <Route path="/:role/plan" element={<Plan />}></Route>
           <Route path="/:role/settings" element={<Settings />} />

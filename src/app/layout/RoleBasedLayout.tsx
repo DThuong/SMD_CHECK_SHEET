@@ -10,6 +10,7 @@ import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { PiPlantFill } from "react-icons/pi";
 import { logoutUser } from "../../redux/slices/authSlice";
 import { useTranslation } from "react-i18next";
+// import { MdEngineering } from "react-icons/md";
 
 const RoleBasedLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -37,6 +38,7 @@ const RoleBasedLayout = () => {
   const location = useLocation();
   const [currentLang, setCurrentLang] = useState(i18n.language || "vi");
 
+  // lắng nghe sự kiện thay đổi ngôn ngữ từ i18n để cập nhật currentLang
   useEffect(() => {
     const handleLanguageChanged = (lng: string) => setCurrentLang(lng);
     i18n.on("languageChanged", handleLanguageChanged);
@@ -45,6 +47,7 @@ const RoleBasedLayout = () => {
     };
   }, [i18n]);
 
+  // hàm xử lý đổi ngôn ngữ
   const handleLanguageChange = async (langCode: string) => {
     if (langCode === currentLang) return;
     try {
@@ -57,6 +60,7 @@ const RoleBasedLayout = () => {
     }
   };
 
+  // ẩn thông báo sau 2 giây hoặc khi component unmount
   useEffect(() => {
     if (!showNoti) return;
     try {
@@ -66,7 +70,7 @@ const RoleBasedLayout = () => {
     return () => clearTimeout(timer);
   }, [showNoti]);
 
-  // Close menus when clicking outside
+  // đóng modal khi click bên ngoài vùng modal
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       // Desktop Patrol Menu
@@ -82,7 +86,7 @@ const RoleBasedLayout = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Save sidebar state to localStorage
+  // lưu trạng thái thu gọn sidebar vào localStorage để giữ nguyên khi reload trang
   useEffect(() => {
     localStorage.setItem("sidebar_collapsed", String(isSidebarCollapsed));
   }, [isSidebarCollapsed]);
@@ -97,6 +101,7 @@ const RoleBasedLayout = () => {
     return <Navigate to={`/${userRoleLower}/dashboard`} replace />;
   }
 
+  // Hàm lấy tên hiển thị của role
   const getRoleDisplayName = (roleName: string) => {
     const roleMap: Record<string, string> = {
       eng: "Engineering",
@@ -111,6 +116,7 @@ const RoleBasedLayout = () => {
     );
   };
 
+  // Hàm lấy màu nền cho avatar dựa trên tên người dùng
   const getAvatarColor = (name: string) => {
     const colors = [
       'bg-blue-600', 'bg-emerald-600', 'bg-violet-600', 'bg-amber-600',
@@ -121,10 +127,22 @@ const RoleBasedLayout = () => {
     return colors[charCodeSum % colors.length];
   };
 
+  // Định nghĩa cấu trúc menu với thông tin về đường dẫn, icon và trạng thái reload
   const menuItems = [
     { name: t('menu.dashboard'), path: `/${role}/dashboard`, icon: <FaChartPie />, shouldReload: false },
     { name: t('menu.smdSheet'), path: `/${role}/smd-sheet-logs`, icon: <FaFile />, shouldReload: true },
-    { name: t('menu.plan'), path: `/${role}/plan`, icon: <PiPlantFill />, shouldReload: true },
+    // {
+    //   name: t('menu.engCheckSheet'),
+    //   path: 'engCheckSheet',
+    //   icon: <MdEngineering />,
+    //   isDropdown: true,
+    //   children: [
+    //     { name: t('menu.engManage'), path: `/${role}/engCheckSheet?view=manage`, shouldReload: false },
+    //     { name: t('menu.engDaily'), path: `/${role}/engCheckSheet?view=list&type=daily`, shouldReload: false },
+    //     { name: t('menu.engWeeklyMonthly'), path: `/${role}/engCheckSheet?view=list&type=weekly-monthly`, shouldReload: false },
+    //     { name: t('menu.engReport'), path: `/${role}/engCheckSheet?view=report`, shouldReload: false },
+    //   ],
+    // },
     {
       name: t('menu.patrolChecklist'),
       path: 'patrol',
@@ -137,6 +155,7 @@ const RoleBasedLayout = () => {
         { name: t('menu.patrolReport'), path: `/${role}/patrol?view=report`, shouldReload: false },
       ],
     },
+    { name: t('menu.plan'), path: `/${role}/plan`, icon: <PiPlantFill />, shouldReload: true },
     { name: t('menu.settings'), path: `/${role}/settings`, icon: <FaC />, shouldReload: false },
   ];
 

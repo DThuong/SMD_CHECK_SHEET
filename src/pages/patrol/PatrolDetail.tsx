@@ -518,6 +518,8 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
   const [collapsedCategories, setCollapsedCategories] = useState<
     Record<string, boolean>
   >({});
+  // Chỉ số công đoạn (stage) đang xem — dùng cho điều hướng next/prev/select.
+  const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const session = isNew ? null : currentSession;
 
   useEffect(() => {
@@ -1048,9 +1050,81 @@ const canEditResults =
     goToView("list", null, savedType);
   };
 
-  const activeStages = stages.filter(
-    (s) => s.patrolType === formPatrolType && s.isActive,
+  const activeStages = useMemo(
+    () => stages.filter((s) => s.patrolType === formPatrolType && s.isActive),
+    [stages, formPatrolType],
   );
+
+  // Đánh dấu công đoạn nào đang chứa câu hỏi NG để highlight trên thanh điều hướng.
+  const stageNgMap = useMemo(() => {
+    const map: Record<number, boolean> = {};
+    activeStages.forEach((stage) => {
+      const categoryIds = categories
+        .filter((c) => c.stageId === stage.id)
+        .map((c) => c.id);
+      map[stage.id] = checkLists.some(
+        (cl) =>
+          categoryIds.includes(cl.categoryId) &&
+          formResults[cl.id]?.result === "NG",
+      );
+    });
+    return map;
+  }, [activeStages, categories, checkLists, formResults]);
+
+  const currentStage = activeStages[currentStageIndex] || null;
+  const stagesToRender = currentStage ? [currentStage] : [];
+
+  // Pagination rút gọn: trang đầu, trang cuối, current ± 1, chèn "..." khi cách quãng.
+  const visibleStagePages = useMemo(() => {
+    const total = activeStages.length;
+    if (total === 0) return [] as (number | "ellipsis")[];
+    const wanted = new Set<number>([0, total - 1, currentStageIndex]);
+    if (currentStageIndex - 1 >= 0) wanted.add(currentStageIndex - 1);
+    if (currentStageIndex + 1 < total) wanted.add(currentStageIndex + 1);
+    const sorted = [...wanted]
+      .filter((n) => n >= 0 && n < total)
+      .sort((a, b) => a - b);
+    const out: (number | "ellipsis")[] = [];
+    let prev = -1;
+    for (const idx of sorted) {
+      if (prev !== -1 && idx - prev > 1) out.push("ellipsis");
+      out.push(idx);
+      prev = idx;
+    }
+    return out;
+  }, [activeStages.length, currentStageIndex]);
+
+  // Đổi loại phiếu (ngày/tuần) => quay về công đoạn đầu.
+  useEffect(() => {
+    setCurrentStageIndex(0);
+  }, [formPatrolType]);
+
+  // Giữ index hợp lệ khi số lượng công đoạn thay đổi.
+  useEffect(() => {
+    if (currentStageIndex > activeStages.length - 1) {
+      setCurrentStageIndex(0);
+    }
+  }, [activeStages.length]);
+
+  // Cuộn nội dung patrol lên đầu để PQC bắt đầu từ câu hỏi đầu tiên của công đoạn.
+  const scrollPatrolToTop = () => {
+    requestAnimationFrame(() => {
+      const main = document.querySelector(
+        "main.overflow-y-auto",
+      ) as HTMLElement | null;
+      if (main) main.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  };
+
+  const goToStage = (index: number) => {
+    const clamped = Math.max(0, Math.min(activeStages.length - 1, index));
+    setCurrentStageIndex(clamped);
+    scrollPatrolToTop();
+  };
+
+  const goPrevStage = () => goToStage(currentStageIndex - 1);
+  const goNextStage = () => goToStage(currentStageIndex + 1);
 
   const toggleStage = (stageId: string) => {
     setCollapsedStages((prev) => ({ ...prev, [stageId]: !prev[stageId] }));
@@ -1259,7 +1333,84 @@ const canEditResults =
               </div>
             )}
             <div className="space-y-4!">
-              {activeStages.map((stage) => {
+              {/* Thanh điều hướng công đoạn: next/prev + chọn nhanh + highlight NG */}
+              {activeStages.length > 0 && (
+                <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={goPrevStage}
+                      disabled={currentStageIndex === 0}
+                      className="shrink-0 flex items-center gap-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <FaChevronLeft size={12} />
+                      <span>Trước</span>
+                    </button>
+
+                    <select
+                      value={currentStageIndex}
+                      onChange={(e) => goToStage(Number(e.target.value))}
+                      className="flex-1 min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    >
+                      {activeStages.map((s, i) => (
+                        <option key={s.id} value={i}>
+                          {`${i + 1}/${activeStages.length} - ${s.name}${stageNgMap[s.id] ? "  ⚠ NG" : ""}`}
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      type="button"
+                      onClick={goNextStage}
+                      disabled={currentStageIndex >= activeStages.length - 1}
+                      className="shrink-0 flex items-center gap-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <span>Sau</span>
+                      <FaChevronRight size={12} />
+                    </button>
+                  </div>
+
+                  {/* Pagination rút gọn: 1 2 3 … cuối; đỏ nếu có NG, tối nếu đang xem */}
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap mt-4!">
+                    {visibleStagePages.map((item, idx) => {
+                      if (item === "ellipsis") {
+                        return (
+                          <span
+                            key={`ellipsis-${idx}`}
+                            className="px-1 text-gray-400 text-sm select-none"
+                          >
+                            …
+                          </span>
+                        );
+                      }
+                      const i = item;
+                      const stage = activeStages[i];
+                      const isActive = i === currentStageIndex;
+                      const hasNG = stageNgMap[stage.id];
+                      return (
+                        <button
+                          key={stage.id}
+                          type="button"
+                          onClick={() => goToStage(i)}
+                          title={stage.name}
+                          className={`shrink-0 min-w-9 h-9 px-2 rounded-lg text-xs font-bold border whitespace-nowrap transition-all ${
+                            isActive
+                              ? "bg-gray-800 text-white border-gray-800"
+                              : hasNG
+                                ? "bg-red-50 text-red-700 border-red-300"
+                                : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                          } ${hasNG && !isActive ? "ring-1 ring-red-200" : ""}`}
+                        >
+                          {i + 1}
+                          {hasNG ? " ⚠" : ""}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {stagesToRender.map((stage) => {
                 const stageKey = stage.id.toString();
                 const isStageCollapsed = !!collapsedStages[stageKey];
 
@@ -1597,6 +1748,31 @@ const canEditResults =
                   </div>
                 );
               })}
+
+              {/* Điều hướng cuối công đoạn: Trước / Sau + tự cuộn lên đầu */}
+              {activeStages.length > 0 && currentStage && (
+                <div className="flex items-center gap-2 bg-white shadow-sm border border-gray-200 rounded-lg p-3">
+                  <button
+                    type="button"
+                    onClick={goPrevStage}
+                    disabled={currentStageIndex === 0}
+                    className="flex flex-1 items-center justify-center gap-1 px-3 py-3 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <FaChevronLeft size={12} /> Trước
+                  </button>
+                  <span className="shrink-0 text-xs font-semibold text-gray-500 whitespace-nowrap">
+                    {currentStageIndex + 1}/{activeStages.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={goNextStage}
+                    disabled={currentStageIndex >= activeStages.length - 1}
+                    className="flex flex-1 items-center justify-center gap-1 px-3 py-3 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Sau <FaChevronRight size={12} />
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="bg-white shadow-sm border border-gray-200 p-4">

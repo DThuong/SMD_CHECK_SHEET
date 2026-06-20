@@ -819,6 +819,8 @@ const NGDefectAnalyticsChart: React.FC<
 
   const [rangeMode, setRangeMode] = useState<RangeMode>("7d");
   const [offset, setOffset] = useState(0);
+  // Trạng thái khởi tạo dữ liệu báo cáo (đợi sessions). true khi chưa có cache.
+  const [booting, setBooting] = useState(() => !(sessions?.length));
   const isRestoringReportStateRef = useRef(false);
   const [statusMode, setStatusMode] = useState<StatusMode>("all");
   const [shiftFilter, setShiftFilter] = useState<ShiftFilter>("both");
@@ -948,21 +950,29 @@ const NGDefectAnalyticsChart: React.FC<
     hasData: boolean,
     actionCreator: () => any,
   ) => {
-    if (hasData || bootstrapRequestedKeysRef.current.has(key)) return;
+    if (hasData || bootstrapRequestedKeysRef.current.has(key)) return undefined;
 
     bootstrapRequestedKeysRef.current.add(key);
-    dispatch(actionCreator())
+    return dispatch(actionCreator())
       .unwrap()
       .catch(() => {
         bootstrapRequestedKeysRef.current.delete(key);
       });
   };
 
-  requestOnce("sessions", Boolean(sessions?.length), fetchPatrolSessions);
+  const sessionsReq = requestOnce("sessions", Boolean(sessions?.length), fetchPatrolSessions);
   requestOnce("stages", Boolean(stages?.length), fetchStages);
   requestOnce("categories", Boolean(categories?.length), fetchCategories);
   requestOnce("checkLists", Boolean(checkLists?.length), fetchCheckLists);
   requestOnce("lineAreas", Boolean(lineAreas?.length), fetchLineAreas);
+
+  // Tắt trạng thái khởi tạo khi đã có sessions (cache) hoặc khi request sessions
+  // vừa khởi tạo hoàn tất (kể cả khi rỗng) — giúp hiện spinner đúng lúc.
+  if (Boolean(sessions?.length)) {
+    setBooting(false);
+  } else if (sessionsReq) {
+    sessionsReq.finally(() => setBooting(false));
+  }
 }, [
   dispatch,
   sessions?.length,
@@ -971,6 +981,11 @@ const NGDefectAnalyticsChart: React.FC<
   checkLists?.length,
   lineAreas?.length,
 ]);
+
+  // An toàn: khi sessions đã có dữ liệu thì chắc chắn tắt trạng thái khởi tạo.
+  useEffect(() => {
+    if (sessions?.length) setBooting(false);
+  }, [sessions?.length]);
   type CheckListLookup = {
     id: number;
     categoryId: number;
@@ -2044,13 +2059,14 @@ const getShiftLabel = useCallback(
       </div>
 
       <div className="p-4 md:p-5">
-        {loading ? (
-          <div className="rounded-xl bg-slate-50 py-10 text-center text-sm text-slate-500">
-            {pT("loading")}
+        {booting || loading ? (
+          <div className="flex flex-col items-center justify-center gap-3 rounded-xl bg-slate-50 py-12 text-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-slate-500" />
+            <span className="text-sm text-slate-500">{pT("loading")}</span>
           </div>
         ) : null}
 
-        {!loading && viewTab === "trend" ? (
+        {!booting && !loading && viewTab === "trend" ? (
           <div className="space-y-4!">
             <div className="rounded-xl border border-slate-100 p-3">
               <div className="mb-3 flex items-center justify-between">
@@ -2444,7 +2460,7 @@ const getShiftLabel = useCallback(
           </div>
         ) : null}
 
-        {!loading && viewTab === "breakdown" ? (
+        {!booting && !loading && viewTab === "breakdown" ? (
           <div className="lg:col-span-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-4!">
             <div className="rounded-xl border border-slate-100 p-4">
               <h4 className="mb-3 text-sm font-bold text-slate-800">
@@ -2662,7 +2678,7 @@ const getShiftLabel = useCallback(
           </div>
         ) : null}
 
-        {!loading && viewTab === "table" ? (
+        {!booting && !loading && viewTab === "table" ? (
           <div id="patrol-report-detail-table" className="space-y-4!">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs text-slate-500">

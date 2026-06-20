@@ -86,7 +86,7 @@ const Login = () => {
     <div className="min-h-[50vh] flex items-center justify-center bg-linear-to-br from-gray-50 to-gray-100 p-4">
       <form onSubmit={handleSubmit} className="w-full max-w-md bg-white rounded-2xl shadow my-4 p-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-700!">Welcome Back</h1>
+          <h1 className="text-2xl font-bold text-gray-700!">SMD SYSTEM</h1>
           <p className="text-xs text-gray-700!">Please login to your account</p>
         </div>
 

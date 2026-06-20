@@ -296,7 +296,12 @@ const SmdSheetDetail = () => {
     const status = sheet.status?.toLowerCase();
     switch (roleKey) {
       case "PQC":
-        return status === "pending";
+        // PQC chỉ được ký sheet do chính mình tạo (so khớp người tạo).
+        return (
+          status === "pending" &&
+          (sheet.account?.id === user.id ||
+            sheet.account?.userName === user.username)
+        );
       case "PQCLeader":
         return status === "pqcdone";
       case "ENG":

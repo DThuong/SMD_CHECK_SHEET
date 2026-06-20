@@ -520,6 +520,8 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
   >({});
   // Chỉ số công đoạn (stage) đang xem — dùng cho điều hướng next/prev/select.
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
+  // Ref tới thanh điều hướng công đoạn để cuộn tới khi đổi trang.
+  const stageNavRef = useRef<HTMLDivElement>(null);
   const session = isNew ? null : currentSession;
 
   useEffect(() => {
@@ -1106,25 +1108,50 @@ const canEditResults =
     }
   }, [activeStages.length]);
 
-  // Cuộn nội dung patrol lên đầu để PQC bắt đầu từ câu hỏi đầu tiên của công đoạn.
-  const scrollPatrolToTop = () => {
+  // Cuộn tới thanh điều hướng công đoạn (đầu nội dung công đoạn).
+  const scrollToStageNav = () => {
     requestAnimationFrame(() => {
-      const main = document.querySelector(
-        "main.overflow-y-auto",
-      ) as HTMLElement | null;
-      if (main) main.scrollTo({ top: 0, behavior: "smooth" });
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      stageNavRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     });
   };
 
   const goToStage = (index: number) => {
     const clamped = Math.max(0, Math.min(activeStages.length - 1, index));
     setCurrentStageIndex(clamped);
-    scrollPatrolToTop();
+    scrollToStageNav();
   };
 
   const goPrevStage = () => goToStage(currentStageIndex - 1);
   const goNextStage = () => goToStage(currentStageIndex + 1);
+
+  // Render 1 chip công đoạn (dùng chung cho bản rút gọn mobile và đầy đủ desktop).
+  const renderStageChip = (i: number) => {
+    const stage = activeStages[i];
+    if (!stage) return null;
+    const isActive = i === currentStageIndex;
+    const hasNG = stageNgMap[stage.id];
+    return (
+      <button
+        key={stage.id}
+        type="button"
+        onClick={() => goToStage(i)}
+        title={stage.name}
+        className={`shrink-0 min-w-9 h-9 px-2 rounded-lg text-xs font-bold border whitespace-nowrap transition-all ${
+          isActive
+            ? "bg-gray-800 text-white border-gray-800"
+            : hasNG
+              ? "bg-red-50 text-red-700 border-red-300"
+              : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+        } ${hasNG && !isActive ? "ring-1 ring-red-200" : ""}`}
+      >
+        {i + 1}
+        {hasNG ? " ⚠" : ""}
+      </button>
+    );
+  };
 
   const toggleStage = (stageId: string) => {
     setCollapsedStages((prev) => ({ ...prev, [stageId]: !prev[stageId] }));
@@ -1335,7 +1362,10 @@ const canEditResults =
             <div className="space-y-4!">
               {/* Thanh điều hướng công đoạn: next/prev + chọn nhanh + highlight NG */}
               {activeStages.length > 0 && (
-                <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-3 space-y-2">
+                <div
+                  ref={stageNavRef}
+                  className="bg-white shadow-sm border border-gray-200 rounded-lg p-3 space-y-2 scroll-mt-4"
+                >
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -1370,42 +1400,25 @@ const canEditResults =
                     </button>
                   </div>
 
-                  {/* Pagination rút gọn: 1 2 3 … cuối; đỏ nếu có NG, tối nếu đang xem */}
-                  <div className="flex items-center justify-center gap-1.5 flex-wrap mt-4!">
-                    {visibleStagePages.map((item, idx) => {
-                      if (item === "ellipsis") {
-                        return (
-                          <span
-                            key={`ellipsis-${idx}`}
-                            className="px-1 text-gray-400 text-sm select-none"
-                          >
-                            …
-                          </span>
-                        );
-                      }
-                      const i = item;
-                      const stage = activeStages[i];
-                      const isActive = i === currentStageIndex;
-                      const hasNG = stageNgMap[stage.id];
-                      return (
-                        <button
-                          key={stage.id}
-                          type="button"
-                          onClick={() => goToStage(i)}
-                          title={stage.name}
-                          className={`shrink-0 min-w-9 h-9 px-2 rounded-lg text-xs font-bold border whitespace-nowrap transition-all ${
-                            isActive
-                              ? "bg-gray-800 text-white border-gray-800"
-                              : hasNG
-                                ? "bg-red-50 text-red-700 border-red-300"
-                                : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-                          } ${hasNG && !isActive ? "ring-1 ring-red-200" : ""}`}
+                  {/* Mobile: pagination rút gọn 1 … 7 8 9 … 12 */}
+                  <div className="flex md:hidden items-center justify-center gap-1.5 flex-wrap mt-4!">
+                    {visibleStagePages.map((item, idx) =>
+                      item === "ellipsis" ? (
+                        <span
+                          key={`ellipsis-${idx}`}
+                          className="px-1 text-gray-400 text-sm select-none"
                         >
-                          {i + 1}
-                          {hasNG ? " ⚠" : ""}
-                        </button>
-                      );
-                    })}
+                          …
+                        </span>
+                      ) : (
+                        renderStageChip(item)
+                      ),
+                    )}
+                  </div>
+
+                  {/* Desktop: hiển thị đầy đủ tất cả công đoạn */}
+                  <div className="hidden md:flex items-center justify-center gap-1.5 flex-wrap mt-4!">
+                    {activeStages.map((_, i) => renderStageChip(i))}
                   </div>
                 </div>
               )}

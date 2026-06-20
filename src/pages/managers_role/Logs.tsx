@@ -453,7 +453,13 @@ const Logs = () => {
 
     switch (role) {
       case ROLES.PQC:
-        return status === STATUS.PENDING.toLowerCase(); // PQC ký khi Pending
+        // PQC chỉ được ký sheet do chính mình tạo (so khớp người tạo).
+        return (
+          status === STATUS.PENDING.toLowerCase() &&
+          (sheet.account?.id === user.id ||
+            sheet.account?.userName === user.username)
+        ); // PQC ký khi Pending của chính mình
+
       case ROLES.PQCLEADER:
         return status === STATUS.PQC_DONE.toLowerCase(); // PQCLeader ký sau PQC
       case ROLES.ENG:

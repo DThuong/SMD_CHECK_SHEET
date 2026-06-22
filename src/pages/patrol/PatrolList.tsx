@@ -519,7 +519,7 @@ const buildFilterParams = (f: PatrolFilter) => ({
           <LoadingSpinner size="sm" message={pT("searchingBtn")} />
         </div>
       ) : currentSheets.length === 0 ? (
-        <div className="text-center py-8 bg-white border border-dashed border-gray-300">
+        <div className="text-center py-4 bg-white border border-dashed border-gray-300">
           <p className="text-gray-500 font-medium m-0 p-4!">
             {isDaily ? pT("emptyDaily") : pT("emptyWeekly")}
           </p>

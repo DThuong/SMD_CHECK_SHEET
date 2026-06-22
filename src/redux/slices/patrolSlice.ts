@@ -22,6 +22,7 @@ export interface CheckListResult {
     actualValue: string
     note: string
     checkAt: string
+    images: ImageModel[]
 }
 
 export interface CheckList {
@@ -54,14 +55,22 @@ export interface Stage {
     isActive: boolean;
 }
 
+// Loại ảnh gắn theo từng câu hỏi (checkListResult)
+export type ImageType = "Before" | "After" | "Evidence";
+
 export interface ImageModel {
     id: number;
-    patrolSessionId: number;
-    note: string;
-    filename: string;
+    // API mới: ảnh gắn theo checkListResultId + typeImage
+    checkListResultId: number;
+    typeImage: ImageType | string;
+    fileName: string;
     imageUrl: string;
-    isActive: boolean;
-    patrolSession: any | null;
+    note: string;
+    // legacy/optional (giữ tương thích dữ liệu cũ)
+    patrolSessionId?: number;
+    filename?: string;
+    isActive?: boolean;
+    patrolSession?: any | null;
 }
 
 export interface StatusHistory {
@@ -219,13 +228,14 @@ export const fetchImageByFilename = createAsyncThunk('patrol/fetchImageByFilenam
     try { const response = await patrolApi.get(`/Image/image/${fileName}`, { responseType: 'blob' }); return response.data; }
     catch (error: any) { return rejectWithValue(error.response?.data || error.message); }
 });
-export const uploadImage = createAsyncThunk('patrol/uploadImage', async ({ sessionId, formData }: { sessionId: number, formData: FormData }, { rejectWithValue }) => {
-    // DEBUG THUNK
-    console.log('=== DEBUG THUNK uploadImage ===');
-    console.log('sessionId:', sessionId);
-    for (const [k, v] of formData.entries()) console.log('formData:', k, v);
-    // DEBUG THUNK END
-    try { const response = await patrolApi.post(`/Image/upload/${sessionId}`, formData); return response.data; }
+// API mới: upload ảnh theo từng câu hỏi (checkListResultId) + loại ảnh (Before/After/Evidence)
+export const uploadImage = createAsyncThunk('patrol/uploadImage', async ({ checkListResultId, typeImage, formData }: { checkListResultId: number, typeImage: string, formData: FormData }, { rejectWithValue }) => {
+    try { const response = await patrolApi.post(`/Image/upload/${checkListResultId}/type/${typeImage}`, formData); return response.data; }
+    catch (error: any) { return rejectWithValue(error.response?.data || error.message); }
+});
+// Lấy ảnh theo 1 câu hỏi + 1 loại ảnh (nếu cần dùng riêng)
+export const fetchImagesByResultType = createAsyncThunk('patrol/fetchImagesByResultType', async ({ checkListResultId, typeImage }: { checkListResultId: number, typeImage: string }, { rejectWithValue }) => {
+    try { const response = await patrolApi.get(`/Image/checklistresult/${checkListResultId}/type/${typeImage}`); return response.data; }
     catch (error: any) { return rejectWithValue(error.response?.data || error.message); }
 });
 export const deleteImage = createAsyncThunk('patrol/deleteImage', async (id: number, { rejectWithValue }) => {
@@ -546,25 +556,15 @@ const patrolSlice = createSlice({
 
                 const payload = Array.isArray(action.payload) ? action.payload : [];
 
-                // Nếu API trả [] thì vẫn nên đánh dấu session đã load,
-                // tránh dashboard gọi đi gọi lại mãi một API rỗng.
-                const requestedSessionId =
-                    Number(action.meta.arg) ||
-                    Number(payload[0]?.patrolSessionId);
-
-                if (requestedSessionId) {
-                    if (!state.loadedImageSessionIds.includes(requestedSessionId)) {
-                        state.loadedImageSessionIds.push(requestedSessionId);
-                    }
-
-                    state.images = state.images.filter(
-                        img => Number(img.patrolSessionId) !== requestedSessionId
-                    );
+                // API mới: ảnh trả về theo session (gắn checkListResultId + typeImage),
+                // không còn trường patrolSessionId. Trang chi tiết chỉ xử lý 1 session
+                // tại một thời điểm nên thay toàn bộ danh sách ảnh đang giữ trong store.
+                const requestedSessionId = Number(action.meta.arg);
+                if (requestedSessionId && !state.loadedImageSessionIds.includes(requestedSessionId)) {
+                    state.loadedImageSessionIds.push(requestedSessionId);
                 }
 
-                if (payload.length > 0) {
-                    state.images.push(...payload);
-                }
+                state.images = payload;
             })
             .addCase(fetchImagesBySession.rejected, handleRejected)
 
@@ -789,3 +789,4 @@ const patrolSlice = createSlice({
 export const { clearPatrolHistoryStatus, clearPatrolError, clearCurrentPatrolSession } = patrolSlice.actions;
 
 export default patrolSlice.reducer;
+// (patrol image API: ảnh gắn theo checkListResultId + typeImage)

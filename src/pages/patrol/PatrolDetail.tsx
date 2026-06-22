@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import {
   FaArrowLeft,
   FaCheck,
-  FaImage,
   FaPen,
   FaTrash,
   FaPlus,
@@ -18,8 +17,8 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaTimes,
+  FaEye,
 } from "react-icons/fa";
-import MultiImageUpload from "../../components/files/MultiImageUpload";
 import type { PatrolSharedProps } from "./types";
 import { useTranslation } from "react-i18next";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
@@ -40,9 +39,9 @@ import {
   fetchStatusHistoryBySession,
   type StatusHistory,
   type ImageModel,
+  type CheckList,
   clearCurrentPatrolSession,
 } from "../../redux/slices/patrolSlice";
-import Modal from "../../components/general/Modal";
 import {
   clearPatrolNavState,
   readPatrolNavState,
@@ -233,7 +232,7 @@ const ImagePreviewCarousel = React.memo(
 
     return (
       <div
-        className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/85 p-2 sm:p-4"
+        className="fixed inset-0 z-99999 flex items-center justify-center bg-black/85 p-2 sm:p-4"
         onClick={onClose}
       >
         <div
@@ -418,6 +417,289 @@ const ImagePreviewCarousel = React.memo(
   },
 );
 
+type ImgTypeKey = "Before" | "After" | "Evidence";
+
+type QuestionImageModalProps = {
+  open: boolean;
+  item: CheckList | null;
+  canEditResults: boolean;
+  canEditImages: boolean;
+  uploadingType: ImgTypeKey | null;
+  note: string;
+  imagesByType: Record<ImgTypeKey, ImageModel[]>;
+  imageTypes: readonly ImgTypeKey[];
+  imageTypeLabel: (type: ImgTypeKey) => string;
+  getImageUrl: (img: ImageModel) => string;
+  pT: (key: string, options?: any) => any;
+  onClose: () => void;
+  onNoteChange: (value: string) => void;
+  onNoteBlur: () => void;
+  onPickFiles: (files: File[], type: ImgTypeKey) => void;
+  onPreview: (imgs: ImageModel[], index: number, title: string) => void;
+  onRemove: (imgId: number) => void;
+};
+
+const TYPE_ACCENT: Record<ImgTypeKey, string> = {
+  Before: "border-amber-200 bg-amber-50",
+  After: "border-emerald-200 bg-emerald-50",
+  Evidence: "border-blue-200 bg-blue-50",
+};
+
+const TYPE_BADGE: Record<ImgTypeKey, string> = {
+  Before: "bg-amber-100 text-amber-700",
+  After: "bg-emerald-100 text-emerald-700",
+  Evidence: "bg-blue-100 text-blue-700",
+};
+
+const QuestionImageModal = React.memo(
+  ({
+    open,
+    item,
+    canEditResults,
+    canEditImages,
+    uploadingType,
+    note,
+    imagesByType,
+    imageTypes,
+    imageTypeLabel,
+    getImageUrl,
+    pT,
+    onClose,
+    onNoteChange,
+    onNoteBlur,
+    onPickFiles,
+    onPreview,
+    onRemove,
+  }: QuestionImageModalProps) => {
+    useEffect(() => {
+      if (!open) return;
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      const handleKey = (e: KeyboardEvent) => {
+        if (e.key === "Escape") onClose();
+      };
+      window.addEventListener("keydown", handleKey);
+      return () => {
+        document.body.style.overflow = previousOverflow;
+        window.removeEventListener("keydown", handleKey);
+      };
+    }, [open, onClose]);
+
+    if (!open || !item) return null;
+
+    const totalImages = imageTypes.reduce(
+      (sum, type) => sum + (imagesByType[type]?.length || 0),
+      0,
+    );
+
+    return (
+      <div
+        className="fixed inset-0 z-9999 flex items-end justify-center bg-black/50 px-3 sm:items-center sm:p-4"
+        onClick={onClose}
+      >
+        <div
+          className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-start justify-between gap-3 border-b border-gray-200 bg-gray-800 px-4 py-3 text-white">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">
+                {pT("detailModalTitle")}
+              </p>
+              <h3 className="mt-0.5 text-sm font-bold leading-snug sm:text-base wrap-break-words">
+                {item.questionCheck}
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+              aria-label="close"
+            >
+              <FaTimes />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="flex-1 space-y-4! overflow-y-auto p-4!">
+            {/* Ghi chú */}
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500">
+                {pT("colNote")}
+              </label>
+              {canEditResults ? (
+                <textarea
+                  value={note}
+                  onChange={(e) => onNoteChange(e.target.value)}
+                  onBlur={onNoteBlur}
+                  rows={2}
+                  placeholder={pT("placeholderNote")}
+                  className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm italic text-gray-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                />
+              ) : (
+                <p className="min-h-10 whitespace-pre-wrap rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm italic text-gray-600">
+                  {note || pT("noNote")}
+                </p>
+              )}
+            </div>
+
+            {/* Hình ảnh theo loại */}
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                  {pT("imageSection")} ({totalImages})
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                {imageTypes.map((type) => {
+                  const imgs = imagesByType[type] || [];
+                  const isUploading = uploadingType === type;
+                  return (
+                    <div
+                      key={type}
+                      className={`flex flex-col rounded-xl border ${TYPE_ACCENT[type]} p-3`}
+                    >
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${TYPE_BADGE[type]}`}
+                        >
+                          {imageTypeLabel(type)}
+                        </span>
+                        <span className="text-[11px] font-semibold text-gray-400">
+                          {imgs.length}
+                        </span>
+                      </div>
+
+                      {canEditImages && (
+                        <div className="mb-2 grid grid-cols-2 gap-2">
+                          <label
+                            className={`flex items-center justify-center gap-1 rounded-lg bg-blue-600 px-2 py-2 text-[11px] font-bold text-white ${
+                              isUploading
+                                ? "cursor-not-allowed opacity-60"
+                                : "cursor-pointer active:scale-[0.98]"
+                            }`}
+                          >
+                            <div className="flex items-center justify-center gap-1">
+                              <FaCamera size={10} />
+                              <span>{pT("captureBtn")}</span>
+                            </div>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              disabled={isUploading}
+                              className="hidden"
+                              onChange={(e) => {
+                                onPickFiles(
+                                  Array.from(e.target.files || []),
+                                  type,
+                                );
+                                e.target.value = "";
+                              }}
+                            />
+                          </label>
+                          <label
+                            className={`flex items-center justify-center gap-1 rounded-lg bg-slate-700 px-2 py-2 text-[11px] font-bold text-white ${
+                              isUploading
+                                ? "cursor-not-allowed opacity-60"
+                                : "cursor-pointer active:scale-[0.98]"
+                            }`}
+                          >
+                            <div className="flex items-center justify-center gap-1">
+                              <FaUpload size={10} />
+                              <span>{pT("uploadShortBtn")}</span>
+                            </div>
+
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              disabled={isUploading}
+                              className="hidden"
+                              onChange={(e) => {
+                                onPickFiles(
+                                  Array.from(e.target.files || []),
+                                  type,
+                                );
+                                e.target.value = "";
+                              }}
+                            />
+                          </label>
+                        </div>
+                      )}
+
+                      {isUploading && (
+                        <p className="mb-2 text-center text-[11px] font-semibold italic text-blue-600">
+                          {pT("uploadingLabel")}
+                        </p>
+                      )}
+
+                      {imgs.length > 0 ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          {imgs.map((img, idx) => (
+                            <div
+                              key={img.id}
+                              className="group flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white"
+                            >
+                              <div className="relative h-28 sm:h-32">
+                                <img
+                                  src={getImageUrl(img)}
+                                  alt={imageTypeLabel(type)}
+                                  loading="lazy"
+                                  className="h-full w-full cursor-pointer bg-gray-100 object-cover"
+                                  onClick={() =>
+                                    onPreview(imgs, idx, imageTypeLabel(type))
+                                  }
+                                />
+                                {canEditImages && (
+                                  <button
+                                    type="button"
+                                    onClick={() => onRemove(img.id)}
+                                    className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+                                    aria-label="delete"
+                                  >
+                                    <FaTrash size={11} />
+                                  </button>
+                                )}
+                              </div>
+                              {img.note ? (
+                                <p className="mb-0 border-t border-gray-100 bg-gray-50 px-1 py-1 text-[10px] italic leading-snug text-gray-600 wrap-break-words">
+                                  {img.note}
+                                </p>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="py-3 text-center text-[11px] italic text-gray-400">
+                          {pT("noImageYet")}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-gray-200 p-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full rounded-lg bg-gray-600 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700"
+            >
+              {pT("closeBtn")}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  },
+);
+
 const PatrolDetail: React.FC<PatrolSharedProps> = ({
   user,
   goToView,
@@ -448,27 +730,46 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
   } = useAppSelector((state) => state.patrol);
   const getImageUrl = (img: ImageModel) => img.imageUrl || "";
 
-  const currentSheetId = Number(sheetId || 0);
+  // Các loại ảnh gắn theo từng câu hỏi
+  const IMAGE_TYPES = ["Before", "After", "Evidence"] as const;
+  type ImgType = (typeof IMAGE_TYPES)[number];
 
-  const sessionImages = useMemo(() => {
-    if (!currentSheetId) return [];
+  const normalizeImageType = (value?: string): ImgType => {
+    const v = String(value || "").toLowerCase();
+    if (v === "before") return "Before";
+    if (v === "after") return "After";
+    return "Evidence";
+  };
 
-    return (images || []).filter(
-      (img) => Number(img.patrolSessionId) === currentSheetId,
-    );
-  }, [images, currentSheetId]);
+  const imageTypeLabel = (type: ImgType) => {
+    if (type === "Before") return pT("imageTypeBefore");
+    if (type === "After") return pT("imageTypeAfter");
+    return pT("imageTypeEvidence");
+  };
+
+  // Map checkListResultId -> danh sách ảnh (API mới gắn ảnh theo câu hỏi)
+  const imagesByResultId = useMemo(() => {
+    const map: Record<number, ImageModel[]> = {};
+    (images || []).forEach((img) => {
+      const rid = Number(img.checkListResultId);
+      if (!rid) return;
+      if (!map[rid]) map[rid] = [];
+      map[rid].push(img);
+    });
+    return map;
+  }, [images]);
 
   const [imagePreview, setImagePreview] = useState<PreviewCarouselState>(
     EMPTY_PREVIEW_CAROUSEL,
   );
 
-  const openSessionImagePreview = useCallback(
-    (startIndex: number) => {
-      const items = sessionImages
+  const openImagesPreview = useCallback(
+    (imgs: ImageModel[], startIndex: number, title: string) => {
+      const items = imgs
         .map((img, index) => ({
           id: img.id || index,
           url: getImageUrl(img),
-          title: `${pT("imageSection")} ${index + 1}`,
+          title: `${title} ${index + 1}`,
           note: img.note || "",
         }))
         .filter((item) => Boolean(item.url));
@@ -479,10 +780,10 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
         open: true,
         items,
         index: Math.max(0, Math.min(startIndex, items.length - 1)),
-        title: pT("imageSection") as string,
+        title,
       });
     },
-    [sessionImages],
+    [],
   );
 
   const [formResults, setFormResults] = useState<
@@ -491,6 +792,16 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
       { id?: number; result: string; actualValue: string; note: string }
     >
   >({});
+  // Ref đồng bộ formResults để dùng trong các callback bất đồng bộ (ensureResultId, getResultId)
+  const formResultsRef = useRef(formResults);
+  useEffect(() => {
+    formResultsRef.current = formResults;
+  }, [formResults]);
+  // Lấy result id của 1 câu hỏi (nếu đã có kết quả lưu trên server)
+  const getResultId = useCallback(
+    (checkListId: number) => formResultsRef.current[checkListId]?.id,
+    [],
+  );
   const [formLineId, setFormLineId] = useState<number>(0);
   const [formPatrolType, setFormPatrolType] = useState<string>(() => {
     if (isNew) {
@@ -501,17 +812,34 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
   }); // "1": Daily, "7": Weekly
   const [isLineSelectOpen, setIsLineSelectOpen] = useState(false);
   const lineSelectRef = useRef<HTMLDivElement>(null);
-  type PendingUploadImage = {
-    file: File;
-    capturedAt: string;
-  };
 
-  const [noteModal, setNoteModal] = useState<{
+  // Modal xem/quản lý ghi chú + hình ảnh theo từng câu hỏi
+  const [qModal, setQModal] = useState<{
     open: boolean;
-    file: PendingUploadImage | null;
-    queue: PendingUploadImage[];
-  }>({ open: false, file: null, queue: [] });
-  const [pendingNote, setPendingNote] = useState("");
+    checkListId: number | null;
+  }>({ open: false, checkListId: null });
+  // Loại ảnh đang được upload (để hiển thị trạng thái "đang tải" ngay trong modal)
+  const [uploadingType, setUploadingType] = useState<ImgType | null>(null);
+  // Modal nhập ghi chú cho từng tấm hình trước khi upload
+  const [imgNoteModal, setImgNoteModal] = useState<{
+    open: boolean;
+    checkListId: number | null;
+    typeImage: ImgType;
+    queue: File[];
+    note: string;
+    index: number;
+    total: number;
+    uploading: boolean;
+  }>({
+    open: false,
+    checkListId: null,
+    typeImage: "Evidence",
+    queue: [],
+    note: "",
+    index: 0,
+    total: 0,
+    uploading: false,
+  });
   const [collapsedStages, setCollapsedStages] = useState<
     Record<string, boolean>
   >({});
@@ -691,31 +1019,6 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
     });
   };
 
-  const buildPendingUploadImages = (files: File[]): PendingUploadImage[] => {
-    const baseTime = Date.now();
-
-    return files
-      .filter((file) => file.type.startsWith("image/"))
-      .map((file, index) => ({
-        file,
-        capturedAt: new Date(baseTime + index).toISOString(),
-      }));
-  };
-
-  const openImageNoteModal = (files: File[]) => {
-    if (!canEditImages || !sheetId) return;
-
-    const uploadImages = buildPendingUploadImages(files);
-    if (uploadImages.length === 0) return;
-
-    setPendingNote("");
-    setNoteModal({
-      open: true,
-      file: uploadImages[0],
-      queue: uploadImages.slice(1),
-    });
-  };
-
   const isOwner =
     !!session && !!user?.id && Number(session.accountId) === Number(user.id);
 
@@ -735,16 +1038,13 @@ const canEditResults =
   /**
    * Quyền sửa hình:
    * - PQC: chỉ upload/xoá hình phiếu Pending của chính mình
-   * - PQCLeader: upload/xoá hình sheet Pending
-   *
-   * Nếu muốn PQCLeader sửa hình cả Submitted thì đổi:
-   * isPQCLeader && isPending
-   * thành:
-   * isPQCLeader && (isPending || isSubmitted)
+   * - PQCLeader: upload/xoá hình của BẤT KỲ sheet nào (do bất kỳ PQC tạo)
+   *   khi đang ở trạng thái Pending hoặc Submitted (lúc đi duyệt).
    */
   const canEditImages =
     !isNew &&
-    ((isPQC && isOwner && isPending) || (isPQCLeader && isPending));
+    ((isPQC && isOwner && isPending) ||
+      (isPQCLeader && (isPending || isSubmitted)));
 
   const canApprove = isSubmitted && isPQCLeader;
 
@@ -833,51 +1133,134 @@ const canEditResults =
     }
   };
 
-  const handleImageUpload = async (
-    _fieldName: string,
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    openImageNoteModal(Array.from(e.target.files || []));
-    e.target.value = "";
-  };
-
-  const handleConfirmUpload = async () => {
-    const currentUpload = noteModal.file;
-    if (!currentUpload || !sheetId) return;
+  // Đảm bảo câu hỏi đã có checkListResult (tạo mới nếu chưa) để gắn ảnh theo result.
+  const ensureResultId = async (checkListId: number): Promise<number | null> => {
+    const existing = formResultsRef.current[checkListId];
+    if (existing?.id) return existing.id;
+    if (isNew || !sheetId) return null;
 
     try {
+      const created = await dispatch(
+        createCheckListResult({
+          patrolSessionId: Number(sheetId),
+          checkListId,
+          result: existing?.result || "",
+          actualValue: existing?.actualValue || "",
+          note: existing?.note || "",
+          checkAt: new Date().toISOString(),
+        }),
+      ).unwrap();
+
+      setFormResults((prev) => ({
+        ...prev,
+        [checkListId]: {
+          ...prev[checkListId],
+          id: created.id,
+          result: created.result ?? prev[checkListId]?.result ?? "",
+          actualValue:
+            created.actualValue ?? prev[checkListId]?.actualValue ?? "",
+          note: created.note ?? prev[checkListId]?.note ?? "",
+        },
+      }));
+
+      return created.id;
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err));
+      return null;
+    }
+  };
+
+  // Loại ảnh đã xác định theo cột (Trước / Sau / Minh chứng). Mở modal nhập
+  // ghi chú cho TỪNG tấm hình trước khi upload (ghi chú gửi kèm trong request).
+  const handleQuestionUpload = (
+    checkListId: number,
+    typeImage: ImgType,
+    files: File[],
+  ) => {
+    if (!canEditImages || !sheetId || !checkListId) return;
+
+    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+    if (imageFiles.length === 0) return;
+
+    setImgNoteModal({
+      open: true,
+      checkListId,
+      typeImage,
+      queue: imageFiles,
+      note: "",
+      index: 0,
+      total: imageFiles.length,
+      uploading: false,
+    });
+  };
+
+  // Xác nhận ghi chú & upload tấm hình hiện tại; nếu còn ảnh trong hàng đợi thì
+  // tiếp tục hỏi ghi chú cho tấm kế tiếp.
+  const handleConfirmImageNote = async () => {
+    const { checkListId, typeImage, queue, note } = imgNoteModal;
+    const file = queue[0];
+    if (!file || !checkListId || !sheetId) return;
+
+    setImgNoteModal((prev) => ({ ...prev, uploading: true }));
+    setUploadingType(typeImage);
+    try {
+      const resultId = await ensureResultId(checkListId);
+      if (!resultId) {
+        toast.error(pT("errorOccurred"));
+        setImgNoteModal((prev) => ({ ...prev, open: false, uploading: false }));
+        return;
+      }
+
       const stampedFile = await drawTimestampOnImage(
-        currentUpload.file,
-        formatImageTimestamp(new Date(currentUpload.capturedAt)),
+        file,
+        formatImageTimestamp(new Date()),
       );
 
       const formData = new FormData();
       formData.append("image", stampedFile);
-      formData.append("note", pendingNote || "");
+      formData.append("note", note || "");
 
       await dispatch(
-        uploadImage({ sessionId: Number(sheetId), formData }),
+        uploadImage({ checkListResultId: resultId, typeImage, formData }),
       ).unwrap();
 
       await dispatch(fetchImagesBySession(Number(sheetId)));
 
-      const nextFile = noteModal.queue[0];
-
-      if (nextFile) {
-        setPendingNote("");
-        setNoteModal({
-          open: true,
-          file: nextFile,
-          queue: noteModal.queue.slice(1),
-        });
+      const rest = queue.slice(1);
+      if (rest.length) {
+        setImgNoteModal((prev) => ({
+          ...prev,
+          queue: rest,
+          note: "",
+          index: prev.index + 1,
+          uploading: false,
+        }));
       } else {
-        setNoteModal({ open: false, file: null, queue: [] });
+        setImgNoteModal((prev) => ({
+          ...prev,
+          open: false,
+          queue: [],
+          note: "",
+          uploading: false,
+        }));
         toast.success(pT("msgUploadSuccess"));
       }
     } catch (err: any) {
       toast.error(extractErrorMessage(err));
+      setImgNoteModal((prev) => ({ ...prev, uploading: false }));
+    } finally {
+      setUploadingType(null);
     }
   };
+
+  const cancelImageNote = () =>
+    setImgNoteModal((prev) => ({
+      ...prev,
+      open: false,
+      queue: [],
+      note: "",
+      uploading: false,
+    }));
 
   const handleRemoveImage = async (imgId: number) => {
     if (!canEditImages || !sheetId) return;
@@ -885,10 +1268,30 @@ const canEditResults =
     try {
       await dispatch(deleteImage(imgId)).unwrap();
       await dispatch(fetchImagesBySession(Number(sheetId)));
-      toast.success("Đã xoá hình thành công.");
+      toast.success(pT("msgDeleteImageSuccess"));
     } catch (err: any) {
       toast.error(extractErrorMessage(err));
     }
+  };
+
+  // Lấy ảnh của 1 câu hỏi (theo result id) và nhóm theo loại ảnh.
+  const getQuestionImages = (checkListId: number): ImageModel[] => {
+    const rid = getResultId(checkListId);
+    if (!rid) return [];
+    return imagesByResultId[rid] || [];
+  };
+
+  const getQuestionImagesByType = (
+    checkListId: number,
+  ): Record<ImgType, ImageModel[]> => {
+    const imgs = getQuestionImages(checkListId);
+    return {
+      Before: imgs.filter((i) => normalizeImageType(i.typeImage) === "Before"),
+      After: imgs.filter((i) => normalizeImageType(i.typeImage) === "After"),
+      Evidence: imgs.filter(
+        (i) => normalizeImageType(i.typeImage) === "Evidence",
+      ),
+    };
   };
 
   const handleCreateSession = async (status: string) => {
@@ -1192,37 +1595,145 @@ const canEditResults =
         onClose={() => setImagePreview(EMPTY_PREVIEW_CAROUSEL)}
       />
 
-      <Modal
-        open={noteModal.open}
-        title={pT("imageNoteTitle")}
-        onClose={() => setNoteModal({ open: false, file: null, queue: [] })}
-        onSave={handleConfirmUpload}
-      >
-        <div className="space-y-3">
-          <p className="text-sm text-gray-500">
-            File:{" "}
-            <span className="font-medium text-gray-700">
-              {noteModal.file?.file.name}
-            </span>
-          </p>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {pT("imageNote")}{" "}
-              <span className="text-gray-400 font-normal">
-                {pT("optional")}
-              </span>
-            </label>
-            <input
-              type="text"
-              value={pendingNote}
-              onChange={(e) => setPendingNote(e.target.value)}
-              placeholder={pT("placeholderImageNote")}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              autoFocus
-            />
+      <QuestionImageModal
+        open={qModal.open}
+        item={
+          qModal.checkListId
+            ? checkLists.find((c) => c.id === qModal.checkListId) || null
+            : null
+        }
+        canEditResults={canEditResults}
+        canEditImages={canEditImages}
+        uploadingType={uploadingType}
+        note={
+          qModal.checkListId
+            ? formResults[qModal.checkListId]?.note || ""
+            : ""
+        }
+        imagesByType={
+          qModal.checkListId
+            ? getQuestionImagesByType(qModal.checkListId)
+            : { Before: [], After: [], Evidence: [] }
+        }
+        imageTypes={IMAGE_TYPES}
+        imageTypeLabel={imageTypeLabel}
+        getImageUrl={getImageUrl}
+        pT={pT}
+        onClose={() => setQModal({ open: false, checkListId: null })}
+        onNoteChange={(value) => {
+          if (qModal.checkListId)
+            handleLocalChange(qModal.checkListId, "note", value);
+        }}
+        onNoteBlur={() => {
+          if (qModal.checkListId) handleSyncResult(qModal.checkListId);
+        }}
+        onPickFiles={(files, type) => {
+          if (qModal.checkListId)
+            handleQuestionUpload(qModal.checkListId, type, files);
+        }}
+        onPreview={(imgs, index, title) =>
+          openImagesPreview(imgs, index, title)
+        }
+        onRemove={(imgId) => handleRemoveImage(imgId)}
+      />
+
+      {/* Modal nhập ghi chú cho từng tấm hình (đặt trên QuestionImageModal) */}
+      {imgNoteModal.open && (
+        <div
+          className="fixed inset-0 z-[100000] flex items-end justify-center bg-black/55 p-0 sm:items-center sm:p-4"
+          onClick={imgNoteModal.uploading ? undefined : cancelImageNote}
+        >
+          <div
+            className="w-full max-w-md overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+              <h3 className="text-base font-bold text-gray-800">
+                {pT("imageNoteTitle")}
+              </h3>
+              <button
+                type="button"
+                onClick={cancelImageNote}
+                disabled={imgNoteModal.uploading}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-40"
+                aria-label="close"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="space-y-3 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${TYPE_BADGE[imgNoteModal.typeImage]}`}
+                >
+                  {imageTypeLabel(imgNoteModal.typeImage)}
+                </span>
+                {imgNoteModal.total > 1 && (
+                  <span className="text-xs font-semibold text-gray-400">
+                    {imgNoteModal.index + 1}/{imgNoteModal.total}
+                  </span>
+                )}
+              </div>
+
+              <p className="truncate text-sm text-gray-500">
+                File:{" "}
+                <span className="font-medium text-gray-700">
+                  {imgNoteModal.queue[0]?.name}
+                </span>
+              </p>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  {pT("imageNote")}{" "}
+                  <span className="font-normal text-gray-400">
+                    {pT("optional")}
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={imgNoteModal.note}
+                  onChange={(e) =>
+                    setImgNoteModal((prev) => ({
+                      ...prev,
+                      note: e.target.value,
+                    }))
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !imgNoteModal.uploading)
+                      handleConfirmImageNote();
+                  }}
+                  placeholder={pT("placeholderImageNote")}
+                  autoFocus
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 border-t border-gray-200 p-3">
+              <button
+                type="button"
+                onClick={handleConfirmImageNote}
+                disabled={imgNoteModal.uploading}
+                className="flex-1 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {imgNoteModal.uploading
+                  ? pT("uploadingLabel")
+                  : pT("saveUploadBtn")}
+              </button>
+              <button
+                type="button"
+                onClick={cancelImageNote}
+                disabled={imgNoteModal.uploading}
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+              >
+                {pT("cancelBtn")}
+              </button>
+            </div>
           </div>
         </div>
-      </Modal>
+      )}
+
       <div className="animate-fade-in space-y-4! mt-6! pb-20!">
         <div className="flex flex-row items-center justify-between mb-4 bg-white py-3 px-3 shadow-sm border border-gray-200 gap-3">
           <div className="flex items-center justify-start gap-3">
@@ -1581,33 +2092,41 @@ const canEditResults =
                                               )}
                                             </div>
 
-                                            {/* 4. Ghi chú */}
+                                            {/* 4. Hành động (xem ghi chú + hình ảnh) */}
                                             <div className="flex flex-col gap-1">
                                               <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                                                {pT("colNote")}
+                                                {pT("colAction")}
                                               </span>
-                                              <input
-                                                type="text"
-                                                value={
-                                                  formResults[item.id]?.note ||
-                                                  ""
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  setQModal({
+                                                    open: true,
+                                                    checkListId: item.id,
+                                                  })
                                                 }
-                                                onChange={(e) =>
-                                                  handleLocalChange(
-                                                    item.id,
-                                                    "note",
-                                                    e.target.value,
-                                                  )
-                                                }
-                                                onBlur={() =>
-                                                  handleSyncResult(item.id)
-                                                }
-                                                disabled={!canEditResults}
-                                                placeholder={pT(
-                                                  "placeholderNote",
+                                                className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm font-semibold text-gray-700 active:bg-gray-100"
+                                              >
+                                                {canEditImages ? (
+                                                  <FaCamera className="text-blue-600" />
+                                                ) : (
+                                                  <FaEye className="text-blue-600" />
                                                 )}
-                                                className="w-full text-sm border-b border-gray-200 focus:border-blue-500 outline-none py-2 italic text-gray-600"
-                                              />
+                                                <span>
+                                                  {canEditImages
+                                                    ? pT("manageImageBtn")
+                                                    : pT("viewNoteImageBtn")}
+                                                </span>
+                                                {getQuestionImages(item.id)
+                                                  .length > 0 && (
+                                                  <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[11px] font-bold text-white">
+                                                    {
+                                                      getQuestionImages(item.id)
+                                                        .length
+                                                    }
+                                                  </span>
+                                                )}
+                                              </button>
                                             </div>
                                           </div>
                                         ))}
@@ -1624,11 +2143,11 @@ const canEditResults =
                                             <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[15%]">
                                               {pT("colStandard")}
                                             </th>
-                                            <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[20%]">
+                                            <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[25%]">
                                               {pT("colResult")}
                                             </th>
-                                            <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[25%]">
-                                              {pT("colNote")}
+                                            <th className="p-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider w-[20%]">
+                                              {pT("colAction")}
                                             </th>
                                           </tr>
                                         </thead>
@@ -1723,28 +2242,49 @@ const canEditResults =
                                                   )}
                                                 </td>
                                                 <td className="p-3">
-                                                  <input
-                                                    type="text"
-                                                    value={
-                                                      formResults[item.id]
-                                                        ?.note || ""
-                                                    }
-                                                    onChange={(e) =>
-                                                      handleLocalChange(
+                                                  <div className="flex items-center justify-center">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() =>
+                                                        setQModal({
+                                                          open: true,
+                                                          checkListId: item.id,
+                                                        })
+                                                      }
+                                                      title={
+                                                        canEditImages
+                                                          ? pT("manageImageBtn")
+                                                          : pT(
+                                                              "viewNoteImageBtn",
+                                                            )
+                                                      }
+                                                      className="relative inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                                                    >
+                                                      {canEditImages ? (
+                                                        <FaCamera className="text-blue-600" />
+                                                      ) : (
+                                                        <FaEye className="text-blue-600" />
+                                                      )}
+                                                      <span className="hidden lg:inline">
+                                                        {canEditImages
+                                                          ? pT("manageImageBtn")
+                                                          : pT(
+                                                              "viewNoteImageBtn",
+                                                            )}
+                                                      </span>
+                                                      {getQuestionImages(
                                                         item.id,
-                                                        "note",
-                                                        e.target.value,
-                                                      )
-                                                    }
-                                                    onBlur={() =>
-                                                      handleSyncResult(item.id)
-                                                    }
-                                                    disabled={!canEditResults}
-                                                    placeholder={pT(
-                                                      "placeholderNote",
-                                                    )}
-                                                    className="w-full text-xs border-b border-gray-300 focus:border-blue-500 outline-none py-1 italic"
-                                                  />
+                                                      ).length > 0 && (
+                                                        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-bold text-white">
+                                                          {
+                                                            getQuestionImages(
+                                                              item.id,
+                                                            ).length
+                                                          }
+                                                        </span>
+                                                      )}
+                                                    </button>
+                                                  </div>
                                                 </td>
                                               </tr>
                                             ))}
@@ -1788,100 +2328,8 @@ const canEditResults =
               )}
             </div>
 
-            <div className="bg-white shadow-sm border border-gray-200 p-4">
-              <h3 className="font-bold text-lg text-gray-800 mb-3 flex items-center gap-2">
-                <FaImage className="text-blue-500" /> {pT("imageSection")} (
-                {sessionImages.length})
-              </h3>
-
-              {canEditImages && (
-                <div className="mb-4 grid grid-cols-2 gap-2 md:hidden">
-                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-3 text-sm font-bold text-white active:scale-[0.98]">
-                    <div className="flex items-center justify-center gap-1">
-                      <FaCamera size={10} />
-                      <p className="text-sm font-medium mb-0">Chụp ảnh</p>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      className="hidden"
-                      onChange={(e) =>
-                        openImageNoteModal(Array.from(e.target.files || []))
-                      }
-                    />
-                  </label>
-
-                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-800 px-3 py-3 text-sm font-bold text-white active:scale-[0.98]">
-                    <div className="flex items-center justify-center gap-1">
-                      <FaUpload size={10} />
-                      <p className="text-sm font-medium mb-0">
-                        Tải từ thư viện
-                      </p>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={(e) =>
-                        openImageNoteModal(Array.from(e.target.files || []))
-                      }
-                    />
-                  </label>
-                </div>
-              )}
-
-              {canEditImages && (
-                <MultiImageUpload
-                  label={pT("uploadLabel")}
-                  fieldName="patrolImages"
-                  images={sessionImages.map((img) => getImageUrl(img))}
-                  notes={sessionImages.map((img) => img.note || "")}
-                  onUpload={handleImageUpload}
-                  onRemove={(idx) => handleRemoveImage(sessionImages[idx].id)}
-                  onViewAll={() => {}}
-                  onViewSingle={(url) => {
-                    const index = sessionImages.findIndex(
-                      (img) => getImageUrl(img) === url,
-                    );
-                    openSessionImagePreview(index >= 0 ? index : 0);
-                  }}
-                  maxImages={20}
-                />
-              )}
-
-              {sessionImages.length > 0 && (
-                  <div className="grid sm:grid-cols-2 gap-4 mt-4">
-                    {sessionImages.map((img, index) => (
-                      <div
-                        key={img.id}
-                        className="border border-gray-200 overflow-hidden flex flex-col relative group"
-                      >
-                        <img
-                          src={getImageUrl(img)}
-                          alt="Current state"
-                          className="w-full h-48 object-cover cursor-pointer bg-gray-100"
-                          onClick={() => openSessionImagePreview(index)}
-                        />
-                        {img.note && (
-                          <div className="text-xs text-gray-600 px-3 py-2 bg-gray-50 border-t border-gray-200 italic">
-                            {img.note}
-                          </div>
-                        )}
-                        {canEditImages && (
-                          <button
-                            onClick={() => handleRemoveImage(img.id)}
-                            className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <FaTrash size={12} />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-            </div>
+            {/* Ảnh minh chứng đã chuyển sang quản lý theo từng câu hỏi
+                (xem/Upload trong modal mở từ cột "Hành động"). */}
 
             {/* Action Bar */}
 

@@ -66,6 +66,7 @@ interface NGErrorItem {
   checkAt: string;
   checkAtText: string;
   shift: ShiftType;
+  images: PatrolImageView[];
 }
 
 interface SheetNGRecord {
@@ -832,6 +833,8 @@ const NGDefectAnalyticsChart: React.FC<
   const [imagePreview, setImagePreview] = useState<PreviewCarouselState>(
     EMPTY_PREVIEW_CAROUSEL,
   );
+  // Chi tiết 1 câu hỏi NG (mở từ cột hành động) để xem hình của riêng câu hỏi đó
+  const [errorDetail, setErrorDetail] = useState<NGErrorItem | null>(null);
   const [detailPage, setDetailPage] = useState(0);
   const [highlightSessionId, setHighlightSessionId] = useState<number | null>(
     null,
@@ -940,6 +943,7 @@ const NGDefectAnalyticsChart: React.FC<
       pT("reportColCategory"),
       pT("reportColErrorContent"),
       pT("colNote"),
+      pT("action"),
     ],
     [pT],
   );
@@ -968,7 +972,7 @@ const NGDefectAnalyticsChart: React.FC<
 
   // Tắt trạng thái khởi tạo khi đã có sessions (cache) hoặc khi request sessions
   // vừa khởi tạo hoàn tất (kể cả khi rỗng) — giúp hiện spinner đúng lúc.
-  if (Boolean(sessions?.length)) {
+  if (sessions?.length) {
     setBooting(false);
   } else if (sessionsReq) {
     sessionsReq.finally(() => setBooting(false));
@@ -1075,19 +1079,38 @@ const NGDefectAnalyticsChart: React.FC<
   }, [checkLists]);
 
   const getSessionImages = useCallback((session: any): PatrolImageView[] => {
-    const rawImages =
-      Array.isArray(session?.images) && session.images.length > 0
-        ? session.images
-        : Array.isArray(session?.patrolImages) && session.patrolImages.length > 0
-          ? session.patrolImages
-          : Array.isArray(session?.sessionImages) && session.sessionImages.length > 0
-            ? session.sessionImages
-            : Array.isArray(session?.patrolSessionImages) &&
-                session.patrolSessionImages.length > 0
-              ? session.patrolSessionImages
-              : [];
+    const collected: any[] = [];
 
-    return rawImages.map(buildImageView).filter((img: any) => Boolean(img.url));
+    // Nguồn cũ: ảnh cấp session (giữ tương thích dữ liệu cũ)
+    const legacy =
+      (Array.isArray(session?.images) && session.images) ||
+      (Array.isArray(session?.patrolImages) && session.patrolImages) ||
+      (Array.isArray(session?.sessionImages) && session.sessionImages) ||
+      (Array.isArray(session?.patrolSessionImages) &&
+        session.patrolSessionImages) ||
+      [];
+    collected.push(...legacy);
+
+    // API mới: ảnh gắn theo từng câu hỏi (checkListResults[].images)
+    const results = Array.isArray(session?.checkListResults)
+      ? session.checkListResults
+      : [];
+    results.forEach((r: any) => {
+      if (Array.isArray(r?.images)) collected.push(...r.images);
+    });
+
+    const views = collected
+      .map(buildImageView)
+      .filter((img: any) => Boolean(img.url));
+
+    // Loại trùng theo id (fallback theo url)
+    const seen = new Set<string>();
+    return views.filter((img) => {
+      const key = img.id ? `id:${img.id}` : `url:${img.url}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }, []);
 
   const getLineName = useCallback(
@@ -1195,6 +1218,12 @@ const allSheetRecords = useMemo<SheetNGRecord[]>(() => {
             checkAt,
             checkAtText: fmtDateTime(checkAt),
             shift: errorShiftInfo.shift,
+            // Ảnh gắn theo từng câu hỏi (API mới: checkListResult.images)
+            images: Array.isArray(result?.images)
+              ? result.images
+                  .map(buildImageView)
+                  .filter((img: PatrolImageView) => Boolean(img.url))
+              : [],
             // ✅ bỏ shiftText — tính lúc render
           };
         });
@@ -2983,10 +3012,10 @@ const getShiftLabel = useCallback(
           onClick={() => setSelectedRecord(null)}
         >
           <div
-            className="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+            className="flex max-h-[90vh] w-full max-w-7xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-4 border-b border-slate-100 p-4">
+            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 p-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-red-600">
                   {pT("reportSheetNGDetail")}
@@ -3010,7 +3039,7 @@ const getShiftLabel = useCallback(
               </button>
             </div>
 
-            <div className="max-h-[calc(90vh-86px)] overflow-y-auto p-5">
+            <div className="min-h-0 flex-1 overflow-y-auto p-5">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
                 <div className="rounded-xl bg-slate-50 p-3">
                   <p className="text-xs text-slate-400">
@@ -3112,68 +3141,132 @@ const getShiftLabel = useCallback(
                           <td className="min-w-[180px] px-3 py-3 text-slate-600">
                             {error.note || EMPTY}
                           </td>
+                          <td className="px-3 py-3 text-center">
+                            <button
+                              type="button"
+                              onClick={() => setErrorDetail(error)}
+                              title={pT("reportOpenDetail")}
+                              className="relative inline-flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:border-blue-300 hover:text-blue-600"
+                            >
+                              <FaEye size={13} />
+                              {error.images.length > 0 && (
+                                <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
+                                  {error.images.length}
+                                </span>
+                              )}
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
-              <div className="mt-4 rounded-xl bg-red-50 p-3">
-                <p className="text-xs font-bold text-red-400">
-                  {pT("reportSheetErrorNote")}
+      {/* Modal chi tiết 1 câu hỏi NG: xem ghi chú + hình của riêng câu hỏi đó */}
+      {errorDetail ? (
+        <div
+          className="fixed inset-0 z-[99990] flex items-end justify-center bg-slate-950/55 p-0 sm:items-center sm:p-4"
+          onClick={() => setErrorDetail(null)}
+        >
+          <div
+            className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-800 p-4 text-white">
+              <div className="min-w-0 space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/60">
+                  {pT("reportErrorDetailTitle")}
                 </p>
-                <p className="mt-1 whitespace-pre-wrap text-sm font-semibold text-red-700">
-                  {selectedRecord.note || EMPTY}
+                <h3 className="text-sm font-bold leading-relaxed sm:text-base">
+                  {errorDetail.errorName}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorDetail(null)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                aria-label="close"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-4! overflow-y-auto p-4!">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="space-y-2 rounded-lg bg-slate-50 p-4">
+                  <p className="text-xs text-slate-400">{pT("reportColStage")}</p>
+                  <p className="font-semibold text-slate-800">
+                    {errorDetail.stageName}
+                  </p>
+                </div>
+                <div className="space-y-2 rounded-lg bg-slate-50 p-4">
+                  <p className="text-xs text-slate-400">
+                    {pT("reportColCategory")}
+                  </p>
+                  <p className="font-semibold text-slate-800">
+                    {errorDetail.categoryName}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2 rounded-lg bg-red-50 p-4">
+                <p className="text-xs font-bold text-red-400">
+                  {pT("colNote")}
+                </p>
+                <p className="whitespace-pre-wrap text-sm font-semibold text-red-700">
+                  {errorDetail.note || EMPTY}
                 </p>
               </div>
 
-              <div className="mt-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <h4 className="text-sm font-extrabold text-slate-900">
-                    {pT("imageSection")}
-                  </h4>
-                </div>
-
-                {selectedRecord.images.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4 mb-6! pb-6!">
-                    {selectedRecord.images.map((img, index) => (
+              <div className="space-y-3">
+                <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+                  {pT("imageSection")} ({errorDetail.images.length})
+                </p>
+                {errorDetail.images.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                    {errorDetail.images.map((img, index) => (
                       <button
-                        key={`${selectedRecord.id}-modal-${img.id}-${index}`}
+                        key={`${errorDetail.id}-img-${img.id}-${index}`}
                         type="button"
                         onClick={() =>
-                          openImage(
-                            img,
-                            `${selectedRecord.lineName} - Sheet #${selectedRecord.sessionId}`,
-                            selectedRecord.images,
-                          )
+                          openImage(img, errorDetail.errorName, errorDetail.images)
                         }
-                        className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100 text-left"
+                        className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-100 text-left"
                       >
                         <img
                           src={img.url}
                           alt={img.note || img.filename || "patrol error"}
                           className="h-32 w-full object-cover"
                         />
-                        <div className="p-2">
-                          <p className="truncate text-[11px] font-semibold text-slate-600">
-                            {img.note || img.filename || pT("reportSheetImage")}
+                        {img.note ? (
+                          <p className="mb-0 truncate border-t border-slate-100 bg-white px-3 py-2 text-[11px] italic text-slate-600">
+                            {img.note}
                           </p>
-                        </div>
+                        ) : null}
                       </button>
                     ))}
                   </div>
-                ) : selectedRecord.hasImages ? (
-                  <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50 py-8 text-center text-sm font-semibold text-amber-700 p-3">
-                    {pT("loading")} {pT("imageSection")} (
-                    {selectedRecord.imageCount})
-                  </div>
                 ) : (
-                  <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-400 p-3">
+                  <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">
                     {pT("reportNoImageForSheet")}
                   </div>
                 )}
               </div>
+            </div>
+
+            <div className="border-t border-slate-200 p-4">
+              <button
+                type="button"
+                onClick={() => setErrorDetail(null)}
+                className="w-full rounded-lg bg-slate-600 p-3 text-sm font-semibold text-white hover:bg-slate-700"
+              >
+                {pT("closeBtn")}
+              </button>
             </div>
           </div>
         </div>

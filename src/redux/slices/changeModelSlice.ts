@@ -727,6 +727,19 @@ const changeModelSlice = createSlice({
         state.loading = false;
         state.currentSheet = action.payload;
         state.error = null;
+
+        // Đồng bộ status mới vào danh sách đang cache để khi back về List
+        // (không gọi lại API vì danh sách rất lớn) vẫn hiển thị đúng trạng thái.
+        const updated = action.payload;
+        if (updated?.id) {
+          const mergeStatus = (sheet: ChangeModelResponse) =>
+            sheet.id === updated.id
+              ? { ...sheet, status: updated.status }
+              : sheet;
+          if (state.filteredSheets)
+            state.filteredSheets = state.filteredSheets.map(mergeStatus);
+          if (state.sheets) state.sheets = state.sheets.map(mergeStatus);
+        }
       })
       .addCase(updateSheetStatus.rejected, (state, action) => {
         state.loading = false;
@@ -742,6 +755,17 @@ const changeModelSlice = createSlice({
         state.loading = false;
         state.currentSheet = action.payload;
         state.error = null;
+
+        const updated = action.payload;
+        if (updated?.id) {
+          const mergeStatus = (sheet: ChangeModelResponse) =>
+            sheet.id === updated.id
+              ? { ...sheet, status: updated.status }
+              : sheet;
+          if (state.filteredSheets)
+            state.filteredSheets = state.filteredSheets.map(mergeStatus);
+          if (state.sheets) state.sheets = state.sheets.map(mergeStatus);
+        }
       })
       .addCase(updateSheetStatusToPQCDone.rejected, (state, action) => {
         state.loading = false;

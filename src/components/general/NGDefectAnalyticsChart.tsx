@@ -42,6 +42,7 @@ import {
   fetchCheckLists,
   fetchLineAreas,
 } from "../../redux/slices/patrolSlice";
+import patrolApi from "../../redux/services/patrolApi";
 import type { PatrolSharedProps } from "../../pages/patrol/types";
 import ReactPaginate from "react-paginate";
 import { useTranslation } from "react-i18next";
@@ -67,6 +68,7 @@ interface NGErrorItem {
   checkAtText: string;
   shift: ShiftType;
   images: PatrolImageView[];
+  imageCount: number;
 }
 
 interface SheetNGRecord {
@@ -835,6 +837,58 @@ const NGDefectAnalyticsChart: React.FC<
   );
   // Chi tiết 1 câu hỏi NG (mở từ cột hành động) để xem hình của riêng câu hỏi đó
   const [errorDetail, setErrorDetail] = useState<NGErrorItem | null>(null);
+  // Ảnh của câu hỏi đang xem — chỉ tải khi mở modal (lazy) để không kéo theo
+  // toàn bộ ảnh khi load danh sách / báo cáo.
+  const [errorImages, setErrorImages] = useState<PatrolImageView[]>([]);
+  const [errorImagesLoading, setErrorImagesLoading] = useState(false);
+
+  useEffect(() => {
+    if (!errorDetail) {
+      setErrorImages([]);
+      setErrorImagesLoading(false);
+      return;
+    }
+
+    // Nếu payload đã nhúng sẵn ảnh thì dùng luôn, khỏi gọi API.
+    if (errorDetail.images.length > 0) {
+      setErrorImages(errorDetail.images);
+      return;
+    }
+
+    const resultId = errorDetail.resultId;
+    if (!resultId) {
+      setErrorImages([]);
+      return;
+    }
+
+    let cancelled = false;
+    setErrorImagesLoading(true);
+
+    // Lấy ảnh theo từng loại (Before/After/Evidence) cho đúng câu hỏi này.
+    Promise.all(
+      ["Before", "After", "Evidence"].map((type) =>
+        patrolApi
+          .get(`/Image/checklistresult/${resultId}/type/${type}`)
+          .then((res) => res.data)
+          .catch(() => []),
+      ),
+    )
+      .then((lists) => {
+        if (cancelled) return;
+        const merged = ([] as any[])
+          .concat(...lists)
+          .map(buildImageView)
+          .filter((img: PatrolImageView) => Boolean(img.url));
+        setErrorImages(merged);
+      })
+      .finally(() => {
+        if (!cancelled) setErrorImagesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [errorDetail]);
   const [detailPage, setDetailPage] = useState(0);
   const [highlightSessionId, setHighlightSessionId] = useState<number | null>(
     null,
@@ -1020,6 +1074,91 @@ const NGDefectAnalyticsChart: React.FC<
     isActive?: boolean;
   };
 
+  // /PatrolSession đã bỏ checkListResults => report tự tải toàn bộ results 1 lần
+  // (không kèm ảnh) vào state cục bộ, tránh đụng state.patrol.checkListResults
+  // vốn bị PatrolDetail ghi đè theo từng sheet.
+  const [reportResults, setReportResults] = useState<any[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    patrolApi
+      .get("/CheckListResult")
+      .then((res) => {
+        const d = res?.data;
+        // Phòng trường hợp API bọc dữ liệu: [], {data:[]}, {items:[]}, {results:[]}
+        const arr = Array.isArray(d)
+          ? d
+          : Array.isArray(d?.data)
+            ? d.data
+            : Array.isArray(d?.items)
+              ? d.items
+              : Array.isArray(d?.results)
+                ? d.results
+                : [];
+        console.log("[Report] /CheckListResult count:", arr.length, arr[0]);
+        if (!cancelled) setReportResults(arr);
+      })
+      .catch((err) => {
+        console.error("[Report] /CheckListResult error:", err);
+        if (!cancelled) setReportResults([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log("[Report] sessions:", sessions?.length);
+    console.log("[Report] FIRST SESSION OBJECT:", sessions?.[0]);
+    console.log(
+      "[Report] session.id values sample:",
+      (sessions || []).slice(0, 5).map((s: any) => s?.id),
+    );
+  }, [sessions]);
+
+  // DEBUG: xác định có NG không và ID có khớp giữa sessions và results không
+  useEffect(() => {
+    if (!reportResults.length) return;
+    const ng = reportResults.filter(
+      (r: any) => String(r?.result || "").trim().toUpperCase() === "NG",
+    );
+    const sessIds = new Set((sessions || []).map((s: any) => Number(s.id)));
+    const ngInSessions = ng.filter((r: any) =>
+      sessIds.has(Number(r?.patrolSessionId)),
+    );
+    console.log(
+      "[Report] NG total:",
+      ng.length,
+      "| NG within loaded sessions:",
+      ngInSessions.length,
+      "| sample NG:",
+      ng[0],
+    );
+    console.log(
+      "[Report] session id sample:",
+      [...sessIds].slice(0, 5),
+      "| result sessionId sample:",
+      [
+        ...new Set(reportResults.map((r: any) => Number(r?.patrolSessionId))),
+      ].slice(0, 5),
+    );
+  }, [reportResults, sessions]);
+
+  // Ghép results theo patrolSessionId để mỗi sheet biết các câu hỏi NG của mình.
+  const resultsBySession = useMemo<Map<number, any[]>>(() => {
+    const map = new Map<number, any[]>();
+    (reportResults || []).forEach((r: any) => {
+      const sid = Number(
+        r?.patrolSessionId ?? r?.PatrolSessionId ?? r?.patrolSession?.id ?? 0,
+      );
+      if (!sid) return;
+      const arr = map.get(sid);
+      if (arr) arr.push(r);
+      else map.set(sid, [r]);
+    });
+    console.log("[Report] resultsBySession sheets:", map.size);
+    return map;
+  }, [reportResults]);
+
   const lineMap = useMemo<Map<number, LineLookup>>(() => {
     return new Map(
       (lineAreas || []).map((line: any) => [
@@ -1129,7 +1268,7 @@ const NGDefectAnalyticsChart: React.FC<
 
   // allSheetRecords
 const allSheetRecords = useMemo<SheetNGRecord[]>(() => {
-  return (sessions || [])
+  const records = (sessions || [])
     .filter(
       (session: any) =>
         normalizePatrolKind(session?.patrolType) === patrolType,
@@ -1149,11 +1288,16 @@ const allSheetRecords = useMemo<SheetNGRecord[]>(() => {
           0,
       );
 
-      // API get patrolSession hiện đã trả về checkListResults + images theo từng sheet.
-      // Không dùng fetch riêng ảnh/result theo session nữa để giảm request và response thừa.
-      const sessionResults = Array.isArray(session?.checkListResults)
+      // /PatrolSession đã bỏ checkListResults (trả về []) => ưu tiên lấy từ map
+      // results tải riêng. Chỉ dùng dữ liệu nhúng khi nó thực sự có phần tử,
+      // vì Array.isArray([]) === true sẽ làm fallback không bao giờ chạy.
+      const embeddedResults = Array.isArray(session?.checkListResults)
         ? session.checkListResults
         : [];
+      const sessionResults =
+        embeddedResults.length > 0
+          ? embeddedResults
+          : resultsBySession.get(sessionId) || [];
       const lineName = getLineName(session);
 
       const sheetTime = session?.createdAt || session?.createAt || "";
@@ -1218,12 +1362,21 @@ const allSheetRecords = useMemo<SheetNGRecord[]>(() => {
             checkAt,
             checkAtText: fmtDateTime(checkAt),
             shift: errorShiftInfo.shift,
-            // Ảnh gắn theo từng câu hỏi (API mới: checkListResult.images)
+            // Ảnh gắn theo từng câu hỏi (API mới: checkListResult.images).
+            // Nếu payload đã nhúng ảnh thì dùng luôn; nếu không thì để rỗng và
+            // tải khi mở modal (xem effect bên dưới).
             images: Array.isArray(result?.images)
               ? result.images
                   .map(buildImageView)
                   .filter((img: PatrolImageView) => Boolean(img.url))
               : [],
+            // Số ảnh để hiển thị badge mà không cần tải ảnh: ưu tiên imageCount
+            // backend trả về, fallback theo độ dài mảng ảnh nhúng (nếu có).
+            imageCount: Number(
+              result?.imageCount ??
+                result?.imagesCount ??
+                (Array.isArray(result?.images) ? result.images.length : 0),
+            ),
             // ✅ bỏ shiftText — tính lúc render
           };
         });
@@ -1263,8 +1416,17 @@ const allSheetRecords = useMemo<SheetNGRecord[]>(() => {
       } as SheetNGRecord;
     })
     .filter(Boolean) as SheetNGRecord[];
+
+  console.log(
+    `[Report] allSheetRecords (NG sheets, type=${patrolType}):`,
+    records.length,
+    "| dates:",
+    records.map((r) => r.date).slice(0, 10),
+  );
+  return records;
 }, [
   sessions,
+  resultsBySession,
   patrolType,
   statusMode,
   getSessionImages,
@@ -3149,9 +3311,9 @@ const getShiftLabel = useCallback(
                               className="relative inline-flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:border-blue-300 hover:text-blue-600"
                             >
                               <FaEye size={13} />
-                              {error.images.length > 0 && (
+                              {error.imageCount > 0 && (
                                 <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
-                                  {error.images.length}
+                                  {error.imageCount}
                                 </span>
                               )}
                             </button>
@@ -3170,7 +3332,7 @@ const getShiftLabel = useCallback(
       {/* Modal chi tiết 1 câu hỏi NG: xem ghi chú + hình của riêng câu hỏi đó */}
       {errorDetail ? (
         <div
-          className="fixed inset-0 z-[99990] flex items-end justify-center bg-slate-950/55 p-0 sm:items-center sm:p-4"
+          className="fixed inset-0 z-99990 flex items-end justify-center bg-slate-950/55 p-0 sm:items-center sm:p-4"
           onClick={() => setErrorDetail(null)}
         >
           <div
@@ -3225,16 +3387,20 @@ const getShiftLabel = useCallback(
 
               <div className="space-y-3">
                 <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
-                  {pT("imageSection")} ({errorDetail.images.length})
+                  {pT("imageSection")} ({errorImages.length})
                 </p>
-                {errorDetail.images.length > 0 ? (
+                {errorImagesLoading ? (
+                  <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">
+                    {pT("loading")}
+                  </div>
+                ) : errorImages.length > 0 ? (
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                    {errorDetail.images.map((img, index) => (
+                    {errorImages.map((img, index) => (
                       <button
                         key={`${errorDetail.id}-img-${img.id}-${index}`}
                         type="button"
                         onClick={() =>
-                          openImage(img, errorDetail.errorName, errorDetail.images)
+                          openImage(img, errorDetail.errorName, errorImages)
                         }
                         className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-100 text-left"
                       >

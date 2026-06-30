@@ -723,6 +723,21 @@ const changeModelSlice = createSlice({
         state.loading = false;
         state.currentSheet = action.payload;
         state.error = null;
+
+        // Đồng bộ status mới nhất vào danh sách cache mỗi khi load đầy đủ 1 sheet
+        // (đặc biệt là sau khi ký ở trang chi tiết). Nhờ vậy khi quay lại danh
+        // sách (không gọi lại API), trạng thái trong cache luôn đúng với thực tế,
+        // và sheet vừa đổi trạng thái sẽ bị lọc khỏi bộ lọc cũ.
+        const updated = action.payload;
+        if (updated?.id) {
+          const mergeStatus = (sheet: ChangeModelResponse) =>
+            sheet.id === updated.id
+              ? { ...sheet, status: updated.status }
+              : sheet;
+          if (state.filteredSheets)
+            state.filteredSheets = state.filteredSheets.map(mergeStatus);
+          if (state.sheets) state.sheets = state.sheets.map(mergeStatus);
+        }
       })
       .addCase(getSheetWithFullObject.rejected, (state, action) => {
         state.loading = false;

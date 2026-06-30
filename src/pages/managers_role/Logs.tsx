@@ -785,7 +785,14 @@ const Logs = () => {
       (sheet) => Number(sheet.id) === Number(targetId),
     );
 
-    if (targetIndex === -1) return;
+    // Sheet không còn trong danh sách đã lọc (ví dụ vừa ký xong nên đổi trạng
+    // thái và bị lọc khỏi bộ lọc hiện tại) => bỏ highlight, không cố scroll nữa.
+    if (targetIndex === -1) {
+      pendingRestoreHighlightRef.current = null;
+      setSelectedSheetId(null);
+      clearSelectedSheetId();
+      return;
+    }
 
     const targetPage = Math.floor(targetIndex / itemsPerPage);
 

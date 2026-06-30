@@ -980,7 +980,7 @@ const SheetDetailViewer = () => {
                             <button
                               onClick={handleConfirm}
                               disabled={confirming}
-                              className="relative z-10 w-full py-2! bg-blue-600 text-white rounded text-[10px] 
+                              className="relative z-10 w-full py-2! bg-blue-600 text-white rounded text-[10px]
                                         font-bold hover:bg-blue-700 transition-all duration-300
                                         disabled:opacity-60 disabled:cursor-not-allowed
                                         flex items-center justify-center gap-1 shadow-sm

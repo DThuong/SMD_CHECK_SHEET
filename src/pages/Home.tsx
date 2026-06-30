@@ -734,21 +734,6 @@ const Home = () => {
                                 : canDeleteSheet(sheet) ? 'Xóa Sheet' : 'Không thể xóa'}
                             </button>
                           </div>
-
-                          <ConfirmModal
-                            open={confirmDeleteModal.open}
-                            title="Xác nhận xóa Sheet"
-                            message={
-                              confirmDeleteModal.sheet
-                                ? `Bạn có chắc chắn muốn xóa Sheet #${confirmDeleteModal.sheet.id}?\n\nHành động này KHÔNG THỂ HOÀN TÁC!`
-                                : ''
-                            }
-                            confirmText="Xóa"
-                            cancelText="Hủy"
-                            type="danger"
-                            onConfirm={handleConfirmDelete}
-                            onCancel={() => setConfirmDeleteModal({ open: false, sheet: null })}
-                          />
                         </div>
                       </div>
                     ))}
@@ -814,6 +799,24 @@ const Home = () => {
             </div>
           </div>
         )}
+
+        {/* Modal xác nhận xóa — render 1 lần ở cấp gốc (KHÔNG đặt trong từng
+            dòng sheet) để click vào modal không "nổi bọt" lên onClick của dòng
+            khiến điều hướng nhầm sang chi tiết sheet khác sau khi xóa. */}
+        <ConfirmModal
+          open={confirmDeleteModal.open}
+          title="Xác nhận xóa Sheet"
+          message={
+            confirmDeleteModal.sheet
+              ? `Bạn có chắc chắn muốn xóa Sheet #${confirmDeleteModal.sheet.id}?\n\nHành động này KHÔNG THỂ HOÀN TÁC!`
+              : ''
+          }
+          confirmText="Xóa"
+          cancelText="Hủy"
+          type="danger"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setConfirmDeleteModal({ open: false, sheet: null })}
+        />
       </div>
     </div>
   );

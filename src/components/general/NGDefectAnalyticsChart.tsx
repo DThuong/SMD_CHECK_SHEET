@@ -28,7 +28,6 @@ import {
   FaChevronRight,
   FaExternalLinkAlt,
   FaEye,
-  FaImage,
   FaUndo,
   FaLayerGroup,
   FaTimes,
@@ -54,6 +53,16 @@ type ReportReturnMode = "trend-dot" | "table";
 type StatusMode = "all" | "Submitted" | "Approved";
 type ShiftType = "morning" | "night";
 type ShiftFilter = "both" | "morning" | "night";
+
+const IMAGE_TYPES = ["Before", "After", "Evidence"] as const;
+type ImageTypeKey = (typeof IMAGE_TYPES)[number];
+
+function normalizeImageType(value?: string): ImageTypeKey {
+  const v = String(value || "").toLowerCase();
+  if (v === "before") return "Before";
+  if (v === "after") return "After";
+  return "Evidence";
+}
 
 interface NGErrorItem {
   id: string;
@@ -98,6 +107,7 @@ interface PatrolImageView {
   url: string;
   filename: string;
   note: string;
+  typeImage: ImageTypeKey;
 }
 
 interface PeriodBucket {
@@ -404,6 +414,7 @@ function buildImageView(img: any): PatrolImageView {
     url: img?.imageUrl || img?.url || "",
     filename: img?.fileName || img?.filename || "",
     note: img?.note || "",
+    typeImage: normalizeImageType(img?.typeImage || img?.type),
   };
 }
 
@@ -626,7 +637,7 @@ const ImagePreviewCarousel = React.memo(
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex flex-col gap-3 border-b border-white/10 bg-slate-950 px-3 py-3 text-white md:flex-row md:items-center md:justify-between">
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold md:text-base">
                 {currentItem.title || preview.title}
               </p>
@@ -635,7 +646,7 @@ const ImagePreviewCarousel = React.memo(
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-nowrap items-center gap-2 shrink-0 overflow-x-auto">
               <button
                 type="button"
                 onClick={zoomOut}
@@ -841,54 +852,6 @@ const NGDefectAnalyticsChart: React.FC<
   // toàn bộ ảnh khi load danh sách / báo cáo.
   const [errorImages, setErrorImages] = useState<PatrolImageView[]>([]);
   const [errorImagesLoading, setErrorImagesLoading] = useState(false);
-
-  useEffect(() => {
-    if (!errorDetail) {
-      setErrorImages([]);
-      setErrorImagesLoading(false);
-      return;
-    }
-
-    // Nếu payload đã nhúng sẵn ảnh thì dùng luôn, khỏi gọi API.
-    if (errorDetail.images.length > 0) {
-      setErrorImages(errorDetail.images);
-      return;
-    }
-
-    const resultId = errorDetail.resultId;
-    if (!resultId) {
-      setErrorImages([]);
-      return;
-    }
-
-    let cancelled = false;
-    setErrorImagesLoading(true);
-
-    // Lấy ảnh theo từng loại (Before/After/Evidence) cho đúng câu hỏi này.
-    Promise.all(
-      ["Before", "After", "Evidence"].map((type) =>
-        patrolApi
-          .get(`/Image/checklistresult/${resultId}/type/${type}`)
-          .then((res) => res.data)
-          .catch(() => []),
-      ),
-    )
-      .then((lists) => {
-        if (cancelled) return;
-        const merged = ([] as any[])
-          .concat(...lists)
-          .map(buildImageView)
-          .filter((img: PatrolImageView) => Boolean(img.url));
-        setErrorImages(merged);
-      })
-      .finally(() => {
-        if (!cancelled) setErrorImagesLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [errorDetail]);
   const [detailPage, setDetailPage] = useState(0);
   const [highlightSessionId, setHighlightSessionId] = useState<number | null>(
     null,
@@ -982,7 +945,6 @@ const NGDefectAnalyticsChart: React.FC<
       pT("reportColStage"),
       pT("reportColCategory"),
       pT("reportColErrorCount"),
-      pT("reportColImage"),
       pT("reportColView"),
     ],
     [pT],
@@ -1078,6 +1040,11 @@ const NGDefectAnalyticsChart: React.FC<
   // (không kèm ảnh) vào state cục bộ, tránh đụng state.patrol.checkListResults
   // vốn bị PatrolDetail ghi đè theo từng sheet.
   const [reportResults, setReportResults] = useState<any[]>([]);
+  // Ảnh cho report: /CheckListResult (bulk) không kèm ảnh, nên tải ảnh theo từng
+  // session NG bằng /Image/session/{id} (trả ảnh gắn theo checkListResultId +
+  // typeImage). Gom lại để biết số lượng ảnh và tách loại Before/After/Evidence.
+  const [reportImages, setReportImages] = useState<any[]>([]);
+  const loadedImageSessionRef = useRef<Set<number>>(new Set());
   useEffect(() => {
     let cancelled = false;
     patrolApi
@@ -1158,6 +1125,41 @@ const NGDefectAnalyticsChart: React.FC<
     console.log("[Report] resultsBySession sheets:", map.size);
     return map;
   }, [reportResults]);
+
+  // Map checkListResultId -> danh sách ảnh (đã build view + giữ typeImage).
+  const imagesByResultId = useMemo<Map<number, PatrolImageView[]>>(() => {
+    const map = new Map<number, PatrolImageView[]>();
+    (reportImages || []).forEach((img: any) => {
+      const rid = Number(img?.checkListResultId);
+      if (!rid) return;
+      const view = buildImageView(img);
+      if (!view.url) return;
+      const arr = map.get(rid);
+      if (arr) arr.push(view);
+      else map.set(rid, [view]);
+    });
+    return map;
+  }, [reportImages]);
+
+  // Ảnh của riêng 1 câu hỏi NG (theo resultId).
+  const getErrorImages = useCallback(
+    (resultId: number): PatrolImageView[] =>
+      resultId ? imagesByResultId.get(resultId) || [] : [],
+    [imagesByResultId],
+  );
+
+  // Toàn bộ ảnh của 1 sheet = gom ảnh của các câu hỏi NG trong sheet đó.
+  const getSheetImages = useCallback(
+    (record: SheetNGRecord): PatrolImageView[] => {
+      const out: PatrolImageView[] = [];
+      record.errors.forEach((err) => {
+        const imgs = imagesByResultId.get(err.resultId);
+        if (imgs?.length) out.push(...imgs);
+      });
+      return out;
+    },
+    [imagesByResultId],
+  );
 
   const lineMap = useMemo<Map<number, LineLookup>>(() => {
     return new Map(
@@ -1509,11 +1511,119 @@ const getShiftLabel = useCallback(
       allSheetRecords,
       start,
       end,
-      debouncedKeyword,    
+      debouncedKeyword,
       shiftFilter,
-      debouncedFromDateTime, 
-      debouncedToDateTime,  
+      debouncedFromDateTime,
+      debouncedToDateTime,
   ]);
+
+  // Tải ảnh cho các sheet NG đang nằm trong phạm vi lọc. Mỗi session chỉ tải 1
+  // lần (ref dedupe), giới hạn số request song song để không quá tải.
+  useEffect(() => {
+    const ids = Array.from(
+      new Set(rangeRecords.map((record) => record.sessionId).filter(Boolean)),
+    ).filter((id) => !loadedImageSessionRef.current.has(id));
+
+    if (!ids.length) return;
+
+    let cancelled = false;
+    ids.forEach((id) => loadedImageSessionRef.current.add(id));
+
+    const CONCURRENCY = 6;
+    let cursor = 0;
+
+    const runNext = async (): Promise<void> => {
+      const current = cursor++;
+      if (current >= ids.length || cancelled) return;
+      const id = ids[current];
+      try {
+        const res = await patrolApi.get(`/Image/session/${id}`);
+        const arr = Array.isArray(res?.data) ? res.data : [];
+        if (!cancelled && arr.length) {
+          setReportImages((prev) => prev.concat(arr));
+        }
+      } catch {
+        // Cho phép thử lại session này ở lần render sau nếu lỗi tạm thời.
+        loadedImageSessionRef.current.delete(id);
+      }
+      await runNext();
+    };
+
+    Promise.all(
+      Array.from({ length: Math.min(CONCURRENCY, ids.length) }, () =>
+        runNext(),
+      ),
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, [rangeRecords]);
+
+  // Ảnh hiển thị trong modal chi tiết 1 câu hỏi NG. Ưu tiên ảnh đã nạp sẵn cho
+  // report; nếu chưa có thì fallback gọi API theo từng loại ảnh.
+  useEffect(() => {
+    if (!errorDetail) {
+      setErrorImages([]);
+      setErrorImagesLoading(false);
+      return;
+    }
+
+    const preloaded = errorDetail.resultId
+      ? imagesByResultId.get(errorDetail.resultId)
+      : undefined;
+    if (preloaded?.length) {
+      setErrorImages(preloaded);
+      setErrorImagesLoading(false);
+      return;
+    }
+
+    // Nếu payload đã nhúng sẵn ảnh thì dùng luôn, khỏi gọi API.
+    if (errorDetail.images.length > 0) {
+      setErrorImages(errorDetail.images);
+      return;
+    }
+
+    const resultId = errorDetail.resultId;
+    if (!resultId) {
+      setErrorImages([]);
+      return;
+    }
+
+    let cancelled = false;
+    setErrorImagesLoading(true);
+
+    // Lấy ảnh theo từng loại (Before/After/Evidence) cho đúng câu hỏi này, đồng
+    // thời gắn nhãn typeImage để modal tách nhóm đúng loại.
+    Promise.all(
+      IMAGE_TYPES.map((type) =>
+        patrolApi
+          .get(`/Image/checklistresult/${resultId}/type/${type}`)
+          .then((res) =>
+            (Array.isArray(res.data) ? res.data : []).map((img: any) => ({
+              ...img,
+              typeImage: type,
+            })),
+          )
+          .catch(() => []),
+      ),
+    )
+      .then((lists) => {
+        if (cancelled) return;
+        const merged = ([] as any[])
+          .concat(...lists)
+          .map(buildImageView)
+          .filter((img: PatrolImageView) => Boolean(img.url));
+        setErrorImages(merged);
+      })
+      .finally(() => {
+        if (!cancelled) setErrorImagesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [errorDetail, imagesByResultId]);
 
   const effectiveTrendRange = useMemo(() => {
     const customFrom = getDateTimeFilter(debouncedFromDateTime);
@@ -1692,7 +1802,12 @@ const getShiftLabel = useCallback(
   const totalSheetNG = activeRecords.length;
   const totalErrorNG = activeErrors.length;
   const topLine = lineData[0]?.name || EMPTY;
-  const imageLinkedCount = activeRecords.filter((x) => x.hasImages).length;
+  // Sheet có hình = sheet mà câu hỏi NG của nó có ít nhất 1 ảnh (tính theo ảnh
+  // đã tải về, gắn theo checkListResultId).
+  const imageLinkedCount = useMemo(
+    () => activeRecords.filter((record) => getSheetImages(record).length > 0).length,
+    [activeRecords, getSheetImages],
+  );
 
   const openImage = useCallback(
     (img: PatrolImageView, title: string, imageList?: PatrolImageView[]) => {
@@ -2513,10 +2628,15 @@ const getShiftLabel = useCallback(
                                 event.stopPropagation();
                                 setSelectedRecord(row);
                               }}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+                              className="inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-slate-200 px-2 text-slate-500 hover:border-red-300 hover:bg-red-50 hover:text-red-600"
                               title={pT("reportOpenDetail")}
                             >
                               <FaEye size={13} />
+                              {getSheetImages(row).length > 0 ? (
+                                <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
+                                  {getSheetImages(row).length}
+                                </span>
+                              ) : null}
                             </button>
                           </td>
                         </tr>
@@ -2968,54 +3088,6 @@ const getShiftLabel = useCallback(
                           {pT("reportErrorUnit", { count: row.errors.length })}
                         </button>
                       </td>
-                      <td className="px-3 py-3">
-                        {row.images.length > 0 ? (
-                          <div className="flex max-w-[150px] gap-1 overflow-x-auto">
-                            {row.images.slice(0, 3).map((img, index) => (
-                              <button
-                                key={`${row.id}-${img.id}-${index}`}
-                                type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  openImage(
-                                    img,
-                                    `${row.lineName} - Sheet #${row.sessionId}`,
-                                    row.images,
-                                  );
-                                }}
-                                className="group relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100"
-                                title={img.note || img.filename}
-                              >
-                                <img
-                                  src={img.url}
-                                  alt={
-                                    img.note || img.filename || "patrol error"
-                                  }
-                                  className="h-full w-full object-cover"
-                                />
-                                <span className="absolute inset-0 hidden items-center justify-center bg-black/40 text-white group-hover:flex">
-                                  <FaImage size={13} />
-                                </span>
-                              </button>
-                            ))}
-
-                            {row.images.length > 3 ? (
-                              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-500">
-                                +{row.images.length - 3}
-                              </span>
-                            ) : null}
-                          </div>
-                        ) : row.hasImages ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-600">
-                            <FaImage size={10} /> {pT("loading")} (
-                            {row.imageCount})
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-400">
-                            <FaImage size={10} /> {pT("reportNoImage")}
-                          </span>
-                        )}
-                      </td>
                       <td className="px-3 py-3 text-left">
                         <button
                           type="button"
@@ -3023,10 +3095,15 @@ const getShiftLabel = useCallback(
                             event.stopPropagation();
                             setSelectedRecord(row);
                           }}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+                          className="inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-slate-200 px-2 text-slate-500 hover:border-red-300 hover:bg-red-50 hover:text-red-600"
                           title={pT("reportOpenDetail")}
                         >
                           <FaEye size={13} />
+                          {getSheetImages(row).length > 0 ? (
+                            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
+                              {getSheetImages(row).length}
+                            </span>
+                          ) : null}
                         </button>
                       </td>
                     </tr>
@@ -3035,7 +3112,7 @@ const getShiftLabel = useCallback(
                   {detailRows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={9}
+                        colSpan={8}
                         className="px-3 py-12 text-center text-sm text-slate-400"
                       >
                         {pT("reportNoNGSheetInFilter")}
@@ -3099,31 +3176,35 @@ const getShiftLabel = useCallback(
                     </div>
                   </div>
 
-                  {row.images.length > 0 ? (
-                    <div className="mt-3 flex gap-2 overflow-x-auto">
-                      {row.images.slice(0, 4).map((img, index) => (
-                        <button
-                          key={`${row.id}-${img.id}-${index}`}
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            openImage(
-                              img,
-                              `${row.lineName} - Sheet #${row.sessionId}`,
-                              row.images,
-                            );
-                          }}
-                          className="h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100"
-                        >
-                          <img
-                            src={img.url}
-                            alt={img.note || img.filename || "patrol error"}
-                            className="h-full w-full object-cover"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
+                  {(() => {
+                    const sheetImages = getSheetImages(row);
+                    if (!sheetImages.length) return null;
+                    return (
+                      <div className="mt-3 flex gap-2 overflow-x-auto">
+                        {sheetImages.slice(0, 4).map((img, index) => (
+                          <button
+                            key={`${row.id}-${img.id}-${index}`}
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              openImage(
+                                img,
+                                `${row.lineName} - Sheet #${row.sessionId}`,
+                                sheetImages,
+                              );
+                            }}
+                            className="h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100"
+                          >
+                            <img
+                              src={img.url}
+                              alt={img.note || img.filename || "patrol error"}
+                              className="h-full w-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               ))}
 
@@ -3311,9 +3392,9 @@ const getShiftLabel = useCallback(
                               className="relative inline-flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:border-blue-300 hover:text-blue-600"
                             >
                               <FaEye size={13} />
-                              {error.imageCount > 0 && (
+                              {getErrorImages(error.resultId).length > 0 && (
                                 <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
-                                  {error.imageCount}
+                                  {getErrorImages(error.resultId).length}
                                 </span>
                               )}
                             </button>
@@ -3340,7 +3421,7 @@ const getShiftLabel = useCallback(
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-800 p-4 text-white">
-              <div className="min-w-0 space-y-2">
+              <div className="min-w-0 space-y-2!">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-white/60">
                   {pT("reportErrorDetailTitle")}
                 </p>
@@ -3360,13 +3441,13 @@ const getShiftLabel = useCallback(
 
             <div className="flex-1 space-y-4! overflow-y-auto p-4!">
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="space-y-2 rounded-lg bg-slate-50 p-4">
+                <div className="space-y-2! rounded-lg bg-slate-50 p-4">
                   <p className="text-xs text-slate-400">{pT("reportColStage")}</p>
                   <p className="font-semibold text-slate-800">
                     {errorDetail.stageName}
                   </p>
                 </div>
-                <div className="space-y-2 rounded-lg bg-slate-50 p-4">
+                <div className="space-y-2! rounded-lg bg-slate-50 p-4">
                   <p className="text-xs text-slate-400">
                     {pT("reportColCategory")}
                   </p>
@@ -3376,7 +3457,7 @@ const getShiftLabel = useCallback(
                 </div>
               </div>
 
-              <div className="space-y-2 rounded-lg bg-red-50 p-4">
+              <div className="space-y-2! rounded-lg bg-red-50 p-4">
                 <p className="text-xs font-bold text-red-400">
                   {pT("colNote")}
                 </p>
@@ -3394,28 +3475,71 @@ const getShiftLabel = useCallback(
                     {pT("loading")}
                   </div>
                 ) : errorImages.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                    {errorImages.map((img, index) => (
-                      <button
-                        key={`${errorDetail.id}-img-${img.id}-${index}`}
-                        type="button"
-                        onClick={() =>
-                          openImage(img, errorDetail.errorName, errorImages)
-                        }
-                        className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-100 text-left"
-                      >
-                        <img
-                          src={img.url}
-                          alt={img.note || img.filename || "patrol error"}
-                          className="h-32 w-full object-cover"
-                        />
-                        {img.note ? (
-                          <p className="mb-0 truncate border-t border-slate-100 bg-white px-3 py-2 text-[11px] italic text-slate-600">
-                            {img.note}
+                  <div className="space-y-4!">
+                    {IMAGE_TYPES.map((type) => {
+                      const typeImages = errorImages.filter(
+                        (img) => img.typeImage === type,
+                      );
+                      if (!typeImages.length) return null;
+
+                      const typeLabel =
+                        type === "Before"
+                          ? pT("imageTypeBefore")
+                          : type === "After"
+                            ? pT("imageTypeAfter")
+                            : pT("imageTypeEvidence");
+
+                      const badgeClass =
+                        type === "Before"
+                          ? "bg-amber-100 text-amber-700"
+                          : type === "After"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-blue-100 text-blue-700";
+
+                      return (
+                        <div key={type} className="space-y-2!">
+                          <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${badgeClass}`}
+                            >
+                              {typeLabel}
+                            </span>
+                            <span className="text-slate-400">
+                              ({typeImages.length})
+                            </span>
                           </p>
-                        ) : null}
-                      </button>
-                    ))}
+                          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                            {typeImages.map((img, index) => (
+                              <button
+                                key={`${errorDetail.id}-${type}-img-${img.id}-${index}`}
+                                type="button"
+                                onClick={() =>
+                                  openImage(
+                                    img,
+                                    `${errorDetail.errorName} - ${typeLabel}`,
+                                    typeImages,
+                                  )
+                                }
+                                className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-100 text-left"
+                              >
+                                <img
+                                  src={img.url}
+                                  alt={
+                                    img.note || img.filename || "patrol error"
+                                  }
+                                  className="h-32 w-full object-cover"
+                                />
+                                {img.note ? (
+                                  <p className="mb-0 truncate border-t border-slate-100 bg-white px-3 py-2 text-[11px] italic text-slate-600">
+                                    {img.note}
+                                  </p>
+                                ) : null}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">

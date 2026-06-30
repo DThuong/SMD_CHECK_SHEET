@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { loginUser, clearError } from '../redux/slices/authSlice';
 import { getDeviceInfo } from '../utils/deviceInfo';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import Footer from '../components/general/Footer';
 
 const inputClass = "w-full px-4 py-3 border rounded-lg outline-none transition focus:border-blue-500 focus:shadow";
@@ -13,7 +14,7 @@ const Login = () => {
   const [password, setPassword] = useState<string>('');
   const [remember, setRemember] = useState<boolean>(false);
   const dispatch = useAppDispatch();
-  const { loading, error } = useAppSelector((state) => state.auth);
+  const { loading } = useAppSelector((state) => state.auth);
   const { i18n } = useTranslation();
 
   useEffect(() => {
@@ -62,16 +63,10 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Login failed: ', error);
+      // Hiển thị lỗi bằng toast (tự ẩn sau 3s) thay vì hiện dưới form.
+      toast.error(formatError(error), { duration: 3000 });
     }
   };
-
-  useEffect(() => {
-    if(error){
-      setTimeout(() => {
-        dispatch(clearError());
-      }, 2000)
-    }
-  }, [error, dispatch]);
 
   // Helper function để format error
   const formatError = (error: any): string => {
@@ -145,13 +140,6 @@ const Login = () => {
             </a>
           </p>
         </div>
-
-        {/* Fix hiển thị error */}
-        {error && (
-          <div className="mx-4 mt-3 p-3 bg-red-50 border-l-4 border-red-500 rounded text-red-700 text-sm">
-            {formatError(error)}
-          </div>
-        )}
       </form>
     </div>
     <Footer />

@@ -66,6 +66,7 @@
   "signPQC": "PQC Ký tên",
   "signLeader": "PQC Leader Duyệt",
   "submitBtn": "Gửi phiếu",
+  "signUncheckedWarning": "Còn {{remaining}} câu chưa kiểm tra. Đã chuyển tới câu cần kiểm tra, vui lòng kiểm tra hết trước khi ký phiếu.",
   "rejectBtn": "Trả về Pending",
   "statusRejected": "Đã trả về Pending",
   "okCount": "Số lượng OK",

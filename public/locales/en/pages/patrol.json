@@ -66,6 +66,7 @@
   "signPQC": "PQC Signature",
   "signLeader": "PQC Leader Approval",
   "submitBtn": "Submit Sheet",
+  "signUncheckedWarning": "{{remaining}} item(s) not yet checked. Jumped to the item to review; please check all of them before signing.",
   "rejectBtn": "Return to Pending",
   "statusRejected": "Returned to Pending",
   "okCount": "OK Count",

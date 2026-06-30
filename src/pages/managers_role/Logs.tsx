@@ -540,13 +540,7 @@ const Logs = () => {
         }
       }
 
-      await dispatch(
-        updateSheetStatus({
-          sheetId,
-          currentStatus: sheet.status || STATUS.PENDING,
-          userRole: role,
-        }),
-      ).unwrap();
+      await dispatch(updateSheetStatus(sheetId)).unwrap();
 
       const roleNames: Record<string, string> = {
         [ROLES.PQCLEADER]: "PQC Leader",
@@ -751,13 +745,31 @@ const Logs = () => {
   };
 
   // ==================== PAGINATION ====================
+  // Chuẩn hóa status để so sánh (xử lý cả typo lịch sử "PQCLeaderLDone").
+  const normalizeStatus = (s?: string) =>
+    (s || "").toLowerCase().replace("pqcleaderldone", "pqcleaderdone");
+
   const sortedSheets = useMemo(() => {
-    return [...(filteredSheets || [])].sort((a, b) => {
+    let list = [...(filteredSheets || [])];
+
+    // Khi đang lọc theo 1 status cụ thể, ẩn các sheet mà status hiện tại
+    // KHÔNG còn khớp với bộ lọc. Cần thiết vì khi quay lại từ trang chi tiết,
+    // danh sách KHÔNG được gọi lại API (để tối ưu cho ~4000 sheet) mà chỉ
+    // được merge status mới vào cache trong Redux. Nếu không lọc lại ở client,
+    // một sheet vừa được ký (ví dụ PQCDone -> PQCLeaderDone) vẫn còn nằm trong
+    // cache và sẽ tiếp tục hiển thị dưới bộ lọc PQCDone. Lọc client-side ở đây
+    // giúp sheet đó biến mất ngay khi trạng thái thay đổi.
+    if (filter.status && filter.status !== "all") {
+      const want = normalizeStatus(filter.status);
+      list = list.filter((s) => normalizeStatus(s.status) === want);
+    }
+
+    return list.sort((a, b) => {
       const dateA = new Date(a.createAt || 0).getTime();
       const dateB = new Date(b.createAt || 0).getTime();
       return dateB - dateA;
     });
-  }, [filteredSheets]);
+  }, [filteredSheets, filter.status]);
 
   const pageCount = Math.ceil(sortedSheets.length / itemsPerPage);
   const offset = currentPage * itemsPerPage;

@@ -850,6 +850,22 @@ const PatrolDetail: React.FC<PatrolSharedProps> = ({
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   // Ref tới thanh điều hướng công đoạn để cuộn tới khi đổi trang.
   const stageNavRef = useRef<HTMLDivElement>(null);
+
+  // === Cảnh báo câu hỏi chưa kiểm tra khi PQC ký phiếu ===
+  // Bật sau lần đầu PQC bấm ký mà còn câu chưa check (để không gây nhiễu trước đó).
+  const [signAttempted, setSignAttempted] = useState(false);
+  // Câu hỏi đang được tô vàng nổi bật (đi từng câu một).
+  const [highlightQuestionId, setHighlightQuestionId] = useState<number | null>(
+    null,
+  );
+  // Yêu cầu cuộn tới 1 câu hỏi sau khi đã chuyển đúng công đoạn/mở nhóm.
+  // token đảm bảo effect chạy lại kể cả khi cùng id.
+  const [pendingScroll, setPendingScroll] = useState<{
+    id: number;
+    token: number;
+  } | null>(null);
+  // Giữ timer tô sáng để dọn dẹp, tránh các lần highlight đè lên nhau.
+  const highlightTimerRef = useRef<number | null>(null);
   const session = isNew ? null : currentSession;
 
   useEffect(() => {
@@ -1476,6 +1492,179 @@ const canEditResults =
     return map;
   }, [activeStages, categories, checkLists, formResults]);
 
+  // 1 câu hỏi được coi là "đã kiểm tra" khi: dạng input có giá trị, dạng OK/NG
+  // đã chọn OK hoặc NG.
+  const isQuestionAnswered = useCallback(
+    (item: { id: number; specType?: string }) => {
+      const r = formResults[item.id];
+      if (!r) return false;
+      if (item.specType === "input") return (r.actualValue || "").trim() !== "";
+      return r.result === "OK" || r.result === "NG";
+    },
+    [formResults],
+  );
+
+  // Danh sách câu hỏi theo đúng thứ tự hiển thị (stage -> category -> checklist),
+  // kèm vị trí công đoạn để có thể nhảy tới đúng trang. Chỉ phụ thuộc cấu trúc
+  // (không phụ thuộc formResults) nên không tính lại khi user tích từng câu.
+  const orderedQuestions = useMemo(() => {
+    const out: {
+      id: number;
+      specType?: string;
+      stageIndex: number;
+      stageId: number;
+      categoryId: number;
+    }[] = [];
+    activeStages.forEach((stage, stageIndex) => {
+      categories
+        .filter((c) => c.stageId === stage.id)
+        .forEach((cat) => {
+          checkLists
+            .filter((cl) => cl.categoryId === cat.id)
+            .forEach((cl) => {
+              out.push({
+                id: cl.id,
+                specType: cl.specType,
+                stageIndex,
+                stageId: stage.id,
+                categoryId: cat.id,
+              });
+            });
+        });
+    });
+    return out;
+  }, [activeStages, categories, checkLists]);
+
+  const questionMeta = useMemo(() => {
+    const m = new Map<
+      number,
+      { stageIndex: number; stageId: number; categoryId: number }
+    >();
+    orderedQuestions.forEach((q) =>
+      m.set(q.id, {
+        stageIndex: q.stageIndex,
+        stageId: q.stageId,
+        categoryId: q.categoryId,
+      }),
+    );
+    return m;
+  }, [orderedQuestions]);
+
+  // Các câu chưa kiểm tra, giữ đúng thứ tự để "đi từng câu một".
+  const uncheckedQuestionIds = useMemo(
+    () =>
+      orderedQuestions.filter((q) => !isQuestionAnswered(q)).map((q) => q.id),
+    [orderedQuestions, isQuestionAnswered],
+  );
+  const uncheckedSet = useMemo(
+    () => new Set(uncheckedQuestionIds),
+    [uncheckedQuestionIds],
+  );
+
+  // Số câu chưa kiểm tra theo từng công đoạn (để chấm dấu trên thanh điều hướng).
+  const stageUncheckedMap = useMemo(() => {
+    const map: Record<number, number> = {};
+    orderedQuestions.forEach((q) => {
+      if (uncheckedSet.has(q.id))
+        map[q.stageId] = (map[q.stageId] || 0) + 1;
+    });
+    return map;
+  }, [orderedQuestions, uncheckedSet]);
+
+  // Nhảy tới đúng câu hỏi: chuyển công đoạn, mở nhóm/công đoạn nếu đang thu gọn,
+  // rồi đặt yêu cầu cuộn (effect bên dưới xử lý sau khi DOM render xong).
+  const jumpToQuestion = useCallback(
+    (checkListId: number) => {
+      const meta = questionMeta.get(checkListId);
+      if (!meta) return;
+      setCurrentStageIndex(meta.stageIndex);
+      setCollapsedStages((prev) =>
+        prev[String(meta.stageId)]
+          ? { ...prev, [String(meta.stageId)]: false }
+          : prev,
+      );
+      setCollapsedCategories((prev) =>
+        prev[String(meta.categoryId)]
+          ? { ...prev, [String(meta.categoryId)]: false }
+          : prev,
+      );
+      setPendingScroll({ id: checkListId, token: Date.now() });
+    },
+    [questionMeta],
+  );
+
+  // Cuộn + tô sáng câu hỏi sau khi công đoạn/nhóm đã render. Dùng 2 frame để
+  // chắc chắn DOM đã cập nhật, và token để mỗi yêu cầu chạy độc lập (không đè).
+  useEffect(() => {
+    if (!pendingScroll) return;
+    let r1 = 0;
+    let r2 = 0;
+    r1 = requestAnimationFrame(() => {
+      r2 = requestAnimationFrame(() => {
+        const els = Array.from(
+          document.querySelectorAll(`[data-qid="${pendingScroll.id}"]`),
+        ) as HTMLElement[];
+        // Chỉ lấy phần tử đang hiển thị (mobile/desktop dùng 2 layout khác nhau).
+        const el = els.find((e) => e.offsetParent !== null) || els[0];
+        if (el)
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        setHighlightQuestionId(pendingScroll.id);
+        if (highlightTimerRef.current)
+          window.clearTimeout(highlightTimerRef.current);
+        highlightTimerRef.current = window.setTimeout(() => {
+          setHighlightQuestionId((cur) =>
+            cur === pendingScroll.id ? null : cur,
+          );
+          highlightTimerRef.current = null;
+        }, 2800);
+      });
+    });
+    return () => {
+      cancelAnimationFrame(r1);
+      cancelAnimationFrame(r2);
+    };
+  }, [pendingScroll]);
+
+  // Dọn timer khi unmount.
+  useEffect(
+    () => () => {
+      if (highlightTimerRef.current)
+        window.clearTimeout(highlightTimerRef.current);
+    },
+    [],
+  );
+
+  // Class tô sáng cho 1 dòng câu hỏi: vàng đậm nếu đang được nhắm tới, vàng nhạt
+  // nếu là câu chưa kiểm tra (sau khi PQC đã bấm ký lần đầu).
+  const getQuestionHighlightClass = useCallback(
+    (id: number) => {
+      if (highlightQuestionId === id)
+        return " bg-yellow-100 shadow-[inset_0_0_0_2px_#facc15] transition-colors duration-300";
+      if (signAttempted && uncheckedSet.has(id)) return " bg-amber-50";
+      return "";
+    },
+    [highlightQuestionId, signAttempted, uncheckedSet],
+  );
+
+  // PQC ký phiếu: nếu còn câu chưa kiểm tra thì chặn gửi, nhảy tới câu chưa
+  // check kế tiếp (đi vòng) và tô vàng để PQC kiểm tra từng câu, tránh bỏ sót.
+  const handleSignSheet = useCallback(() => {
+    const list = uncheckedQuestionIds;
+    if (list.length === 0) {
+      handleUpdateStatus("Submitted");
+      return;
+    }
+    setSignAttempted(true);
+    const curPos =
+      highlightQuestionId != null ? list.indexOf(highlightQuestionId) : -1;
+    const nextId = list[(curPos + 1) % list.length];
+    jumpToQuestion(nextId);
+    toast.error(pT("signUncheckedWarning", { remaining: list.length }), {
+      duration: 2500,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uncheckedQuestionIds, highlightQuestionId, jumpToQuestion, pT]);
+
   const currentStage = activeStages[currentStageIndex] || null;
   const stagesToRender = currentStage ? [currentStage] : [];
 
@@ -1536,22 +1725,27 @@ const canEditResults =
     if (!stage) return null;
     const isActive = i === currentStageIndex;
     const hasNG = stageNgMap[stage.id];
+    // Còn câu chưa kiểm tra ở công đoạn này (chỉ báo sau khi PQC đã bấm ký).
+    const hasUnchecked = signAttempted && (stageUncheckedMap[stage.id] || 0) > 0;
     return (
       <button
         key={stage.id}
         type="button"
         onClick={() => goToStage(i)}
         title={stage.name}
-        className={`shrink-0 min-w-9 h-9 px-2 rounded-lg text-xs font-bold border whitespace-nowrap transition-all ${
+        className={`relative shrink-0 min-w-9 h-9 px-2 rounded-lg text-xs font-bold border whitespace-nowrap transition-all ${
           isActive
             ? "bg-gray-800 text-white border-gray-800"
             : hasNG
               ? "bg-red-50 text-red-700 border-red-300"
               : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-        } ${hasNG && !isActive ? "ring-1 ring-red-200" : ""}`}
+        } ${hasNG && !isActive ? "ring-1 ring-red-200" : ""} ${hasUnchecked && !isActive ? "ring-1 ring-amber-300" : ""}`}
       >
         {i + 1}
         {hasNG ? " ⚠" : ""}
+        {hasUnchecked ? (
+          <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-white" />
+        ) : null}
       </button>
     );
   };
@@ -2005,7 +2199,8 @@ const canEditResults =
                                         .map((item) => (
                                           <div
                                             key={item.id}
-                                            className="p-4 flex flex-col gap-4 hover:bg-gray-50 transition-colors"
+                                            data-qid={item.id}
+                                            className={`p-4 flex flex-col gap-4 hover:bg-gray-50 transition-colors${getQuestionHighlightClass(item.id)}`}
                                           >
                                             {/* 1. Câu hỏi */}
                                             <div>
@@ -2159,7 +2354,8 @@ const canEditResults =
                                             .map((item) => (
                                               <tr
                                                 key={item.id}
-                                                className="hover:bg-gray-50 transition-colors"
+                                                data-qid={item.id}
+                                                className={`hover:bg-gray-50 transition-colors${getQuestionHighlightClass(item.id)}`}
                                               >
                                                 <td className="p-3 text-sm text-gray-800">
                                                   {item.questionCheck}
@@ -2349,11 +2545,16 @@ const canEditResults =
                     session?.status === "Pending" &&
                     user?.role === "PQC" && (
                       <button
-                        onClick={() => handleUpdateStatus("Submitted")}
+                        onClick={handleSignSheet}
                         disabled={loading}
                         className="flex-1! px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 disabled:opacity-50"
                       >
                         <FaPen /> {pT("submitBtn")}
+                        {signAttempted && uncheckedQuestionIds.length > 0 ? (
+                          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-bold text-amber-900">
+                            {uncheckedQuestionIds.length}
+                          </span>
+                        ) : null}
                       </button>
                     )}
 

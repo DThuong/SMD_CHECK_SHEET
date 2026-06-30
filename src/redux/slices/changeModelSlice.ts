@@ -237,16 +237,13 @@ export const getSheetStatusHistory = createAsyncThunk(
 /**
  * UPDATE STATUS TO PQCDONE - Dùng cho PQC
  * PUT /api/ChangeModel/status/{id}
- * Tự động cập nhật status thành "PQCDone"
+ * Backend tự xác định status kế tiếp theo role nên chỉ cần truyền id.
  */
 export const updateSheetStatusToPQCDone = createAsyncThunk(
   'changeModel/updateStatusToPQCDone',
   async (sheetId: number, { rejectWithValue }) => {
     try {
-      const response = await smdApi.put(
-        `ChangeModel/status/${sheetId}`,
-        { status: 'PQCDone' }
-      );
+      const response = await smdApi.put(`ChangeModel/status/${sheetId}`);
       return response.data as ChangeModelResponse;
     } catch (error: any) {
       if (error.response?.status === 404) {
@@ -264,85 +261,14 @@ export const updateSheetStatusToPQCDone = createAsyncThunk(
 /**
  * UPDATE STATUS - FLEXIBLE (Dùng cho ENG, SUPERVISOR, MANAGER, MANAGER_KOREA)
  * PUT /api/ChangeModel/status/{id}
- * Cho phép cập nhật status tùy theo role
+ * Backend tự kiểm tra role của user hiện tại và tự xác định status kế tiếp,
+ * nên client chỉ cần truyền vào id của sheet.
  */
 export const updateSheetStatus = createAsyncThunk(
   'changeModel/updateStatusByRole',
-  async ({ sheetId, currentStatus, userRole }: { 
-    sheetId: number; 
-    currentStatus: string;
-    userRole: string;
-  }, { rejectWithValue }) => {
+  async (sheetId: number, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        return rejectWithValue('Không tìm thấy token. Vui lòng đăng nhập lại.');
-      }
-
-      // MAP ROLE → STATUS CHUẨN
-      let newStatus = '';
-      const currentStatusLower = currentStatus.toLowerCase();
-      
-      switch (userRole) {
-        case 'PQC':
-          if (currentStatusLower === 'pending') {
-            newStatus = 'PQCDone';
-          } else {
-            return rejectWithValue('PQC chỉ có thể xác nhận sheet ở trạng thái Pending');
-          }
-          break;
-        
-          case 'PQCLeader':
-          if (currentStatusLower === 'pqcdone') {
-            newStatus = 'PQCLeaderLDone';
-          } else {
-            return rejectWithValue('PQC Leader chỉ có thể xác nhận sau khi PQC hoàn thành');
-          }
-          break;
-          
-        case 'ENG':
-          if (currentStatusLower === 'pqcleaderdone') {
-            newStatus = 'ENGDone';
-          } else {
-            return rejectWithValue('ENG chỉ có thể xác nhận sau khi PQC Leader hoàn thành');
-          }
-          break;
-          
-        case 'Supervisior':
-          if (currentStatusLower === 'engdone') {
-            newStatus = 'SupervisiorDone';
-          } else {
-            return rejectWithValue('Supervisor chỉ có thể xác nhận sau khi ENG hoàn thành');
-          }
-          break;
-          
-        case 'Manager':
-          if (currentStatusLower === 'supervisiordone') {
-            newStatus = 'ManagerDone';
-          } else {
-            return rejectWithValue('Manager chỉ có thể xác nhận sau khi Supervisor hoàn thành');
-          }
-          break;
-          
-        case 'KoreaManager':
-          if (currentStatusLower === 'managerdone') {
-            newStatus = 'KoreaManagerDone';
-          } else {
-            return rejectWithValue('Korea Manager chỉ có thể xác nhận sau khi Manager hoàn thành');
-          }
-          break;
-          
-        default:
-          return rejectWithValue(`Role ${userRole} không có quyền xác nhận sheet`);
-      }
-
-      // Call API
-      const response = await smdApi.put(
-        `ChangeModel/status/${sheetId}`,
-        { status: newStatus }
-      );
-
+      const response = await smdApi.put(`ChangeModel/status/${sheetId}`);
       return response.data as ChangeModelResponse;
     } catch (error: any) {
       if (error.response?.status === 401) {
@@ -352,8 +278,8 @@ export const updateSheetStatus = createAsyncThunk(
         return rejectWithValue('Không tìm thấy sheet với ID này.');
       }
       return rejectWithValue(
-        error.response?.data?.message || 
-        error.message || 
+        error.response?.data?.message ||
+        error.message ||
         'Không thể cập nhật status'
       );
     }

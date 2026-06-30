@@ -434,13 +434,7 @@ const SheetDetailViewer = () => {
 
     try {
       setConfirming(true);
-      await dispatch(
-        updateSheetStatus({
-          sheetId: currentSheet.id!,
-          currentStatus: currentSheet.status!,
-          userRole: user.role as string,
-        }),
-      ).unwrap();
+      await dispatch(updateSheetStatus(currentSheet.id!)).unwrap();
 
       showNotification(
         "success",

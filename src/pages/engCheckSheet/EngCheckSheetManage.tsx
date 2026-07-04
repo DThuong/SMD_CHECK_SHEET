@@ -254,7 +254,7 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                     {machineTypes.length === 0 && <p className="text-sm text-gray-400 py-4 text-center">{t('manage.noMachineType')}</p>}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {machineTypes.map(mt => (
-                            <div key={mt.id} className="flex items-center justify-between border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2">
+                            <div key={mt.id} className="flex items-center justify-between border border-gray-200 rounded-lg px-3 py-2 sm:py-2">
                                 <span className="text-sm text-gray-800">{mt.name}</span>
                                 {isEngineer && (
                                     <div className="flex gap-1.5 sm:gap-0.5 shrink-0">
@@ -347,7 +347,7 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                                             {/* Danh sách máy - MOBILE */}
                                             <div className="md:hidden divide-y divide-gray-100">
                                                 {lineMachines.map(m => (
-                                                    <div key={m.id} className="flex items-center justify-between px-3 py-2.5 gap-2">
+                                                    <div key={m.id} className="flex items-center justify-between px-3 py-2 gap-2">
                                                         <div className="min-w-0 flex-1">
                                                             <p className="text-sm text-gray-800 truncate">{m.machineName}</p>
                                                             <p className="text-xs text-gray-400 truncate">
@@ -392,7 +392,7 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                         <div className="hidden sm:block flex-1" />
                         <button
                             onClick={() => openCreateModal('category')}
-                            className={`w-full sm:w-auto justify-center px-3 py-2.5 sm:py-2 bg-blue-600 text-white rounded-lg text-sm items-center gap-1.5 hover:bg-blue-700 ${isEngineer ? 'flex' : 'hidden'}`}
+                            className={`w-full sm:w-auto justify-center px-3 py-2 sm:py-2 bg-blue-600 text-white rounded-lg text-sm items-center gap-1.5 hover:bg-blue-700 ${isEngineer ? 'flex' : 'hidden'}`}
                         >
                             <FaPlus /> {t('manage.addGroup')}
                         </button>
@@ -462,7 +462,7 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                                             {/* Danh sách câu hỏi - MOBILE */}
                                             <div className="md:hidden divide-y divide-gray-100">
                                                 {catCheckLists.map(cl => (
-                                                    <div key={cl.id} className="flex items-start justify-between px-3 py-2.5 gap-2">
+                                                    <div key={cl.id} className="flex items-start justify-between px-3 py-2 gap-2">
                                                         <div className="min-w-0 flex-1">
                                                             <p className="text-sm text-gray-800">{cl.questionCheck}</p>
                                                             <span className="inline-block mt-1 text-xs bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">

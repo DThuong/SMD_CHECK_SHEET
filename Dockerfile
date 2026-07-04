@@ -5,6 +5,9 @@ WORKDIR /app
 
 COPY package*.json ./
 RUN npm ci
+# Bug npm (npm/cli#4828): optionalDependencies binary theo platform (musl) đôi khi
+# không được cài dù có trong lockfile — cài bổ sung tường minh cho Alpine.
+RUN npm i --no-save --force lightningcss-linux-x64-musl@1.30.2 @tailwindcss/oxide-linux-x64-musl@4.1.17 @rollup/rollup-linux-x64-musl@4.53.3
 
 COPY . .
 RUN npm run build

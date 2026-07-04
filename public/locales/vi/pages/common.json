@@ -11,7 +11,12 @@
     "patrolManage": "Quản lý Patrol",
     "patrolDaily": "Patrol Ngày",
     "patrolWeekly": "Patrol Tuần",
-    "patrolReport": "Báo cáo Patrol"
+    "patrolReport": "Báo cáo Patrol",
+    "engCheckSheet": "Check Sheet Kỹ thuật",
+    "engManage": "Quản lý Check Sheet",
+    "engDaily": "Check Sheet Ngày",
+    "engWeekly": "Check Sheet Tuần",
+    "engReport": "Báo cáo lỗi"
   },
   "roles": {
     "engineering": "Engineering",

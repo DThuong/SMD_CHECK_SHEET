@@ -11,7 +11,7 @@ i18n
     fallbackLng: 'vi',
     lng: localStorage.getItem('appLanguage') || 'vi',
     
-    ns: ['settings', 'dashboard', 'logs', 'common', 'sheetDetail', 'sheetHeader', 'checkModel', 'standardProduction', 'timeChangeModel', 'standardVehicle', 'pqcCheck', 'fileDetail', 'patrol'],
+    ns: ['settings', 'dashboard', 'logs', 'common', 'sheetDetail', 'sheetHeader', 'checkModel', 'standardProduction', 'timeChangeModel', 'standardVehicle', 'pqcCheck', 'fileDetail', 'patrol', 'engCheckSheet'],
     defaultNS: 'common',
     
     interpolation: {

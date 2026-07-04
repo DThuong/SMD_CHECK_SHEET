@@ -10,7 +10,7 @@ import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { PiPlantFill } from "react-icons/pi";
 import { logoutUser } from "../../redux/slices/authSlice";
 import { useTranslation } from "react-i18next";
-// import { MdEngineering } from "react-icons/md";
+import { MdEngineering } from "react-icons/md";
 
 const RoleBasedLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -22,9 +22,9 @@ const RoleBasedLayout = () => {
     }
   });
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [isPatrolOpen, setIsPatrolOpen] = useState(false);
-  const [isMobilePatrolOpen, setIsMobilePatrolOpen] = useState(false);
-  const patrolMenuRef = useRef<HTMLDivElement>(null);
+  // Dropdown dùng chung cho các menu có submenu (patrol, engCheckSheet, ...)
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [mobileOpenDropdown, setMobileOpenDropdown] = useState<string | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [showNoti, setShowNoti] = useState(() => {
     try {
@@ -73,9 +73,10 @@ const RoleBasedLayout = () => {
   // đóng modal khi click bên ngoài vùng modal
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      // Desktop Patrol Menu
-      if (patrolMenuRef.current && !patrolMenuRef.current.contains(e.target as Node)) {
-        setIsPatrolOpen(false);
+      // Desktop Dropdown Menus (patrol, engCheckSheet, ...)
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-dropdown-menu]')) {
+        setOpenDropdown(null);
       }
       // User Menu
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
@@ -131,18 +132,18 @@ const RoleBasedLayout = () => {
   const menuItems = [
     { name: t('menu.dashboard'), path: `/${role}/dashboard`, icon: <FaChartPie />, shouldReload: false },
     { name: t('menu.smdSheet'), path: `/${role}/smd-sheet-logs`, icon: <FaFile />, shouldReload: true },
-    // {
-    //   name: t('menu.engCheckSheet'),
-    //   path: 'engCheckSheet',
-    //   icon: <MdEngineering />,
-    //   isDropdown: true,
-    //   children: [
-    //     { name: t('menu.engManage'), path: `/${role}/engCheckSheet?view=manage`, shouldReload: false },
-    //     { name: t('menu.engDaily'), path: `/${role}/engCheckSheet?view=list&type=daily`, shouldReload: false },
-    //     { name: t('menu.engWeeklyMonthly'), path: `/${role}/engCheckSheet?view=list&type=weekly-monthly`, shouldReload: false },
-    //     { name: t('menu.engReport'), path: `/${role}/engCheckSheet?view=report`, shouldReload: false },
-    //   ],
-    // },
+    {
+      name: t('menu.engCheckSheet'),
+      path: 'engCheckSheet',
+      icon: <MdEngineering />,
+      isDropdown: true,
+      children: [
+        { name: t('menu.engManage'), path: `/${role}/engCheckSheet?view=manage`, shouldReload: false },
+        { name: t('menu.engDaily'), path: `/${role}/engCheckSheet?view=list&type=daily`, shouldReload: false },
+        { name: t('menu.engWeekly'), path: `/${role}/engCheckSheet?view=list&type=weekly`, shouldReload: false },
+        { name: t('menu.engReport'), path: `/${role}/engCheckSheet?view=report`, shouldReload: false },
+      ],
+    },
     {
       name: t('menu.patrolChecklist'),
       path: 'patrol',
@@ -219,11 +220,12 @@ const RoleBasedLayout = () => {
         >
           {menuItems.map((item) => {
             if (item.isDropdown) {
-              const isDropdownActive = location.pathname.includes('patrol');
+              const isDropdownActive = location.pathname.includes(item.path);
+              const isOpen = openDropdown === item.path;
               return (
-                <div key={item.path} ref={patrolMenuRef} className={`mb-3 transition-all w-full rounded-lg overflow-hidden ${isPatrolOpen ? 'bg-gray-700 shadow-md' : ''}`}>
+                <div key={item.path} data-dropdown-menu className={`mb-3 transition-all w-full rounded-lg overflow-hidden ${isOpen ? 'bg-gray-700 shadow-md' : ''}`}>
                   <button
-                    onClick={() => !isSidebarCollapsed && setIsPatrolOpen(!isPatrolOpen)}
+                    onClick={() => !isSidebarCollapsed && setOpenDropdown(isOpen ? null : item.path)}
                     className={`w-full h-11 transition-colors flex items-center gap-2 rounded-lg ${isSidebarCollapsed
                       ? "justify-center py-4 text-gray-600! hover:text-gray-900!"
                       : `px-4 py-3 justify-between ${isDropdownActive ? 'bg-gray-500 text-white font-semibold' : 'bg-gray-700 text-white hover:bg-gray-600'}`
@@ -234,12 +236,12 @@ const RoleBasedLayout = () => {
                     {!isSidebarCollapsed && (
                       <>
                         <span className="flex-1 text-left font-medium text-sm ml-4">{item.name}</span>
-                        <HiChevronDown className={`w-4 h-4 transform transition-transform ${isPatrolOpen ? 'rotate-180' : ''}`} />
+                        <HiChevronDown className={`w-4 h-4 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                       </>
                     )}
                   </button>
                   {!isSidebarCollapsed && (
-                    <div className={`grid transition-all duration-300 ease-in-out ${isPatrolOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                    <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
                       <div className="overflow-hidden space-y-1">
                         {item.children?.map((child) => {
                           const [childPath] = child.path.split('?');
@@ -411,16 +413,16 @@ const RoleBasedLayout = () => {
             item.isDropdown ? (
               <div key={item.path} className="mb-3 overflow-hidden rounded-lg bg-gray-700">
                 <button
-                  onClick={() => setIsMobilePatrolOpen(!isMobilePatrolOpen)}
-                  className={`w-full text-left px-4 py-4 text-white font-medium flex justify-between items-center transition-colors ${location.pathname.includes('patrol') ? 'bg-gray-500' : 'hover:bg-gray-600'}`}
+                  onClick={() => setMobileOpenDropdown(mobileOpenDropdown === item.path ? null : item.path)}
+                  className={`w-full text-left px-4 py-4 text-white font-medium flex justify-between items-center transition-colors ${location.pathname.includes(item.path) ? 'bg-gray-500' : 'hover:bg-gray-600'}`}
                 >
                   <span className="flex items-center gap-3">
                     {item.icon}
                     {item.name}
                   </span>
-                  <span className={`transform transition-transform ${isMobilePatrolOpen ? 'rotate-180' : ''}`}>▲</span>
+                  <span className={`transform transition-transform ${mobileOpenDropdown === item.path ? 'rotate-180' : ''}`}>▲</span>
                 </button>
-                <div className={`grid transition-all duration-300 ease-in-out ${isMobilePatrolOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                <div className={`grid transition-all duration-300 ease-in-out ${mobileOpenDropdown === item.path ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
                   <div className="overflow-hidden">
                     {item.children?.map((child) => {
                       const isChildActive = location.pathname === child.path.split('?')[0] &&
@@ -464,7 +466,8 @@ const RoleBasedLayout = () => {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         @media (min-width: 768px) {
-          .patrol-action-bar {
+          .patrol-action-bar,
+          .eng-action-bar {
             left: calc(var(--sidebar-width, 0px) + 1.5rem) !important;
             right: 1.5rem !important;
             bottom: 0px !important;

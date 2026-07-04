@@ -495,7 +495,6 @@ const buildFilterParams = (f: PatrolFilter) => ({
         loading={listLoading}
         showFullName={user?.role === "PQCLeader"}
         statusOptions={[
-          { value: "", label: `${pT("colStatus")}` },
           { value: "Pending", label: pT("statusPending") },
           { value: "Submitted", label: pT("statusSubmitted") },
           { value: "Approved", label: pT("statusApproved") },

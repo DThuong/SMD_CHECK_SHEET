@@ -16,6 +16,9 @@ import {
   type RegisterUserRequest
 } from '../../redux/slices/authSlice';
 import ReactPaginate from 'react-paginate';
+import Modal from '../../components/general/Modal';
+import CustomSelect from '../../components/general/CustomSelect';
+import { ConfirmModal } from '../../components/general/ConfirmModal';
 import LoadingSpinner from '../../components/general/LoadingSpinner';
 import { FaSpinner } from 'react-icons/fa6';
 
@@ -709,21 +712,19 @@ const User = () => {
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Quyền *
                   </label>
-                  <select
-                    name="role"
+                  <CustomSelect
+                    options={[
+                      { value: 'PQC', label: 'PQC' },
+                      { value: 'PQCLeader', label: 'PQC Leader' },
+                      { value: 'ENG', label: 'ENG' },
+                      { value: 'Supervisior', label: 'Supervisior' },
+                      { value: 'Manager', label: 'Manager' },
+                      { value: 'KoreaManager', label: 'KoreaManager' },
+                      { value: 'Admin', label: 'Admin' }
+                    ]}
                     value={addUserData.role}
-                    onChange={handleAddUserInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  >
-                    <option value="PQC">PQC</option>
-                    <option value="PQCLeader">PQC Leader</option>
-                    <option value="ENG">ENG</option>
-                    <option value="Supervisior">Supervisior</option>
-                    <option value="Manager">Manager</option>
-                    <option value="KoreaManager">KoreaManager</option>
-                    <option value="Admin">Admin</option>
-                  </select>
+                    onChange={(val) => setAddUserData(prev => ({ ...prev, role: val }))}
+                  />
                 </div>
               </div>
 
@@ -947,22 +948,20 @@ const User = () => {
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Quyền *
                   </label>
-                  <select
-                    name="role"
+                  <CustomSelect
+                    options={[
+                      { value: 'PQC', label: 'PQC' },
+                      { value: 'PQCLeader', label: 'PQC Leader' },
+                      { value: 'ENG', label: 'ENG' },
+                      { value: 'Supervisior', label: 'Supervisior' },
+                      { value: 'Manager', label: 'Manager' },
+                      { value: 'KoreaManager', label: 'KoreaManager' },
+                      { value: 'Admin', label: 'Admin' }
+                    ]}
                     value={formData.role}
-                    onChange={handleInputChange}
-                    required
-                    disabled={editingUser.role === 'Admin'}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  >
-                    <option value="PQC">PQC</option>
-                    <option value="PQCLeader">PQC Leader</option>
-                    <option value="ENG">ENG</option>
-                    <option value="Supervisior">Supervisior</option>
-                    <option value="Manager">Manager</option>
-                    <option value="KoreaManager">KoreaManager</option>
-                    <option value="Admin">Admin</option>
-                  </select>
+                    onChange={(val) => setFormData(prev => ({ ...prev, role: val }))}
+                    isDisabled={editingUser.role === 'Admin'}
+                  />
                 </div>
 
                 {/* Status */}
@@ -970,16 +969,14 @@ const User = () => {
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Trạng thái *
                   </label>
-                  <select
-                    name="isActive"
+                  <CustomSelect
+                    options={[
+                      { value: 'true', label: 'Hoạt động' },
+                      { value: 'false', label: 'Không hoạt động' }
+                    ]}
                     value={formData.isActive.toString()}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="true">Hoạt động</option>
-                    <option value="false">Không hoạt động</option>
-                  </select>
+                    onChange={(val) => setFormData(prev => ({ ...prev, isActive: val === 'true' }))}
+                  />
                 </div>
               </div>
 

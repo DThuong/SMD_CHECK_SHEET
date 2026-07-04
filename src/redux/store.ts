@@ -20,6 +20,7 @@ import NotificationReducer from "./slices/notificationSlice";
 import noteReducer from "./slices/noteSlice";
 import planWorkReducer from "./slices/planWorkSlice";
 import patrolReducer from "./slices/patrolSlice";
+import engReducer from "./slices/engSlice";
 
 import smdApi from "./services/smdApi";
 import { setupApiInterceptor } from "./setupApiInterceptor";
@@ -42,6 +43,7 @@ const rootReducer = combineReducers({
   notification: NotificationReducer,
   note: noteReducer,
   patrol: patrolReducer,
+  eng: engReducer,
 });
 
 // Tạo store

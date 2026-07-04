@@ -11,7 +11,12 @@
     "patrolManage": "Manage Patrol",
     "patrolDaily": "Daily Patrol",
     "patrolWeekly": "Weekly Patrol",
-    "patrolReport": "Patrol Report"
+    "patrolReport": "Patrol Report",
+    "engCheckSheet": "Engineer Check Sheet",
+    "engManage": "Manage Check Sheet",
+    "engDaily": "Daily Check Sheet",
+    "engWeekly": "Weekly Check Sheet",
+    "engReport": "Defect Report"
   },
   "roles": {
     "engineering": "Engineering",

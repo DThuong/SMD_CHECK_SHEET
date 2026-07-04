@@ -17,6 +17,7 @@ import {
 } from '../../redux/slices/patrolSlice';
 import { ConfirmModal } from '../../components/general/ConfirmModal';
 import Modal from '../../components/general/Modal';
+import CustomSelect from '../../components/general/CustomSelect';
 import LoadingSpinner from '../../components/general/LoadingSpinner';
 import { FaEye } from 'react-icons/fa6';
 
@@ -579,14 +580,14 @@ const ManagePatrol: React.FC<PatrolSharedProps> = ({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{pT('promptAddType')}</label>
-                <select
+                <CustomSelect
+                  options={[
+                    { value: 'radio', label: pT('typeRadio') },
+                    { value: 'input', label: pT('typeInput') }
+                  ]}
                   value={inputSpecType}
-                  onChange={(e) => setInputSpecType(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition-all"
-                >
-                  <option value="radio">{pT('typeRadio')}</option>
-                  <option value="input">{pT('typeInput')}</option>
-                </select>
+                  onChange={(val) => setInputSpecType(val as any)}
+                />
               </div>
             </>
           )}

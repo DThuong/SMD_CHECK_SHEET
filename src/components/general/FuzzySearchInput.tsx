@@ -71,7 +71,7 @@ export default function FuzzySearchInput({
         <input
           ref={inputRef}
           type="text"
-          className={`w-full px-3 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 bg-white ${inputClassName}`}
+          className={`w-full h-[40px] px-3 pr-8 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 bg-white ${inputClassName}`}
           placeholder={placeholder}
           value={value}
           onChange={e => {

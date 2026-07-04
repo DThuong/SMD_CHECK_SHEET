@@ -163,6 +163,7 @@ const App = () => {
           <Route path="/admin/sheet-detail/:id" element={<SheetDetailViewer />} />
           <Route path="/admin/settings" element={<Settings />} />
           <Route path="/admin/patrol" element={<PatrolComponent />} />
+          <Route path="/admin/engCheckSheet" element={<EngCheckSheet />} />
           <Route path="/admin/files/:id/:fileType" element={<FileDetailViewer />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>

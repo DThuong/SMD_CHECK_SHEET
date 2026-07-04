@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AiOutlineSearch, AiOutlineClose } from "react-icons/ai";
 import FuzzySearchInput from "./FuzzySearchInput";
+import CustomSelect from "./CustomSelect";
+import CustomDatePicker from "./CustomDatePicker";
 
 interface SearchField {
   key: string;
@@ -55,35 +57,24 @@ export const SmartSearchBar = ({
             <div className="text-xs font-medium text-gray-700 mb-1">{field.label}</div>
 
             {field.type === 'select' ? (
-              <select
-                value={values[field.key] ?? ''}
-                onChange={e => onChange(field.key, e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                style={{ WebkitAppearance: 'none' }}
-              >
-                {field.options?.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
+              <div className="z-10 relative">
+                <CustomSelect
+                  value={values[field.key] ?? ''}
+                  onChange={val => onChange(field.key, val)}
+                  options={field.options || []}
+                  placeholder={field.placeholder || "Chọn..."}
+                  isClearable={true}
+                />
+              </div>
 
             ) : field.type === 'datetime-local' ? (
-              <div className="relative">
-                <input
-                  type="datetime-local"
+              <div className="relative z-10">
+                <CustomDatePicker
                   value={getInputValue(field)}
-                  onChange={e => onChange(field.key, e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm pr-8"
-                  style={{ WebkitAppearance: 'none', minHeight: '44px' }}
+                  onChange={val => onChange(field.key, val)}
+                  placeholder={field.placeholder || "Chọn thời gian"}
+                  isClearable={true}
                 />
-                {getInputValue(field) && (
-                  <button
-                    type="button"
-                    onClick={() => onChange(field.key, '')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <AiOutlineClose className="w-3 h-3" />
-                  </button>
-                )}
               </div>
 
             ) : field.candidates ? (
@@ -108,8 +99,8 @@ export const SmartSearchBar = ({
                       onChange(field.key, e.target.value);
                     }
                   }}
+                  className="w-full h-[40px] px-3 border border-gray-300 rounded-lg text-sm pr-8 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
                   placeholder={field.placeholder}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm pr-8"
                 />
                 {getInputValue(field) && (
                   <button

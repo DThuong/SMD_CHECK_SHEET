@@ -1,7 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import React from 'react';
-import { FaSearch, FaTimes } from 'react-icons/fa';
+import { FaTimes } from 'react-icons/fa';
 import FuzzySearchInput from '../general/FuzzySearchInput';
+import CustomSelect from './CustomSelect';
+import CustomDatePicker from './CustomDatePicker';
 import type { LineArea } from '../../redux/slices/patrolSlice';
 
 export interface PatrolFilter {
@@ -23,7 +25,8 @@ export const PATROL_FILTER_DEFAULT: PatrolFilter = {
 interface PatrolFilterBarProps {
   filter: PatrolFilter;
   onChange: (key: keyof PatrolFilter, value: string) => void;
-  onSearch: () => void;
+  /** @deprecated Lọc realtime qua onChange (debounce) — không còn nút Lọc */
+  onSearch?: () => void;
   onReset: () => void;
   lineAreas: LineArea[];
   totalCount: number;
@@ -37,7 +40,7 @@ interface PatrolFilterBarProps {
     status: string;
     fromDate: string;
     toDate: string;
-    search: string;
+    search?: string;
     searching?: string;
     reset: string;
     results: string;
@@ -45,7 +48,7 @@ interface PatrolFilterBarProps {
 }
 
 const PatrolFilterBar: React.FC<PatrolFilterBarProps> = ({
-  filter, onChange, onSearch, onReset,
+  filter, onChange, onReset,
   lineAreas, totalCount, loading = false,
   showFullName = false, statusOptions, labels,
   fullNameCandidates = [],
@@ -56,10 +59,7 @@ const PatrolFilterBar: React.FC<PatrolFilterBarProps> = ({
     !!filter.status || !!filter.fromDate || !!filter.toDate;
 
   return (
-    <div
-      className="bg-white border border-gray-200 shadow-sm p-3 space-y-3!"
-      onKeyDown={e => e.key === 'Enter' && onSearch()}
-    >
+    <div className="bg-white border border-gray-200 shadow-sm p-3 space-y-3!">
       <div className={`grid gap-2 ${showFullName
         ? 'grid-cols-1 sm:grid-cols-3 lg:grid-cols-5'
         : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'}`}
@@ -88,60 +88,54 @@ const PatrolFilterBar: React.FC<PatrolFilterBarProps> = ({
             candidates={lineAreaNames}
             placeholder={`${labels.lineArea}...`}
             className="w-full"
+            inputClassName="h-[40px]"
           />
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 z-10">
           <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{labels.status}</label>
-          <select
+          <CustomSelect
+            options={[
+                { value: '', label: 'Tất cả' },
+                ...statusOptions
+            ]}
             value={filter.status}
-            onChange={e => onChange('status', e.target.value)}
-            className={inputCls}
-          >
-            {statusOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{labels.fromDate}</label>
-          <input
-            type="datetime-local"
-            value={filter.fromDate}
-            onChange={e => onChange('fromDate', e.target.value)}
-            className={`${inputCls} pr-8`}
+            onChange={val => onChange('status', val)}
+            placeholder={labels.status}
           />
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 z-10">
+          <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{labels.fromDate}</label>
+          <CustomDatePicker
+            value={filter.fromDate}
+            onChange={val => onChange('fromDate', val)}
+            placeholder={labels.fromDate}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1 z-10">
           <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{labels.toDate}</label>
-          <input
-            type="datetime-local"
+          <CustomDatePicker
             value={filter.toDate}
-            onChange={e => onChange('toDate', e.target.value)}
-            className={`${inputCls} pr-8`}
+            onChange={val => onChange('toDate', val)}
+            placeholder={labels.toDate}
           />
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t border-gray-100">
+      {/* Lọc realtime (debounce) — không cần nút Lọc */}
+      <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
         <span className="text-xs text-gray-500">
           {labels.results}: <span className="font-bold text-gray-700">{totalCount}</span>
+          {loading && <span className="ml-2 text-blue-500 animate-pulse">{labels.searching || 'Đang lọc...'}</span>}
         </span>
-        <div className="flex gap-2">
-          {hasActiveFilter && (
-            <button type="button" onClick={onReset}
-              className="flex-1 sm:flex-none px-3 py-2 text-sm border border-gray-300 text-gray-600 hover:bg-gray-50 rounded flex items-center justify-center gap-1.5">
-              <FaTimes className="w-3 h-3" /> {labels.reset}
-            </button>
-          )}
-          <button type="button" onClick={onSearch} disabled={loading}
-            className="flex-1 sm:flex-none px-4 py-2 text-sm bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50 rounded flex items-center justify-center gap-2">
-            <FaSearch className="w-3 h-3" />
-            {loading ? (labels.searching || 'Đang tìm...') : labels.search}
+        {hasActiveFilter && (
+          <button type="button" onClick={onReset}
+            className="shrink-0 px-3 py-1.5 text-xs sm:text-sm border border-gray-300 text-gray-600 hover:bg-gray-50 rounded flex items-center justify-center gap-1.5">
+            <FaTimes className="w-3 h-3" /> {labels.reset}
           </button>
-        </div>
+        )}
       </div>
     </div>
   );

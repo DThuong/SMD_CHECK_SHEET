@@ -1,5 +1,7 @@
 {
   "searchBtn": "Search",
+  "msgDeviceNotSupportedForReport": "Your device is not supported for viewing reports",
+  "backToList": "Back to list",
   "all": "All",
   "action": "Action",
   "loading": "Loading...",

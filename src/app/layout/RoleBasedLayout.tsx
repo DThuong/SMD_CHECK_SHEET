@@ -180,17 +180,18 @@ const RoleBasedLayout = () => {
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
       {user && isAuthenticated && showNoti && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-100 animate-fade-in-down px-2 whitespace-nowrap flex-nowrap">
-          <div className="bg-green-50 border border-green-200 rounded-full shadow-lg flex flex-row items-center gap-3 py-2 px-4 flex-nowrap">
-            <span className="flex items-center justify-center w-5 h-5 bg-green-500 text-white rounded-full text-xs shrink-0">✓</span>
-            <span className="font-bold text-green-800 text-sm shrink-0">
-              {t('msg_success')}
-            </span>
-            <div className="h-4 w-px bg-green-300 shrink-0" />
-            <div className="text-green-700 text-xs font-medium flex flex-row items-center gap-1 shrink-0 flex-nowrap">
-              <span>{t('user')}: <strong className="text-green-900">{user?.username}</strong></span>
-              <span className="mx-1 text-green-300">|</span>
-              <span>{t('role')}: <strong className="text-green-900">{user?.role}</strong></span>
+        <div className="fixed top-4 inset-x-0 z-100 flex justify-center px-4 animate-fade-in-down pointer-events-none">
+          <div className="pointer-events-auto w-full max-w-sm sm:w-auto sm:max-w-md bg-white/95 backdrop-blur border border-green-200 rounded-2xl shadow-xl px-4 py-3 flex items-center gap-3">
+            <span className="flex items-center justify-center w-9 h-9 rounded-full bg-green-500 text-white text-sm shrink-0 shadow-sm">✓</span>
+            <div className="min-w-0">
+              <p className="font-bold text-green-800 text-sm leading-5 m-0">
+                {t('msg_success')}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5 mb-0 truncate">
+                {t('user')}: <strong className="text-gray-800">{user?.username}</strong>
+                <span className="mx-1.5 text-gray-300">•</span>
+                {t('role')}: <strong className="text-gray-800">{user?.role}</strong>
+              </p>
             </div>
           </div>
         </div>

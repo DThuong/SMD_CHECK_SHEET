@@ -210,7 +210,7 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
                 <h1 className="text-lg md:text-xl font-bold text-gray-800">
                     {activeTab === 'daily' ? t('list.titleDaily') : t('list.titleWeekly')}
                 </h1>
-                <div className="flex gap-2 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <button
                         onClick={() => goToView('report')}
                         className="flex-1 sm:flex-none justify-center px-3 py-2 rounded-lg bg-gray-600 text-white text-sm flex items-center gap-2 hover:opacity-70 transition-colors"

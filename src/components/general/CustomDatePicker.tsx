@@ -71,6 +71,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
                 locale={mappedLocale}
                 placeholderText={placeholder}
                 isClearable={isClearable}
+                portalId="datepicker-portal"
                 className={`w-full h-[40px] pl-9 pr-8 border border-gray-200 rounded-lg text-sm text-gray-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 bg-white transition-all shadow-sm hover:border-blue-300 ${className}`}
                 wrapperClassName="w-full"
                 calendarClassName="shadow-xl border-gray-200 rounded-xl overflow-hidden font-sans text-sm"
@@ -82,7 +83,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
                    (shrink-to-fit) làm cột Time rớt xuống dưới — ép rộng theo nội dung. */
                 .react-datepicker-popper {
                     min-width: max-content;
-                    z-index: 50;
+                    z-index: 9999;
                 }
                 .react-datepicker-wrapper input {
                     padding-left: 2.25rem !important;

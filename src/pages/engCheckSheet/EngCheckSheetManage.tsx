@@ -216,7 +216,7 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
             </div>
 
             {/* Section tabs */}
-            <div className="flex gap-2 mb-5 flex-wrap">
+            <div className="flex flex-col sm:flex-row gap-2 mb-5">
                 <button
                     onClick={() => setSection('lineMachine')}
                     className={`flex-1 sm:flex-none justify-center px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-2 ${section === 'lineMachine' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
@@ -240,12 +240,12 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
             {/* ============ SECTION: LOẠI MÁY ============ */}
             {section === 'machineType' && (
                 <div className="bg-white rounded-xl border border-gray-200 p-4">
-                    <div className="flex justify-between items-center mb-3 gap-2">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
                         <h2 className="font-semibold text-gray-700 text-sm sm:text-base truncate">{t('manage.listMachineType')}</h2>
                         {isEngineer && (
                             <button
                                 onClick={() => openCreateModal('machineType')}
-                                className="shrink-0 px-3 sm:px-3 py-2 sm:py-2 bg-blue-600 text-white rounded-lg text-xs sm:text-sm flex items-center gap-1 hover:bg-blue-700"
+                                className="w-full sm:w-auto shrink-0 justify-center px-3 py-2 sm:py-2 bg-blue-600 text-white rounded-lg text-sm flex items-center gap-1.5 hover:bg-blue-700"
                             >
                                 <FaPlus /> {t('manage.addMachineType')}
                             </button>
@@ -254,12 +254,12 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                     {machineTypes.length === 0 && <p className="text-sm text-gray-400 py-4 text-center">{t('manage.noMachineType')}</p>}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {machineTypes.map(mt => (
-                            <div key={mt.id} className="flex items-center justify-between border border-gray-200 rounded-lg px-3 py-2">
+                            <div key={mt.id} className="flex items-center justify-between border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2">
                                 <span className="text-sm text-gray-800">{mt.name}</span>
                                 {isEngineer && (
-                                    <div className="flex gap-0.5 shrink-0">
-                                        <button onClick={() => openEditModal('machineType', mt.id)} className="p-1.5 rounded-md text-blue-500 hover:bg-blue-50"><FaEdit /></button>
-                                        <button onClick={() => setDeleteModal({ isOpen: true, type: 'machineType', id: mt.id })} className="p-1.5 rounded-md text-red-500 hover:bg-red-50"><FaTrash /></button>
+                                    <div className="flex gap-1.5 sm:gap-0.5 shrink-0">
+                                        <button onClick={() => openEditModal('machineType', mt.id)} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-blue-500 bg-blue-50 sm:bg-transparent hover:bg-blue-100 sm:hover:bg-blue-50"><FaEdit /></button>
+                                        <button onClick={() => setDeleteModal({ isOpen: true, type: 'machineType', id: mt.id })} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-red-500 bg-red-50 sm:bg-transparent hover:bg-red-100 sm:hover:bg-red-50"><FaTrash /></button>
                                     </div>
                                 )}
                             </div>
@@ -271,12 +271,12 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
             {/* ============ SECTION: LINE & MÁY ============ */}
             {section === 'lineMachine' && (
                 <div className="bg-white rounded-xl border border-gray-200 p-4">
-                    <div className="flex justify-between items-center mb-3 gap-2">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
                         <h2 className="font-semibold text-gray-700 text-sm sm:text-base truncate">{t('manage.listLine')}</h2>
                         {isEngineer && (
                             <button
                                 onClick={() => openCreateModal('line')}
-                                className="shrink-0 px-3 sm:px-3 py-2 sm:py-2 bg-blue-600 text-white rounded-lg text-xs sm:text-sm flex items-center gap-1 hover:bg-blue-700"
+                                className="w-full sm:w-auto shrink-0 justify-center px-3 py-2 sm:py-2 bg-blue-600 text-white rounded-lg text-sm flex items-center gap-1.5 hover:bg-blue-700"
                             >
                                 <FaPlus /> {t('manage.addLine')}
                             </button>
@@ -300,10 +300,10 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                                             <span className="text-xs bg-blue-100 text-blue-600 rounded-full px-2 py-0.5 shrink-0">{t('manage.machineCount', { count: lineMachines.length })}</span>
                                         </button>
                                         {isEngineer && (
-                                            <div className="flex gap-0.5 sm:gap-1 shrink-0">
-                                                <button onClick={() => openCreateModal('machine', line.id)} className="p-1.5 rounded-md text-green-600 hover:bg-green-50" title={t('manage.addMachine')}><FaPlus /></button>
-                                                <button onClick={() => openEditModal('line', line.id)} className="p-1.5 rounded-md text-blue-500 hover:bg-blue-50" title={t('manage.editLine')}><FaEdit /></button>
-                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'line', id: line.id })} className="p-1.5 rounded-md text-red-500 hover:bg-red-50" title={t('manage.deleteLine')}><FaTrash /></button>
+                                            <div className="flex gap-1.5 sm:gap-1 shrink-0">
+                                                <button onClick={() => openCreateModal('machine', line.id)} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-green-600 bg-green-50 sm:bg-transparent hover:bg-green-100 sm:hover:bg-green-50" title={t('manage.addMachine')}><FaPlus /></button>
+                                                <button onClick={() => openEditModal('line', line.id)} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-blue-500 bg-blue-50 sm:bg-transparent hover:bg-blue-100 sm:hover:bg-blue-50" title={t('manage.editLine')}><FaEdit /></button>
+                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'line', id: line.id })} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-red-500 bg-red-50 sm:bg-transparent hover:bg-red-100 sm:hover:bg-red-50" title={t('manage.deleteLine')}><FaTrash /></button>
                                             </div>
                                         )}
                                     </div>
@@ -347,7 +347,7 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                                             {/* Danh sách máy - MOBILE */}
                                             <div className="md:hidden divide-y divide-gray-100">
                                                 {lineMachines.map(m => (
-                                                    <div key={m.id} className="flex items-center justify-between px-3 py-2 gap-2">
+                                                    <div key={m.id} className="flex items-center justify-between px-3 py-2.5 gap-2">
                                                         <div className="min-w-0 flex-1">
                                                             <p className="text-sm text-gray-800 truncate">{m.machineName}</p>
                                                             <p className="text-xs text-gray-400 truncate">
@@ -355,9 +355,9 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                                                             </p>
                                                         </div>
                                                         {isEngineer && (
-                                                            <div className="flex gap-0.5 shrink-0">
-                                                                <button onClick={() => openEditModal('machine', m.id)} className="p-1.5 rounded-md text-blue-500 hover:bg-blue-50"><FaEdit /></button>
-                                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'machine', id: m.id })} className="p-1.5 rounded-md text-red-500 hover:bg-red-50"><FaTrash /></button>
+                                                            <div className="flex gap-1.5 shrink-0">
+                                                                <button onClick={() => openEditModal('machine', m.id)} className="p-2.5 rounded-lg text-blue-500 bg-blue-50 hover:bg-blue-100"><FaEdit /></button>
+                                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'machine', id: m.id })} className="p-2.5 rounded-lg text-red-500 bg-red-50 hover:bg-red-100"><FaTrash /></button>
                                                             </div>
                                                         )}
                                                     </div>
@@ -392,7 +392,7 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                         <div className="hidden sm:block flex-1" />
                         <button
                             onClick={() => openCreateModal('category')}
-                            className={`w-full sm:w-auto justify-center px-3 py-2 bg-blue-600 text-white rounded-lg text-sm items-center gap-1 hover:bg-blue-700 ${isEngineer ? 'flex' : 'hidden'}`}
+                            className={`w-full sm:w-auto justify-center px-3 py-2.5 sm:py-2 bg-blue-600 text-white rounded-lg text-sm items-center gap-1.5 hover:bg-blue-700 ${isEngineer ? 'flex' : 'hidden'}`}
                         >
                             <FaPlus /> {t('manage.addGroup')}
                         </button>
@@ -415,10 +415,10 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                                             <span className="text-xs bg-indigo-100 text-indigo-600 rounded-full px-2 py-0.5 shrink-0">{t('manage.questionCount', { count: catCheckLists.length })}</span>
                                         </button>
                                         {isEngineer && (
-                                            <div className="flex gap-0.5 sm:gap-1 shrink-0">
-                                                <button onClick={() => openCreateModal('checkList', cat.id)} className="p-1.5 rounded-md text-green-600 hover:bg-green-50" title={t('manage.addQuestion')}><FaPlus /></button>
-                                                <button onClick={() => openEditModal('category', cat.id)} className="p-1.5 rounded-md text-blue-500 hover:bg-blue-50" title={t('manage.editGroup')}><FaEdit /></button>
-                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'category', id: cat.id })} className="p-1.5 rounded-md text-red-500 hover:bg-red-50" title={t('manage.deleteGroup')}><FaTrash /></button>
+                                            <div className="flex gap-1.5 sm:gap-1 shrink-0">
+                                                <button onClick={() => openCreateModal('checkList', cat.id)} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-green-600 bg-green-50 sm:bg-transparent hover:bg-green-100 sm:hover:bg-green-50" title={t('manage.addQuestion')}><FaPlus /></button>
+                                                <button onClick={() => openEditModal('category', cat.id)} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-blue-500 bg-blue-50 sm:bg-transparent hover:bg-blue-100 sm:hover:bg-blue-50" title={t('manage.editGroup')}><FaEdit /></button>
+                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'category', id: cat.id })} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-red-500 bg-red-50 sm:bg-transparent hover:bg-red-100 sm:hover:bg-red-50" title={t('manage.deleteGroup')}><FaTrash /></button>
                                             </div>
                                         )}
                                     </div>
@@ -462,7 +462,7 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                                             {/* Danh sách câu hỏi - MOBILE */}
                                             <div className="md:hidden divide-y divide-gray-100">
                                                 {catCheckLists.map(cl => (
-                                                    <div key={cl.id} className="flex items-start justify-between px-3 py-2 gap-2">
+                                                    <div key={cl.id} className="flex items-start justify-between px-3 py-2.5 gap-2">
                                                         <div className="min-w-0 flex-1">
                                                             <p className="text-sm text-gray-800">{cl.questionCheck}</p>
                                                             <span className="inline-block mt-1 text-xs bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">
@@ -470,9 +470,9 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                                                             </span>
                                                         </div>
                                                         {isEngineer && (
-                                                            <div className="flex gap-0.5 shrink-0">
-                                                                <button onClick={() => openEditModal('checkList', cl.id)} className="p-1.5 rounded-md text-blue-500 hover:bg-blue-50"><FaEdit /></button>
-                                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'checkList', id: cl.id })} className="p-1.5 rounded-md text-red-500 hover:bg-red-50"><FaTrash /></button>
+                                                            <div className="flex gap-1.5 shrink-0">
+                                                                <button onClick={() => openEditModal('checkList', cl.id)} className="p-2.5 rounded-lg text-blue-500 bg-blue-50 hover:bg-blue-100"><FaEdit /></button>
+                                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'checkList', id: cl.id })} className="p-2.5 rounded-lg text-red-500 bg-red-50 hover:bg-red-100"><FaTrash /></button>
                                                             </div>
                                                         )}
                                                     </div>

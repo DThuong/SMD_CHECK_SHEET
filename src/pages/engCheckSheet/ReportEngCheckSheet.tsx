@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
-import { FaArrowLeft, FaChartBar, FaCalendarDay, FaCalendarWeek } from 'react-icons/fa';
+import React, { useEffect, useMemo, useState } from 'react';
+import { FaArrowLeft, FaChartBar, FaCalendarDay, FaCalendarWeek, FaMobileAlt } from 'react-icons/fa';
+import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import type { EngSharedProps, EngTab } from '../managers_role/EngCheckSheet';
@@ -9,6 +10,29 @@ const ReportEngCheckSheet: React.FC<EngSharedProps> = (props) => {
     const { goToView, activeTab } = props;
     const { t } = useTranslation('engCheckSheet');
     const [searchParams, setSearchParams] = useSearchParams();
+    const [isMobileReportBlocked, setIsMobileReportBlocked] = useState(false);
+
+    // Report có nhiều biểu đồ/bảng lớn — không hỗ trợ mobile (giống ReportPatrol)
+    useEffect(() => {
+        const checkDevice = () => {
+            const isMobile =
+                window.innerWidth < 768 ||
+                /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(
+                    navigator.userAgent,
+                );
+
+            setIsMobileReportBlocked(isMobile);
+
+            if (isMobile) {
+                toast.error(t('msgDeviceNotSupportedForReport'));
+            }
+        };
+
+        checkDevice();
+
+        window.addEventListener('resize', checkDevice);
+        return () => window.removeEventListener('resize', checkDevice);
+    }, [t]);
 
     // Xác định type hiện tại từ URL hoặc activeTab
     const typeFromUrl = searchParams.get('type') as EngTab | null;
@@ -23,6 +47,34 @@ const ReportEngCheckSheet: React.FC<EngSharedProps> = (props) => {
             type: nextType,
         });
     };
+
+    if (isMobileReportBlocked) {
+        return (
+            <div className="animate-fade-in mt-6 px-4">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4! text-center shadow-sm">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
+                        <FaMobileAlt size={24} />
+                    </div>
+
+                    <h2 className="mt-4 text-lg font-extrabold text-slate-900">
+                        {t('msgDeviceNotSupportedForReport')}
+                    </h2>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                        {t('reportMobileBlockedDescription')}
+                    </p>
+
+                    <button
+                        type="button"
+                        onClick={() => goToView('list', null, currentType)}
+                        className="mt-5 inline-flex items-center justify-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
+                    >
+                        {t('backToList')}
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="animate-fade-in mt-6 space-y-4">

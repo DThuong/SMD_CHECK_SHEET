@@ -1,5 +1,7 @@
 {
   "searchBtn": "Tìm kiếm",
+  "msgDeviceNotSupportedForReport": "Thiết bị của bạn không được hỗ trợ để xem báo cáo",
+  "backToList": "Quay lại danh sách",
   "all": "Tất cả",
   "action": "Hành động",
   "loading": "Đang tải...",

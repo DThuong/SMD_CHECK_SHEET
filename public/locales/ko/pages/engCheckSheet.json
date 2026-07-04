@@ -1,5 +1,7 @@
 {
   "searchBtn": "검색",
+  "msgDeviceNotSupportedForReport": "사용 중인 기기에서는 보고서를 볼 수 없습니다",
+  "backToList": "목록으로 돌아가기",
   "all": "전체",
   "action": "작업",
   "loading": "로딩 중...",

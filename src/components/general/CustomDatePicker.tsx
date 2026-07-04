@@ -78,6 +78,12 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             
             <style>{`
+                /* Popup định vị absolute trong cột filter hẹp sẽ bị bó chiều rộng
+                   (shrink-to-fit) làm cột Time rớt xuống dưới — ép rộng theo nội dung. */
+                .react-datepicker-popper {
+                    min-width: max-content;
+                    z-index: 50;
+                }
                 .react-datepicker-wrapper input {
                     padding-left: 2.25rem !important;
                 }

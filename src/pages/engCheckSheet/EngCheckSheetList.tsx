@@ -262,9 +262,8 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
                     showFullName
                     fullNameCandidates={fullNameCandidates}
                     statusOptions={[
-                        { value: '', label: '-- Trạng thái --' },
-                        { value: 'Pending', label: 'Pending' },
-                        { value: 'Submitted', label: 'Submitted' },
+                        { value: 'Pending', label: t('statusPending') },
+                        { value: 'Submitted', label: t('statusSubmitted') },
                     ]}
                     labels={{
                         fullName: t('list.inspector'),

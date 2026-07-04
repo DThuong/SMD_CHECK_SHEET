@@ -758,23 +758,41 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
 
             {/* Status history */}
             {showHistory && (
-                <div className="bg-gray-900 rounded-2xl p-5 shadow-lg animate-fade-in !w-full text-white">
-                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">{t('detail.statusHistory')}</h3>
+                <div className="bg-white border border-gray-200 rounded-2xl p-4 md:p-5 shadow-sm animate-fade-in !w-full">
+                    <h3 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <FaHistory className="text-gray-400" /> {t('detail.statusHistory')}
+                    </h3>
                     {statusHistories.length === 0 ? (
-                        <p className="text-sm text-gray-500">{t('detail.noHistory')}</p>
+                        <p className="text-sm text-gray-400">{t('detail.noHistory')}</p>
                     ) : (
-                        <div className="space-y-3">
+                        <ol className="relative ml-1.5 space-y-4 border-l-2 border-gray-100">
                             {statusHistories.map(h => (
-                                <div key={h.id} className="text-sm flex flex-wrap items-center gap-3">
-                                    <span className="text-gray-400 font-medium">{h.createdAt ? new Date(h.createdAt).toLocaleString('vi-VN') : ''}</span>
-                                    <span className="font-bold text-gray-100">{h.fullName}</span>
-                                    <span className="text-gray-500 bg-white/10 px-2 py-0.5 rounded text-xs">{h.role}</span>
-                                    <span className={`px-2.5 py-0.5 rounded text-xs font-bold ${h.status === 'Submitted' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'}`}>
-                                        {h.status}
-                                    </span>
-                                </div>
+                                <li key={h.id} className="relative pl-5">
+                                    <span
+                                        className={`absolute -left-[7px] top-1 h-3 w-3 rounded-full border-2 border-white shadow ${
+                                            h.status === 'Submitted' ? 'bg-emerald-500' :
+                                            h.status === 'Approved' ? 'bg-blue-500' : 'bg-amber-400'
+                                        }`}
+                                    />
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                                        <span className="font-bold text-gray-800">{h.fullName}</span>
+                                        <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-500">{h.role}</span>
+                                        <span
+                                            className={`rounded-md border px-2 py-0.5 text-xs font-bold ${
+                                                h.status === 'Submitted' ? 'border-emerald-200 bg-emerald-50 text-emerald-600' :
+                                                h.status === 'Approved' ? 'border-blue-200 bg-blue-50 text-blue-600' :
+                                                'border-amber-200 bg-amber-50 text-amber-600'
+                                            }`}
+                                        >
+                                            {h.status}
+                                        </span>
+                                    </div>
+                                    <p className="mt-0.5 mb-0 text-xs text-gray-400">
+                                        {h.createdAt ? new Date(h.createdAt).toLocaleString('vi-VN') : ''}
+                                    </p>
+                                </li>
                             ))}
-                        </div>
+                        </ol>
                     )}
                 </div>
             )}

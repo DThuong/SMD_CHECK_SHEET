@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
-import { FaArrowLeft, FaPlus, FaTrash, FaEdit, FaChevronDown, FaChevronRight, FaCogs, FaClipboardList } from 'react-icons/fa';
+import { FaArrowLeft, FaPlus, FaTrash, FaEdit, FaChevronDown, FaChevronRight, FaCogs, FaClipboardList, FaCopy } from 'react-icons/fa';
 import { MdPrecisionManufacturing } from 'react-icons/md';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -45,6 +45,10 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
         id?: number;
         parentId?: number; // lineId cho machine, categoryId cho checkList
     }>({ isOpen: false, type: 'line', isEdit: false });
+
+    const [copyModal, setCopyModal] = useState<{ isOpen: boolean; sourceLineId?: number }>({ isOpen: false });
+    const [selectedTargetLines, setSelectedTargetLines] = useState<number[]>([]);
+    const [selectedSourceMachines, setSelectedSourceMachines] = useState<number[]>([]);
 
     // Input fields dùng chung cho các modal
     const [inputName, setInputName] = useState('');
@@ -94,6 +98,64 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
     };
 
     const closeItemModal = () => setItemModal({ isOpen: false, type: 'line', isEdit: false });
+
+    const openCopyModal = (lineId: number) => {
+        if (!isEngineer) return;
+        const sourceMachines = machines.filter(m => m.lineId === lineId);
+        setCopyModal({ isOpen: true, sourceLineId: lineId });
+        setSelectedTargetLines([]);
+        setSelectedSourceMachines(sourceMachines.map(m => m.id));
+    };
+
+    const closeCopyModal = () => {
+        setCopyModal({ isOpen: false });
+        setSelectedTargetLines([]);
+        setSelectedSourceMachines([]);
+    };
+
+    const handleCopyMachines = async () => {
+        if (!isEngineer) return;
+        if (!copyModal.sourceLineId || selectedTargetLines.length === 0) {
+            toast.error(t('manage.toast.selectTargetLine') || 'Vui lòng chọn ít nhất một line đích');
+            return;
+        }
+        if (selectedSourceMachines.length === 0) {
+            toast.error('Vui lòng chọn ít nhất một máy để copy');
+            return;
+        }
+        const sourceMachines = machines.filter(m => m.lineId === copyModal.sourceLineId && selectedSourceMachines.includes(m.id));
+        if (sourceMachines.length === 0) {
+            toast.error(t('manage.toast.noMachineToCopy') || 'Line nguồn không có máy nào để copy');
+            return;
+        }
+
+        try {
+            let copiedCount = 0;
+            let skippedCount = 0;
+            for (const targetLineId of selectedTargetLines) {
+                const existingMachinesInTarget = machines.filter(m => m.lineId === targetLineId);
+                for (const machine of sourceMachines) {
+                    const isExist = existingMachinesInTarget.some(em => 
+                        em.machineName.trim().toLowerCase() === machine.machineName.trim().toLowerCase()
+                    );
+                    if (isExist) {
+                        skippedCount++;
+                        continue;
+                    }
+                    await dispatch(createEngMachine({
+                        machineName: machine.machineName,
+                        machineTypeId: machine.machineTypeId,
+                        lineId: targetLineId
+                    })).unwrap();
+                    copiedCount++;
+                }
+            }
+            toast.success(`Đã copy ${copiedCount} máy. Bỏ qua ${skippedCount} máy đã tồn tại.`);
+            closeCopyModal();
+        } catch (err: any) {
+            toast.error(typeof err === 'string' ? err : (t('manage.toast.copyFailed') || 'Có lỗi xảy ra khi copy máy'));
+        }
+    };
 
     const handleSave = async () => {
         if (!isEngineer) {
@@ -258,8 +320,8 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                                 <span className="text-sm text-gray-800">{mt.name}</span>
                                 {isEngineer && (
                                     <div className="flex gap-1.5 sm:gap-0.5 shrink-0">
-                                        <button onClick={() => openEditModal('machineType', mt.id)} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-blue-500 bg-blue-50 sm:bg-transparent hover:bg-blue-100 sm:hover:bg-blue-50"><FaEdit /></button>
-                                        <button onClick={() => setDeleteModal({ isOpen: true, type: 'machineType', id: mt.id })} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-red-500 bg-red-50 sm:bg-transparent hover:bg-red-100 sm:hover:bg-red-50"><FaTrash /></button>
+                                        <button onClick={() => openEditModal('machineType', mt.id)} className="p-2 sm:p-1.5 rounded-lg sm:rounded-md text-blue-500 bg-blue-50 sm:bg-transparent hover:bg-blue-100 sm:hover:bg-blue-50"><FaEdit /></button>
+                                        <button onClick={() => setDeleteModal({ isOpen: true, type: 'machineType', id: mt.id })} className="p-2 sm:p-1.5 rounded-lg sm:rounded-md text-red-500 bg-red-50 sm:bg-transparent hover:bg-red-100 sm:hover:bg-red-50"><FaTrash /></button>
                                     </div>
                                 )}
                             </div>
@@ -301,9 +363,10 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                                         </button>
                                         {isEngineer && (
                                             <div className="flex gap-1.5 sm:gap-1 shrink-0">
-                                                <button onClick={() => openCreateModal('machine', line.id)} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-green-600 bg-green-50 sm:bg-transparent hover:bg-green-100 sm:hover:bg-green-50" title={t('manage.addMachine')}><FaPlus /></button>
-                                                <button onClick={() => openEditModal('line', line.id)} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-blue-500 bg-blue-50 sm:bg-transparent hover:bg-blue-100 sm:hover:bg-blue-50" title={t('manage.editLine')}><FaEdit /></button>
-                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'line', id: line.id })} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-red-500 bg-red-50 sm:bg-transparent hover:bg-red-100 sm:hover:bg-red-50" title={t('manage.deleteLine')}><FaTrash /></button>
+                                                <button onClick={() => openCopyModal(line.id)} className="p-2 sm:p-1.5 rounded-lg sm:rounded-md text-indigo-500 bg-indigo-50 sm:bg-transparent hover:bg-indigo-100 sm:hover:bg-indigo-50" title="Copy máy sang line khác"><FaCopy /></button>
+                                                <button onClick={() => openCreateModal('machine', line.id)} className="p-2 sm:p-1.5 rounded-lg sm:rounded-md text-green-600 bg-green-50 sm:bg-transparent hover:bg-green-100 sm:hover:bg-green-50" title={t('manage.addMachine')}><FaPlus /></button>
+                                                <button onClick={() => openEditModal('line', line.id)} className="p-2 sm:p-1.5 rounded-lg sm:rounded-md text-blue-500 bg-blue-50 sm:bg-transparent hover:bg-blue-100 sm:hover:bg-blue-50" title={t('manage.editLine')}><FaEdit /></button>
+                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'line', id: line.id })} className="p-2 sm:p-1.5 rounded-lg sm:rounded-md text-red-500 bg-red-50 sm:bg-transparent hover:bg-red-100 sm:hover:bg-red-50" title={t('manage.deleteLine')}><FaTrash /></button>
                                             </div>
                                         )}
                                     </div>
@@ -356,8 +419,8 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                                                         </div>
                                                         {isEngineer && (
                                                             <div className="flex gap-1.5 shrink-0">
-                                                                <button onClick={() => openEditModal('machine', m.id)} className="p-2.5 rounded-lg text-blue-500 bg-blue-50 hover:bg-blue-100"><FaEdit /></button>
-                                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'machine', id: m.id })} className="p-2.5 rounded-lg text-red-500 bg-red-50 hover:bg-red-100"><FaTrash /></button>
+                                                                <button onClick={() => openEditModal('machine', m.id)} className="p-2 rounded-lg text-blue-500 bg-blue-50 hover:bg-blue-100"><FaEdit /></button>
+                                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'machine', id: m.id })} className="p-2 rounded-lg text-red-500 bg-red-50 hover:bg-red-100"><FaTrash /></button>
                                                             </div>
                                                         )}
                                                     </div>
@@ -416,9 +479,9 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                                         </button>
                                         {isEngineer && (
                                             <div className="flex gap-1.5 sm:gap-1 shrink-0">
-                                                <button onClick={() => openCreateModal('checkList', cat.id)} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-green-600 bg-green-50 sm:bg-transparent hover:bg-green-100 sm:hover:bg-green-50" title={t('manage.addQuestion')}><FaPlus /></button>
-                                                <button onClick={() => openEditModal('category', cat.id)} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-blue-500 bg-blue-50 sm:bg-transparent hover:bg-blue-100 sm:hover:bg-blue-50" title={t('manage.editGroup')}><FaEdit /></button>
-                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'category', id: cat.id })} className="p-2.5 sm:p-1.5 rounded-lg sm:rounded-md text-red-500 bg-red-50 sm:bg-transparent hover:bg-red-100 sm:hover:bg-red-50" title={t('manage.deleteGroup')}><FaTrash /></button>
+                                                <button onClick={() => openCreateModal('checkList', cat.id)} className="p-2 sm:p-1.5 rounded-lg sm:rounded-md text-green-600 bg-green-50 sm:bg-transparent hover:bg-green-100 sm:hover:bg-green-50" title={t('manage.addQuestion')}><FaPlus /></button>
+                                                <button onClick={() => openEditModal('category', cat.id)} className="p-2 sm:p-1.5 rounded-lg sm:rounded-md text-blue-500 bg-blue-50 sm:bg-transparent hover:bg-blue-100 sm:hover:bg-blue-50" title={t('manage.editGroup')}><FaEdit /></button>
+                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'category', id: cat.id })} className="p-2 sm:p-1.5 rounded-lg sm:rounded-md text-red-500 bg-red-50 sm:bg-transparent hover:bg-red-100 sm:hover:bg-red-50" title={t('manage.deleteGroup')}><FaTrash /></button>
                                             </div>
                                         )}
                                     </div>
@@ -471,8 +534,8 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                                                         </div>
                                                         {isEngineer && (
                                                             <div className="flex gap-1.5 shrink-0">
-                                                                <button onClick={() => openEditModal('checkList', cl.id)} className="p-2.5 rounded-lg text-blue-500 bg-blue-50 hover:bg-blue-100"><FaEdit /></button>
-                                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'checkList', id: cl.id })} className="p-2.5 rounded-lg text-red-500 bg-red-50 hover:bg-red-100"><FaTrash /></button>
+                                                                <button onClick={() => openEditModal('checkList', cl.id)} className="p-2 rounded-lg text-blue-500 bg-blue-50 hover:bg-blue-100"><FaEdit /></button>
+                                                                <button onClick={() => setDeleteModal({ isOpen: true, type: 'checkList', id: cl.id })} className="p-2 rounded-lg text-red-500 bg-red-50 hover:bg-red-100"><FaTrash /></button>
                                                             </div>
                                                         )}
                                                     </div>
@@ -540,6 +603,71 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                             />
                         </div>
                     )}
+                </div>
+            </Modal>
+
+            <Modal open={copyModal.isOpen} title="Copy máy sang Line khác" onClose={closeCopyModal} onSave={handleCopyMachines}>
+                <div className="space-y-4">
+                    {/* Phần chọn máy nguồn */}
+                    <div>
+                        <p className="text-sm text-gray-800 font-semibold mb-2">1. Chọn các máy từ line nguồn để copy:</p>
+                        <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg bg-gray-50">
+                            <div className="flex flex-col">
+                                {machines.filter(m => m.lineId === copyModal.sourceLineId).map(machine => (
+                                    <label key={machine.id} className="flex items-center p-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200 last:border-0">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedSourceMachines.includes(machine.id)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedSourceMachines(prev => [...prev, machine.id]);
+                                                } else {
+                                                    setSelectedSourceMachines(prev => prev.filter(id => id !== machine.id));
+                                                }
+                                            }}
+                                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mr-2! shrink-0"
+                                        />
+                                        <span className="text-sm text-gray-800 truncate font-medium">{machine.machineName}</span>
+                                    </label>
+                                ))}
+                                {machines.filter(m => m.lineId === copyModal.sourceLineId).length === 0 && (
+                                    <p className="text-sm text-gray-400 text-center py-3">Không có máy nào trong line này</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Phần chọn line đích */}
+                    <div>
+                        <p className="text-sm text-gray-800 font-semibold mb-2">2. Chọn các line đích:</p>
+                        <p className="text-xs text-gray-500 mb-2 italic">* Nếu line đích đã có máy trùng tên, hệ thống sẽ tự động bỏ qua máy đó.</p>
+                        <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg bg-gray-50">
+                            <div className="flex flex-col">
+                                {lines.filter(l => l.id !== copyModal.sourceLineId).map(line => (
+                                    <label key={line.id} className="flex items-center p-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200 last:border-0">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedTargetLines.includes(line.id)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedTargetLines(prev => [...prev, line.id]);
+                                                } else {
+                                                    setSelectedTargetLines(prev => prev.filter(id => id !== line.id));
+                                                }
+                                            }}
+                                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mr-2! shrink-0"
+                                        />
+                                        <span className="text-sm text-gray-800 truncate font-medium">
+                                            {line.lineName} {line.areaPart && <span className="text-gray-400 font-normal">({line.areaPart})</span>}
+                                        </span>
+                                    </label>
+                                ))}
+                                {lines.filter(l => l.id !== copyModal.sourceLineId).length === 0 && (
+                                    <p className="text-sm text-gray-400 text-center py-3">Không có line đích nào khác</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </Modal>
 

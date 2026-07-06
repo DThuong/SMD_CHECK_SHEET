@@ -1,6 +1,6 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import ReactPaginate from 'react-paginate';
 import { FaPlus, FaCog, FaTrash, FaEye, FaChartBar } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,7 @@ import {
     deleteEngSession,
     fetchEngLines,
 } from '../../redux/slices/engSlice';
-import type { vehicleSession } from '../../redux/slices/engSlice';
+
 import Modal from '../../components/general/Modal';
 import { ConfirmModal } from '../../components/general/ConfirmModal';
 import LoadingSpinner from '../../components/general/LoadingSpinner';
@@ -58,37 +58,86 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
     // ------- Delete modal -------
     const [deleteId, setDeleteId] = useState<number | null>(null);
 
+    // ------- Pagination -------
+    const [currentPage, setCurrentPage] = useState(0);
+    const itemsPerPage = 20;
+
     // ------- Highlight session after back from detail -------
     const [highlightId, setHighlightId] = useState<number | null>(null);
+    const [initialHighlightCheck, setInitialHighlightCheck] = useState(false);
+
+    // Danh sách hiển thị: kết quả filter (đã lọc theo sheetType) hoặc list theo tab
+    const baseList = useMemo(() => {
+        return hasActiveFilter
+            ? filteredSessionsResult.filter(s => s.sheetType === sheetType)
+            : sessions.filter(s => s.sheetType === sheetType);
+    }, [hasActiveFilter, filteredSessionsResult, sessions, sheetType]);
+
+    const sortedList = useMemo(() => {
+        return [...baseList].sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+    }, [baseList]);
 
     useEffect(() => {
+        if (initialHighlightCheck || sortedList.length === 0) return;
         try {
             const raw = localStorage.getItem('eng_highlight_session');
             if (raw) {
                 const { id, ts } = JSON.parse(raw);
                 localStorage.removeItem('eng_highlight_session');
-                // Only highlight if it was set less than 10 seconds ago
                 if (Date.now() - ts < 10000) {
+                    const highlightIndex = sortedList.findIndex(s => s.id === Number(id));
+                    if (highlightIndex !== -1) {
+                        setCurrentPage(Math.floor(highlightIndex / itemsPerPage));
+                    }
                     setHighlightId(Number(id));
-                    // Scroll to the highlighted element after render
                     setTimeout(() => {
                         const el = document.getElementById(`eng-session-${id}`);
                         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 200);
-                    // Remove highlight after 5 seconds
+                    }, 300);
                     const timer = setTimeout(() => setHighlightId(null), 5000);
+                    setInitialHighlightCheck(true);
                     return () => clearTimeout(timer);
                 }
             }
-        } catch {}
-    }, []);
+        } catch (e) {
+            console.error(e);
+        }
+        setInitialHighlightCheck(true);
+    }, [sortedList, initialHighlightCheck]);
+
+    // Reset pagination when filter/tab changes
+    useEffect(() => {
+        setCurrentPage(0);
+    }, [sheetType, hasActiveFilter, filteredSessionsResult]);
+
+    const pageCount = Math.ceil(sortedList.length / itemsPerPage);
+    const displayList = useMemo(() => {
+        const offset = currentPage * itemsPerPage;
+        return sortedList.slice(offset, offset + itemsPerPage);
+    }, [currentPage, sortedList]);
+
+    const handlePageChange = ({ selected }: { selected: number }) => {
+        setCurrentPage(selected);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const [isFetchingSessions, setIsFetchingSessions] = useState(true);
 
     useEffect(() => {
-        dispatch(fetchEngSessionsBySheetType(sheetType));
-        dispatch(fetchEngLines());
+        let isMounted = true;
+        setIsFetchingSessions(true);
+        Promise.all([
+            dispatch(fetchEngSessionsBySheetType(sheetType)).unwrap().catch(() => {}),
+            dispatch(fetchEngLines()).unwrap().catch(() => {})
+        ]).finally(() => {
+            if (isMounted) setIsFetchingSessions(false);
+        });
         setFilter(PATROL_FILTER_DEFAULT);
         lastFilterKeyRef.current = '';
         return () => {
+            isMounted = false;
             if (debounceRef.current) clearTimeout(debounceRef.current);
         };
     }, [dispatch, sheetType]);
@@ -180,15 +229,6 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
         setDeleteId(null);
     };
 
-    // Danh sách hiển thị: kết quả filter (đã lọc theo sheetType) hoặc list theo tab
-    const baseList: vehicleSession[] = hasActiveFilter
-        ? filteredSessionsResult.filter(s => s.sheetType === sheetType)
-        : sessions.filter(s => s.sheetType === sheetType);
-
-    const displayList = [...baseList].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-
     // Candidates cho autocomplete/fuzzy search
     const fullNameCandidates = useMemo(
         () => [...new Set(sessions.map(s => s.fullName).filter(Boolean))],
@@ -279,16 +319,19 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
             </div>
 
             {/* Danh sách */}
-            {loading && displayList.length === 0 ? (
-                <LoadingSpinner size="sm" message={t('list.loading')} />
+            {(loading || isFetchingSessions) && displayList.length === 0 ? (
+                <div className="flex justify-center items-center py-12">
+                    <LoadingSpinner size="sm" message={t('list.loading', 'Đang tải dữ liệu...')} />
+                </div>
             ) : displayList.length === 0 ? (
-                <div className="text-center py-4 text-gray-400 text-sm bg-white border border-gray-200 rounded-xl">
+                <div className="text-center py-10 text-gray-500 text-sm bg-white border border-gray-200 rounded-xl shadow-sm">
+                    <div className="text-4xl mb-3 opacity-50">📋</div>
                     Chưa có phiên check sheet nào. Bấm "{t('list.createNew')}" để bắt đầu.
                 </div>
             ) : (
                 <>
                 {/* Card view - MOBILE */}
-                <div className="md:hidden space-y-3">
+                <div className="md:hidden space-y-3!">
                     {displayList.map(session => (
                         <div
                             key={session.id}
@@ -402,6 +445,33 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
                 </>
             )}
 
+            {pageCount > 1 && (
+                <div className="flex justify-center mt-6 pb-6">
+                    <ReactPaginate
+                        previousLabel={t('pagination.previous', { defaultValue: 'Trước' })}
+                        nextLabel={t('pagination.next', { defaultValue: 'Sau' })}
+                        breakLabel="..."
+                        pageCount={pageCount}
+                        marginPagesDisplayed={1}
+                        pageRangeDisplayed={3}
+                        onPageChange={handlePageChange}
+                        forcePage={currentPage}
+                        containerClassName="pagination flex items-center justify-center gap-1 sm:gap-2 px-2"
+                        pageClassName="page-item"
+                        pageLinkClassName="page-link flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-blue-50 transition-colors text-sm sm:text-base font-medium"
+                        previousClassName="page-item"
+                        previousLinkClassName="page-link flex items-center justify-center px-3 h-8 sm:px-4 sm:h-10 rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-blue-50 transition-colors text-sm sm:text-base font-medium"
+                        nextClassName="page-item"
+                        nextLinkClassName="page-link flex items-center justify-center px-3 h-8 sm:px-4 sm:h-10 rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-blue-50 transition-colors text-sm sm:text-base font-medium"
+                        breakClassName="page-item"
+                        breakLinkClassName="page-link flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 text-gray-500"
+                        activeClassName="active"
+                        activeLinkClassName="!bg-blue-600 !text-white !border-blue-600 shadow-md font-bold"
+                        disabledClassName="opacity-50 cursor-not-allowed pointer-events-none"
+                    />
+                </div>
+            )}
+
             {/* Modal tạo session */}
             <Modal
                 open={createModalOpen}
@@ -440,7 +510,7 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
                             onChange={e => setNewNote(e.target.value)}
                             rows={2}
                             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            placeholder="{t('list.noteLabel')} (nếu có)..."
+                            placeholder={`${t('list.noteLabel')} (nếu có)...`}
                         />
                     </div>
                 </div>

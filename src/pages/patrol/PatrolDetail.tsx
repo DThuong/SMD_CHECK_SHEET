@@ -696,13 +696,13 @@ const canEditResults =
   /**
    * Quyền sửa hình:
    * - PQC: chỉ upload/xoá hình phiếu Pending của chính mình
-   * - PQCLeader: upload/xoá hình của BẤT KỲ sheet nào (do bất kỳ PQC tạo)
-   *   khi đang ở trạng thái Pending hoặc Submitted (lúc đi duyệt).
+   * - Các role từ PQCLeader trở lên (không phải PQC): upload/xoá hình của BẤT KỲ sheet nào 
+   *   khi đang ở trạng thái Pending hoặc Submitted.
    */
   const canEditImages =
     !isNew &&
     ((isPQC && isOwner && isPending) ||
-      (isPQCLeader && (isPending || isSubmitted)));
+      (!isPQC && (isPending || isSubmitted)));
 
   const canApprove = isSubmitted && isPQCLeader;
 

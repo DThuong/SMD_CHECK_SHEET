@@ -1,8 +1,7 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FaArrowLeft, FaCheck, FaTimes, FaSave, FaPaperPlane, FaHistory, FaCamera, FaTrash, FaSearchPlus, FaEye, FaChevronDown, FaChevronRight, FaPen, FaUndo } from 'react-icons/fa';
+import { FaArrowLeft, FaCheck, FaTimes, FaPaperPlane, FaHistory, FaCamera, FaTrash, FaSearchPlus, FaEye, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
@@ -16,12 +15,14 @@ import {
     fetchEngMachines,
     fetchEngMachineTypes,
     bulkUpdateEngCheckListResults,
-    bulkResultEngByMachine,
+    bulkResultEngBySession,
     updateEngSessionStatus,
     clearCurrentEngSession,
     fetchEngImagesBySession,
     uploadEngImage,
     deleteEngImage,
+    updateEngCheckListResult,
+    createEngCheckListResult,
 } from '../../redux/slices/engSlice';
 import type { CheckList, CheckListResult, EngImage } from '../../redux/slices/engSlice';
 import { ConfirmModal } from '../../components/general/ConfirmModal';
@@ -56,7 +57,7 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
 
     const {
         currentSession, checkListResults, statusHistories,
-        categories, checkLists, machines, machineTypes, images, loading,
+        categories, checkLists, machines, images, loading,
     } = useAppSelector(state => state.eng);
 
     const [answers, setAnswers] = useState<Record<string, LocalAnswer>>({});
@@ -117,6 +118,10 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
         });
     }, [checkListResults]);
 
+    // Ref luôn trỏ tới answers mới nhất, tránh closure stale khi gọi syncResultToApi
+    const answersRef = useRef(answers);
+    useEffect(() => { answersRef.current = answers; }, [answers]);
+
     const sheetType = currentSession?.sheetType || (activeTab === 'daily' ? '1' : '7');
     const selectedMachine = lineMachines[currentMachineIndex] || null;
 
@@ -152,13 +157,65 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
     const isEditable = isEngineer && currentSession?.status === 'Pending';
 
     // ------- Handlers -------
-    const setResult = (machineId: number, checkListId: number, result: string) => {
+    const syncResultToApi = async (machineId: number, checkListId: number, result: string, note: string) => {
         if (!isEditable) return;
         const key = answerKey(machineId, checkListId);
+        // Luôn đọc resultId từ ref mới nhất, tránh stale closure sau OK toàn bộ
+        const resultId = answersRef.current[key]?.resultId;
+
+        // DEBUG: Xem có gọi đúng API không
+        console.log(`[syncResultToApi] key=${key}, result="${result}", resultId=${resultId}, hasResultId=${!!resultId}`);
+
+        try {
+            if (resultId) {
+                console.log(`[syncResultToApi] → Gọi PUT updateEngCheckListResult (id=${resultId}, result="${result}")`);
+                await dispatch(updateEngCheckListResult({
+                    id: resultId,
+                    data: {
+                        id: resultId,
+                        vehicleSheetSessionId: sessionId,
+                        checkListId,
+                        machineId,
+                        result,
+                        note
+                    }
+                })).unwrap();
+                console.log(`[syncResultToApi] ✅ PUT thành công`);
+            } else {
+                if (result || note) {
+                    console.log(`[syncResultToApi] → Gọi POST createEngCheckListResult (result="${result}")`);
+                    const res = await dispatch(createEngCheckListResult({
+                        vehicleSheetSessionId: sessionId,
+                        checkListId,
+                        machineId,
+                        result,
+                        note
+                    })).unwrap();
+                    setAnswers(prev => ({
+                        ...prev,
+                        [key]: { ...prev[key], resultId: res.id }
+                    }));
+                    console.log(`[syncResultToApi] ✅ POST thành công, resultId mới=${res.id}`);
+                }
+            }
+        } catch (error: any) {
+            console.error(`[syncResultToApi] ❌ Lỗi:`, error);
+            toast.error(typeof error === 'string' ? error : "Lỗi khi lưu kết quả");
+        }
+    };
+
+    const setResult = async (machineId: number, checkListId: number, result: string) => {
+        if (!isEditable) return;
+        const key = answerKey(machineId, checkListId);
+        const currentNote = answers[key]?.note || '';
+        const newResult = answers[key]?.result === result ? '' : result;
+        
         setAnswers(prev => ({
             ...prev,
-            [key]: { ...prev[key], note: prev[key]?.note || '', result: prev[key]?.result === result ? '' : result }
+            [key]: { ...prev[key], note: currentNote, result: newResult }
         }));
+        
+        await syncResultToApi(machineId, checkListId, newResult, currentNote);
     };
 
     const setNote = (machineId: number, checkListId: number, note: string) => {
@@ -167,6 +224,13 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
             ...prev,
             [key]: { ...prev[key], result: prev[key]?.result || '', note }
         }));
+    };
+
+    const handleNoteBlur = async (machineId: number, checkListId: number) => {
+        const key = answerKey(machineId, checkListId);
+        const currentResult = answers[key]?.result || '';
+        const currentNote = answers[key]?.note || '';
+        await syncResultToApi(machineId, checkListId, currentResult, currentNote);
     };
 
     const buildBulkPayload = (): Partial<CheckListResult>[] => {
@@ -195,6 +259,10 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
 
     const handleSave = async (silent = false): Promise<boolean> => {
         const payload = buildBulkPayload();
+        // DEBUG: Xem payload gửi lên server có đúng NG không
+        console.log('[handleSave] payload gửi lên bulk API:', JSON.stringify(payload.map(p => ({ id: p.id, machineId: p.machineId, checkListId: p.checkListId, result: p.result })), null, 2));
+        console.log('[handleSave] Số item NG:', payload.filter(p => p.result === 'NG').length);
+        console.log('[handleSave] Số item OK:', payload.filter(p => p.result === 'OK').length);
         if (payload.length === 0) {
             if (!silent) toast.error(t('detail.toast.noResultToSave'));
             return false;
@@ -214,50 +282,38 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
 
     const handleSubmit = async () => {
         setSubmitConfirm(false);
-        if (answeredQuestions < totalQuestions) {
-            toast.error(t('detail.toast.unanswered', { count: totalQuestions - answeredQuestions }));
-            return;
-        }
-        const saved = await handleSave(true);
-        if (!saved) return;
+        setSaving(true);
         try {
+            // Chỉ gọi API đổi status vì các kết quả đã được auto-save qua syncResultToApi
             await dispatch(updateEngSessionStatus({ id: sessionId, status: 'Submitted' })).unwrap();
+
             toast.success(t('detail.toast.submitSuccess'));
             dispatch(fetchEngStatusHistoryBySession(sessionId));
+            // Refetch kết quả để đảm bảo UI hiển thị đúng
+            dispatch(fetchEngCheckListResultsBySession(sessionId));
         } catch (err: any) {
             toast.error(typeof err === 'string' ? err : t('detail.toast.submitFailed'));
+        } finally {
+            setSaving(false);
         }
     };
 
-    // Check OK toàn bộ câu hỏi của máy đang chọn (PATCH /CheckListResult/session/{id}/machine/{id}/bulk-result)
-    const handleBulkOkMachine = async () => {
+    // Check OK toàn bộ câu hỏi của session (PATCH /CheckListResult/session/{id}/bulk-result)
+    const handleBulkOkSession = async () => {
         setBulkOkConfirm(false);
-        if (!selectedMachine || !isEditable) return;
+        if (!isEditable) return;
         setBulkOkLoading(true);
         try {
-            await dispatch(bulkResultEngByMachine({
+            await dispatch(bulkResultEngBySession({
                 sessionId,
-                machineId: selectedMachine.id,
                 result: 'OK',
             })).unwrap();
 
-            // Đồng bộ local: set OK cho tất cả câu của máy này
-            const machineQuestions = checkLists.filter(cl =>
-                cl.machineTypeId === selectedMachine.machineTypeId &&
-                categories.some(c => c.id === cl.categoryId && c.sheetType === sheetType)
-            );
-            setAnswers(prev => {
-                const next = { ...prev };
-                machineQuestions.forEach(q => {
-                    const key = answerKey(selectedMachine.id, q.id);
-                    next[key] = { ...next[key], result: 'OK', note: next[key]?.note || '' };
-                });
-                return next;
-            });
-
             // Refetch để lấy id các CheckListResult backend vừa tạo/cập nhật
-            dispatch(fetchEngCheckListResultsBySession(sessionId));
-            toast.success(t('detail.toast.okAllSuccess', { name: selectedMachine.machineName }));
+            // Phải await để chắc chắn state Redux được cập nhật đầy đủ trước khi user tương tác tiếp
+            await dispatch(fetchEngCheckListResultsBySession(sessionId)).unwrap();
+            
+            toast.success("Đánh dấu OK thành công cho toàn bộ Sheet");
         } catch (err: any) {
             toast.error(typeof err === 'string' ? err : t('detail.toast.okAllFailed'));
         } finally {
@@ -297,7 +353,7 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
                     setImgModal({ open: true, machineId, checkListId, resultId: r.id });
                     return;
                 }
-            } catch (e) {}
+            } catch { /* auto-save fallback */ }
             toast.error(t('detail.toast.errorRetry'), { id: 'auto-save' });
             return;
         }
@@ -517,13 +573,13 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
                 </button>
             </div>
 
-            {/* Check OK toàn bộ câu hỏi của máy hiện tại */}
+            {/* Check OK toàn bộ câu hỏi của session */}
             {isEditable && (
                 <button
                     onClick={() => setBulkOkConfirm(true)}
                     disabled={bulkOkLoading}
                     className="w-full md:w-auto md:order-4 px-4 py-2 rounded-lg text-sm font-bold bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap"
-                    title="Đánh dấu OK cho toàn bộ câu hỏi của máy này"
+                    title="Đánh dấu OK cho toàn bộ câu hỏi của Sheet"
                 >
                     <FaCheck /> {bulkOkLoading ? t('detail.processing') : t('detail.okAll')}
                 </button>
@@ -873,6 +929,7 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
                                                                             type="text"
                                                                             value={a?.note || ''}
                                                                             onChange={e => setNote(selectedMachine!.id, q.id, e.target.value)}
+                                                                            onBlur={() => handleNoteBlur(selectedMachine!.id, q.id)}
                                                                             disabled={!isEditable}
                                                                             placeholder={t('detail.ngNotePlaceholder')}
                                                                             className="w-full text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none p-3 bg-gray-50"
@@ -945,6 +1002,7 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
                                                                                         type="text"
                                                                                         value={a?.note || ''}
                                                                                         onChange={e => setNote(selectedMachine!.id, q.id, e.target.value)}
+                                                                                        onBlur={() => handleNoteBlur(selectedMachine!.id, q.id)}
                                                                                         disabled={!isEditable}
                                                                                         placeholder={t('detail.ngNotePlaceholder')}
                                                                                         className="w-full text-xs border-b border-gray-300 focus:border-blue-500 outline-none py-1 bg-transparent"
@@ -1026,9 +1084,9 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
             <ConfirmModal
                 open={bulkOkConfirm}
                 type="info"
-                title="Check OK toàn bộ"
-                message={`Đánh dấu OK cho TẤT CẢ câu hỏi của máy "${selectedMachine?.machineName || ''}"? Các kết quả đã chọn trước đó của máy này sẽ bị ghi đè thành OK.`}
-                onConfirm={handleBulkOkMachine}
+                title="Check OK toàn bộ Sheet"
+                message={`Đánh dấu OK cho TẤT CẢ câu hỏi của toàn bộ Sheet này? Các kết quả đã chọn trước đó sẽ bị ghi đè thành OK.`}
+                onConfirm={handleBulkOkSession}
                 onCancel={() => setBulkOkConfirm(false)}
             />
 

@@ -256,6 +256,14 @@ export const bulkResultEngByMachine = createAsyncThunk(
         catch (error: any) { return rejectWithValue(getErrorMessage(error)); }
     }
 );
+// Check nhanh toàn bộ kết quả (OK/NG) cho 1 session
+export const bulkResultEngBySession = createAsyncThunk(
+    'eng/bulkResultBySession',
+    async ({ sessionId, result }: { sessionId: number, result: string }, { rejectWithValue }) => {
+        try { const response = await engApi.patch(`/CheckListResult/session/${sessionId}/bulk-result`, { result }); return response.data; }
+        catch (error: any) { return rejectWithValue(getErrorMessage(error)); }
+    }
+);
 
 // --- Image ---
 export const fetchEngImagesBySession = createAsyncThunk('eng/fetchImagesBySession', async (sessionId: number, { rejectWithValue }) => {
@@ -598,6 +606,21 @@ const engSlice = createSlice({
                 }
             })
             .addCase(bulkResultEngByMachine.rejected, handleRejected)
+
+            .addCase(bulkResultEngBySession.pending, handlePending)
+            .addCase(bulkResultEngBySession.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = true;
+                // Nếu API trả về danh sách kết quả của session → merge vào store
+                if (Array.isArray(action.payload)) {
+                    action.payload.forEach((r: CheckListResult) => {
+                        const index = state.checkListResults.findIndex(item => item.id === r.id);
+                        if (index !== -1) state.checkListResults[index] = r;
+                        else state.checkListResults.push(r);
+                    });
+                }
+            })
+            .addCase(bulkResultEngBySession.rejected, handleRejected)
 
             // --- Image ---
             .addCase(fetchEngImagesBySession.pending, (state) => {

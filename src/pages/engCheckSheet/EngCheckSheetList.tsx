@@ -223,6 +223,12 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
         try {
             await dispatch(deleteEngSession(deleteId)).unwrap();
             toast.success(t('list.toast.deleteSuccess'));
+            // Re-fetch danh sách từ server để đảm bảo UI đồng bộ
+            lastFilterKeyRef.current = '';
+            if (hasActiveFilter) {
+                dispatchFilter(filter);
+            }
+            dispatch(fetchEngSessionsBySheetType(sheetType));
         } catch (err: any) {
             toast.error(typeof err === 'string' ? err : t('list.toast.deleteFailed'));
         }
@@ -324,7 +330,7 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
                     <LoadingSpinner size="sm" message={t('list.loading', 'Đang tải dữ liệu...')} />
                 </div>
             ) : displayList.length === 0 ? (
-                <div className="text-center py-10 text-gray-500 text-sm bg-white border border-gray-200 rounded-xl shadow-sm">
+                <div className="text-center p-4 text-gray-500 text-sm bg-white border border-gray-200 rounded-xl shadow-sm">
                     <div className="text-4xl mb-3 opacity-50">📋</div>
                     Chưa có phiên check sheet nào. Bấm "{t('list.createNew')}" để bắt đầu.
                 </div>

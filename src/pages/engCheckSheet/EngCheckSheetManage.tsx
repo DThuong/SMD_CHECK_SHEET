@@ -33,8 +33,8 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
     // sub-tab cho phần câu hỏi: sheetType "1" (ngày) | "7" (tuần)
     const [sheetTab, setSheetTab] = useState<'1' | '7'>('1');
 
-    const [collapsedLines, setCollapsedLines] = useState<Record<number, boolean>>({});
-    const [collapsedCategories, setCollapsedCategories] = useState<Record<number, boolean>>({});
+    const [expandedLines, setExpandedLines] = useState<Record<number, boolean>>({});
+    const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({});
 
     // ------- Modal state -------
     const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; type: EntityType; id?: number }>({ isOpen: false, type: 'line' });
@@ -348,15 +348,15 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                     <div className="space-y-2!">
                         {lines.map(line => {
                             const lineMachines = machines.filter(m => m.lineId === line.id);
-                            const collapsed = collapsedLines[line.id];
+                            const isExpanded = expandedLines[line.id];
                             return (
                                 <div key={line.id} className="border border-gray-200 rounded-lg overflow-hidden">
                                     <div className="flex items-center justify-between bg-gray-50 px-3 py-2">
                                         <button
                                             className="flex items-center gap-2 text-sm font-medium text-gray-800 min-w-0 flex-1 text-left flex-wrap"
-                                            onClick={() => setCollapsedLines(prev => ({ ...prev, [line.id]: !prev[line.id] }))}
+                                            onClick={() => setExpandedLines(prev => ({ ...prev, [line.id]: !prev[line.id] }))}
                                         >
-                                            {collapsed ? <FaChevronRight className="text-gray-400 shrink-0" /> : <FaChevronDown className="text-gray-400 shrink-0" />}
+                                            {!isExpanded ? <FaChevronRight className="text-gray-400 shrink-0" /> : <FaChevronDown className="text-gray-400 shrink-0" />}
                                             <span className="truncate">{line.lineName}</span>
                                             {line.areaPart && <span className="text-xs text-gray-400">({line.areaPart})</span>}
                                             <span className="text-xs bg-blue-100 text-blue-600 rounded-full px-2 py-0.5 shrink-0">{t('manage.machineCount', { count: lineMachines.length })}</span>
@@ -370,7 +370,7 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                                             </div>
                                         )}
                                     </div>
-                                    {!collapsed && (
+                                    {isExpanded && (
                                         <>
                                             {lineMachines.length === 0 && <p className="text-xs text-gray-400 px-4 py-2">{t('manage.noMachine')}</p>}
 
@@ -465,15 +465,15 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                     <div className="space-y-2!">
                         {currentCategories.map(cat => {
                             const catCheckLists = checkLists.filter(cl => cl.categoryId === cat.id);
-                            const collapsed = collapsedCategories[cat.id];
+                            const isExpanded = expandedCategories[cat.id];
                             return (
                                 <div key={cat.id} className="border border-gray-200 rounded-lg overflow-hidden">
                                     <div className="flex items-center justify-between bg-gray-50 px-3 py-2">
                                         <button
                                             className="flex items-center gap-2 text-sm font-medium text-gray-800 text-left min-w-0 flex-1 flex-wrap"
-                                            onClick={() => setCollapsedCategories(prev => ({ ...prev, [cat.id]: !prev[cat.id] }))}
+                                            onClick={() => setExpandedCategories(prev => ({ ...prev, [cat.id]: !prev[cat.id] }))}
                                         >
-                                            {collapsed ? <FaChevronRight className="text-gray-400 shrink-0" /> : <FaChevronDown className="text-gray-400 shrink-0" />}
+                                            {!isExpanded ? <FaChevronRight className="text-gray-400 shrink-0" /> : <FaChevronDown className="text-gray-400 shrink-0" />}
                                             <span className="truncate">{cat.name}</span>
                                             <span className="text-xs bg-indigo-100 text-indigo-600 rounded-full px-2 py-0.5 shrink-0">{t('manage.questionCount', { count: catCheckLists.length })}</span>
                                         </button>
@@ -485,7 +485,7 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                                             </div>
                                         )}
                                     </div>
-                                    {!collapsed && (
+                                    {isExpanded && (
                                         <>
                                             {catCheckLists.length === 0 && <p className="text-xs text-gray-400 px-4 py-2">Chưa có câu hỏi</p>}
 

@@ -48,7 +48,7 @@ import ReactPaginate from "react-paginate";
 import { useTranslation } from "react-i18next";
 
 type EngTab = "daily" | "weekly";
-type RangeMode = "7d" | "30d" | "all";
+type RangeMode = "1d" | "7d" | "30d" | "all";
 type ViewTab = "trend" | "breakdown" | "table";
 type ReportReturnMode = "trend-dot" | "table";
 type StatusMode = "all" | "Submitted" | "Approved";
@@ -332,6 +332,17 @@ function endOfBusinessDate(date: Date) {
 function getRange(mode: RangeMode, offset: number, firstDateKey?: string) {
   const now = new Date();
   const currentBusinessDate = getBusinessDate(now) || new Date();
+
+  if (mode === "1d") {
+    const businessDate = addDays(currentBusinessDate, -offset);
+    return {
+      start: startOfBusinessDate(businessDate),
+      end: endOfBusinessDate(businessDate),
+      startKey: formatLocalDateKey(businessDate),
+      endKey: formatLocalDateKey(businessDate),
+      label: fmtDateKey(formatLocalDateKey(businessDate)),
+    };
+  }
 
   if (mode === "7d") {
     const endBusiness = addDays(currentBusinessDate, -offset * 7);
@@ -887,6 +898,7 @@ const EngDefectAnalyticsChart: React.FC<
 
   const rangeOptions = useMemo(
     () => [
+      { key: "1d" as RangeMode, label: "1 Ngày" },
       { key: "7d" as RangeMode, label: pT("reportRange7d") },
       { key: "30d" as RangeMode, label: pT("reportRange30d") },
       { key: "all" as RangeMode, label: pT("all") },
@@ -1480,6 +1492,99 @@ const getShiftLabel = useCallback(
       debouncedFromDateTime,
       debouncedToDateTime,
   ]);
+
+  const rangeAllSessions = useMemo(() => {
+    const customFrom = getDateTimeFilter(debouncedFromDateTime);
+    const customTo = getDateTimeFilter(debouncedToDateTime);
+
+    return (sessions || [])
+      .filter((session: any) => normalizeEngTab(session?.sheetType) === patrolType)
+      .filter((session: any) => {
+        if (statusMode === "all") return true;
+        return String(session?.status || "") === statusMode;
+      })
+      .filter((session: any) => {
+        const sheetTime = session?.createdAt || session?.createAt || "";
+        const sheetShiftInfo = getShiftDay(sheetTime);
+        
+        if (customFrom || customTo) {
+          const sheetDateTime = parseDate(sheetTime);
+          if (!sheetDateTime) return false;
+          if (customFrom && sheetDateTime < customFrom) return false;
+          if (customTo && sheetDateTime > customTo) return false;
+        } else {
+          const businessDate = parseDate(
+            `${sheetShiftInfo.key}T${String(DAY_START_HOUR).padStart(2, "0")}:00:00`,
+          );
+          const inRange = businessDate
+            ? businessDate >= start && businessDate <= end
+            : false;
+          if (!inRange) return false;
+        }
+
+        if (shiftFilter !== "both" && sheetShiftInfo.shift !== shiftFilter) {
+          return false;
+        }
+
+        return true;
+      });
+  }, [
+    sessions,
+    patrolType,
+    statusMode,
+    start,
+    end,
+    shiftFilter,
+    debouncedFromDateTime,
+    debouncedToDateTime,
+  ]);
+
+  const dashboardStats = useMemo(() => {
+    const totalSheetCreated = rangeAllSessions.length;
+    
+    // Line IDs for all active lines
+    const activeLines = (lines || []).filter((l: any) => l.isActive !== false);
+    const totalLines = activeLines.length;
+
+    // Get lineIds that have at least one NG sheet
+    const ngLineIds = new Set<number>();
+    rangeRecords.forEach((r: SheetNGRecord) => {
+      const s = rangeAllSessions.find((s: any) => s.id === r.sessionId);
+      if (s?.lineId) ngLineIds.add(Number(s.lineId));
+    });
+
+    // Get lineIds that have sheets
+    const producedLineIds = new Set<number>();
+    rangeAllSessions.forEach((s: any) => {
+      if (s?.lineId) producedLineIds.add(Number(s.lineId));
+    });
+
+    const okLineIds = new Set<number>();
+    producedLineIds.forEach(id => {
+      if (!ngLineIds.has(id)) okLineIds.add(id);
+    });
+
+    const notProducedLineIds = new Set<number>();
+    activeLines.forEach((l: any) => {
+      if (!producedLineIds.has(Number(l.id))) {
+        notProducedLineIds.add(Number(l.id));
+      }
+    });
+
+    const getLineNameFromId = (id: number) => {
+      const line = activeLines.find((l: any) => Number(l.id) === id);
+      return line ? line.lineName : String(id);
+    };
+
+    return {
+      totalSheetCreated,
+      lineOkNames: Array.from(okLineIds).map(getLineNameFromId),
+      lineNgNames: Array.from(ngLineIds).map(getLineNameFromId),
+      lineNotProducedNames: Array.from(notProducedLineIds).map(getLineNameFromId),
+      producedLineCount: producedLineIds.size,
+      totalLines
+    };
+  }, [rangeAllSessions, rangeRecords, lines]);
 
   // Tải ảnh cho các sheet NG đang nằm trong phạm vi lọc. Mỗi session chỉ tải 1
   // lần (ref dedupe), giới hạn số request song song để không quá tải.
@@ -2097,98 +2202,115 @@ const getShiftLabel = useCallback(
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              disabled={rangeMode === "all"}
-              onClick={() => setOffset((x) => x + 1)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              <FaChevronLeft size={10} />
-            </button>
-
-            <div className="flex rounded-lg bg-slate-900 p-1">
-              {rangeOptions.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => {
-                    setRangeMode(item.key);
-                    setOffset(0);
-                    setDrillPoint(null);
-                    setFromDateTime("");
-                    setToDateTime("");
-                  }}
-                  className={`rounded-lg px-4 py-2 text-xs font-semibold transition ${
-                    rangeMode === item.key
-                      ? "bg-red-600 text-white"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex rounded-lg bg-slate-900 p-1">
-              {(["both", "morning", "night"] as const).map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => {
-                    setShiftFilter(item);
-                    setDrillPoint(null);
-                  }}
-                  className={`rounded-lg px-4 py-2 text-xs font-semibold transition ${
-                    shiftFilter === item
-                      ? item === "morning"
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex rounded-lg bg-slate-900 p-1">
+                {rangeOptions.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => {
+                      setRangeMode(item.key);
+                      setOffset(0);
+                      setDrillPoint(null);
+                      setFromDateTime("");
+                      setToDateTime("");
+                    }}
+                    className={`rounded-lg px-4 py-2 text-xs font-semibold transition ${
+                      rangeMode === item.key
                         ? "bg-red-600 text-white"
-                        : item === "night"
-                          ? "bg-purple-600 text-white"
-                          : "bg-blue-600 text-white"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  {item === "both"
-                    ? pT("shiftBoth")
-                    : item === "morning"
-                      ? pT("shiftMorning")
-                      : pT("shiftNight")}
-                </button>
-              ))}
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex rounded-lg bg-slate-900 p-1">
+                {(["both", "morning", "night"] as const).map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => {
+                      setShiftFilter(item);
+                      setDrillPoint(null);
+                    }}
+                    className={`rounded-lg px-4 py-2 text-xs font-semibold transition ${
+                      shiftFilter === item
+                        ? item === "morning"
+                          ? "bg-red-600 text-white"
+                          : item === "night"
+                            ? "bg-purple-600 text-white"
+                            : "bg-blue-600 text-white"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {item === "both"
+                      ? pT("shiftBoth")
+                      : item === "morning"
+                        ? pT("shiftMorning")
+                        : pT("shiftNight")}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <button
-              type="button"
-              disabled={offset === 0 || rangeMode === "all"}
-              onClick={() => setOffset((x) => Math.max(0, x - 1))}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              <FaChevronRight size={10} />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                disabled={rangeMode === "all"}
+                onClick={() => setOffset((x) => x + 1)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                <FaChevronLeft size={10} />
+              </button>
+
+              <div className="flex h-8 min-w-[120px] items-center justify-center rounded-lg bg-slate-900 px-3 text-xs font-bold text-amber-300">
+                {rangeLabel}
+              </div>
+
+              <button
+                type="button"
+                disabled={offset === 0 || rangeMode === "all"}
+                onClick={() => setOffset((x) => Math.max(0, x - 1))}
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                <FaChevronRight size={10} />
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
           <div className="rounded-xl bg-white/10 p-3">
-            <p className="text-xs text-slate-400">{pT("reportTotalSheetNG")}</p>
-            <p className="mt-1 text-2xl font-extrabold text-red-400">
-              {totalSheetNG}
-            </p>
-            <p className="mt-1 text-[11px] text-slate-500">
-              {pT("reportTotalErrorNG")}: {totalErrorNG}
+            <p className="text-xs text-slate-400">Tổng check tạo</p>
+            <p className="mt-1 text-2xl font-extrabold text-blue-400">
+              {dashboardStats.totalSheetCreated}
             </p>
           </div>
           <div className="rounded-xl bg-white/10 p-3">
-            <p className="text-xs text-slate-400">{pT("reportTopLine")}</p>
-            <p className="mt-1 truncate text-sm font-bold text-amber-300">
-              {topLine}
+            <p className="text-xs text-slate-400">Line OK</p>
+            <p className="mt-1 line-clamp-2 text-sm font-bold leading-tight text-emerald-400" title={dashboardStats.lineOkNames.join(', ')}>
+              {dashboardStats.lineOkNames.length > 0 ? dashboardStats.lineOkNames.join(', ') : EMPTY}
             </p>
           </div>
           <div className="rounded-xl bg-white/10 p-3">
-            <p className="text-xs text-slate-400">{pT("reportImageLinked")}</p>
-            <p className="mt-1 text-2xl font-extrabold text-emerald-300">
-              {imageLinkedCount}/{totalSheetNG}
+            <p className="text-xs text-slate-400">Line NG</p>
+            <p className="mt-1 line-clamp-2 text-sm font-bold leading-tight text-red-400" title={dashboardStats.lineNgNames.join(', ')}>
+              {dashboardStats.lineNgNames.length > 0 ? dashboardStats.lineNgNames.join(', ') : EMPTY}
+            </p>
+          </div>
+          <div className="rounded-xl bg-white/10 p-3">
+            <p className="text-xs text-slate-400">Line không sản xuất</p>
+            <p className="mt-1 line-clamp-2 text-sm font-bold leading-tight text-slate-400" title={dashboardStats.lineNotProducedNames.join(', ')}>
+              {dashboardStats.lineNotProducedNames.length > 0 ? dashboardStats.lineNotProducedNames.join(', ') : EMPTY}
+            </p>
+          </div>
+          <div className="rounded-xl bg-white/10 p-3">
+            <p className="text-xs text-slate-400">Tổng Line sản xuất</p>
+            <p className="mt-1 text-2xl font-extrabold text-amber-300">
+              {dashboardStats.producedLineCount}/{dashboardStats.totalLines}
             </p>
           </div>
         </div>

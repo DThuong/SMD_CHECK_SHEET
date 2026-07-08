@@ -679,8 +679,8 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
 
             {/* Modal Quản lý hình ảnh */}
             {imgModal.open && (
-                <div className="fixed inset-0 z-40 flex items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-md animate-fade-in" onClick={() => setImgModal({ open: false, machineId: 0, checkListId: 0, resultId: undefined })}>
-                    <div className="bg-gray-100 rounded-none md:rounded-2xl shadow-2xl w-full max-w-6xl h-[100dvh] md:h-[90vh] flex flex-col overflow-hidden border-0 md:border md:border-white/20" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in" onClick={() => setImgModal({ open: false, machineId: 0, checkListId: 0, resultId: undefined })}>
+                    <div className="bg-gray-100 rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90dvh] flex flex-col overflow-hidden border border-white/20" onClick={(e) => e.stopPropagation()}>
                         <div className="p-4 md:p-5 border-b border-gray-200 flex justify-between items-center bg-white shadow-sm z-10">
                             <div>
                                 <h3 className="text-lg md:text-xl font-extrabold text-gray-800 flex items-center gap-2">
@@ -1051,7 +1051,7 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
 
             {/* Action Bar - Fixed at bottom like Patrol */}
             <div
-                className="eng-action-bar fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-30 px-4 pt-3"
+                className={`eng-action-bar fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-30 px-4 pt-3 transition-transform ${imgModal.open ? 'translate-y-full' : ''}`}
                 style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}
             >
                 <div className="flex flex-row gap-3 w-full">

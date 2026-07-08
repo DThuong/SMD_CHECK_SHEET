@@ -275,5 +275,11 @@
   "reportSheetErrorNote": "시트 / 불량 비고",
   "reportSheetImage": "시트 이미지",
   "reportNoImageForSheet": "이 시트에는 이미지가 없습니다.",
-  "reportNoImage": "이미지 없음"
+  "reportNoImage": "이미지 없음",
+  "reportTotalSheetCreated": "총 생성된 시트",
+  "reportLineOK": "라인 OK",
+  "reportLineNG": "라인 NG",
+  "reportLineNotProduced": "미생산 라인",
+  "reportTotalLineProduced": "총 생산 라인",
+  "reportRange1d": "1일"
 }

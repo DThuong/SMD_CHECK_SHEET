@@ -275,5 +275,11 @@
   "reportSheetErrorNote": "Sheet / defect note",
   "reportSheetImage": "Sheet image",
   "reportNoImageForSheet": "No images for this sheet.",
-  "reportNoImage": "No image"
+  "reportNoImage": "No image",
+  "reportTotalSheetCreated": "Total sheets created",
+  "reportLineOK": "Line OK",
+  "reportLineNG": "Line NG",
+  "reportLineNotProduced": "Line not produced",
+  "reportTotalLineProduced": "Total Line produced",
+  "reportRange1d": "1 Day"
 }

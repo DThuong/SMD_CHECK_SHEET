@@ -275,5 +275,11 @@
   "reportSheetErrorNote": "Note của sheet / lỗi",
   "reportSheetImage": "Ảnh sheet",
   "reportNoImageForSheet": "Chưa có hình ảnh cho sheet này.",
-  "reportNoImage": "Chưa có"
+  "reportNoImage": "Chưa có",
+  "reportTotalSheetCreated": "Tổng check tạo",
+  "reportLineOK": "Line OK",
+  "reportLineNG": "Line NG",
+  "reportLineNotProduced": "Line không sản xuất",
+  "reportTotalLineProduced": "Tổng Line sản xuất",
+  "reportRange1d": "1 Ngày"
 }

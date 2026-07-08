@@ -898,7 +898,7 @@ const EngDefectAnalyticsChart: React.FC<
 
   const rangeOptions = useMemo(
     () => [
-      { key: "1d" as RangeMode, label: "1 Ngày" },
+      { key: "1d" as RangeMode, label: pT("reportRange1d") },
       { key: "7d" as RangeMode, label: pT("reportRange7d") },
       { key: "30d" as RangeMode, label: pT("reportRange30d") },
       { key: "all" as RangeMode, label: pT("all") },
@@ -2284,32 +2284,32 @@ const getShiftLabel = useCallback(
 
         <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
           <div className="rounded-xl bg-white/10 p-3">
-            <p className="text-xs text-slate-400">Tổng check tạo</p>
-            <p className="mt-1 text-2xl font-extrabold text-blue-400">
+            <p className="text-xs text-slate-400">{pT("reportTotalSheetCreated")}</p>
+            <p className="mt-1 text-lg font-bold leading-tight text-blue-400">
               {dashboardStats.totalSheetCreated}
             </p>
           </div>
           <div className="rounded-xl bg-white/10 p-3">
-            <p className="text-xs text-slate-400">Line OK</p>
-            <p className="mt-1 line-clamp-2 text-sm font-bold leading-tight text-emerald-400" title={dashboardStats.lineOkNames.join(', ')}>
+            <p className="text-xs text-slate-400">{pT("reportLineOK")}</p>
+            <p className="mt-1 line-clamp-2 text-lg font-bold leading-tight text-emerald-400" title={dashboardStats.lineOkNames.join(', ')}>
               {dashboardStats.lineOkNames.length > 0 ? dashboardStats.lineOkNames.join(', ') : EMPTY}
             </p>
           </div>
           <div className="rounded-xl bg-white/10 p-3">
-            <p className="text-xs text-slate-400">Line NG</p>
-            <p className="mt-1 line-clamp-2 text-sm font-bold leading-tight text-red-400" title={dashboardStats.lineNgNames.join(', ')}>
+            <p className="text-xs text-slate-400">{pT("reportLineNG")}</p>
+            <p className="mt-1 line-clamp-2 text-lg font-bold leading-tight text-red-400" title={dashboardStats.lineNgNames.join(', ')}>
               {dashboardStats.lineNgNames.length > 0 ? dashboardStats.lineNgNames.join(', ') : EMPTY}
             </p>
           </div>
           <div className="rounded-xl bg-white/10 p-3">
-            <p className="text-xs text-slate-400">Line không sản xuất</p>
-            <p className="mt-1 line-clamp-2 text-sm font-bold leading-tight text-slate-400" title={dashboardStats.lineNotProducedNames.join(', ')}>
+            <p className="text-xs text-slate-400">{pT("reportLineNotProduced")}</p>
+            <p className="mt-1 line-clamp-2 text-lg font-bold leading-tight text-slate-400" title={dashboardStats.lineNotProducedNames.join(', ')}>
               {dashboardStats.lineNotProducedNames.length > 0 ? dashboardStats.lineNotProducedNames.join(', ') : EMPTY}
             </p>
           </div>
           <div className="rounded-xl bg-white/10 p-3">
-            <p className="text-xs text-slate-400">Tổng Line sản xuất</p>
-            <p className="mt-1 text-2xl font-extrabold text-amber-300">
+            <p className="text-xs text-slate-400">{pT("reportTotalLineProduced")}</p>
+            <p className="mt-1 text-lg font-bold leading-tight text-amber-300">
               {dashboardStats.producedLineCount}/{dashboardStats.totalLines}
             </p>
           </div>

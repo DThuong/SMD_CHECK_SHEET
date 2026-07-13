@@ -539,19 +539,34 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
         return <LoadingSpinner size="sm" message={t('detail.loading')} />;
     }
 
-    const renderPagination = () => (
-        <div className="flex flex-col md:flex-row items-center justify-between bg-white border border-gray-200 rounded-xl p-3 md:p-4 shadow-sm gap-3 md:gap-4">
+    const machineHasNG = (machineId: number) => {
+        return Object.entries(answers).some(([key, a]) => {
+            const [mId] = key.split('_');
+            return Number(mId) === machineId && a.result === 'NG';
+        });
+    };
+
+    const renderPagination = () => {
+        const isCurrentMachineNG = selectedMachine ? machineHasNG(selectedMachine.id) : false;
+
+        return (
+        <div className={`flex flex-col md:flex-row items-center justify-between bg-white border rounded-xl p-3 md:p-4 shadow-sm gap-3 md:gap-4 transition-colors ${isCurrentMachineNG ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
             <div className="w-full md:flex-1 md:order-2 z-20">
                 <div className="relative w-full">
                     <CustomSelect
-                        options={lineMachines.map((m, idx) => ({
-                            value: String(idx),
-                            label: `Máy ${idx + 1}/${lineMachines.length}: ${m.machineName}`
-                        }))}
+                        options={lineMachines.map((m, idx) => {
+                            const isNG = machineHasNG(m.id);
+                            return {
+                                value: String(idx),
+                                label: `Máy ${idx + 1}/${lineMachines.length}: ${m.machineName}${isNG ? ' (NG)' : ''}`,
+                                color: isNG ? '#dc2626' : undefined
+                            };
+                        })}
                         value={String(currentMachineIndex)}
                         onChange={(val) => setCurrentMachineIndex(Number(val))}
                         isSearchable={true}
                         className="w-full text-sm font-semibold shadow-sm"
+                        menuPlacement="top"
                     />
                 </div>
             </div>
@@ -585,7 +600,7 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
                 </button>
             )}
         </div>
-    );
+    )};
 
     const renderImgCol = (type: ImgType, label: string, colorClass: string) => {
         const modalImages = images.filter((img: EngImage) => img.checkListResultId === imgModal.resultId);

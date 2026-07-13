@@ -129,8 +129,8 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
         let isMounted = true;
         setIsFetchingSessions(true);
         Promise.all([
-            dispatch(fetchEngSessionsBySheetType(sheetType)).unwrap().catch(() => {}),
-            dispatch(fetchEngLines()).unwrap().catch(() => {})
+            dispatch(fetchEngSessionsBySheetType(sheetType)).unwrap().catch(() => { }),
+            dispatch(fetchEngLines()).unwrap().catch(() => { })
         ]).finally(() => {
             if (isMounted) setIsFetchingSessions(false);
         });
@@ -336,118 +336,116 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
                 </div>
             ) : (
                 <>
-                {/* Card view - MOBILE */}
-                <div className="md:hidden space-y-3!">
-                    {displayList.map(session => (
-                        <div
-                            key={session.id}
-                            id={`eng-session-${session.id}`}
-                            onClick={() => goToView('detail', String(session.id))}
-                            className={`bg-white border rounded-xl p-4 active:bg-gray-50 transition-all duration-500 ${
-                                highlightId === session.id
-                                    ? 'border-blue-400 ring-2 ring-blue-300 bg-blue-50/50 shadow-md'
-                                    : 'border-gray-200'
-                            }`}
-                        >
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                                <div className="min-w-0">
-                                    <p className="font-semibold text-gray-800 text-sm truncate">
-                                        {session.lineName || lines.find(l => l.id === session.lineId)?.lineName || `Line ${session.lineId}`}
-                                        <span className="ml-2 text-xs font-normal text-gray-400">#{session.id}</span>
-                                    </p>
-                                    <p className="text-xs text-gray-500 truncate">
-                                        {session.fullName}{session.sessionShift ? ` · ${session.sessionShift}` : ''}
-                                    </p>
+                    {/* Card view - MOBILE */}
+                    <div className="md:hidden space-y-3!">
+                        {displayList.map(session => (
+                            <div
+                                key={session.id}
+                                id={`eng-session-${session.id}`}
+                                onClick={() => goToView('detail', String(session.id))}
+                                className={`bg-white border rounded-xl p-4 active:bg-gray-50 transition-all duration-500 ${highlightId === session.id
+                                        ? 'border-blue-400 ring-2 ring-blue-300 bg-blue-50/50 shadow-md'
+                                        : 'border-gray-200'
+                                    }`}
+                            >
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                    <div className="min-w-0">
+                                        <p className="font-semibold text-gray-800 text-sm truncate">
+                                            {session.lineName || lines.find(l => l.id === session.lineId)?.lineName || `Line ${session.lineId}`}
+                                            <span className="ml-2 text-xs font-normal text-gray-400">#{session.id}</span>
+                                        </p>
+                                        <p className="text-xs text-gray-500 truncate">
+                                            {session.fullName}{session.sessionShift ? ` · ${session.sessionShift}` : ''}
+                                        </p>
+                                    </div>
+                                    <span className={`shrink-0 px-2 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[session.status] || 'bg-gray-100 text-gray-600'}`}>
+                                        {session.status}
+                                    </span>
                                 </div>
-                                <span className={`shrink-0 px-2 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[session.status] || 'bg-gray-100 text-gray-600'}`}>
-                                    {session.status}
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs text-gray-400">
-                                    {session.createdAt ? new Date(session.createdAt).toLocaleString('vi-VN') : ''}
-                                </span>
-                                <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                                    <button
-                                        onClick={() => goToView('detail', String(session.id))}
-                                        className="px-2 py-2 text-blue-600 bg-blue-50 rounded-lg text-xs flex items-center gap-1"
-                                    >
-                                        <FaEye />
-                                    </button>
-                                    {isEngineer && (
-                                        <button
-                                            onClick={() => setDeleteId(session.id)}
-                                            className="px-2 py-2 text-red-500 bg-red-50 rounded-lg text-xs"
-                                        >
-                                            <FaTrash />
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Table view - DESKTOP */}
-                <div className="hidden md:block bg-white border border-gray-200 rounded-xl overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="bg-gray-50 text-gray-500 text-left">
-                                <th className="px-4 py-3 font-medium">{t('list.id')}</th>
-                                <th className="px-4 py-3 font-medium">{t('list.line')}</th>
-                                <th className="px-4 py-3 font-medium">{t('list.inspector')}</th>
-                                <th className="px-4 py-3 font-medium">{t('list.shift')}</th>
-                                <th className="px-4 py-3 font-medium">{t('list.status')}</th>
-                                <th className="px-4 py-3 font-medium">{t('list.createdAt')}</th>
-                                <th className="px-4 py-3 font-medium text-center">{t('list.action')}</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {displayList.map(session => (
-                                <tr key={session.id} id={`eng-session-${session.id}`} onClick={() => goToView('detail', String(session.id))} className={`cursor-pointer transition-all duration-500 ${
-                                    highlightId === session.id
-                                        ? 'bg-blue-50 ring-2 ring-blue-300'
-                                        : 'hover:bg-gray-50'
-                                }`}>
-                                    <td className="px-4 py-3 text-gray-500">#{session.id}</td>
-                                    <td className="px-4 py-3 font-medium text-gray-800">
-                                        {session.lineName || lines.find(l => l.id === session.lineId)?.lineName || `Line ${session.lineId}`}
-                                    </td>
-                                    <td className="px-4 py-3 text-gray-700">{session.fullName}</td>
-                                    <td className="px-4 py-3 text-gray-700">{session.sessionShift}</td>
-                                    <td className="px-4 py-3">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[session.status] || 'bg-gray-100 text-gray-600'}`}>
-                                            {session.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-gray-500">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs text-gray-400">
                                         {session.createdAt ? new Date(session.createdAt).toLocaleString('vi-VN') : ''}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex gap-2 justify-center">
+                                    </span>
+                                    <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                                        <button
+                                            onClick={() => goToView('detail', String(session.id))}
+                                            className="px-2 py-2 text-blue-600 bg-blue-50 rounded-lg text-xs flex items-center gap-1"
+                                        >
+                                            <FaEye />
+                                        </button>
+                                        {isEngineer && (
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); goToView('detail', String(session.id)); }}
-                                                className="px-2 py-2 text-blue-600 hover:bg-blue-50 rounded flex items-center gap-1"
-                                                title={t('list.viewFill')}
+                                                onClick={() => setDeleteId(session.id)}
+                                                className="px-2 py-2 text-red-500 bg-red-50 rounded-lg text-xs"
                                             >
-                                                <FaEye />
+                                                <FaTrash />
                                             </button>
-                                            {isEngineer && (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); setDeleteId(session.id); }}
-                                                    className="px-2 py-1 text-red-500 hover:bg-red-50 rounded"
-                                                    title={t('list.delete')}
-                                                >
-                                                    <FaTrash />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Table view - DESKTOP */}
+                    <div className="hidden md:block bg-white border border-gray-200 rounded-xl overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="bg-gray-50 text-gray-500 text-left">
+                                    <th className="px-4 py-3 font-medium">{t('list.id')}</th>
+                                    <th className="px-4 py-3 font-medium">{t('list.line')}</th>
+                                    <th className="px-4 py-3 font-medium">{t('list.inspector')}</th>
+                                    <th className="px-4 py-3 font-medium">{t('list.shift')}</th>
+                                    <th className="px-4 py-3 font-medium">{t('list.status')}</th>
+                                    <th className="px-4 py-3 font-medium">{t('list.createdAt')}</th>
+                                    <th className="px-4 py-3 font-medium text-center">{t('list.action')}</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {displayList.map(session => (
+                                    <tr key={session.id} id={`eng-session-${session.id}`} onClick={() => goToView('detail', String(session.id))} className={`cursor-pointer transition-all duration-500 ${highlightId === session.id
+                                            ? 'bg-blue-50 ring-2 ring-blue-300'
+                                            : 'hover:bg-gray-50'
+                                        }`}>
+                                        <td className="px-4 py-3 text-gray-500">#{session.id}</td>
+                                        <td className="px-4 py-3 font-medium text-gray-800">
+                                            {session.lineName || lines.find(l => l.id === session.lineId)?.lineName || `Line ${session.lineId}`}
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-700">{session.fullName}</td>
+                                        <td className="px-4 py-3 text-gray-700">{session.sessionShift}</td>
+                                        <td className="px-4 py-3">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[session.status] || 'bg-gray-100 text-gray-600'}`}>
+                                                {session.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-500">
+                                            {session.createdAt ? new Date(session.createdAt).toLocaleString('vi-VN') : ''}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex gap-2 justify-center">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); goToView('detail', String(session.id)); }}
+                                                    className="px-2 py-2 text-blue-600 hover:bg-blue-50 rounded flex items-center gap-1"
+                                                    title={t('list.viewFill')}
+                                                >
+                                                    <FaEye />
+                                                </button>
+                                                {isEngineer && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setDeleteId(session.id); }}
+                                                        className="px-2 py-1 text-red-500 hover:bg-red-50 rounded"
+                                                        title={t('list.delete')}
+                                                    >
+                                                        <FaTrash />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </>
             )}
 

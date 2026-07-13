@@ -4,6 +4,7 @@ import Select, { type StylesConfig, type GroupBase } from 'react-select';
 export interface SelectOption {
     value: string;
     label: string;
+    color?: string;
 }
 
 interface CustomSelectProps {
@@ -15,37 +16,45 @@ interface CustomSelectProps {
     isClearable?: boolean;
     isDisabled?: boolean;
     menuPlacement?: 'auto' | 'top' | 'bottom';
+    closeMenuOnScroll?: boolean | ((e: Event) => boolean);
     className?: string;
 }
 
 const customStyles: StylesConfig<SelectOption, false, GroupBase<SelectOption>> = {
-    control: (base, state) => ({
-        ...base,
-        // index.css ép mọi input min-height 44px → control phải 44px mới cao bằng các input khác
-        minHeight: '44px',
-        height: '44px',
-        borderRadius: '0.5rem',
-        border: state.isFocused ? '1px solid #60a5fa' : '1px solid #e5e7eb',
-        boxShadow: state.isFocused ? '0 0 0 2px rgba(191,219,254,0.6)' : 'none',
-        backgroundColor: '#fff',
-        fontSize: '0.875rem',
-        cursor: 'pointer',
-        boxSizing: 'border-box',
-        alignItems: 'center',
-        '&:hover': {
-            borderColor: '#93c5fd',
-        },
-        transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-    }),
+    control: (base, state) => {
+        const color = state.hasValue ? (state.getValue()[0] as SelectOption).color : undefined;
+        return {
+            ...base,
+            // index.css ép mọi input min-height 44px → control phải 44px mới cao bằng các input khác
+            minHeight: '44px',
+            height: '44px',
+            borderRadius: '0.5rem',
+            border: state.isFocused 
+                ? (color ? `1px solid ${color}` : '1px solid #60a5fa') 
+                : (color ? `1px solid ${color}` : '1px solid #e5e7eb'),
+            boxShadow: state.isFocused 
+                ? (color ? `0 0 0 2px ${color}40` : '0 0 0 2px rgba(191,219,254,0.6)') 
+                : 'none',
+            backgroundColor: color ? `${color}10` : '#fff',
+            fontSize: '0.875rem',
+            cursor: 'pointer',
+            boxSizing: 'border-box',
+            alignItems: 'center',
+            '&:hover': {
+                borderColor: color ? color : '#93c5fd',
+            },
+            transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+        };
+    },
     // KHÔNG override display — react-select dùng grid để chồng singleValue lên input ẩn
     valueContainer: (base) => ({
         ...base,
         padding: '0 12px',
     }),
-    singleValue: (base) => ({
+    singleValue: (base, state) => ({
         ...base,
-        color: '#1f2937',
-        fontWeight: 500,
+        color: state.data.color || '#1f2937',
+        fontWeight: state.data.color ? 700 : 500,
         margin: 0,
         lineHeight: '1.25rem',
     }),
@@ -115,17 +124,19 @@ const customStyles: StylesConfig<SelectOption, false, GroupBase<SelectOption>> =
         borderRadius: '0.5rem',
         padding: '8px 12px',
         fontSize: '0.875rem',
-        fontWeight: state.isSelected ? 600 : 400,
+        fontWeight: state.data.color ? 700 : (state.isSelected ? 600 : 400),
         cursor: 'pointer',
         backgroundColor: state.isSelected
-            ? '#eff6ff'
+            ? (state.data.color ? `${state.data.color}20` : '#eff6ff')
             : state.isFocused
-                ? '#f3f4f6'
+                ? (state.data.color ? `${state.data.color}10` : '#f3f4f6')
                 : 'transparent',
-        color: state.isSelected ? '#1d4ed8' : '#374151',
+        color: state.data.color || (state.isSelected ? '#1d4ed8' : '#374151'),
         transition: 'background-color 0.1s ease',
         '&:active': {
-            backgroundColor: state.isSelected ? '#dbeafe' : '#e5e7eb',
+            backgroundColor: state.isSelected 
+                ? (state.data.color ? `${state.data.color}30` : '#dbeafe') 
+                : '#e5e7eb',
         },
     }),
     noOptionsMessage: (base) => ({
@@ -144,6 +155,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
     isClearable = false,
     isDisabled = false,
     menuPlacement = 'auto',
+    closeMenuOnScroll = true,
     className = '',
 }) => {
     const selectedOption = options.find(opt => opt.value === value) || null;
@@ -160,6 +172,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
                 isDisabled={isDisabled}
                 menuPlacement={menuPlacement}
                 menuPortalTarget={document.body}
+                closeMenuOnScroll={closeMenuOnScroll}
                 styles={customStyles}
                 className={className}
                 noOptionsMessage={() => 'Không có kết quả'}

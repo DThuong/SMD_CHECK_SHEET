@@ -21,6 +21,7 @@ import CustomSelect from '../../components/general/CustomSelect';
 import { ConfirmModal } from '../../components/general/ConfirmModal';
 import LoadingSpinner from '../../components/general/LoadingSpinner';
 import { FaSpinner } from 'react-icons/fa6';
+import { toast } from 'sonner';
 
 const User = () => {
   const dispatch = useAppDispatch();
@@ -30,8 +31,6 @@ const User = () => {
   const [filterUserId, setFilterUserId] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingUser, setEditingUser] = useState<AccountUser | null>(null);
-  const [showSuccess, setShowSuccess] = useState<boolean>(false);
-  const [successMessage, setSuccessMessage] = useState<string>('');
   const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
   const [showPasswordModal, setShowPasswordModal] = useState<boolean>(false);
   const [passwordUser, setPasswordUser] = useState<AccountUser | null>(null);
@@ -53,7 +52,7 @@ const User = () => {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState<number>(0);
-  const usersPerPage = 5;
+  const usersPerPage = 20;
 
   const [formData, setFormData] = useState<Omit<AccountUser, 'id' | 'username'>>({
     fullName: '',
@@ -74,12 +73,25 @@ const User = () => {
     };
   }, [dispatch]);
 
+  // Toast for usersError
+  useEffect(() => {
+    if (usersError) {
+      toast.error(usersError);
+      dispatch(clearError());
+    }
+  }, [usersError, dispatch]);
+
   // Hiển thị selectedUser khi filter theo ID
   useEffect(() => {
     if (selectedUser && filterUserId) {
       setCurrentPage(0);
     }
   }, [selectedUser, filterUserId]);
+
+  // Reset page về 0 khi tìm kiếm
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm]);
 
   const resetForm = (): void => {
     setFormData({
@@ -188,6 +200,7 @@ const User = () => {
       handleCloseAddUserModal();
       await dispatch(fetchUsers()); // Refresh danh sách
     } else {
+      toast.error(result.payload as string || 'Thêm người dùng thất bại');
       setAddUserError(result.payload as string || 'Thêm người dùng thất bại');
     }
   };
@@ -213,7 +226,7 @@ const User = () => {
           await dispatch(fetchUsers());
         }
       } else {
-        showSuccessMessage('Lỗi: ' + (result.payload as string || 'Cập nhật thất bại'));
+        toast.error('Lỗi: ' + (result.payload as string || 'Cập nhật thất bại'));
       }
     }
   };
@@ -237,15 +250,13 @@ const User = () => {
           setCurrentPage(maxPage);
         }
       } else {
-        showSuccessMessage('Lỗi: ' + (result.payload as string || 'Xóa thất bại'));
+        toast.error('Lỗi: ' + (result.payload as string || 'Xóa thất bại'));
       }
     }
   };
 
   const showSuccessMessage = (message: string): void => {
-    setSuccessMessage(message);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+    toast.success(message);
   };
 
   const handleFilterById = async (): Promise<void> => {
@@ -352,26 +363,6 @@ const User = () => {
   return (
     <div className="bg-linear-to-br from-slate-50 to-slate-100 md:p-4 pb-4 mb-4">
       <div className="max-w-7xl mx-auto">
-        {/* Success Message */}
-        {showSuccess && (
-          <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg flex items-center">
-            <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            {successMessage}
-          </div>
-        )}
-
-        {/* Error Message */}
-        {usersError && (
-          <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center">
-            <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-            {usersError}
-          </div>
-        )}
-
         {/* Header */}
         <div className="bg-white rounded-xl shadow-lg p-4 mb-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

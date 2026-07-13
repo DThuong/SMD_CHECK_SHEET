@@ -101,10 +101,17 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
         return () => { dispatch(clearCurrentEngSession()); };
     }, [dispatch, sessionId]);
 
-    const lineMachines = useMemo(
-        () => machines.filter(m => m.lineId === currentSession?.lineId),
-        [machines, currentSession?.lineId]
-    );
+    const sheetType = currentSession?.sheetType || (activeTab === 'daily' ? '1' : '7');
+
+    const lineMachines = useMemo(() => {
+        const allLineMachines = machines.filter(m => m.lineId === currentSession?.lineId);
+        return allLineMachines.filter(m => {
+            return checkLists.some(cl => 
+                cl.machineTypeId === m.machineTypeId &&
+                categories.some(c => c.id === cl.categoryId && c.sheetType === sheetType)
+            );
+        });
+    }, [machines, currentSession?.lineId, checkLists, categories, sheetType]);
 
     useEffect(() => {
         if (!checkListResults || checkListResults.length === 0) return;
@@ -122,7 +129,6 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
     const answersRef = useRef(answers);
     useEffect(() => { answersRef.current = answers; }, [answers]);
 
-    const sheetType = currentSession?.sheetType || (activeTab === 'daily' ? '1' : '7');
     const selectedMachine = lineMachines[currentMachineIndex] || null;
 
     const questionGroups = useMemo(() => {
@@ -613,7 +619,7 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
                         <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${colorClass}`} />
                         {label}
                     </span>
-                    <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-semibold">{typeImages.length}</span>
+                    <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-semibold">{typeImages.length}</span>
                 </div>
                 <div className="p-3 flex-1 overflow-y-auto max-h-[40vh] md:max-h-[50vh] bg-gray-50">
                     {typeImages.length === 0 ? (
@@ -723,7 +729,7 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-white/20 transform transition-all scale-100">
                         <div className="p-5 border-b border-gray-100 bg-gray-50 flex items-center gap-3">
-                            <span className={`px-2.5 py-1 rounded-md text-xs font-bold text-white shadow-sm ${
+                            <span className={`px-2 py-1 rounded-md text-xs font-bold text-white shadow-sm ${
                                 imgNoteModal.typeImage === 'Evidence' ? 'bg-red-500' :
                                 imgNoteModal.typeImage === 'Before' ? 'bg-orange-500' : 'bg-emerald-500'
                             }`}>
@@ -746,7 +752,7 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
                                 value={imgNoteModal.note}
                                 onChange={(e) => setImgNoteModal(prev => ({ ...prev, note: e.target.value }))}
                                 placeholder={t('detail.noteImagePlaceholder')}
-                                className="w-full p-3.5 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-blue-500 outline-none resize-none min-h-[100px] text-gray-800 transition-colors"
+                                className="w-full p-3 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-blue-500 outline-none resize-none min-h-[100px] text-gray-800 transition-colors"
                                 disabled={imgNoteModal.uploading}
                                 autoFocus
                             />
@@ -755,14 +761,14 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
                             <button
                                 onClick={() => setImgNoteModal({ open: false, typeImage: 'Evidence', file: null, note: '', uploading: false })}
                                 disabled={imgNoteModal.uploading}
-                                className="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50"
+                                className="px-5 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50"
                             >
                                 Hủy bỏ
                             </button>
                             <button
                                 onClick={confirmUploadImage}
                                 disabled={imgNoteModal.uploading}
-                                className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-md shadow-blue-200"
+                                className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-md shadow-blue-200"
                             >
                                 {imgNoteModal.uploading ? t('detail.uploading') : t('detail.confirm')}
                             </button>
@@ -836,20 +842,20 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
                     {statusHistories.length === 0 ? (
                         <p className="text-sm text-gray-400">{t('detail.noHistory')}</p>
                     ) : (
-                        <ol className="relative ml-1.5 space-y-4 border-l-2 border-gray-100">
+                        <ol className="relative ml-2! space-y-4 border-l-2 border-gray-100">
                             {statusHistories.map(h => (
-                                <li key={h.id} className="relative pl-5">
+                                <li key={h.id} className="relative pl-4!">
                                     <span
-                                        className={`absolute -left-[7px] top-1 h-3 w-3 rounded-full border-2 border-white shadow ${
+                                        className={`absolute -left-[9px] top-1.5 h-4 w-4 rounded-full border-[3px] border-white shadow-sm ${
                                             h.status === 'Submitted' ? 'bg-emerald-500' :
                                             h.status === 'Approved' ? 'bg-blue-500' : 'bg-amber-400'
                                         }`}
                                     />
-                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                                    <div className="flex flex-wrap items-center gap-3 gap-y-1 text-sm">
                                         <span className="font-bold text-gray-800">{h.fullName}</span>
-                                        <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-500">{h.role}</span>
+                                        <span className="rounded bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-500">{h.role}</span>
                                         <span
-                                            className={`rounded-md border px-2 py-0.5 text-xs font-bold ${
+                                            className={`rounded-md border px-2 py-1 text-xs font-bold ${
                                                 h.status === 'Submitted' ? 'border-emerald-200 bg-emerald-50 text-emerald-600' :
                                                 h.status === 'Approved' ? 'border-blue-200 bg-blue-50 text-blue-600' :
                                                 'border-amber-200 bg-amber-50 text-amber-600'
@@ -897,7 +903,7 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
                                                 {group.category.name}
                                             </h4>
                                         </div>
-                                        <span className="bg-white px-2 py-0.5 rounded text-xs font-semibold text-gray-500 border border-gray-200 shadow-sm shrink-0">
+                                        <span className="bg-white px-2 py-1 rounded text-xs font-semibold text-gray-500 border border-gray-200 shadow-sm shrink-0">
                                             {group.items.filter(q => answers[answerKey(selectedMachine!.id, q.id)]?.result).length} / {group.items.length}
                                         </span>
                                     </button>
@@ -938,19 +944,17 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
                                                                         }`}
                                                                     >NG</button>
                                                                 </div>
-                                                                {a?.result === 'NG' && (
-                                                                    <div className="mt-2">
-                                                                        <input
-                                                                            type="text"
-                                                                            value={a?.note || ''}
-                                                                            onChange={e => setNote(selectedMachine!.id, q.id, e.target.value)}
-                                                                            onBlur={() => handleNoteBlur(selectedMachine!.id, q.id)}
-                                                                            disabled={!isEditable}
-                                                                            placeholder={t('detail.ngNotePlaceholder')}
-                                                                            className="w-full text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none p-3 bg-gray-50"
-                                                                        />
-                                                                    </div>
-                                                                )}
+                                                                <div className="mt-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={a?.note || ''}
+                                                                        onChange={e => setNote(selectedMachine!.id, q.id, e.target.value)}
+                                                                        onBlur={() => handleNoteBlur(selectedMachine!.id, q.id)}
+                                                                        disabled={!isEditable}
+                                                                        placeholder="Ghi chú (nếu có)..."
+                                                                        className="w-full text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none p-3 bg-gray-50"
+                                                                    />
+                                                                </div>
                                                             </div>
                                                             {/* 3. Hành động */}
                                                             <div className="flex flex-col gap-1">
@@ -979,9 +983,10 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
                                                 <table className="w-full text-left border-collapse">
                                                     <thead>
                                                         <tr className="bg-gray-50 border-b border-gray-200">
-                                                            <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[50%]">Hạng mục kiểm tra</th>
-                                                            <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[30%]">{t('detail.result')}</th>
-                                                            <th className="p-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider w-[20%]">{t('detail.actions')}</th>
+                                                            <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[45%]">Hạng mục kiểm tra</th>
+                                                            <th className="p-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider w-[15%]">{t('detail.result')}</th>
+                                                            <th className="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider w-[22%]">Ghi chú</th>
+                                                            <th className="p-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider w-[18%]">{t('detail.actions')}</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-gray-100">
@@ -995,45 +1000,44 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
                                                                     <tr className="hover:bg-gray-50 transition-colors">
                                                                         <td className="p-3 text-sm text-gray-800">{q.questionCheck}</td>
                                                                         <td className="p-3">
-                                                                            <div className="flex flex-col gap-2">
-                                                                                <div className="flex gap-1.5">
-                                                                                    <button
-                                                                                        onClick={() => setResult(selectedMachine!.id, q.id, 'OK')}
-                                                                                        disabled={!isEditable}
-                                                                                        className={`px-3 py-1 text-xs font-bold border transition-all rounded ${
-                                                                                            a?.result === 'OK' ? 'bg-green-600 text-white border-green-600 shadow-sm' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
-                                                                                        }`}
-                                                                                    >OK</button>
-                                                                                    <button
-                                                                                        onClick={() => setResult(selectedMachine!.id, q.id, 'NG')}
-                                                                                        disabled={!isEditable}
-                                                                                        className={`px-3 py-1 text-xs font-bold border transition-all rounded ${
-                                                                                            a?.result === 'NG' ? 'bg-red-600 text-white border-red-600 shadow-sm' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
-                                                                                        }`}
-                                                                                    >NG</button>
-                                                                                </div>
-                                                                                {a?.result === 'NG' && (
-                                                                                    <input
-                                                                                        type="text"
-                                                                                        value={a?.note || ''}
-                                                                                        onChange={e => setNote(selectedMachine!.id, q.id, e.target.value)}
-                                                                                        onBlur={() => handleNoteBlur(selectedMachine!.id, q.id)}
-                                                                                        disabled={!isEditable}
-                                                                                        placeholder={t('detail.ngNotePlaceholder')}
-                                                                                        className="w-full text-xs border-b border-gray-300 focus:border-blue-500 outline-none py-1 bg-transparent"
-                                                                                    />
-                                                                                )}
+                                                                            <div className="flex justify-center gap-2">
+                                                                                <button
+                                                                                    onClick={() => setResult(selectedMachine!.id, q.id, 'OK')}
+                                                                                    disabled={!isEditable}
+                                                                                    className={`px-4 py-2 text-xs font-bold border transition-all rounded-lg ${
+                                                                                        a?.result === 'OK' ? 'bg-green-600 text-white border-green-600 shadow-sm' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
+                                                                                    }`}
+                                                                                >OK</button>
+                                                                                <button
+                                                                                    onClick={() => setResult(selectedMachine!.id, q.id, 'NG')}
+                                                                                    disabled={!isEditable}
+                                                                                    className={`px-4 py-2 text-xs font-bold border transition-all rounded-lg ${
+                                                                                        a?.result === 'NG' ? 'bg-red-600 text-white border-red-600 shadow-sm' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
+                                                                                    }`}
+                                                                                >NG</button>
                                                                             </div>
+                                                                        </td>
+                                                                        <td className="p-3">
+                                                                            <input
+                                                                                type="text"
+                                                                                value={a?.note || ''}
+                                                                                onChange={e => setNote(selectedMachine!.id, q.id, e.target.value)}
+                                                                                onBlur={() => handleNoteBlur(selectedMachine!.id, q.id)}
+                                                                                disabled={!isEditable}
+                                                                                placeholder="Ghi chú (nếu có)..."
+                                                                                className="w-full text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none py-2 px-3 bg-gray-50"
+                                                                            />
                                                                         </td>
                                                                         <td className="p-3">
                                                                             <div className="flex items-center justify-center">
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={() => openImageModal(selectedMachine!.id, q.id)}
-                                                                                    className="relative inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                                                                                    className="relative inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 whitespace-nowrap"
                                                                                 >
-                                                                                    {isEditable ? <FaCamera className="text-blue-600" /> : <FaEye className="text-blue-600" />}
-                                                                                    <span className="hidden lg:inline">{isEditable ? t('detail.manageImgBtn') : t('detail.viewImgBtn')}</span>
+                                                                                    {isEditable ? <FaCamera className="text-blue-600 shrink-0" /> : <FaEye className="text-blue-600 shrink-0" />}
+                                                                                    <span className="hidden xl:inline">{isEditable ? t('detail.manageImgBtn') : t('detail.viewImgBtn')}</span>
+                                                                                    <span className="xl:hidden">{isEditable ? 'Hình ảnh' : 'Xem ảnh'}</span>
                                                                                     {questionImages.length > 0 && (
                                                                                         <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-bold text-white">
                                                                                             {questionImages.length}

@@ -116,8 +116,8 @@ interface PeriodBucket {
   label: string;
   dateKey: string;
   total: number;
-  morning: number;
-  night: number;
+  ok: number;
+  ng: number;
   records: SheetNGRecord[];
 }
 
@@ -871,11 +871,12 @@ const EngDefectAnalyticsChart: React.FC<
   );
   const [drillPoint, setDrillPoint] = useState<{
     dateKey: string;
-    shift: ShiftType;
+    shift: ShiftType | 'both';
+    lineType?: 'total' | 'ok' | 'ng';
   } | null>(null);
   const [hoveredTrendPoint, setHoveredTrendPoint] = useState<{
     dateKey: string;
-    shift: ShiftType;
+    shift?: ShiftType | 'both';
   } | null>(null);
   const [trendDetailPage, setTrendDetailPage] = useState(0);
   const [fromDateTime, setFromDateTime] = useState("");
@@ -942,8 +943,6 @@ const EngDefectAnalyticsChart: React.FC<
       pT("reportColShift"),
       pT("reportColSheetId"),
       pT("reportColLine"),
-      pT("reportColStage"),
-      pT("reportColCategory"),
       pT("reportColErrorCount"),
       pT("reportColView"),
     ],
@@ -1247,7 +1246,7 @@ const EngDefectAnalyticsChart: React.FC<
   );
 
   // allSheetRecords
-const allSheetRecords = useMemo<SheetNGRecord[]>(() => {
+const allMappedRecords = useMemo<SheetNGRecord[]>(() => {
   const records = (sessions || [])
     .filter(
       (session: any) =>
@@ -1365,7 +1364,7 @@ const allSheetRecords = useMemo<SheetNGRecord[]>(() => {
           };
         });
 
-      if (!errors.length || !sheetShiftInfo.key) return null;
+      if (!sheetShiftInfo.key) return null;
 
       const dateKey = sheetShiftInfo.key;
       const sheetShift = sheetShiftInfo.shift;
@@ -1415,17 +1414,19 @@ const allSheetRecords = useMemo<SheetNGRecord[]>(() => {
   // ✅ KHÔNG có pT
 ]);
 
+const allSheetRecords = useMemo(() => allMappedRecords.filter(r => r.errors.length > 0), [allMappedRecords]);
+
 const getShiftLabel = useCallback(
-  (shift: ShiftType) => getShiftText(shift, pT),
+  (shift: ShiftType | 'both') => shift === 'both' ? pT("shiftBoth") : getShiftText(shift as ShiftType, pT),
   [pT],
 );
 
   const firstDateKey = useMemo(() => {
-    return allSheetRecords
+    return allMappedRecords
       .map((record) => record.date)
       .filter(Boolean)
       .sort()[0];
-  }, [allSheetRecords]);
+  }, [allMappedRecords]);
 
   const {
     start,
@@ -1485,6 +1486,61 @@ const getShiftLabel = useCallback(
     });
   }, [
       allSheetRecords,
+      start,
+      end,
+      debouncedKeyword,
+      shiftFilter,
+      debouncedFromDateTime,
+      debouncedToDateTime,
+  ]);
+
+  const rangeMappedRecords = useMemo(() => {
+    const kw = debouncedKeyword.trim().toLowerCase();
+    const customFrom = getDateTimeFilter(debouncedFromDateTime);
+    const customTo = getDateTimeFilter(debouncedToDateTime);
+
+    return allMappedRecords.filter((record) => {
+      if (customFrom || customTo) {
+        const sheetDateTime = parseDate(record.sheetTime);
+        if (!sheetDateTime) return false;
+        if (customFrom && sheetDateTime < customFrom) return false;
+        if (customTo && sheetDateTime > customTo) return false;
+      } else {
+        const businessDate = parseDate(
+          `${record.date}T${String(DAY_START_HOUR).padStart(2, "0")}:00:00`,
+        );
+        const inRange = businessDate
+          ? businessDate >= start && businessDate <= end
+          : false;
+        if (!inRange) return false;
+      }
+
+      if (shiftFilter !== "both" && record.shift !== shiftFilter) {
+        return false;
+      }
+
+      if (!kw) return true;
+      return [
+        record.sessionId,
+        record.lineName,
+        record.machineSummary,
+        record.categorySummary,
+        record.firstQuestionCheck,
+        record.note,
+        record.detectedBy,
+        ...record.errors.flatMap((x) => [
+          x.machineName,
+          x.categoryName,
+          x.questionCheck,
+          x.note,
+        ]),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(kw);
+    });
+  }, [
+      allMappedRecords,
       start,
       end,
       debouncedKeyword,
@@ -1720,29 +1776,62 @@ const getShiftLabel = useCallback(
     return Array.from({ length: Math.max(days, 0) }, (_, index) => {
       const d = addDays(parseDate(`${fromKey}T00:00:00`) || new Date(), index);
       const key = formatLocalDateKey(d);
-      const rows = rangeRecords.filter((record) => record.date === key);
-      const morningRows = rows.filter((record) => record.shift === "morning");
-      const nightRows = rows.filter((record) => record.shift === "night");
+      const allRows = rangeAllSessions.filter((session: any) => {
+        const sheetTime = session?.createdAt || session?.createAt || "";
+        const shiftInfo = getShiftDay(sheetTime);
+        return shiftInfo.key === key;
+      });
+
+      const ngRows = rangeRecords.filter((record) => record.date === key);
+
+      const totalSheets = allRows.length;
+      const ngSheets = ngRows.length;
+      const okSheets = totalSheets - ngSheets;
 
       return {
         label: fmtShort(d),
         dateKey: key,
-        total: rows.length,
-        morning: morningRows.length,
-        night: nightRows.length,
-        records: rows,
+        total: totalSheets,
+        ok: okSheets,
+        ng: ngSheets,
+        records: ngRows,
       };
     });
   }, [effectiveTrendRange, rangeRecords]);
 
   const activeRecords = useMemo(() => {
     if (!drillPoint) return rangeRecords;
+    if (drillPoint.lineType === 'ok') return [];
 
-    return rangeRecords.filter(
-      (record) =>
-        record.date === drillPoint.dateKey && record.shift === drillPoint.shift,
-    );
+    return rangeRecords.filter((record) => {
+      const isSameDate = record.date === drillPoint.dateKey;
+      if (drillPoint.shift && drillPoint.shift !== 'both') {
+        return isSameDate && record.shift === drillPoint.shift;
+      }
+      return isSameDate;
+    });
   }, [drillPoint, rangeRecords]);
+
+  const activeMappedRecords = useMemo(() => {
+    if (!drillPoint) return rangeMappedRecords;
+
+    return rangeMappedRecords.filter((record) => {
+      const isSameDate = record.date === drillPoint.dateKey;
+      let shiftMatch = true;
+      if (drillPoint.shift && drillPoint.shift !== 'both') {
+        shiftMatch = record.shift === drillPoint.shift;
+      }
+      
+      let lineTypeMatch = true;
+      if (drillPoint.lineType === 'ok') {
+        lineTypeMatch = record.errors.length === 0;
+      } else if (drillPoint.lineType === 'ng') {
+        lineTypeMatch = record.errors.length > 0;
+      }
+
+      return isSameDate && shiftMatch && lineTypeMatch;
+    });
+  }, [drillPoint, rangeMappedRecords]);
 
   const activeErrors = useMemo(
     () => activeRecords.flatMap((record) => record.errors),
@@ -1847,28 +1936,21 @@ const getShiftLabel = useCallback(
   const trendSelectedRows = useMemo(() => {
     if (!drillPoint) return [];
     const startIndex = trendDetailPage * TREND_DETAIL_PAGE_SIZE;
-    return activeRecords.slice(startIndex, startIndex + TREND_DETAIL_PAGE_SIZE);
-  }, [activeRecords, drillPoint, trendDetailPage]);
+    return activeMappedRecords.slice(startIndex, startIndex + TREND_DETAIL_PAGE_SIZE);
+  }, [activeMappedRecords, drillPoint, trendDetailPage]);
 
   const trendDetailPageCount = useMemo(() => {
     if (!drillPoint) return 0;
-    return Math.ceil(activeRecords.length / TREND_DETAIL_PAGE_SIZE);
-  }, [activeRecords.length, drillPoint]);
+    return Math.ceil(activeMappedRecords.length / TREND_DETAIL_PAGE_SIZE);
+  }, [activeMappedRecords.length, drillPoint]);
 
   const trendSelectedLabel = useMemo(() => {
     if (!drillPoint) return "";
-    return `${fmtDateKey(drillPoint.dateKey)} - ${getShiftLabel(drillPoint.shift)}`;
-  }, [drillPoint, getShiftLabel]);
-
-  const totalSheetNG = activeRecords.length;
-  const totalErrorNG = activeErrors.length;
-  const topLine = lineData[0]?.name || EMPTY;
-  // Sheet có hình = sheet mà câu hỏi NG của nó có ít nhất 1 ảnh (tính theo ảnh
-  // đã tải về, gắn theo checkListResultId).
-  const imageLinkedCount = useMemo(
-    () => activeRecords.filter((record) => getSheetImages(record).length > 0).length,
-    [activeRecords, getSheetImages],
-  );
+    const shiftLabel = drillPoint.shift && drillPoint.shift !== 'both' 
+      ? ` - ${getShiftLabel(drillPoint.shift)}` 
+      : (shiftFilter !== 'both' ? ` - ${getShiftLabel(shiftFilter)}` : '');
+    return `${fmtDateKey(drillPoint.dateKey)}${shiftLabel}`;
+  }, [drillPoint, getShiftLabel, shiftFilter]);
 
   const openImage = useCallback(
     (img: EngImageView, title: string, imageList?: EngImageView[]) => {
@@ -1997,15 +2079,13 @@ const getShiftLabel = useCallback(
     [buildReportState, goToView, patrolType],
   );
 
-  const handleShiftDotClick = useCallback((payload: any, shift: ShiftType) => {
+  const handleShiftDotClick = useCallback((payload: any, shiftFilterValue: ShiftFilter, lineType: 'total' | 'ok' | 'ng') => {
     if (!payload?.dateKey) return;
 
-    // Không đổi shiftFilter ở đây. Nếu đang chọn "Cả 2 ca", cả 2 line phải luôn hiển thị.
-    // Dot chỉ dùng để drill xuống danh sách sheet NG của đúng ngày + đúng ca.
     setDrillPoint((prev) => {
-      const isSame = prev?.dateKey === payload.dateKey && prev?.shift === shift;
+      const isSame = prev?.dateKey === payload.dateKey && prev?.lineType === lineType;
 
-      return isSame ? null : { dateKey: payload.dateKey, shift };
+      return isSame ? null : { dateKey: payload.dateKey, shift: shiftFilterValue, lineType };
     });
     setTrendDetailPage(0);
   }, []);
@@ -2292,19 +2372,19 @@ const getShiftLabel = useCallback(
           <div className="rounded-xl bg-white/10 p-3">
             <p className="text-xs text-slate-400">{pT("reportLineOK")}</p>
             <p className="mt-1 line-clamp-2 text-lg font-bold leading-tight text-emerald-400" title={dashboardStats.lineOkNames.join(', ')}>
-              {dashboardStats.lineOkNames.length > 0 ? dashboardStats.lineOkNames.join(', ') : EMPTY}
+              {dashboardStats.lineOkNames.length > 0 ? dashboardStats.lineOkNames.join(', ') : '0'}
             </p>
           </div>
           <div className="rounded-xl bg-white/10 p-3">
             <p className="text-xs text-slate-400">{pT("reportLineNG")}</p>
             <p className="mt-1 line-clamp-2 text-lg font-bold leading-tight text-red-400" title={dashboardStats.lineNgNames.join(', ')}>
-              {dashboardStats.lineNgNames.length > 0 ? dashboardStats.lineNgNames.join(', ') : EMPTY}
+              {dashboardStats.lineNgNames.length > 0 ? dashboardStats.lineNgNames.join(', ') : '0'}
             </p>
           </div>
           <div className="rounded-xl bg-white/10 p-3">
             <p className="text-xs text-slate-400">{pT("reportLineNotProduced")}</p>
             <p className="mt-1 line-clamp-2 text-lg font-bold leading-tight text-slate-400" title={dashboardStats.lineNotProducedNames.join(', ')}>
-              {dashboardStats.lineNotProducedNames.length > 0 ? dashboardStats.lineNotProducedNames.join(', ') : EMPTY}
+              {dashboardStats.lineNotProducedNames.length > 0 ? dashboardStats.lineNotProducedNames.join(', ') : '0'}
             </p>
           </div>
           <div className="rounded-xl bg-white/10 p-3">
@@ -2495,103 +2575,119 @@ const getShiftLabel = useCallback(
                       wrapperStyle={{ fontSize: 11 }}
                     />
 
-                    {(shiftFilter === "morning" || shiftFilter === "both") && (
-                      <Line
-                        type="monotone"
-                        dataKey="morning"
-                        name={pT("shiftMorning")}
-                        stroke="#E24B4A"
-                        strokeWidth={3}
-                        activeDot={false}
-                        dot={(props: any) => {
-                          const { cx, cy, payload, value } = props;
+                    <Line
+                      type="monotone"
+                      dataKey="total"
+                      name={pT("reportTotalSheetCreated", "Tổng sheet tạo")}
+                      stroke="#3b82f6" // blue-500
+                      strokeWidth={3}
+                      activeDot={false}
+                      dot={(props: any) => {
+                        const { cx, cy, payload, value } = props;
+                        if (value == null) return null;
 
-                          if (value == null) return null;
+                        const isSelected = drillPoint?.dateKey === payload.dateKey;
+                        const isHovered = hoveredTrendPoint?.dateKey === payload.dateKey;
 
-                          const isSelected =
-                            drillPoint?.dateKey === payload.dateKey &&
-                            drillPoint?.shift === "morning";
+                        return (
+                          <circle
+                            focusable="false"
+                            tabIndex={-1}
+                            cx={cx}
+                            cy={cy}
+                            r={isSelected || isHovered ? 7 : 4}
+                            fill="#3b82f6"
+                            stroke="#fff"
+                            strokeWidth={isSelected || isHovered ? 3 : 2}
+                            style={{ cursor: "pointer" }}
+                            onMouseEnter={() =>
+                              setHoveredTrendPoint({ dateKey: payload.dateKey })
+                            }
+                            onMouseLeave={() => setHoveredTrendPoint(null)}
+                            onClick={(e: any) => {
+                              e.stopPropagation();
+                              handleShiftDotClick(payload, shiftFilter, 'total');
+                            }}
+                          />
+                        );
+                      }}
+                    />
 
-                          const isHovered =
-                            hoveredTrendPoint?.dateKey === payload.dateKey &&
-                            hoveredTrendPoint?.shift === "morning";
+                    <Line
+                      type="monotone"
+                      dataKey="ok"
+                      name={pT("reportLineOK", "Sheet OK")}
+                      stroke="#10b981" // emerald-500
+                      strokeWidth={3}
+                      activeDot={false}
+                      dot={(props: any) => {
+                        const { cx, cy, payload, value } = props;
+                        if (value == null) return null;
 
-                          return (
-                            <circle
-                              focusable="false"
-                              tabIndex={-1}
-                              cx={cx}
-                              cy={cy}
-                              r={isSelected || isHovered ? 7 : 4}
-                              fill="#E24B4A"
-                              stroke="#fff"
-                              strokeWidth={isSelected || isHovered ? 3 : 2}
-                              style={{ cursor: "pointer" }}
-                              onMouseEnter={() =>
-                                setHoveredTrendPoint({
-                                  dateKey: payload.dateKey,
-                                  shift: "morning",
-                                })
-                              }
-                              onMouseLeave={() => setHoveredTrendPoint(null)}
-                              onClick={(e: any) => {
-                                e.stopPropagation();
-                                handleShiftDotClick(payload, "morning");
-                              }}
-                            />
-                          );
-                        }}
-                      />
-                    )}
+                        const isSelected = drillPoint?.dateKey === payload.dateKey;
+                        const isHovered = hoveredTrendPoint?.dateKey === payload.dateKey;
 
-                    {(shiftFilter === "night" || shiftFilter === "both") && (
-                      <Line
-                        type="monotone"
-                        dataKey="night"
-                        name={pT("shiftNight")}
-                        stroke="#534AB7"
-                        strokeWidth={3}
-                        activeDot={false}
-                        dot={(props: any) => {
-                          const { cx, cy, payload, value } = props;
+                        return (
+                          <circle
+                            focusable="false"
+                            tabIndex={-1}
+                            cx={cx}
+                            cy={cy}
+                            r={isSelected || isHovered ? 7 : 4}
+                            fill="#10b981"
+                            stroke="#fff"
+                            strokeWidth={isSelected || isHovered ? 3 : 2}
+                            style={{ cursor: "pointer" }}
+                            onMouseEnter={() =>
+                              setHoveredTrendPoint({ dateKey: payload.dateKey })
+                            }
+                            onMouseLeave={() => setHoveredTrendPoint(null)}
+                            onClick={(e: any) => {
+                              e.stopPropagation();
+                              handleShiftDotClick(payload, shiftFilter, 'ok');
+                            }}
+                          />
+                        );
+                      }}
+                    />
 
-                          if (value == null) return null;
+                    <Line
+                      type="monotone"
+                      dataKey="ng"
+                      name={pT("reportLineNG", "Sheet NG")}
+                      stroke="#ef4444" // red-500
+                      strokeWidth={3}
+                      activeDot={false}
+                      dot={(props: any) => {
+                        const { cx, cy, payload, value } = props;
+                        if (value == null) return null;
 
-                          const isSelected =
-                            drillPoint?.dateKey === payload.dateKey &&
-                            drillPoint?.shift === "night";
+                        const isSelected = drillPoint?.dateKey === payload.dateKey;
+                        const isHovered = hoveredTrendPoint?.dateKey === payload.dateKey;
 
-                          const isHovered =
-                            hoveredTrendPoint?.dateKey === payload.dateKey &&
-                            hoveredTrendPoint?.shift === "night";
-
-                          return (
-                            <circle
-                              focusable="false"
-                              tabIndex={-1}
-                              cx={cx}
-                              cy={cy}
-                              r={isSelected || isHovered ? 7 : 4}
-                              fill="#534AB7"
-                              stroke="#fff"
-                              strokeWidth={isSelected || isHovered ? 3 : 2}
-                              style={{ cursor: "pointer" }}
-                              onMouseEnter={() =>
-                                setHoveredTrendPoint({
-                                  dateKey: payload.dateKey,
-                                  shift: "night",
-                                })
-                              }
-                              onMouseLeave={() => setHoveredTrendPoint(null)}
-                              onClick={(e: any) => {
-                                e.stopPropagation();
-                                handleShiftDotClick(payload, "night");
-                              }}
-                            />
-                          );
-                        }}
-                      />
-                    )}
+                        return (
+                          <circle
+                            focusable="false"
+                            tabIndex={-1}
+                            cx={cx}
+                            cy={cy}
+                            r={isSelected || isHovered ? 7 : 4}
+                            fill="#ef4444"
+                            stroke="#fff"
+                            strokeWidth={isSelected || isHovered ? 3 : 2}
+                            style={{ cursor: "pointer" }}
+                            onMouseEnter={() =>
+                              setHoveredTrendPoint({ dateKey: payload.dateKey })
+                            }
+                            onMouseLeave={() => setHoveredTrendPoint(null)}
+                            onClick={(e: any) => {
+                              e.stopPropagation();
+                              handleShiftDotClick(payload, shiftFilter, 'ng');
+                            }}
+                          />
+                        );
+                      }}
+                    />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
@@ -2609,7 +2705,7 @@ const getShiftLabel = useCallback(
                     <p className="mt-1 text-xs text-slate-500">
                       {pT("reportShowingTrendSheets", {
                         pageSize: TREND_DETAIL_PAGE_SIZE,
-                        count: activeRecords.length,
+                        count: activeMappedRecords.length,
                       })}
                     </p>
                   </div>
@@ -2669,22 +2765,6 @@ const getShiftLabel = useCallback(
                           <td className="px-3 py-3 font-bold text-slate-900">
                             {row.lineName}
                           </td>
-                          <td className="px-3 py-3 text-slate-600">
-                            <span
-                              className="block max-w-40 truncate"
-                              title={row.machineSummary}
-                            >
-                              {row.machineSummary}
-                            </span>
-                          </td>
-                          <td className="px-3 py-3 text-slate-600">
-                            <span
-                              className="block max-w-[180px] truncate"
-                              title={row.categorySummary}
-                            >
-                              {row.categorySummary}
-                            </span>
-                          </td>
                           <td className="px-3 py-3">
                             <button
                               type="button"
@@ -2692,7 +2772,9 @@ const getShiftLabel = useCallback(
                                 event.stopPropagation();
                                 setSelectedRecord(row);
                               }}
-                              className="rounded-lg bg-red-50 px-2 py-1 text-left font-bold text-red-600 hover:underline"
+                              className={`rounded-lg px-2 py-1 text-left font-bold hover:underline ${
+                                row.errors.length > 0 ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"
+                              }`}
                             >
                               {pT("reportErrorUnit", {
                                 count: row.errors.length,
@@ -2723,7 +2805,7 @@ const getShiftLabel = useCallback(
                       {trendSelectedRows.length === 0 ? (
                         <tr>
                           <td
-                            colSpan={8}
+                            colSpan={6}
                             className="px-3 py-10 text-center text-sm text-slate-400"
                           >
                             {pT("reportNoData")}
@@ -2757,7 +2839,7 @@ const getShiftLabel = useCallback(
                           <h4 className="mt-1 text-sm font-extrabold text-slate-900">
                             Sheet #{row.sessionId} • {row.lineName}
                           </h4>
-                          <p className="mt-1 text-sm font-bold text-red-600">
+                          <p className={`mt-1 text-sm font-bold ${row.errors.length > 0 ? "text-red-600" : "text-emerald-600"}`}>
                             {pT("reportErrorUnit", {
                               count: row.errors.length,
                             })}

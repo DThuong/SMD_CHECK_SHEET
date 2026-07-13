@@ -171,6 +171,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
                 isClearable={isClearable}
                 isDisabled={isDisabled}
                 menuPlacement={menuPlacement}
+                menuPosition="fixed"
                 menuPortalTarget={document.body}
                 closeMenuOnScroll={closeMenuOnScroll}
                 styles={customStyles}

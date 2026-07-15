@@ -141,6 +141,7 @@ const RoleBasedLayout = () => {
         { name: t('menu.engManage'), path: `/${role}/engCheckSheet?view=manage`, shouldReload: false },
         { name: t('menu.engDaily'), path: `/${role}/engCheckSheet?view=list&type=daily`, shouldReload: false },
         { name: t('menu.engWeekly'), path: `/${role}/engCheckSheet?view=list&type=weekly`, shouldReload: false },
+        { name: t('menu.engMonthly'), path: `/${role}/engCheckSheet?view=list&type=monthly`, shouldReload: false },
         { name: t('menu.engReport'), path: `/${role}/engCheckSheet?view=report`, shouldReload: false },
       ],
     },

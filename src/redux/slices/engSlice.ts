@@ -9,7 +9,7 @@ export interface vehicleSession {
     accountId: number,
     fullName: string,
     status: string,
-    sheetType: string, // "1": ngày (daily), "7": tuần (weekly)
+    sheetType: string, // "1": ngày (daily), "7": tuần (weekly), "30": tháng (monthly)
     lineId: number,
     lineName: string,
     note: string,

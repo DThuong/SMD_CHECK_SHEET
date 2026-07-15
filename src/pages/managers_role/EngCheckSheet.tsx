@@ -9,7 +9,7 @@ import EngCheckListDetail from '../engCheckSheet/EngCheckListDetail';
 import ReportEngCheckSheet from '../engCheckSheet/ReportEngCheckSheet';
 
 export type EngView = 'list' | 'manage' | 'detail' | 'report';
-export type EngTab = 'daily' | 'weekly';
+export type EngTab = 'daily' | 'weekly' | 'monthly';
 
 export interface EngSharedProps {
     user: any;
@@ -19,7 +19,7 @@ export interface EngSharedProps {
 
 // ==========================================
 // MAIN COMPONENT - Engineer Check Sheet
-// view=list|manage|detail & type=daily|weekly (sheetType: "1" ngày, "7" tuần)
+// view=list|manage|detail & type=daily|weekly|monthly (sheetType: "1" ngày, "7" tuần, "30" tháng)
 // ==========================================
 const EngCheckSheet = () => {
     const { user } = useAppSelector(state => state.auth);

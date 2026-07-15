@@ -30,8 +30,8 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
     const isEngineer = user?.role?.toLowerCase() === 'eng';
 
     const [section, setSection] = useState<ManageSection>('lineMachine');
-    // sub-tab cho phần câu hỏi: sheetType "1" (ngày) | "7" (tuần)
-    const [sheetTab, setSheetTab] = useState<'1' | '7'>('1');
+    // sub-tab cho phần câu hỏi: sheetType "1" (ngày) | "7" (tuần) | "30" (tháng)
+    const [sheetTab, setSheetTab] = useState<'1' | '7' | '30'>('1');
 
     const [expandedLines, setExpandedLines] = useState<Record<number, boolean>>({});
     const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({});
@@ -451,6 +451,12 @@ const EngCheckSheetManage: React.FC<EngSharedProps> = ({ user, goToView }) => {
                             className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium ${sheetTab === '7' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                         >
                             {t('manage.weeklySheet')}
+                        </button>
+                        <button
+                            onClick={() => setSheetTab('30')}
+                            className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium ${sheetTab === '30' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                        >
+                            {t('manage.monthlySheet')}
                         </button>
                         <div className="hidden sm:block flex-1" />
                         <button

@@ -100,6 +100,7 @@ const handleLanguageChange = async (langCode: string) => {
         { name: t('menu.engManage'), path: "/admin/engCheckSheet?view=manage", shouldReload: false },
         { name: t('menu.engDaily'), path: "/admin/engCheckSheet?view=list&type=daily", shouldReload: false },
         { name: t('menu.engWeekly'), path: "/admin/engCheckSheet?view=list&type=weekly", shouldReload: false },
+        { name: t('menu.engMonthly'), path: "/admin/engCheckSheet?view=list&type=monthly", shouldReload: false },
         { name: t('menu.engReport'), path: "/admin/engCheckSheet?view=report", shouldReload: false },
       ],
     },

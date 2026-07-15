@@ -16,6 +16,7 @@
     "engManage": "Manage Check Sheet",
     "engDaily": "Daily Check Sheet",
     "engWeekly": "Weekly Check Sheet",
+    "engMonthly": "Monthly Check Sheet",
     "engReport": "Defect Report"
   },
   "roles": {

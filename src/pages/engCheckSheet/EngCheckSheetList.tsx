@@ -34,7 +34,7 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
     const dispatch = useAppDispatch();
     const { sessions, filteredSessionsResult, lines, loading } = useAppSelector(state => state.eng);
 
-    const sheetType = activeTab === 'daily' ? '1' : '7';
+    const sheetType = activeTab === 'daily' ? '1' : activeTab === 'weekly' ? '7' : '30';
 
     // Chỉ role Engineer được tạo/xóa sheet, các role khác chỉ xem
     const isEngineer = user?.role?.toLowerCase() === 'eng';
@@ -254,7 +254,7 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
             {/* Header */}
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <h1 className="text-lg md:text-xl font-bold text-gray-800">
-                    {activeTab === 'daily' ? t('list.titleDaily') : t('list.titleWeekly')}
+                    {activeTab === 'daily' ? t('list.titleDaily') : activeTab === 'weekly' ? t('list.titleWeekly') : t('list.titleMonthly')}
                 </h1>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <button
@@ -280,7 +280,7 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
                 </div>
             </div>
 
-            {/* Tabs ngày/tuần */}
+            {/* Tabs ngày/tuần/tháng */}
             <div className="flex gap-2 mb-4">
                 <button
                     onClick={() => switchTab('daily')}
@@ -293,6 +293,12 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
                     className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium ${activeTab === 'weekly' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                 >
                     {t('list.tabWeekly')}
+                </button>
+                <button
+                    onClick={() => switchTab('monthly')}
+                    className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium ${activeTab === 'monthly' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                    {t('list.tabMonthly')}
                 </button>
             </div>
 
@@ -479,7 +485,7 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
             {/* Modal tạo session */}
             <Modal
                 open={createModalOpen}
-                title={activeTab === 'daily' ? t('list.createDaily') : t('list.createWeekly')}
+                title={activeTab === 'daily' ? t('list.createDaily') : activeTab === 'weekly' ? t('list.createWeekly') : t('list.createMonthly')}
                 onClose={() => setCreateModalOpen(false)}
                 onSave={handleCreate}
             >

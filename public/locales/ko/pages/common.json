@@ -16,6 +16,7 @@
     "engManage": "체크시트 관리",
     "engDaily": "일일 체크시트",
     "engWeekly": "주간 체크시트",
+    "engMonthly": "월간 체크시트",
     "engReport": "결함 보고서"
   },
   "roles": {

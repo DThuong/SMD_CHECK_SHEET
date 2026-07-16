@@ -43,11 +43,9 @@ import {
   fetchEngCheckListResults,
   fetchEngImagesBySession,
 } from "../../redux/slices/engSlice";
-import type { EngSharedProps } from "../../pages/managers_role/EngCheckSheet";
+import type { EngSharedProps, EngTab } from "../../pages/managers_role/EngCheckSheet";
 import ReactPaginate from "react-paginate";
 import { useTranslation } from "react-i18next";
-
-type EngTab = "daily" | "weekly";
 type RangeMode = "1d" | "7d" | "30d" | "all";
 type ViewTab = "trend" | "breakdown" | "table";
 type ReportReturnMode = "trend-dot" | "table";
@@ -843,7 +841,6 @@ const EngDefectAnalyticsChart: React.FC<
   } = useAppSelector((state: any) => state.eng);
 
   const patrolType: EngTab = type || activeTab || "daily";
-
   const [rangeMode, setRangeMode] = useState<RangeMode>("7d");
   const [offset, setOffset] = useState(0);
   // Trạng thái khởi tạo dữ liệu báo cáo (đợi sessions). true khi chưa có cache.

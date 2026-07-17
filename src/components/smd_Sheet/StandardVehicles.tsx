@@ -21,6 +21,8 @@ import {
   uploadStandardVehicleReflowImage,
   deleteStandardVehicleReflowImage,
   uploadOcrImage,
+  uploadCntImage,
+  deleteCNTImage,
   deleteOCRImage
 } from "../../redux/slices/subTableSlice";
 import ImagePreviewModal from "../files/ImagePreviewModal";
@@ -90,6 +92,7 @@ const initialStandardVehiclesState: StandardVehicleData = {
   imgXray: [],
   imgReflow: [],
   imgOCR: [],
+  imgCNT: [],
 };
 
 const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
@@ -339,6 +342,15 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
           ).unwrap();
           successMessage = "Upload hình ảnh Reflow thành công";
           break;
+        case "imgCNT":
+          result = await dispatch(
+            uploadCntImage({
+              standardVehicleId: Number(standardVehicleId),
+              file,
+            }),
+          ).unwrap();
+          successMessage = "Upload hình ảnh CNT thành công";
+          break;
         case "imgOCR":
           result = await dispatch(
             uploadOcrImage({
@@ -362,7 +374,8 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
             | "imgIssue"
             | "imgXray"
             | "imgReflow"
-            | "imgOCR";
+            | "imgOCR"
+            | "imgCNT";
           const currentArray = prev[fieldKey] || [];
           return {
             ...prev,
@@ -460,6 +473,14 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         case "imgReflow":
           await dispatch(
             deleteStandardVehicleReflowImage({
+              standardVehicleId: Number(standardVehicleId),
+              imageUrl,
+            }),
+          ).unwrap();
+          break;
+        case "imgCNT":
+          await dispatch(
+            deleteCNTImage({
               standardVehicleId: Number(standardVehicleId),
               imageUrl,
             }),
@@ -1163,7 +1184,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
             <tr className="pdf-section-aoi">
               <th
                 colSpan={1}
-                rowSpan={7}
+                rowSpan={9}
                 className="border border-gray-600 px-2 py-2 text-xs bg-gray-100"
               >
                 AOI
@@ -1302,6 +1323,28 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
                   <ImageViewIcon
                     imageUrl={form.imgOCR}
                     title={t("ocr.imageOCR")}
+                    onView={openImagePreview}
+                  />
+                </div>
+              </td>
+            </tr>
+
+            {/** CNT Section (part of AOI) */}
+            <tr>
+              <th
+                colSpan={1}
+                className="border border-gray-600 px-2 py-2 text-xs bg-gray-100 text-left!"
+              >
+                {t("cnt.imageCNT")}
+              </th>
+              <td
+                colSpan={11}
+                className="border border-gray-600 px-2 py-2 text-xs"
+              >
+                <div className="flex items-center justify-center">
+                  <ImageViewIcon
+                    imageUrl={form.imgCNT}
+                    title={t("cnt.imageCNT")}
                     onView={openImagePreview}
                   />
                 </div>
@@ -2015,7 +2058,8 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
               </div>
             </div>
 
-            <div className="mb-0">
+            {/** OCR section */}
+            <div className="mb-3">
               <div className="text-xs font-semibold text-gray-600 mb-1">
                 {t("ocr.imageOCR")}
               </div>
@@ -2026,6 +2070,23 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
                 <ImageViewIcon
                   imageUrl={form.imgOCR}
                   title={t("ocr.imageOCR")}
+                  onView={openImagePreview}
+                />
+              </div>
+            </div>
+
+            {/** CNT section */}
+            <div className="mb-0">
+              <div className="text-xs font-semibold text-gray-600 mb-1">
+                {t("cnt.imageCNT")}
+              </div>
+              <div
+                className="w-full text-sm px-2 py-1 border border-gray-300 rounded bg-gray-100 flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ImageViewIcon
+                  imageUrl={form.imgCNT}
+                  title={t("cnt.imageCNT")}
                   onView={openImagePreview}
                 />
               </div>
@@ -2693,6 +2754,21 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
                   openImagePreview(
                     form.imgOCR || [],
                     t("ocr.imageOCR"),
+                    0,
+                  )
+                }
+                onViewSingle={(url, title) => openImagePreview(url, title)}
+              />
+              <MultiImageUpload
+                label="CNT"
+                images={form.imgCNT}
+                fieldName="imgCNT"
+                onUpload={handleImageUpload}
+                onRemove={(index) => handleRemoveImage("imgCNT", index)}
+                onViewAll={() =>
+                  openImagePreview(
+                    form.imgCNT || [],
+                    t("cnt.imageCNT"),
                     0,
                   )
                 }

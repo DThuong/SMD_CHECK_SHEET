@@ -51,6 +51,10 @@
       "title": "OCR Image",
       "imageOCR": "Hình ảnh OCR"
     },
+    "cnt": {
+      "title": "CNT Image",
+      "imageCNT": "Hình ảnh CNT"
+    },
     "mount": {
       "title": "Mount",
       "checkFirst3Boards": "Kiểm tra 3 board đầu tiên sau khi cắm linh kiện có OK không ?",

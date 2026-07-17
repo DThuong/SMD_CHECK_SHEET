@@ -111,6 +111,7 @@ export interface StandardVehicleData {
   imgXray?: string[];
   imgReflow?: string[];
   imgOCR?: string[];
+  imgCNT?: string[];
 }
 
 // PQCCheck
@@ -299,6 +300,24 @@ export const fetchTimeChangeModel = createAsyncThunk(
 );
 
 // ----------------------------------UPLOAD IMAGE ----------------------------------------
+// upload cnt image
+export const uploadCntImage = createAsyncThunk(
+  'subTable/uploadCntImage',
+  async ({ standardVehicleId, file }: { standardVehicleId: number; file: File }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await smdApi.put(`StandardVehicle/image-cnt/${standardVehicleId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể tải lên hình ảnh CNT');
+    }
+  }
+);
 // upload ocr image
 export const uploadOcrImage = createAsyncThunk(
   'subTable/uploadOcrImage',
@@ -584,6 +603,19 @@ export const uploadXRayImage = createAsyncThunk(
 )
 
 // ---------------------------------- DELETE ----------------------------------------
+// Delete image-cnt StandardVehicle
+export const deleteCNTImage = createAsyncThunk(
+  'subTable/deleteCNTImage',
+  async ({ standardVehicleId, imageUrl }: { standardVehicleId: number; imageUrl: string }, { rejectWithValue }) => {
+    try {
+      const imageName = extractFileName(imageUrl);
+      const response = await smdApi.delete(`StandardVehicle/image-cnt/${standardVehicleId}/${imageName}`);
+      return { data: response.data, imageUrl };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Không thể xóa hình ảnh CNT của StandardVehicle');
+    }
+  }
+)
 // Delete image-ocr StandardVehicle
 export const deleteOCRImage = createAsyncThunk(
   'subTable/deleteOCRImage',
@@ -1401,6 +1433,31 @@ const subTableSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
+
+    // upload image-cnt StandardVehicle
+    builder
+      .addCase(uploadCntImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadCntImage.fulfilled, (state, action) => {
+        state.loading = false;
+        // Cập nhật URL hình ảnh nếu backend trả về
+        if (state.standardVehicle && action.payload?.imageUrl) {
+          // Nếu imgCNT chưa tồn tại hoặc không phải array, khởi tạo mảng mới
+          if (!Array.isArray(state.standardVehicle.imgCNT)) {
+            state.standardVehicle.imgCNT = [];
+          }
+          // Thêm URL mới vào array (không trùng lặp)
+          if (!state.standardVehicle.imgCNT.includes(action.payload.imageUrl)) {
+            state.standardVehicle.imgCNT.push(action.payload.imageUrl);
+          }
+        }
+      })
+      .addCase(uploadCntImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
     // ----------------------------------- DELETE IMAGE -----------------------------------
     // Delete image ocr StandardVehicle
     builder
@@ -1682,6 +1739,25 @@ const subTableSlice = createSlice({
         }
       })
       .addCase(deleteTimeChangeModelIssueImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+      // delete cnt image
+      builder
+      .addCase(deleteCNTImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteCNTImage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.standardVehicle && state.standardVehicle.imgCNT) {
+          state.standardVehicle.imgCNT = state.standardVehicle.imgCNT.filter(
+            url => url !== action.payload.imageUrl //  Sửa logic filter
+          );
+        }
+      })
+      .addCase(deleteCNTImage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

@@ -19,6 +19,10 @@
       "title": "OCR 이미지",
       "imageOCR": "OCR 이미지"
     },
+    "cnt": {
+      "title": "CNT 이미지",
+      "imageCNT": "CNT 이미지"
+    },
     "printer": {
       "title": "프린터",
       "specGTAL": "압력 값 사양 (kg)",

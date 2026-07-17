@@ -76,6 +76,10 @@
       "title": "OCR Image",
       "imageOCR": "OCR Image"
     },
+    "cnt": {
+      "title": "CNT Image",
+      "imageCNT": "CNT Image"
+    },
     "output": {
       "title": "Output",
       "magazineDistance": "Check setting condition, input magazine distance at uploader?",

@@ -47,12 +47,13 @@ import ReactPaginate from "react-paginate";
 import { useTranslation } from "react-i18next";
 
 type PatrolKind = "daily" | "weekly";
-type RangeMode = "7d" | "30d" | "all";
+type RangeMode = "1d" | "7d" | "30d" | "all";
 type ViewTab = "trend" | "breakdown" | "table";
 type ReportReturnMode = "trend-dot" | "table";
 type StatusMode = "all" | "Submitted" | "Approved";
 type ShiftType = "morning" | "night";
 type ShiftFilter = "both" | "morning" | "night";
+type CardFilterType = "all" | "sheet_ng" | "error_ng" | "top_lines" | "has_after" | "no_after";
 
 const IMAGE_TYPES = ["Before", "After", "Evidence"] as const;
 type ImageTypeKey = (typeof IMAGE_TYPES)[number];
@@ -330,6 +331,17 @@ function endOfBusinessDate(date: Date) {
 function getRange(mode: RangeMode, offset: number, firstDateKey?: string) {
   const now = new Date();
   const currentBusinessDate = getBusinessDate(now) || new Date();
+
+  if (mode === "1d") {
+    const targetBusiness = addDays(currentBusinessDate, -offset * 1);
+    return {
+      start: startOfBusinessDate(targetBusiness),
+      end: endOfBusinessDate(targetBusiness),
+      startKey: formatLocalDateKey(targetBusiness),
+      endKey: formatLocalDateKey(targetBusiness),
+      label: `${fmtShort(targetBusiness)}`,
+    };
+  }
 
   if (mode === "7d") {
     const endBusiness = addDays(currentBusinessDate, -offset * 7);
@@ -838,6 +850,7 @@ const NGDefectAnalyticsChart: React.FC<
   const isRestoringReportStateRef = useRef(false);
   const [statusMode, setStatusMode] = useState<StatusMode>("all");
   const [shiftFilter, setShiftFilter] = useState<ShiftFilter>("both");
+  const [cardFilter, setCardFilter] = useState<CardFilterType>("all");
   const [viewTab, setViewTab] = useState<ViewTab>("trend");
   const [keyword, setKeyword] = useState("");
   const [selectedRecord, setSelectedRecord] = useState<SheetNGRecord | null>(
@@ -885,6 +898,7 @@ const NGDefectAnalyticsChart: React.FC<
 
   const rangeOptions = useMemo(
     () => [
+      { key: "1d" as RangeMode, label: "1 Ngày" },
       { key: "7d" as RangeMode, label: pT("reportRange7d") },
       { key: "30d" as RangeMode, label: pT("reportRange30d") },
       { key: "all" as RangeMode, label: pT("all") },
@@ -1758,14 +1772,25 @@ const getShiftLabel = useCallback(
   const detailTablePageSize = compact ? 20 : DETAIL_TABLE_PAGE_SIZE;
 
   const sortedDetailRecords = useMemo(() => {
-    return [...activeRecords].sort((a, b) => {
+    let records = [...activeRecords];
+    
+    if (cardFilter === "has_after") {
+      records = records.filter(record => getSheetImages(record).some(img => img.typeImage === "After"));
+    } else if (cardFilter === "no_after") {
+      records = records.filter(record => !getSheetImages(record).some(img => img.typeImage === "After"));
+    } else if (cardFilter === "top_lines") {
+      const topLineNames = lineData.slice(0, 5).map(l => l.name);
+      records = records.filter(record => topLineNames.includes(record.lineName || EMPTY));
+    }
+
+    return records.sort((a, b) => {
       const timeA = parseDate(a.sheetTime)?.getTime() || 0;
       const timeB = parseDate(b.sheetTime)?.getTime() || 0;
 
       // Ngày mới nhất / giờ mới nhất lên đầu
       return timeB - timeA;
     });
-  }, [activeRecords]);
+  }, [activeRecords, cardFilter, lineData, getSheetImages]);
 
   const detailPageCount = useMemo(() => {
     return Math.ceil(sortedDetailRecords.length / detailTablePageSize);
@@ -1802,12 +1827,15 @@ const getShiftLabel = useCallback(
   const totalSheetNG = activeRecords.length;
   const totalErrorNG = activeErrors.length;
   const topLine = lineData[0]?.name || EMPTY;
-  // Sheet có hình = sheet mà câu hỏi NG của nó có ít nhất 1 ảnh (tính theo ảnh
-  // đã tải về, gắn theo checkListResultId).
-  const imageLinkedCount = useMemo(
-    () => activeRecords.filter((record) => getSheetImages(record).length > 0).length,
+  // Phân tích hình ảnh cải tiến (After)
+  const sheetsWithAfterImageCount = useMemo(
+    () => activeRecords.filter((record) => 
+        getSheetImages(record).some(img => img.typeImage === "After")
+    ).length,
     [activeRecords, getSheetImages],
   );
+  
+  const sheetsWithoutAfterImageCount = totalSheetNG - sheetsWithAfterImageCount;
 
   const openImage = useCallback(
     (img: PatrolImageView, title: string, imageList?: PatrolImageView[]) => {
@@ -1955,6 +1983,7 @@ const getShiftLabel = useCallback(
     setToDateTime("");
     setStatusMode("all");
     setShiftFilter("both");
+    setCardFilter("all");
     setRangeMode("7d");
     setOffset(0);
     setDrillPoint(null);
@@ -2110,6 +2139,13 @@ const getShiftLabel = useCallback(
     }
   }, [patrolType]);
 
+  const handleCardClick = useCallback(
+    (filter: CardFilterType) => {
+      setCardFilter(filter);
+      setViewTab("table");
+    },
+    []
+  );
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none [&_.recharts-layer]:outline-none [&_.recharts-sector]:outline-none [&_.recharts-rectangle]:outline-none [&_.recharts-dot]:outline-none [&_*:focus]:outline-none">
@@ -2130,7 +2166,7 @@ const getShiftLabel = useCallback(
                 })}
               </h3>
               <p className="text-xs text-slate-400">
-                {rangeLabel} • {pT("businessDayTimeNote")}
+                {pT("businessDayTimeNote")}
                 {drillPoint ? (
                   <span className="ml-2 text-amber-300">
                     • {pT("reportFiltering")}: {fmtDateKey(drillPoint.dateKey)}{" "}
@@ -2141,98 +2177,130 @@ const getShiftLabel = useCallback(
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              disabled={rangeMode === "all"}
-              onClick={() => setOffset((x) => x + 1)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              <FaChevronLeft size={10} />
-            </button>
-
-            <div className="flex rounded-lg bg-slate-900 p-1">
-              {rangeOptions.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => {
-                    setRangeMode(item.key);
-                    setOffset(0);
-                    setDrillPoint(null);
-                    setFromDateTime("");
-                    setToDateTime("");
-                  }}
-                  className={`rounded-lg px-4 py-2 text-xs font-semibold transition ${
-                    rangeMode === item.key
-                      ? "bg-red-600 text-white"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex rounded-lg bg-slate-900 p-1">
-              {(["both", "morning", "night"] as const).map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => {
-                    setShiftFilter(item);
-                    setDrillPoint(null);
-                  }}
-                  className={`rounded-lg px-4 py-2 text-xs font-semibold transition ${
-                    shiftFilter === item
-                      ? item === "morning"
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex rounded-lg bg-slate-900 p-1">
+                {rangeOptions.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => {
+                      setRangeMode(item.key);
+                      setOffset(0);
+                      setDrillPoint(null);
+                      setFromDateTime("");
+                      setToDateTime("");
+                    }}
+                    className={`rounded-lg px-4 py-2 text-xs font-semibold transition ${
+                      rangeMode === item.key
                         ? "bg-red-600 text-white"
-                        : item === "night"
-                          ? "bg-purple-600 text-white"
-                          : "bg-blue-600 text-white"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  {item === "both"
-                    ? pT("shiftBoth")
-                    : item === "morning"
-                      ? pT("shiftMorning")
-                      : pT("shiftNight")}
-                </button>
-              ))}
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex rounded-lg bg-slate-900 p-1">
+                {(["both", "morning", "night"] as const).map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => {
+                      setShiftFilter(item);
+                      setDrillPoint(null);
+                    }}
+                    className={`rounded-lg px-4 py-2 text-xs font-semibold transition ${
+                      shiftFilter === item
+                        ? item === "morning"
+                          ? "bg-red-600 text-white"
+                          : item === "night"
+                            ? "bg-purple-600 text-white"
+                            : "bg-blue-600 text-white"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {item === "both"
+                      ? pT("shiftBoth")
+                      : item === "morning"
+                        ? pT("shiftMorning")
+                        : pT("shiftNight")}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <button
-              type="button"
-              disabled={offset === 0 || rangeMode === "all"}
-              onClick={() => setOffset((x) => Math.max(0, x - 1))}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              <FaChevronRight size={10} />
-            </button>
+            <div className="flex items-center gap-1 rounded-lg bg-slate-900/50 p-1">
+              <button
+                type="button"
+                disabled={rangeMode === "all"}
+                onClick={() => setOffset((x) => x + 1)}
+                className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                <FaChevronLeft size={10} />
+              </button>
+              
+              <span className="px-3 text-xs font-bold text-amber-300">
+                {rangeLabel.replace("Tất cả: ", "")}
+              </span>
+
+              <button
+                type="button"
+                disabled={offset === 0 || rangeMode === "all"}
+                onClick={() => setOffset((x) => Math.max(0, x - 1))}
+                className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                <FaChevronRight size={10} />
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <div className="rounded-xl bg-white/10 p-3">
+        <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
+          <div 
+             onClick={() => handleCardClick("sheet_ng")}
+             className={`rounded-xl p-3 cursor-pointer transition ${cardFilter === 'sheet_ng' ? 'bg-white/20 ring-2 ring-white/50' : 'bg-white/10 hover:bg-white/15'}`}
+          >
             <p className="text-xs text-slate-400">{pT("reportTotalSheetNG")}</p>
-            <p className="mt-1 text-2xl font-extrabold text-red-400">
+            <p className="mt-1 text-lg font-extrabold text-white">
               {totalSheetNG}
             </p>
-            <p className="mt-1 text-[11px] text-slate-500">
-              {pT("reportTotalErrorNG")}: {totalErrorNG}
+          </div>
+          <div 
+             onClick={() => handleCardClick("error_ng")}
+             className={`rounded-xl p-3 cursor-pointer transition ${cardFilter === 'error_ng' ? 'bg-white/20 ring-2 ring-white/50' : 'bg-white/10 hover:bg-white/15'}`}
+          >
+            <p className="text-xs text-slate-400">{pT("reportTotalErrorNG")}</p>
+            <p className="mt-1 text-lg font-extrabold text-red-400">
+              {totalErrorNG}
             </p>
           </div>
-          <div className="rounded-xl bg-white/10 p-3">
-            <p className="text-xs text-slate-400">{pT("reportTopLine")}</p>
-            <p className="mt-1 truncate text-sm font-bold text-amber-300">
-              {topLine}
+          <div 
+             onClick={() => handleCardClick("top_lines")}
+             className={`rounded-xl p-3 cursor-pointer transition ${cardFilter === 'top_lines' ? 'bg-white/20 ring-2 ring-white/50' : 'bg-white/10 hover:bg-white/15'}`}
+          >
+            <p className="text-xs text-slate-400">{pT("reportTop5Lines")}</p>
+            <p className="mt-1 text-lg font-extrabold text-amber-300">
+              {lineData.slice(0, 5).map(l => l.name).join(", ") || EMPTY}
             </p>
           </div>
-          <div className="rounded-xl bg-white/10 p-3">
-            <p className="text-xs text-slate-400">{pT("reportImageLinked")}</p>
-            <p className="mt-1 text-2xl font-extrabold text-emerald-300">
-              {imageLinkedCount}/{totalSheetNG}
+          <div 
+             onClick={() => handleCardClick("has_after")}
+             className={`rounded-xl p-3 cursor-pointer transition ${cardFilter === 'has_after' ? 'bg-white/20 ring-2 ring-emerald-400' : 'bg-white/10 hover:bg-white/15'}`}
+          >
+            <p className="text-xs text-slate-400">{pT("reportSheetWithAfterImage")}</p>
+            <p className="mt-1 text-lg font-extrabold text-emerald-300">
+              {sheetsWithAfterImageCount}/{totalSheetNG}
+            </p>
+          </div>
+          <div 
+             onClick={() => handleCardClick("no_after")}
+             className={`rounded-xl p-3 cursor-pointer transition ${cardFilter === 'no_after' ? 'bg-white/20 ring-2 ring-red-400' : 'bg-white/10 hover:bg-white/15'}`}
+          >
+            <p className="text-xs text-slate-400">{pT("reportSheetWithoutAfterImage")}</p>
+            <p className="mt-1 text-lg font-extrabold text-red-300">
+              {sheetsWithoutAfterImageCount}/{totalSheetNG}
             </p>
           </div>
         </div>

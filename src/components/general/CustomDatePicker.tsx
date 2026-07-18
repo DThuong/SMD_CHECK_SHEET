@@ -73,13 +73,8 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
                         allowScrollCloseRef.current = true;
                     }, 500);
                 }}
-                onFocus={(e) => {
-                    // Prevent software keyboard on mobile by setting readonly on focus
-                    if (e.target && 'readOnly' in e.target) {
-                        (e.target as HTMLInputElement).readOnly = true;
-                    }
-                }}
                 onChange={handleChange}
+                customInput={<input inputMode="none" />}
                 showTimeSelect={showTimeSelect}
                 timeFormat="HH:mm"
                 timeIntervals={1}

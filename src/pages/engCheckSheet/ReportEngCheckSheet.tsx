@@ -104,7 +104,7 @@ const ReportEngCheckSheet: React.FC<EngSharedProps> = (props) => {
                         <button
                             type="button"
                             onClick={() => handleChangeType('daily')}
-                            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition md:flex-none ${currentType === 'daily'
+                            className={`flex flex-1 items-center justify-center gap-2 rounded-xl! px-4 py-2 text-xs font-bold transition md:flex-none ${currentType === 'daily'
                                     ? 'bg-slate-950 text-white shadow-sm'
                                     : 'text-slate-500 hover:bg-white hover:text-slate-900'
                                 }`}
@@ -116,7 +116,7 @@ const ReportEngCheckSheet: React.FC<EngSharedProps> = (props) => {
                         <button
                             type="button"
                             onClick={() => handleChangeType('weekly')}
-                            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition md:flex-none ${currentType === 'weekly'
+                            className={`flex flex-1 items-center justify-center gap-2 rounded-xl! px-4 py-2 text-xs font-bold transition md:flex-none ${currentType === 'weekly'
                                     ? 'bg-slate-950 text-white shadow-sm'
                                     : 'text-slate-500 hover:bg-white hover:text-slate-900'
                                 }`}

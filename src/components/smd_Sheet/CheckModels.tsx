@@ -19,6 +19,7 @@ import {
 } from "../../redux/slices/subTableSlice";
 import { useSubTableFetch } from "../../utils/useSubTableFetch";
 import MultiImageUpload from "../files/MultiImageUpload";
+import CustomDatePicker from "../general/CustomDatePicker";
 
 const getWorkOrderPrefix = () => {
   const now = new Date();
@@ -740,35 +741,27 @@ const CheckModels = memo(function CheckModels({
             </label>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 mb-3">
             {/* Feeder Check */}
             <label className="text-xs">
               Feeder Check
-              <input
-                type="datetime-local"
-                value={form.feederCheck ?? ""}
-                onChange={(e) => set("feederCheck", e.target.value)}
-                className="mt-1 block w-full border rounded px-3 py-2 text-base"
-                style={{
-                  WebkitAppearance: "none",
-                  minHeight: "44px",
-                }}
-              />
+              <div className="mt-1">
+                <CustomDatePicker
+                  value={form.feederCheck ?? ""}
+                  onChange={(val) => set("feederCheck", val)}
+                />
+              </div>
             </label>
 
             {/* OP Accept */}
             <label className="text-xs">
               OP Accept
-              <input
-                type="datetime-local"
-                value={form.opAccept ?? ""}
-                onChange={(e) => set("opAccept", e.target.value)}
-                className="mt-1 block w-full border rounded px-3 py-2 text-base"
-                style={{
-                  WebkitAppearance: "none",
-                  minHeight: "44px",
-                }}
-              />
+              <div className="mt-1">
+                <CustomDatePicker
+                  value={form.opAccept ?? ""}
+                  onChange={(val) => set("opAccept", val)}
+                />
+              </div>
             </label>
           </div>
 

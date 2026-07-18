@@ -21,6 +21,7 @@ import ImagePreviewModal from "../files/ImagePreviewModal";
 import { useTranslation } from "react-i18next";
 import MultiImageUpload from "../files/MultiImageUpload";
 import { useSubTableFetch } from "../../utils/useSubTableFetch";
+import CustomDatePicker from "../general/CustomDatePicker";
 
 const initialPQCChecksState: PQCCheckData = {
   id: undefined,
@@ -811,33 +812,25 @@ const PQCChecks = memo(({ canEdit }: { canEdit: boolean }) => {
               </label>
 
               {/* Datetime-local GIỮ NGUYÊN style */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 <label className="text-xs">
                   Thời gian bắt đầu đo LCR
-                  <input
-                    type="datetime-local"
-                    value={form.startLCR ?? ""}
-                    onChange={(e) => set("startLCR", e.target.value)}
-                    className="mt-1 block w-full border rounded px-3 py-2 text-sm"
-                    style={{
-                      WebkitAppearance: "none",
-                      minHeight: "44px",
-                    }}
-                  />
+                  <div className="mt-1">
+                    <CustomDatePicker
+                      value={form.startLCR ?? ""}
+                      onChange={(val) => set("startLCR", val)}
+                    />
+                  </div>
                 </label>
 
                 <label className="text-xs">
                   Thời gian kết thúc đo LCR
-                  <input
-                    type="datetime-local"
-                    value={form.endLCR ?? ""}
-                    onChange={(e) => set("endLCR", e.target.value)}
-                    className="mt-1 block w-full border rounded px-3 py-2 text-sm"
-                    style={{
-                      WebkitAppearance: "none",
-                      minHeight: "44px",
-                    }}
-                  />
+                  <div className="mt-1">
+                    <CustomDatePicker
+                      value={form.endLCR ?? ""}
+                      onChange={(val) => set("endLCR", val)}
+                    />
+                  </div>
                 </label>
               </div>
 

@@ -18,6 +18,7 @@ import ImageViewIcon from "../files/ImageViewIcon";
 import ImagePreviewModal from "../files/ImagePreviewModal";
 import MultiImageUpload from "../files/MultiImageUpload";
 import { useSubTableFetch } from "../../utils/useSubTableFetch";
+import CustomDatePicker from "../general/CustomDatePicker";
 
 const initialTimeChangeState: TimeChangeModelData = {
   qc: "",
@@ -593,35 +594,27 @@ const TimeChangeModels = memo(({ canEdit }: { canEdit: boolean }) => {
                   className="block w-full border rounded px-3 py-2 text-sm uppercase"
                 />
               </div>
+            </div>
 
+            <div className="grid grid-cols-1 gap-3 mb-3">
               <div className="min-w-0">
                 <label className="text-xs block mb-1">Thời gian bắt đầu</label>
-                <input
-                  type="datetime-local"
-                  value={form.startTime || ""}
-                  onChange={(e) =>
-                    set("startTime", e.target.value || undefined)
-                  }
-                  className="block w-full border rounded px-3 py-2 text-sm"
-                  style={{
-                    WebkitAppearance: "none",
-                    minHeight: "44px",
-                  }}
-                />
+                <div className="mt-1">
+                  <CustomDatePicker
+                    value={form.startTime || ""}
+                    onChange={(val) => set("startTime", val || undefined)}
+                  />
+                </div>
               </div>
 
               <div className="min-w-0">
                 <label className="text-xs block mb-1">Thời gian kết thúc</label>
-                <input
-                  type="datetime-local"
-                  value={form.endTime || ""}
-                  onChange={(e) => set("endTime", e.target.value || undefined)}
-                  className="block w-full border rounded px-3 py-2 text-sm"
-                  style={{
-                    WebkitAppearance: "none",
-                    minHeight: "44px",
-                  }}
-                />
+                <div className="mt-1">
+                  <CustomDatePicker
+                    value={form.endTime || ""}
+                    onChange={(val) => set("endTime", val || undefined)}
+                  />
+                </div>
               </div>
             </div>
 

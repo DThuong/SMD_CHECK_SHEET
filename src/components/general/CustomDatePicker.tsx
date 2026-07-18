@@ -59,19 +59,37 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
         onChange(localISOTime);
     };
 
+    const datePickerRef = React.useRef<DatePicker>(null);
+    const allowScrollCloseRef = React.useRef(true);
+
     return (
         <div className="relative w-full">
             <DatePicker
+                ref={datePickerRef}
                 selected={selectedDate}
+                onCalendarOpen={() => {
+                    allowScrollCloseRef.current = false;
+                    setTimeout(() => {
+                        allowScrollCloseRef.current = true;
+                    }, 500);
+                }}
                 onChange={handleChange}
                 showTimeSelect={showTimeSelect}
                 timeFormat="HH:mm"
-                timeIntervals={15}
+                timeIntervals={1}
                 dateFormat={dateFormat}
                 locale={mappedLocale}
                 placeholderText={placeholder}
                 isClearable={isClearable}
                 portalId="datepicker-portal"
+                closeOnScroll={(e: Event) => {
+                    if (!allowScrollCloseRef.current) return false;
+                    const target = e.target as HTMLElement;
+                    if (target && target.closest && target.closest('.react-datepicker')) {
+                        return false;
+                    }
+                    return true;
+                }}
                 className={`w-full h-[40px] pl-9 pr-8 border border-gray-200 rounded-lg text-sm text-gray-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 bg-white transition-all shadow-sm hover:border-blue-300 ${className}`}
                 wrapperClassName="w-full"
                 calendarClassName="shadow-xl border-gray-200 rounded-xl overflow-hidden font-sans text-sm"

@@ -39,7 +39,11 @@
       "activeRate": "Tỷ lệ Active",
       "lockedAccounts": "tài khoản bị khóa",
       "completion": "Hoàn thành",
-      "approved": "Sheets đã duyệt"
+      "approved": "Sheets đã duyệt",
+      "totalSmdSheets": "Tổng SMD Sheets",
+      "totalEngSheets": "Tổng Engineer Sheets",
+      "pendingEngSheets": "Engineer Sheets Đang chờ",
+      "submittedEngSheets": "Engineer Sheets Đã nộp"
     }
   },
   "charts": {
@@ -63,6 +67,9 @@
     "sheetStatus": {
       "title": "Trạng thái SMD Sheets",
       "count": "Số lượng"
+    },
+    "engTimeline": {
+      "title": "Xu hướng tạo Engineer Sheet"
     }
   },
   "tables": {

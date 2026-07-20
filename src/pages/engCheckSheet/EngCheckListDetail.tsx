@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaCheck, FaTimes, FaPaperPlane, FaHistory, FaCamera, FaTrash, FaSearchPlus, FaEye, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +33,7 @@ import {
 } from '../../components/general/ImagePreviewCarousel';
 import LoadingSpinner from '../../components/general/LoadingSpinner';
 import type { EngSharedProps } from '../managers_role/EngCheckSheet';
+import { readPatrolNavState, savePatrolDashboardState, clearPatrolNavState } from '../../utils/patrolNavState';
 
 export type ImgType = 'Before' | 'After' | 'Evidence';
 
@@ -52,6 +53,7 @@ const STATUS_STYLES: Record<string, string> = {
 const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTab }) => {
     const { t } = useTranslation('engCheckSheet');
     const dispatch = useAppDispatch();
+    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const sessionId = Number(searchParams.get('id'));
 
@@ -332,6 +334,32 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
         if (sessionId) {
             localStorage.setItem('eng_highlight_session', JSON.stringify({ id: sessionId, ts: Date.now() }));
         }
+
+        const saved = readPatrolNavState();
+        const source = saved?.source;
+
+        const isFreshReturnState = (savedAt?: number) => {
+            if (!savedAt) return false;
+            return Date.now() - Number(savedAt) < 30 * 60 * 1000;
+        };
+
+        if (
+            source === "dashboard" &&
+            saved?.dashboardReturnPath &&
+            isFreshReturnState(saved.savedAt)
+        ) {
+            savePatrolDashboardState({
+                date: saved.dashboardDate || "",
+                shift: saved.dashboardShift,
+                page: saved.page || 0,
+                highlightId: Number(sessionId) || 0,
+                type: "eng",
+            });
+            clearPatrolNavState();
+            navigate(saved.dashboardReturnPath, { replace: true });
+            return;
+        }
+
         goToView('list');
     };
 

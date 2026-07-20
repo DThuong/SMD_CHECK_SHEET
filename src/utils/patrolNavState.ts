@@ -25,8 +25,9 @@ export interface PatrolNavState {
 export interface PatrolDashboardState {
   date: string;       // yyyy-MM-dd
   shift?: "morning" | "night";
-  page: number;       // detailPage trong PatrolTrendCard
+  page: number;       // detailPage
   highlightId: number;
+  type?: "patrol" | "eng";
 }
 
 export const savePatrolNavState = (state: PatrolNavState) => {

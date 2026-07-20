@@ -1,4 +1,4 @@
-// src/pages/dashboard/PatrolTrendCard.tsx
+// src/pages/dashboard/EngTrendCard.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
@@ -13,7 +13,8 @@ import {
 } from "recharts";
 import ReactPaginate from "react-paginate";
 import { useNavigate } from "react-router-dom";
-import type { PatrolSession, LineArea } from "../../redux/slices/patrolSlice";
+import { useTranslation } from "react-i18next";
+import type { vehicleSession } from "../../redux/slices/engSlice";
 import { savePatrolNavStateWithTimestamp } from "../../utils/patrolNavState";
 
 const PAGINATE_PROPS = {
@@ -34,7 +35,7 @@ const PAGINATE_PROPS = {
   disabledClassName: "opacity-40 cursor-not-allowed",
 };
 
-export interface PatrolTimelineStat {
+export interface EngTimelineStat {
   date: string;
   fullDate: string;
   morning: number;
@@ -42,14 +43,14 @@ export interface PatrolTimelineStat {
   count: number;
 }
 
-export interface PatrolTrendCardProps {
-  patrolTimelineStats: PatrolTimelineStat[];
-  patrolSessions: PatrolSession[];
-  lineAreas: LineArea[];
+export interface EngTrendCardProps {
+  engTimelineStats: EngTimelineStat[];
+  engSessions: vehicleSession[];
+
   fontSize: number;
   userRole?: string;
   navigate: ReturnType<typeof useNavigate>;
-  tPatrol: (key: string, opts?: any) => string;
+  tDashboard: (key: string, opts?: any) => string;
   shiftFilter: "morning" | "night" | "both";
   setShiftFilter: (v: "morning" | "night" | "both") => void;
   timeRange: "week" | "month" | "all";
@@ -61,14 +62,13 @@ export interface PatrolTrendCardProps {
   initialHighlightId?: number | null;
 }
 
-const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
-  patrolTimelineStats,
-  patrolSessions,
-  lineAreas,
+const EngTrendCard: React.FC<EngTrendCardProps> = ({
+  engTimelineStats,
+  engSessions,
   fontSize,
   userRole,
   navigate,
-  tPatrol,
+  tDashboard,
   shiftFilter,
   setShiftFilter,
   timeRange,
@@ -82,11 +82,12 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedShift, setSelectedShift] = useState<"morning" | "night" | null>(null);
   const [detailPage, setDetailPage] = useState(0);
-  const [highlightPatrolId, setHighlightPatrolId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"all" | "daily" | "weekly">("all");
-  const patrolDetailRef = useRef<HTMLDivElement>(null);
+  const [highlightDashboardId, setHighlightDashboardId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<"all" | "daily" | "weekly" | "monthly">("all");
+  const engDetailRef = useRef<HTMLDivElement>(null);
+  const { t: tPatrol } = useTranslation("patrol");
 
-  const pT = (key: string, opts?: any) => tPatrol(key, opts);
+  const pT = (key: string, opts?: any) => tDashboard(key, opts);
 
   // ── Click điểm trên chart ──
   const handleChartPointClick = (payload: any, shift: "morning" | "night") => {
@@ -99,29 +100,31 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
     setDetailPage(0);
 
     setTimeout(() => {
-      patrolDetailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      engDetailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
   };
 
   // ── Lọc sessions theo shift-based date ──
   const daySessions = useMemo(() => {
-    if (!selectedDate || !selectedShift || !patrolSessions?.length) return [];
-    return patrolSessions.filter((session) => {
+    if (!selectedDate || !selectedShift || !engSessions?.length) return [];
+    return engSessions.filter((session) => {
       if (!session.createdAt) return false;
       const { shift, key } = getShiftDay(new Date(session.createdAt));
       return key === selectedDate && shift === selectedShift;
     });
-  }, [selectedDate, selectedShift, patrolSessions, getShiftDay]);
+  }, [selectedDate, selectedShift, engSessions, getShiftDay]);
 
   const counts = useMemo(() => ({
     all: daySessions.length,
-    daily: daySessions.filter((s) => s.patrolType === "1").length,
-    weekly: daySessions.filter((s) => s.patrolType === "7").length,
+    daily: daySessions.filter((s) => s.sheetType === "1").length,
+    weekly: daySessions.filter((s) => s.sheetType === "7").length,
+    monthly: daySessions.filter((s) => s.sheetType === "30").length,
   }), [daySessions]);
 
   const filteredSheets = useMemo(() => {
-    if (activeTab === "daily") return daySessions.filter((s) => s.patrolType === "1");
-    if (activeTab === "weekly") return daySessions.filter((s) => s.patrolType === "7");
+    if (activeTab === "daily") return daySessions.filter((s) => s.sheetType === "1");
+    if (activeTab === "weekly") return daySessions.filter((s) => s.sheetType === "7");
+    if (activeTab === "monthly") return daySessions.filter((s) => s.sheetType === "30");
     return daySessions;
   }, [daySessions, activeTab]);
 
@@ -144,8 +147,8 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
   })();
 
   const handleGoToDetail = (sheetId: number) => {
-    const sheet = patrolSessions.find((s) => s.id === sheetId);
-    const sheetType = sheet?.patrolType === "7" ? "weekly" : "daily";
+    const sheet = engSessions.find((s) => s.id === sheetId);
+    const sheetType = sheet?.sheetType === "7" ? "weekly" : "daily";
 
     savePatrolNavStateWithTimestamp({
       type: sheetType,
@@ -158,7 +161,7 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
       dashboardReturnPath: window.location.pathname + window.location.search,
     });
 
-    navigate(`/${userRole?.toLowerCase()}/patrol?view=detail&id=${sheetId}`);
+    navigate(`/${userRole?.toLowerCase()}/engCheckSheet?view=detail&id=${sheetId}`);
   };
 
   const getStatusStyle = (status: string) => {
@@ -171,9 +174,9 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "Approved": return pT("statusApproved");
-      case "Submitted": return pT("statusSubmitted");
-      default: return pT("statusPending");
+      case "Approved": return tPatrol("statusApproved", { defaultValue: "Đã duyệt" });
+      case "Submitted": return tPatrol("statusSubmitted", { defaultValue: "Đã nộp" });
+      default: return tPatrol("statusPending", { defaultValue: "Chờ xử lý" });
     }
   };
 
@@ -194,12 +197,12 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
     if (!isInPage) return;
 
     const scrollTimer = setTimeout(() => {
-      setHighlightPatrolId(initialHighlightId);
+      setHighlightDashboardId(initialHighlightId);
       document
-        .querySelector(`[data-patrol-id="${initialHighlightId}"]`)
+        .querySelector(`[data-eng-id="${initialHighlightId}"]`)
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 150);
-    const clearTimer = setTimeout(() => setHighlightPatrolId(null), 2500);
+    const clearTimer = setTimeout(() => setHighlightDashboardId(null), 2500);
     return () => { clearTimeout(scrollTimer); clearTimeout(clearTimer); };
   }, [initialHighlightId, paginatedSheets]);
 
@@ -208,14 +211,14 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">{pT("patrolTrendTitle")}</h2>
-          <p className="text-xs text-slate-500 mt-1">{pT("patrolTrendSubtitle")}</p>
+          <h2 className="text-xl font-bold text-slate-800">{pT("charts.engTimeline.title", { defaultValue: "Xu hướng tạo Engineer Sheet" })}</h2>
+          <p className="text-xs text-slate-500 mt-1">{pT("charts.engTimeline.title", { defaultValue: "Xu hướng tạo Engineer Sheet" })}</p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-3 rounded-lg border border-emerald-200">
-            {pT("totalPatrolSheets")}:{" "}
-            {patrolTimelineStats.reduce((sum, item) => sum + item.count, 0)}
-          </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="px-3 py-3 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold shadow-sm">
+            {pT("adminDashboard.stats.totalEngSheets", { defaultValue: "Tổng Engineer Sheets" })}:{" "}
+            {engTimelineStats.reduce((sum, item) => sum + item.count, 0)}
+          </div>
 
           {/* Time range filter (7 ngày / 30 ngày / Tất cả) */}
           <div className="flex gap-2 flex-wrap">
@@ -258,7 +261,7 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
       {/* Chart */}
       <ResponsiveContainer width="100%" height={250} className="[&_*:focus]:outline-none">
         <LineChart
-          data={patrolTimelineStats}
+          data={engTimelineStats}
           accessibilityLayer={false}
           style={{ outline: "none" }}
         >
@@ -339,7 +342,7 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
       </ResponsiveContainer>
 
       {/* Detail table */}
-      <div ref={patrolDetailRef} className="mt-6 pt-4 border-t border-slate-100 scroll-mt-6">
+      <div ref={engDetailRef} className="mt-6 pt-4 border-t border-slate-100 scroll-mt-6">
         {!selectedDate ? (
           <div className="flex flex-col items-center justify-center py-4 px-4 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
             <svg className="w-10 h-10 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -352,11 +355,11 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
           <div>
             {/* Tab header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-              <span className="text-sm font-bold text-teal-600 bg-teal-50 px-3 py-1 rounded-full">
-                {pT("showingPatrolSheets", { count: counts[activeTab], info: formattedDateLabel })}
+              <span className="text-sm font-bold text-teal-700">
+                {tPatrol("showingPatrolSheets", { defaultValue: `Hiển thị ${counts[activeTab]} sheet - ${formattedDateLabel}`, count: counts[activeTab], info: formattedDateLabel })}
               </span>
               <div className="flex gap-1.5 p-1 bg-slate-100 rounded-lg border border-slate-200/40">
-                {(["all", "daily", "weekly"] as const).map((tab) => (
+                {(["all", "daily", "weekly", "monthly"] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => { setActiveTab(tab); setDetailPage(0); }}
@@ -365,9 +368,10 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
                         : "text-slate-500 hover:text-slate-800"
                       }`}
                   >
-                    {tab === "all" ? `${pT("all")} (${counts.all})` :
-                      tab === "daily" ? `${pT("dailyPatrol")} (${counts.daily})` :
-                        `${pT("weeklyPatrol")} (${counts.weekly})`}
+                    {tab === "all" ? `${tPatrol("all", { defaultValue: "Tất cả" })} (${counts.all})` :
+                      tab === "daily" ? `Sheet Ngày (${counts.daily})` :
+                        tab === "weekly" ? `Sheet Tuần (${counts.weekly})` :
+                          `Sheet Tháng (${counts.monthly})`}
                   </button>
                 ))}
               </div>
@@ -382,7 +386,7 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
                     <table className="w-full border-collapse">
                       <thead>
                         <tr className="border-b border-slate-100 bg-slate-50/50">
-                          {[pT("stt"), pT("sheetId"), pT("lineArea"), pT("creator"), pT("createdAt"), pT("status"), pT("action")]
+                          {[tPatrol("stt", { defaultValue: "STT" }), tPatrol("sheetId", { defaultValue: "SHEET ID" }), tPatrol("lineArea", { defaultValue: "CHUYỀN" }), tPatrol("creator", { defaultValue: "NGƯỜI TẠO" }), tPatrol("createdAt", { defaultValue: "NGÀY TẠO" }), tPatrol("status", { defaultValue: "TRẠNG THÁI" }), tPatrol("action", { defaultValue: "ACTION" })]
                             .map((label, i) => (
                               <th key={i} className={`py-3 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 ${i === 6 ? "text-center" : "text-left"}`}>
                                 {label}
@@ -392,13 +396,13 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
                       </thead>
                       <tbody>
                         {paginatedSheets.map((sheet, index) => {
-                          const lineName = lineAreas.find((l) => l.id === sheet.lineAreaId)?.lineAreaName || "N/A";
+                          const lineName = sheet.lineName || "N/A";
                           return (
                             <tr
                               key={sheet.id}
-                              data-patrol-id={sheet.id}
+                              data-eng-id={sheet.id}
                               onClick={() => handleGoToDetail(sheet.id)}
-                              className={`border-b border-slate-100 cursor-pointer transition-all duration-500 ${highlightPatrolId === sheet.id
+                              className={`border-b border-slate-100 cursor-pointer transition-all duration-500 ${highlightDashboardId === sheet.id
                                   ? "bg-blue-100 ring-2 ring-inset ring-blue-400 shadow-md"
                                   : "hover:bg-slate-50/60"
                                 }`}
@@ -424,7 +428,7 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                   </svg>
-                                  {pT("view")}
+                                  {tPatrol("view", { defaultValue: "Xem" })}
                                 </button>
                               </td>
                             </tr>
@@ -436,14 +440,15 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
 
                   {/* Mobile */}
                   <div className="grid gap-3 md:hidden">
+                    
                     {paginatedSheets.map((sheet) => {
-                      const lineName = lineAreas.find((l) => l.id === sheet.lineAreaId)?.lineAreaName || "N/A";
+                      const lineName = sheet.lineName || "N/A";
                       return (
                         <div
                           key={sheet.id}
-                          data-patrol-id={sheet.id}
+                          data-eng-id={sheet.id}
                           onClick={() => handleGoToDetail(sheet.id)}
-                          className={`border rounded-lg p-3 cursor-pointer transition-all duration-500 ${highlightPatrolId === sheet.id
+                          className={`border rounded-lg p-3 cursor-pointer transition-all duration-500 ${highlightDashboardId === sheet.id
                               ? "bg-blue-50 border-blue-400 ring-2 ring-blue-300"
                               : "bg-slate-50/40 border-slate-100 hover:border-slate-200"
                             }`}
@@ -469,7 +474,11 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
                               onClick={() => handleGoToDetail(sheet.id)}
                               className="inline-flex items-center gap-1.5 px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-lg"
                             >
-                              {pT("view")}
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              {tPatrol("view", { defaultValue: "Xem" })}
                             </button>
                           </div>
                         </div>
@@ -481,12 +490,12 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
                   {totalPages > 1 && (
                     <div className="flex flex-col sm:flex-row justify-between items-center mt-4 pt-3 border-t border-slate-100 gap-3">
                       <span className="text-xs text-slate-500 font-semibold">
-                        {pT("pageIndicator", { current: detailPage + 1, total: totalPages })}
+                        {tPatrol("pageIndicator", { defaultValue: `Trang ${detailPage + 1} / ${totalPages}`, current: detailPage + 1, total: totalPages })}
                       </span>
                       <ReactPaginate
                         {...PAGINATE_PROPS}
-                        previousLabel={pT("prevPage")}
-                        nextLabel={pT("nextPage")}
+                        previousLabel={tPatrol("prevPage", { defaultValue: "Trước" })}
+                        nextLabel={tPatrol("nextPage", { defaultValue: "Sau" })}
                         activeLinkClassName="!bg-teal-600 !text-white !border-teal-600 font-bold"
                         pageCount={totalPages}
                         forcePage={detailPage}
@@ -497,7 +506,7 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
                 </>
               ) : (
                 <div className="text-center py-6">
-                  <p className="text-sm font-semibold text-slate-400">{pT("noPatrolSheets")}</p>
+                  <p className="text-sm font-semibold text-slate-400">{tPatrol("noPatrolSheets", { defaultValue: "Không có dữ liệu" })}</p>
                 </div>
               )}
             </div>
@@ -508,4 +517,4 @@ const PatrolTrendCard: React.FC<PatrolTrendCardProps> = ({
   );
 };
 
-export default PatrolTrendCard;
+export default EngTrendCard;

@@ -4,6 +4,7 @@ import ReactPaginate from 'react-paginate';
 import { FaPlus, FaCog, FaTrash, FaEye, FaChartBar } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import {
     fetchEngSessionsBySheetType,
@@ -40,7 +41,13 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
     const isEngineer = user?.role?.toLowerCase() === 'eng';
 
     // ------- Filter state (realtime: debounce + fuzzy + cache) -------
-    const [filter, setFilter] = useState<PatrolFilter>(PATROL_FILTER_DEFAULT);
+    const [searchParams] = useSearchParams();
+    const [filter, setFilter] = useState<PatrolFilter>(() => {
+        const queryStatus = searchParams.get('status');
+        return queryStatus
+            ? { ...PATROL_FILTER_DEFAULT, status: queryStatus }
+            : PATROL_FILTER_DEFAULT;
+    });
     const [filterLoading, setFilterLoading] = useState(false);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Cache: không gọi lại API nếu bộ lọc không đổi so với lần gọi gần nhất
@@ -128,19 +135,37 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
     useEffect(() => {
         let isMounted = true;
         setIsFetchingSessions(true);
-        Promise.all([
+
+        const initStatus = searchParams.get('status') || '';
+        
+        const promises: Promise<any>[] = [
             dispatch(fetchEngSessionsBySheetType(sheetType)).unwrap().catch(() => { }),
             dispatch(fetchEngLines()).unwrap().catch(() => { })
-        ]).finally(() => {
+        ];
+
+        if (initStatus) {
+            promises.push(
+                dispatch(filterEngSessions({ status: initStatus })).unwrap().catch(() => { })
+            );
+            lastFilterKeyRef.current = JSON.stringify({ status: initStatus });
+        } else {
+            lastFilterKeyRef.current = '';
+        }
+
+        Promise.all(promises).finally(() => {
             if (isMounted) setIsFetchingSessions(false);
         });
-        setFilter(PATROL_FILTER_DEFAULT);
-        lastFilterKeyRef.current = '';
+        
+        setFilter({
+            ...PATROL_FILTER_DEFAULT,
+            status: initStatus
+        });
+        
         return () => {
             isMounted = false;
             if (debounceRef.current) clearTimeout(debounceRef.current);
         };
-    }, [dispatch, sheetType]);
+    }, [dispatch, sheetType, searchParams]);
 
     const switchTab = (tab: EngTab) => {
         goToView('list', null, tab);
@@ -331,7 +356,7 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
             </div>
 
             {/* Danh sách */}
-            {(loading || isFetchingSessions) && displayList.length === 0 ? (
+            {(loading || isFetchingSessions || filterLoading) ? (
                 <div className="flex justify-center items-center py-12">
                     <LoadingSpinner size="sm" message={t('list.loading', 'Đang tải dữ liệu...')} />
                 </div>

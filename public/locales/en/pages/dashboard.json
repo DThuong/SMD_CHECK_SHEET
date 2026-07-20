@@ -39,7 +39,11 @@
       "activeRate": "Active Rate",
       "lockedAccounts": "locked accounts",
       "completion": "Completion",
-      "approved": "Approved Sheets"
+      "approved": "Approved Sheets",
+      "totalSmdSheets": "Total SMD Sheets",
+      "totalEngSheets": "Total Engineer Sheets",
+      "pendingEngSheets": "Pending Engineer Sheets",
+      "submittedEngSheets": "Submitted Engineer Sheets"
     }
   },
   "charts": {
@@ -63,6 +67,9 @@
     "sheetStatus": {
       "title": "SMD Sheet Status",
       "count": "Count"
+    },
+    "engTimeline": {
+      "title": "Engineer Sheet Status"
     }
   },
   "tables": {

@@ -24,7 +24,7 @@ export interface AuthUser {
   expiresAt?: string;
 }
 
-export interface RegisterUserRequest{
+export interface RegisterUserRequest {
   username: string,
   password: string,
   role: string,
@@ -99,19 +99,19 @@ export const loginUser = createAsyncThunk(
       }
 
       const response = await smdApi.post('/Account/login', credentials);
-      
+
       // Lưu token mới (localStorage đã sạch)
       if (response.data?.token) {
         localStorage.setItem('token', response.data.token);
       }
-      
+
       // Set flag notification
       try {
         sessionStorage.setItem("justLoggedIn", "1");
       } catch (error) {
         console.error('Failed to set session storage:', error);
       }
-      
+
       return response.data;
     } catch (error: any) {
       // Nếu login thất bại, cũng clear storage
@@ -121,15 +121,15 @@ export const loginUser = createAsyncThunk(
       } catch (e) {
         console.error('Failed to clear storage on error:', e);
 
-        
+
       }
 
       if (error.response && error.response.data) {
         const errorData = error.response.data;
-        const errorMessage = typeof errorData === 'string' 
-          ? errorData 
+        const errorMessage = typeof errorData === 'string'
+          ? errorData
           : errorData.title || errorData.message || 'Đăng nhập thất bại';
-        
+
         return rejectWithValue(errorMessage);
       }
       return rejectWithValue(error.message || 'Đăng nhập thất bại');
@@ -185,7 +185,7 @@ export const updateUser = createAsyncThunk(
         fullName: userData.fullName,
         phoneNumber: userData.phoneNumber
       };
-      
+
       const response = await smdApi.put(`/Account/${userData.id}`, updateData);
       return { ...response.data, id: userData.id };
     } catch (error: any) {
@@ -196,7 +196,7 @@ export const updateUser = createAsyncThunk(
 
 // API xóa người dùng theo id (dùng cho admin)
 export const deleteUser = createAsyncThunk(
-  'auth/deleteUser',  
+  'auth/deleteUser',
   async (userId: number, { rejectWithValue }) => {
     try {
       const response = await smdApi.delete(`/Account/${userId}`);
@@ -213,20 +213,20 @@ export const changePasswordUser = createAsyncThunk(
   async (passwordData: ChangePasswordUserRequest, { rejectWithValue }) => {
     try {
       const response = await smdApi.put('/Account/change-password', passwordData);
-      
+
       // Server trả về plain text "Đổi mật khẩu thành công"
       // Nên ta cần return một object
-      return { 
+      return {
         message: typeof response.data === 'string' ? response.data : response.data.message || 'Success'
       };
     } catch (error: any) {
       // Xử lý error message từ API
       if (error.response && error.response.data) {
         const errorData = error.response.data;
-        const errorMessage = typeof errorData === 'string' 
-          ? errorData 
+        const errorMessage = typeof errorData === 'string'
+          ? errorData
           : errorData.title || errorData.message || 'Đổi mật khẩu thất bại';
-        
+
         return rejectWithValue(errorMessage);
       }
       return rejectWithValue(error.message || 'Đổi mật khẩu thất bại');
@@ -276,10 +276,10 @@ const authSlice = createSlice({
       try {
         // Lưu device ID trước khi clear
         const deviceId = localStorage.getItem('smd_device_id');
-        
+
         localStorage.clear();
         sessionStorage.clear();
-        
+
         // Khôi phục device ID
         if (deviceId) {
           localStorage.setItem('smd_device_id', deviceId);
@@ -288,7 +288,7 @@ const authSlice = createSlice({
         console.error('Failed to clear storage:', error);
       }
     },
-    
+
     clearError(state) {
       state.error = null;
       state.usersError = null;
@@ -314,7 +314,7 @@ const authSlice = createSlice({
 
         const expiresAtTimestamp = new Date(action.payload.expiresAt).getTime();
         state.tokenExpiresAt = expiresAtTimestamp;
-        
+
         // Lưu token (localStorage đã được clear trong thunk)
         if (action.payload.token) {
           localStorage.setItem('token', action.payload.token);
@@ -331,11 +331,11 @@ const authSlice = createSlice({
         try {
           localStorage.removeItem('token');
           localStorage.removeItem('tokenExpiresAt');
-        } catch(error) {
+        } catch (error) {
           console.error('Failed to remove storage:', error);
         }
       })
-      
+
       // Logout
       .addCase(logoutUser.pending, (state) => {
         state.loading = true;

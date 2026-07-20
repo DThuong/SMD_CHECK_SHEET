@@ -39,7 +39,11 @@
       "activeRate": "활성 비율",
       "lockedAccounts": "잠긴 계정",
       "completion": "완료",
-      "approved": "승인된 시트"
+      "approved": "승인된 시트",
+      "totalSmdSheets": "전체 SMD 시트",
+      "totalEngSheets": "전체 엔지니어 시트",
+      "pendingEngSheets": "대기 중인 엔지니어 시트",
+      "submittedEngSheets": "제출된 엔지니어 시트"
     }
   },
   "charts": {
@@ -63,6 +67,9 @@
     "sheetStatus": {
       "title": "SMD 시트 상태",
       "count": "수량"
+    },
+    "engTimeline": {
+      "title": "엔지니어 시트 상태"
     }
   },
   "tables": {

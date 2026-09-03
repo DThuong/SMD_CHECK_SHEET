@@ -19,6 +19,11 @@ interface CustomDatePickerProps {
     showTimeSelect?: boolean;
     dateFormat?: string;
     isClearable?: boolean;
+    showMonthYearPicker?: boolean;
+    showYearPicker?: boolean;
+    showWeekPicker?: boolean;
+    maxDate?: Date;
+    showYearDropdown?: boolean;
 }
 
 const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
@@ -28,7 +33,12 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
     className = '',
     showTimeSelect = true,
     dateFormat = "dd/MM/yyyy HH:mm",
-    isClearable = true
+    isClearable = true,
+    showMonthYearPicker = false,
+    showYearPicker = false,
+    showWeekPicker = false,
+    maxDate,
+    showYearDropdown = false
 }) => {
     const { i18n } = useTranslation();
     
@@ -54,6 +64,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
         }
         
         // Format to local ISO string (YYYY-MM-DDTHH:mm) suitable for input type="datetime-local" and backend
+        // If year or month picker, we might just want to store the first day of that month/year
         const offset = date.getTimezoneOffset() * 60000;
         const localISOTime = (new Date(date.getTime() - offset)).toISOString().slice(0, 16);
         onChange(localISOTime);
@@ -76,6 +87,13 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
                 onChange={handleChange}
                 customInput={<input inputMode="none" />}
                 showTimeSelect={showTimeSelect}
+                showMonthYearPicker={showMonthYearPicker}
+                showYearPicker={showYearPicker}
+                showWeekPicker={showWeekPicker}
+                showYearDropdown={showYearDropdown}
+                scrollableYearDropdown={showYearDropdown}
+                yearDropdownItemNumber={15}
+                maxDate={maxDate}
                 timeFormat="HH:mm"
                 timeIntervals={1}
                 dateFormat={dateFormat}
@@ -91,7 +109,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
                     }
                     return true;
                 }}
-                className={`w-full h-[40px] pl-9 pr-8 border border-gray-200 rounded-lg text-sm text-gray-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 bg-white transition-all shadow-sm hover:border-blue-300 ${className}`}
+                className={`w-full h-[34px] pl-9 pr-8 border border-gray-300 rounded-lg text-sm text-gray-700 font-medium outline-none focus:ring-1 focus:ring-blue-400 bg-white transition-all shadow-sm hover:border-blue-400 ${className}`}
                 wrapperClassName="w-full"
                 calendarClassName="shadow-xl border-gray-200 rounded-xl overflow-hidden font-sans text-sm"
             />

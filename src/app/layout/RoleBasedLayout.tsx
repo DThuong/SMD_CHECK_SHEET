@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, NavLink, Outlet, useParams, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { HiMenu, HiX, HiLogout, HiChevronDown } from "react-icons/hi";
 import { FaAnglesLeft, FaAnglesRight } from "react-icons/fa6";
-import { FaKey, FaUser, FaChartPie, FaFile, FaC, FaMicrochip } from "react-icons/fa6";
+import { FaKey, FaUser, FaChartPie, FaFile, FaC, FaMicrochip, FaWrench } from "react-icons/fa6";
 import logo from "../../assets/image/brand_image_3.webp";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { PiPlantFill } from "react-icons/pi";
@@ -33,7 +33,7 @@ const RoleBasedLayout = () => {
       return false;
     }
   });
-  const { t, i18n } = useTranslation('common');
+  const { t, i18n } = useTranslation(['common']);
   const navigate = useNavigate();
   const location = useLocation();
   const [currentLang, setCurrentLang] = useState(i18n.language || "vi");

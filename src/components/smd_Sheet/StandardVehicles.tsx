@@ -201,40 +201,40 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
 
   // useEffect scroll đến section khi modal mở
   useEffect(() => {
-  if (!open || !scrollTarget) return;
+    if (!open || !scrollTarget) return;
 
-  const timer = setTimeout(() => {
-    const ref = sectionRefs[scrollTarget as keyof typeof sectionRefs];
-    if (!ref?.current) {
+    const timer = setTimeout(() => {
+      const ref = sectionRefs[scrollTarget as keyof typeof sectionRefs];
+      if (!ref?.current) {
+        setScrollTarget('');
+        return;
+      }
+
+      // Tìm scrollable container bằng cách đi ngược lên DOM từ section
+      let container: HTMLElement | null = ref.current.parentElement;
+      while (container) {
+        const overflow = window.getComputedStyle(container).overflowY;
+        if (overflow === 'auto' || overflow === 'scroll') break;
+        container = container.parentElement;
+      }
+
+      if (container) {
+        const containerTop = container.getBoundingClientRect().top;
+        const sectionTop = ref.current.getBoundingClientRect().top;
+        const offset = sectionTop - containerTop;
+
+        container.scrollBy({
+          top: offset,
+          behavior: 'smooth',
+        });
+      }
+
       setScrollTarget('');
-      return;
-    }
+    }, 150);
 
-    // Tìm scrollable container bằng cách đi ngược lên DOM từ section
-    let container: HTMLElement | null = ref.current.parentElement;
-    while (container) {
-      const overflow = window.getComputedStyle(container).overflowY;
-      if (overflow === 'auto' || overflow === 'scroll') break;
-      container = container.parentElement;
-    }
-
-    if (container) {
-      const containerTop = container.getBoundingClientRect().top;
-      const sectionTop = ref.current.getBoundingClientRect().top;
-      const offset = sectionTop - containerTop;
-
-      container.scrollBy({
-        top: offset,
-        behavior: 'smooth',
-      });
-    }
-
-    setScrollTarget('');
-  }, 150);
-
-  return () => clearTimeout(timer);
-// eslint-disable-next-line react-hooks/exhaustive-deps
-}, [open, scrollTarget]);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, scrollTarget]);
 
   const openModalAt = (section: string) => {
     if (!canEdit) return;
@@ -1380,7 +1380,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
 
             {/** Row 27.2 */}
             <tr>
-              <th colSpan={8} className="border px-2 py-2 text-xs bg-gray-100">
+              <th colSpan={10} className="border px-2 py-2 text-xs bg-gray-100">
                 <div className="font-semibold mb-1">
                   {t("output.settingValue")}
                 </div>
@@ -2644,7 +2644,7 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
 
                 <div className="min-w-0">
                   <label className="text-xs block mb-1">Reflow Speed</label>
-                   <input
+                  <input
                     className="block w-full border rounded px-3 py-2 text-sm min-w-0 uppercase"
                     value={form.reflowSpeed ?? ""}
                     onChange={(e) => set("reflowSpeed", e.target.value)}

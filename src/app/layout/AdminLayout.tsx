@@ -28,7 +28,7 @@ const AdminLayout = () => {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
-  const { t, i18n } = useTranslation("common");
+  const { t, i18n } = useTranslation(["common"]);
 const [currentLang, setCurrentLang] = useState(i18n.language || "vi");
 
 useEffect(() => {

@@ -4,29 +4,37 @@ import AdminLayout from './layout/AdminLayout';
 import RoleBasedLayout from './layout/RoleBasedLayout'; // Layout động theo role
 // router
 import { Route, Routes, Navigate } from 'react-router-dom';
-// user pages
-import Home from '../pages/Home';
-import Login from '../pages/Login';
-import ErrorPage from '../pages/ErrorPage';
-// admin pages (chỉ cho ADMIN)
-import Dashboard from '../pages/managers_role/Dashboard';
-import User from '../pages/managers_role/User';
-// shared pages (dùng chung)
-import Settings from '../pages/managers_role/Settings';
-import Logs from '../pages/managers_role/Logs';
+import { lazy, Suspense } from 'react';
 
 // Import Redux hooks
 import { useAppSelector } from '../redux/hooks';
 // import spinner
 import LoadingSpinner from '../components/general/LoadingSpinner';
-import SmdSheetDetail from '../components/detail_Sheet/SmdSheetDetail';
 import AuthInitializer from '../components/auth/AuthInitializer';
-import SheetDetailViewer from '../components/detail_Sheet/SheetDetailViewer';
-import FileDetailViewer from '../pages/FileDetailViewer';
-import ChangePassword from '../pages/ChangePassword';
-import Plan from '../pages/managers_role/Plan';
-import PatrolComponent from '../pages/managers_role/PatrolComponent';
-import EngCheckSheet from '../pages/managers_role/EngCheckSheet';
+
+// Login giữ import tĩnh: là màn hình đầu tiên, không nên chờ tải thêm chunk.
+import Login from '../pages/Login';
+
+// ---------------------------------------------------------------------------
+// LAZY-LOAD CÁC TRANG
+// Trước đây toàn bộ trang được import tĩnh nên Vite gộp tất cả vào MỘT file
+// index.js ~2,5 MB — kể cả recharts, xlsx, jspdf, html2canvas — và máy trạm phải
+// tải + parse hết ngay ở màn hình đăng nhập.
+// Nay mỗi trang là một chunk riêng, chỉ tải khi người dùng thực sự mở trang đó.
+// ---------------------------------------------------------------------------
+const Home = lazy(() => import('../pages/Home'));
+const ErrorPage = lazy(() => import('../pages/ErrorPage'));
+const Dashboard = lazy(() => import('../pages/managers_role/Dashboard'));
+const User = lazy(() => import('../pages/managers_role/User'));
+const Settings = lazy(() => import('../pages/managers_role/Settings'));
+const Logs = lazy(() => import('../pages/managers_role/Logs'));
+const SmdSheetDetail = lazy(() => import('../components/detail_Sheet/SmdSheetDetail'));
+const SheetDetailViewer = lazy(() => import('../components/detail_Sheet/SheetDetailViewer'));
+const FileDetailViewer = lazy(() => import('../pages/FileDetailViewer'));
+const ChangePassword = lazy(() => import('../pages/ChangePassword'));
+const Plan = lazy(() => import('../pages/managers_role/Plan'));
+const PatrolComponent = lazy(() => import('../pages/managers_role/PatrolComponent'));
+const EngCheckSheet = lazy(() => import('../pages/managers_role/EngCheckSheet'));
 
 // ========================================
 // Component bảo vệ route cho PQC
@@ -142,6 +150,8 @@ const ChangePasswordRoute = ({ children }: { children: React.ReactNode }) => {
 const App = () => {
   return (
     <AuthInitializer>
+      {/* Suspense bọc toàn bộ Routes để hiện spinner trong lúc tải chunk của trang */}
+      <Suspense fallback={<LoadingSpinner />}>
       <Routes>
         {/* ========== PQC ROUTES ========== */}
         <Route element={<UserLayout />}>
@@ -182,6 +192,7 @@ const App = () => {
           <Route path="/:role" element={<RoleDynamicRedirect />} />
         </Route>
       </Routes>
+      </Suspense>
     </AuthInitializer>
   );
 };

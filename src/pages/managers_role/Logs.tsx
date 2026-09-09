@@ -17,7 +17,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../../components/general/Notification";
 import { useSearchParams } from "react-router-dom";
-import { deleteSheetById } from "../../redux/slices/changeModelSlice";
+import { deleteSheetById, removeSheetFromList } from "../../redux/slices/changeModelSlice";
 import { ConfirmModal } from "../../components/general/ConfirmModal";
 import {
   saveFilterState,
@@ -29,6 +29,7 @@ import {
 } from "../../utils/navigationState";
 import LoadingSpinner from "../../components/general/LoadingSpinner";
 import { SmartSearchBar } from "../../components/general/SmartSearchBar";
+import { getDefaultDateRange, DEFAULT_RANGE_DAYS } from "../../utils/defaultDateRange";
 
 // Redux actions
 import {
@@ -119,16 +120,17 @@ const Logs = () => {
     sheet: ChangeModelResponse | null;
   }>({ open: false, sheet: null });
 
-  // Filter state
-  const [filter, setFilter] = useState<SheetFilter>({
+  // Filter state.
+  // Mặc định lọc 30 ngày gần nhất thay vì tải toàn bộ ~4000 sheet mỗi lần mở trang.
+  // Người dùng vẫn xem được toàn bộ bằng nút "Xem tất cả" bên dưới thanh tìm kiếm.
+  const [filter, setFilter] = useState<SheetFilter>(() => ({
     workOrder: "",
-    fromDate: "",
-    toDate: "",
+    ...getDefaultDateRange(),
     fcode: "",
     id: 0,
     status: "all",
     createrName: "",
-  });
+  }));
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(0);
@@ -148,8 +150,10 @@ const Logs = () => {
   }>({ fcode: [], workOrder: [], createrName: [], id: [] });
   const [, setCandidatesTick] = useState(0);
 
-  // Load sheets với filter được truyền vào (không dùng state)
-  const loadSheetsWithFilter = async (filterToUse: SheetFilter) => {
+  // Load sheets với filter được truyền vào (không dùng state).
+  // Trả về true nếu tải thành công, false nếu lỗi — KHÔNG throw, vì có nhiều chỗ
+  // gọi hàm này trong setTimeout mà không bắt lỗi.
+  const loadSheetsWithFilter = async (filterToUse: SheetFilter): Promise<boolean> => {
     try {
       const hasWorkOrder = filterToUse.workOrder.trim() !== "";
       const hasDateRange =
@@ -178,15 +182,16 @@ const Logs = () => {
           filterParams.id = filterToUse.id;
         }
         await dispatch(getSheetByFilter(filterParams)).unwrap();
-        return;
+        return true;
       }
 
       await dispatch(fetchChangeModel()).unwrap();
+      return true;
     } catch (error: any) {
       console.error("❌ Lỗi khi tải sheets:", error);
-      if (error?.message) {
-        alert(`Lỗi: ${error.message}`);
-      }
+      // Trước đây dùng alert() — hộp thoại chặn toàn bộ trang. Dùng toast thay thế.
+      showNotification("error", t("error.loadSheetsFailed"), error?.message || String(error));
+      return false;
     }
   };
 
@@ -312,8 +317,9 @@ const Logs = () => {
       return;
     }
 
-    // Priority 6: Load all
-    loadSheets();
+    // Priority 6: lần đầu vào trang — chỉ tải khoảng ngày mặc định (30 ngày),
+    // không tải toàn bộ danh sách nữa.
+    loadSheetsInitial(filter);
   }, []);
 
   // clear state khi reload hoặc close tab
@@ -370,15 +376,42 @@ const Logs = () => {
   }, [filter, currentPage]);
 
   // ==================== LOAD SHEETS ====================
-  const loadSheets = async () => {
-    await loadSheetsWithFilter(filter);
+  // Lần tải đầu tiên dùng khoảng ngày mặc định. Nếu vì lý do nào đó endpoint lọc
+  // theo ngày không trả về được, vẫn tải toàn bộ để người dùng không gặp màn hình
+  // trống — chậm nhưng không mất dữ liệu.
+  const loadSheetsInitial = async (filterToUse: SheetFilter) => {
+    const ok = await loadSheetsWithFilter(filterToUse);
+    if (ok) return;
+    console.error("❌ Lọc theo khoảng ngày mặc định thất bại — tải toàn bộ để dự phòng");
+    try {
+      await dispatch(fetchChangeModel()).unwrap();
+    } catch (fallbackError) {
+      console.error("❌ Tải toàn bộ cũng thất bại:", fallbackError);
+    }
   };
 
+  // Xóa bộ lọc = quay về khoảng ngày mặc định (30 ngày gần nhất), KHÔNG tải tất cả.
   const resetFilter = async () => {
     clearLogsSession();
     candidatesRef.current = { fcode: [], workOrder: [], createrName: [], id: [] };
     setCandidatesTick(0);
-    setFilter({
+    const defaultFilter: SheetFilter = {
+      workOrder: "",
+      ...getDefaultDateRange(),
+      id: 0,
+      fcode: "",
+      status: "all",
+      createrName: "",
+    };
+    setFilter(defaultFilter);
+    setCurrentPage(0);
+    await loadSheetsWithFilter(defaultFilter);
+  };
+
+  // Nút "Xem tất cả": bỏ khoảng ngày và tải toàn bộ danh sách.
+  // Chậm (tải hết dữ liệu từ trước tới nay) nên chỉ chạy khi người dùng chủ động bấm.
+  const loadAllSheets = async () => {
+    const allFilter: SheetFilter = {
       workOrder: "",
       fromDate: "",
       toDate: "",
@@ -386,14 +419,18 @@ const Logs = () => {
       fcode: "",
       status: "all",
       createrName: "",
-    });
+    };
+    setFilter(allFilter);
+    setCurrentPage(0);
     try {
       await dispatch(fetchChangeModel()).unwrap();
-      setCurrentPage(0);
     } catch (error) {
-      console.error("❌ Lỗi khi reset filter:", error);
+      console.error("❌ Lỗi khi tải toàn bộ sheets:", error);
     }
   };
+
+  const isDefaultRangeActive =
+    filter.fromDate !== "" && filter.toDate !== "";
 
   const handleFilterChange = (key: string, value: any) => {
     let parsedValue = value;
@@ -551,9 +588,13 @@ const Logs = () => {
       };
       showNotification("success", `${t("success.confirmed")} ${roleNames[role]}!`);
 
-      // Reload history và list — selectedSheet sẽ tự sync qua useEffect
+      // KHÔNG gọi lại loadSheets() nữa.
+      // updateSheetStatus.fulfilled trong changeModelSlice đã tự merge status mới
+      // vào cả `sheets` và `filteredSheets`, nên danh sách đã hiển thị đúng.
+      // Trước đây mỗi chữ ký kéo về lại toàn bộ ~4000 sheet kèm 5 bảng con —
+      // đó chính là nguyên nhân "ký thì lag".
+      // Lịch sử ký là call nhẹ (theo 1 sheet) nên vẫn giữ.
       await dispatch(getSheetStatusHistory(sheetId)).unwrap();
-      await loadSheets();
 
     } catch (error: any) {
       console.error("Error confirming sheet:", error);
@@ -615,7 +656,8 @@ const Logs = () => {
       setConfirmingSheetId(sheet.id);
       await dispatch(returnSheetToPending({ sheetId: sheet.id })).unwrap();
       showNotification("success", `Sheet #${sheet.id} đã được trả về Pending`);
-      await loadSheets();
+      // returnSheetToPending.fulfilled đã tự cập nhật status trong sheets/filteredSheets,
+      // không cần gọi lại API lấy toàn bộ danh sách.
     } catch (error: any) {
       showNotification("error", "Lỗi", error || "Không thể trả sheet về Pending");
     } finally {
@@ -637,8 +679,8 @@ const Logs = () => {
       // Đóng modal
       setConfirmDeleteModal({ open: false, sheet: null });
 
-      // Reload lại danh sách sau khi xóa
-      await loadSheets();
+      // Gỡ sheet khỏi danh sách đang cache thay vì gọi lại API lấy toàn bộ.
+      dispatch(removeSheetFromList(sheetId));
 
       // Reset về trang đầu nếu trang hiện tại không còn items
       const remainingItems = sortedSheets.length - 1;
@@ -918,6 +960,23 @@ const Logs = () => {
             values={filter}
             onChange={handleFilterChange}
             onReset={resetFilter}
+            extraActions={
+              isDefaultRangeActive ? (
+                <button
+                  type="button"
+                  onClick={loadAllSheets}
+                  disabled={loadingList}
+                  className="w-full sm:w-auto px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 text-sm font-medium disabled:opacity-50"
+                  title="Tải toàn bộ sheet từ trước tới nay (chậm hơn)"
+                >
+                  Xem tất cả
+                </button>
+              ) : (
+                <span className="text-xs text-gray-500">
+                  Đang xem toàn bộ dữ liệu — bấm "Xóa bộ lọc" để về {DEFAULT_RANGE_DAYS} ngày gần nhất
+                </span>
+              )
+            }
             loading={loadingList}
             resultCount={{
               current: currentSheets.length,

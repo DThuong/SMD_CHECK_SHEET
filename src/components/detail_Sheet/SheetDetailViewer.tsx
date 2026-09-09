@@ -50,9 +50,7 @@ import {
   getMissingFields,
 } from "../../utils/requiredFieldsConfig";
 import { useTranslation } from "react-i18next";
-import html2canvas from "html2canvas-pro";
-import { jsPDF } from "jspdf";
-import { clearLcrFile, getLcrFileData } from "../../redux/slices/FileSlice";
+import { clearLcrFile, clearReflowFile, getLcrFileData } from "../../redux/slices/FileSlice";
 // import { saveFilterState } from '../../utils/navigationState';
 
 
@@ -374,6 +372,8 @@ const SheetDetailViewer = () => {
       dispatch(clearAllSubTableData());
       dispatch(clearError());
       dispatch(clearLcrFile());
+      // Thu hồi luôn blob URL của file Reflow PDF nếu còn sót từ màn hình trước.
+      dispatch(clearReflowFile());
       dispatch(clearStatusHistory());
       dispatch(clearSheet());
     };
@@ -557,6 +557,16 @@ const SheetDetailViewer = () => {
 
     try {
       showNotification("info", "Đang tạo PDF", "Đang xử lý từng section...");
+
+      // Nạp jsPDF + html2canvas theo yêu cầu (~970 KB). Trước đây import tĩnh nên
+      // MỌI người mở trang chi tiết sheet để ký đều phải tải, dù không export PDF.
+      const [jspdfModule, html2canvasModule] = await Promise.all([
+        import("jspdf"),
+        import("html2canvas-pro"),
+      ]);
+      // jspdf 4.x: "export default jsPDF" — dùng .default cho đúng cả kiểu lẫn runtime.
+      const jsPDF = jspdfModule.default;
+      const html2canvas = html2canvasModule.default;
 
       await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -753,7 +763,11 @@ const SheetDetailViewer = () => {
             continue;
           }
 
-          const imgProps = pdf.getImageProperties(imgData);
+          // getImageProperties có thật ở runtime (plugin addImage của jsPDF)
+          // nhưng thiếu trong file .d.ts của jspdf 4 -> ép kiểu tại chỗ.
+          const imgProps = (pdf as unknown as {
+            getImageProperties: (data: string) => { width: number; height: number };
+          }).getImageProperties(imgData);
           const imgHeight = (imgProps.height * contentWidth) / imgProps.width;
 
           if (currentY + imgHeight > pdfHeight - margin && !isFirstSection) {

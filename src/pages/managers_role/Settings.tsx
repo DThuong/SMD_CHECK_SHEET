@@ -2,6 +2,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { HiSun, HiMoon, HiGlobeAlt, HiCheckCircle } from "react-icons/hi";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { changeAppLanguage } from "../../lang/i18n/configs";
 import LoadingSpinner from "../../components/general/LoadingSpinner";
 
 interface Language {
@@ -43,23 +44,14 @@ const Settings = () => {
     if (langCode === currentLang || isTranslating) return;
 
     setIsTranslating(true);
-    console.log("Changing language to:", langCode);
 
     try {
-      // Reload namespace trước khi đổi ngôn ngữ
-      await i18n.reloadResources(langCode, ["settings", "dashboard", "logs"]);
+      // Dùng changeAppLanguage dùng chung: nạp đủ 14 namespace + tự nạp bù khi lỗi.
+      // Trước đây chỉ reload 3 namespace ["settings","dashboard","logs"] nên các
+      // màn hình khác giữ nguyên ngôn ngữ cũ hoặc hiện key thô.
+      await changeAppLanguage(langCode);
 
-      // Đổi ngôn ngữ
-      await i18n.changeLanguage(langCode);
-
-      // Lưu vào localStorage
-      localStorage.setItem("appLanguage", langCode);
-
-      // Cập nhật state
       setCurrentLang(langCode);
-
-      console.log("Language changed successfully to:", langCode);
-      console.log("Current translation:", t("title"));
 
       setTimeout(() => {
         setIsTranslating(false);

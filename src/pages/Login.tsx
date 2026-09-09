@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { loginUser, clearError } from '../redux/slices/authSlice';
 import { getDeviceInfo } from '../utils/deviceInfo';
-import { useTranslation } from 'react-i18next';
+import { changeAppLanguage } from '../lang/i18n/configs';
 import { toast } from 'sonner';
 import Footer from '../components/general/Footer';
+import { clearAuthStorage } from "../utils/authStorage";
 
 const inputClass = "w-full px-4 py-3 border rounded-lg outline-none transition focus:border-blue-500 focus:shadow";
 
@@ -15,7 +16,6 @@ const Login = () => {
   const [remember, setRemember] = useState<boolean>(false);
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector((state) => state.auth);
-  const { i18n } = useTranslation();
 
   useEffect(() => {
     //Chỉ clear token, KHÔNG XÓA device ID
@@ -24,8 +24,7 @@ const Login = () => {
       if (currentPath === '/login') {
         // Lưu device ID trước khi clear
         const deviceId = localStorage.getItem('smd_device_id');
-        localStorage.clear();
-        sessionStorage.clear();
+        clearAuthStorage();
         
         // Khôi phục device ID
         if (deviceId) {
@@ -53,14 +52,8 @@ const Login = () => {
       })).unwrap();
 
       // Set Korean cho KoreaManager ngay sau khi login thành công
-      if (resultAction?.role === 'KoreaManager') {
-        await i18n.changeLanguage('ko');
-        localStorage.setItem('appLanguage', 'ko');
-      } else {
-        // Role khác: set Vietnamese (hoặc giữ default)
-        await i18n.changeLanguage('vi');
-        localStorage.setItem('appLanguage', 'vi');
-      }
+      // changeAppLanguage tự nạp đủ 14 namespace + lưu localStorage.
+      await changeAppLanguage(resultAction?.role === 'KoreaManager' ? 'ko' : 'vi');
     } catch (error) {
       console.error('Login failed: ', error);
       // Hiển thị lỗi bằng toast (tự ẩn sau 3s) thay vì hiện dưới form.

@@ -6,6 +6,7 @@
 // axios: thư viện call api
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import smdApi from '../services/smdApi';
+import { clearAuthStorage } from "../../utils/authStorage";
 
 interface LoginRequest {
   username: string;
@@ -92,8 +93,7 @@ export const loginUser = createAsyncThunk(
     try {
       // Clear toàn bộ storage CỦA THIẾT BỊ HIỆN TẠI trước khi login
       try {
-        localStorage.clear();
-        sessionStorage.clear();
+        clearAuthStorage();
       } catch (error) {
         console.error('Failed to clear storage:', error);
       }
@@ -116,8 +116,7 @@ export const loginUser = createAsyncThunk(
     } catch (error: any) {
       // Nếu login thất bại, cũng clear storage
       try {
-        localStorage.clear();
-        sessionStorage.clear();
+        clearAuthStorage();
       } catch (e) {
         console.error('Failed to clear storage on error:', e);
 
@@ -277,8 +276,7 @@ const authSlice = createSlice({
         // Lưu device ID trước khi clear
         const deviceId = localStorage.getItem('smd_device_id');
 
-        localStorage.clear();
-        sessionStorage.clear();
+        clearAuthStorage();
 
         // Khôi phục device ID
         if (deviceId) {
@@ -351,8 +349,7 @@ const authSlice = createSlice({
         state.selectedUser = null;
         // Xóa token khỏi localStorage
         try {
-          localStorage.clear();
-          sessionStorage.clear();
+          clearAuthStorage();
         } catch (error) {
           console.error('Failed to remove storage:', error);
         }

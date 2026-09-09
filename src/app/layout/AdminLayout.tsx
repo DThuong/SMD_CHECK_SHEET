@@ -10,6 +10,7 @@ import logo from "../../assets/image/brand_image_3.webp";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { logoutUser } from "../../redux/slices/authSlice";
 import { useTranslation } from "react-i18next";
+import { changeAppLanguage } from "../../lang/i18n/configs";
 
 const AdminLayout = () => {
   // States
@@ -41,20 +42,12 @@ useEffect(() => {
   };
 }, [i18n]);
 
+// Dùng changeAppLanguage dùng chung: nạp đủ 14 namespace + tự nạp bù khi lỗi.
 const handleLanguageChange = async (langCode: string) => {
   if (langCode === currentLang) return;
 
   try {
-    await i18n.reloadResources(langCode, [
-      "settings",
-      "dashboard",
-      "logs",
-      "common",
-      "patrol",
-    ]);
-
-    await i18n.changeLanguage(langCode);
-    localStorage.setItem("appLanguage", langCode);
+    await changeAppLanguage(langCode);
     setCurrentLang(langCode);
   } catch (error) {
     console.error("Error changing language:", error);

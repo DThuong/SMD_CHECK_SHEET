@@ -2,6 +2,7 @@
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { changeAppLanguage } from '../lang/i18n/configs';
 
 interface LanguageContextType {
   currentLanguage: string;
@@ -13,9 +14,9 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const { i18n } = useTranslation();
 
+  // Dùng changeAppLanguage dùng chung: nạp đủ 14 namespace + lưu localStorage.
   const changeLanguage = async (lang: string) => {
-    await i18n.changeLanguage(lang);
-    localStorage.setItem('appLanguage', lang);
+    await changeAppLanguage(lang);
   };
 
   return (

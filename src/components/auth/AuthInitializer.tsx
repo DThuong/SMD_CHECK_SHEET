@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logout } from '../../redux/slices/authSlice';
 import { useNavigate, useLocation } from 'react-router-dom';
 import smdApi from '../../redux/services/smdApi';
+import { clearAuthStorage } from "../../utils/authStorage";
 
 const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useAppDispatch();
@@ -29,8 +30,7 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
       if (location.pathname === '/login') {
         try {
           const deviceId = localStorage.getItem('smd_device_id');
-          localStorage.clear();
-          sessionStorage.clear();
+          clearAuthStorage();
           if (deviceId) {
             localStorage.setItem('smd_device_id', deviceId);
           }
@@ -90,8 +90,7 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
     const handleLogout = () => {
       const deviceId = localStorage.getItem('smd_device_id');
       
-      localStorage.clear();
-      sessionStorage.clear();
+      clearAuthStorage();
       
       if (deviceId) {
         localStorage.setItem('smd_device_id', deviceId);
@@ -119,8 +118,7 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
       // console.log('❌ Token expired');
       
       const deviceId = localStorage.getItem('smd_device_id');
-      localStorage.clear();
-      sessionStorage.clear();
+      clearAuthStorage();
       if (deviceId) {
         localStorage.setItem('smd_device_id', deviceId);
       }
@@ -132,20 +130,27 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
 
     // console.log(`Token expires in ${Math.floor(timeUntilExpiry / 1000)}s`);
     
-    // Setup timeout để auto logout khi hết hạn
+    // Setup timeout để auto logout khi hết hạn.
+    // setTimeout tràn số nếu delay > 2^31-1 ms (~24,8 ngày): trình duyệt sẽ chạy
+    // callback NGAY LẬP TỨC, khiến người dùng bị đá ra trang login ngay khi vào.
+    // Kẹp lại và hẹn kiểm tra lại sau nếu token còn hạn rất dài.
+    const MAX_TIMEOUT = 2147483647;
+    const delay = Math.min(timeUntilExpiry, MAX_TIMEOUT);
     const timer = setTimeout(() => {
+      // Chưa thực sự hết hạn (do bị kẹp) thì chỉ bỏ qua, effect sẽ hẹn lại lần sau.
+      if (Date.now() < tokenExpiresAt) return;
+
       // console.log('Auto logout - Token expired');
       
       const deviceId = localStorage.getItem('smd_device_id');
-      localStorage.clear();
-      sessionStorage.clear();
+      clearAuthStorage();
       if (deviceId) {
         localStorage.setItem('smd_device_id', deviceId);
       }
       
       dispatch(logout());
       navigate('/login', { replace: true });
-    }, timeUntilExpiry);
+    }, delay);
 
     return () => clearTimeout(timer);
   }, [tokenExpiresAt, isAuthenticated, token, dispatch, navigate]);

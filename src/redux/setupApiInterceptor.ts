@@ -3,6 +3,7 @@
 import type { AxiosInstance } from "axios";
 import type { Store } from "@reduxjs/toolkit";
 import { logout } from "./slices/authSlice";
+import { clearAuthStorage } from "../utils/authStorage";
 
 let isLoggingOut = false;
 
@@ -21,8 +22,7 @@ export const setupApiInterceptor = (api: AxiosInstance, store: Store) => {
           isLoggingOut = true;
           
           const deviceId = localStorage.getItem('smd_device_id');
-          localStorage.clear();
-          sessionStorage.clear();
+          clearAuthStorage();
           if (deviceId) {
             localStorage.setItem('smd_device_id', deviceId);
           }
@@ -62,8 +62,7 @@ export const setupApiInterceptor = (api: AxiosInstance, store: Store) => {
         
         try {
           const deviceId = localStorage.getItem('smd_device_id');
-          localStorage.clear();
-          sessionStorage.clear();
+          clearAuthStorage();
           if (deviceId) {
             localStorage.setItem('smd_device_id', deviceId);
           }

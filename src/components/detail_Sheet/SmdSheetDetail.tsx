@@ -159,9 +159,24 @@ const SmdSheetDetail = () => {
       
       if(res){
         showNotification('success', 'Hoàn thành!', 'Sheet được ký xác nhận thành công!');
-        setTimeout(() => {
-          navigate(0);
-        }, 1000);
+
+        // Trước đây gọi navigate(0) — reload trình duyệt hoàn toàn: tải lại
+        // bundle JS, toàn bộ file ngôn ngữ và mọi API từ đầu. Nay chỉ nạp lại
+        // đúng sheet này + lịch sử ký, giữ nguyên trang.
+        try {
+          const refreshed = await dispatch(getSheetWithFullObject(currentSheet.id)).unwrap();
+          dispatch(setAllSubTableData({
+            checkModel: refreshed.checkModel ?? null,
+            standardProduction: refreshed.standardProduction ?? null,
+            timeChangeModel: refreshed.timeChangeModel ?? null,
+            standardVehicle: refreshed.standardVehicle ?? null,
+            pqcCheck: refreshed.pqcCheck ?? null,
+            loadedFromSheetId: currentSheet.id,
+          }));
+          await dispatch(getSheetStatusHistory(currentSheet.id)).unwrap();
+        } catch (reloadError) {
+          console.error('Lỗi khi tải lại dữ liệu sau khi ký:', reloadError);
+        }
       }else{
         showNotification('error', 'Lỗi', 'Không thể ký');
       }

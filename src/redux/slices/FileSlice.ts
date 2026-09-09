@@ -211,6 +211,11 @@ const FileSlice = createSlice({
       })
       .addCase(getLcrFile.fulfilled, (state, action) => {
         state.loading = false;
+        // Thu hồi blob URL cũ trước khi ghi đè, nếu không object cũ sẽ nằm lại
+        // trong RAM đến khi đóng tab.
+        if (state.lcrFileUrl && state.lcrFileUrl !== action.payload) {
+          URL.revokeObjectURL(state.lcrFileUrl);
+        }
         state.lcrFileUrl = action.payload;
       })
       .addCase(getLcrFile.rejected, (state, action) => {
@@ -225,6 +230,10 @@ const FileSlice = createSlice({
       })
       .addCase(getReflowFile.fulfilled, (state, action) => {
         state.reflowLoading = false;
+        // Thu hồi blob URL cũ trước khi ghi đè (mỗi file Reflow PDF có thể vài MB).
+        if (state.reflowFileUrl && state.reflowFileUrl !== action.payload) {
+          URL.revokeObjectURL(state.reflowFileUrl);
+        }
         state.reflowFileUrl = action.payload;
       })
       .addCase(getReflowFile.rejected, (state, action) => {

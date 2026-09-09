@@ -10,6 +10,7 @@ import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { PiPlantFill } from "react-icons/pi";
 import { logoutUser } from "../../redux/slices/authSlice";
 import { useTranslation } from "react-i18next";
+import { changeAppLanguage } from "../../lang/i18n/configs";
 import { MdEngineering } from "react-icons/md";
 
 const RoleBasedLayout = () => {
@@ -48,12 +49,11 @@ const RoleBasedLayout = () => {
   }, [i18n]);
 
   // hàm xử lý đổi ngôn ngữ
+  // Dùng changeAppLanguage dùng chung: nạp đủ 14 namespace + tự nạp bù khi lỗi.
   const handleLanguageChange = async (langCode: string) => {
     if (langCode === currentLang) return;
     try {
-      await i18n.reloadResources(langCode, ["settings", "dashboard", "logs", "common", "patrol"]);
-      await i18n.changeLanguage(langCode);
-      localStorage.setItem("appLanguage", langCode);
+      await changeAppLanguage(langCode);
       setCurrentLang(langCode);
     } catch (error) {
       console.error("Error changing language:", error);

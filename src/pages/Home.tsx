@@ -25,6 +25,7 @@ import {
   clearSelectedSheetId
 } from '../utils/navigationState';
 import { SmartSearchBar } from '../components/general/SmartSearchBar';
+import { getDefaultDateRange, DEFAULT_RANGE_DAYS } from '../utils/defaultDateRange';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -38,6 +39,7 @@ type SheetFilter = {
   createrName: string;
 };
 
+/** Bộ lọc rỗng hoàn toàn — tải TOÀN BỘ dữ liệu (chỉ dùng cho nút "Xem tất cả"). */
 const EMPTY_FILTER: SheetFilter = {
   workOrder: '',
   fromDate: '',
@@ -47,6 +49,15 @@ const EMPTY_FILTER: SheetFilter = {
   status: 'all',
   createrName: '',
 };
+
+/**
+ * Bộ lọc mặc định khi mở trang: 30 ngày gần nhất.
+ * Backend chưa phân trang nên tải tất cả sẽ càng ngày càng chậm.
+ */
+const makeDefaultFilter = (): SheetFilter => ({
+  ...EMPTY_FILTER,
+  ...getDefaultDateRange(),
+});
 
 const SESSION_KEY = 'home_filter_state';
 
@@ -99,7 +110,7 @@ const Home = () => {
   const itemsPerPage = 5;
   const { showNotification, hideNotification, notification } = useNotification();
 
-  const [filter, setFilter] = useState<SheetFilter>(EMPTY_FILTER);
+  const [filter, setFilter] = useState<SheetFilter>(makeDefaultFilter);
 
   // Candidates cho FuzzySearchInput — chỉ expand, không bao giờ thu hẹp
   const candidatesRef = useRef<{
@@ -306,7 +317,8 @@ const Home = () => {
         }, 100);
       }
     } else {
-      if (activeTab === 'list') loadSheetsWithFilter(EMPTY_FILTER);
+      // Lần đầu vào trang: chỉ tải khoảng ngày mặc định, không tải toàn bộ.
+      if (activeTab === 'list') loadSheetsWithFilter(makeDefaultFilter());
     }
 
     if (savedSheetId) {
@@ -341,7 +353,7 @@ const Home = () => {
       setCurrentPage(savedState.currentPage || 0);
       setTimeout(() => loadSheetsWithFilter(savedState.filter), 0);
     } else {
-      loadSheetsWithFilter(EMPTY_FILTER);
+      loadSheetsWithFilter(makeDefaultFilter());
     }
   }, [activeTab]);
 
@@ -363,14 +375,24 @@ const Home = () => {
     }, 400);
   }, [filter, activeTab, loadSheetsWithFilter]);
 
-  // ── Reset filter
+  // ── Reset filter: quay về khoảng ngày mặc định (30 ngày), KHÔNG tải tất cả
   const resetFilter = useCallback(async () => {
     clearSession();
     candidatesRef.current = { fcode: [], workOrder: [], createrName: [], id: [] };
     setCandidatesTick(0);
+    const defaultFilter = makeDefaultFilter();
+    setFilter(defaultFilter);
+    setCurrentPage(0);
+    await loadSheetsWithFilter(defaultFilter);
+  }, [loadSheetsWithFilter]);
+
+  // ── Nút "Xem tất cả": bỏ khoảng ngày, tải toàn bộ (chậm, chỉ khi người dùng bấm)
+  const loadAllSheets = useCallback(async () => {
     setFilter(EMPTY_FILTER);
     setCurrentPage(0);
-    try { await dispatch(fetchChangeModel()).unwrap(); } catch { }
+    try { await dispatch(fetchChangeModel()).unwrap(); } catch (error) {
+      console.error('❌ Lỗi khi tải toàn bộ sheets:', error);
+    }
   }, [dispatch]);
 
   // ── Format datetime hiển thị
@@ -646,6 +668,23 @@ const Home = () => {
               values={filter}
               onChange={handleFilterChange}
               onReset={resetFilter}
+              extraActions={
+                filter.fromDate && filter.toDate ? (
+                  <button
+                    type="button"
+                    onClick={loadAllSheets}
+                    disabled={loadingList}
+                    className="w-full sm:w-auto px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 text-sm font-medium disabled:opacity-50"
+                    title="Tải toàn bộ sheet từ trước tới nay (chậm hơn)"
+                  >
+                    Xem tất cả
+                  </button>
+                ) : (
+                  <span className="text-xs text-gray-500">
+                    Đang xem toàn bộ dữ liệu — bấm "Xóa bộ lọc" để về {DEFAULT_RANGE_DAYS} ngày gần nhất
+                  </span>
+                )
+              }
               loading={loadingList}
               resultCount={{
                 current: currentSheets.length,

@@ -89,6 +89,23 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
         uploading: boolean;
     }>({ open: false, typeImage: 'Evidence', file: null, note: '', uploading: false });
 
+    // Blob URL cho ảnh xem trước trong modal note.
+    // TRƯỚC: gọi URL.createObjectURL(...) thẳng trong JSX -> sinh một blob URL MỚI
+    // sau MỖI lần render và không cái nào được thu hồi -> rò rỉ bộ nhớ tích lũy,
+    // là một lý do khiến máy dùng lâu phải tắt Chrome mở lại.
+    // NAY: chỉ tạo 1 URL cho mỗi file và thu hồi ngay khi đổi file / đóng modal.
+    const [imgNotePreviewUrl, setImgNotePreviewUrl] = useState<string | null>(null);
+    useEffect(() => {
+        const file = imgNoteModal.file;
+        if (!file) {
+            setImgNotePreviewUrl(null);
+            return;
+        }
+        const url = URL.createObjectURL(file);
+        setImgNotePreviewUrl(url);
+        return () => URL.revokeObjectURL(url);
+    }, [imgNoteModal.file]);
+
     // ------- Load data -------
     useEffect(() => {
         if (!sessionId) return;
@@ -766,10 +783,10 @@ const EngCheckListDetail: React.FC<EngSharedProps> = ({ user, goToView, activeTa
                             <h3 className="text-lg font-bold text-gray-800">{t('detail.imageNote')}</h3>
                         </div>
                         <div className="p-5 flex-1 overflow-y-auto">
-                            {imgNoteModal.file && (
+                            {imgNotePreviewUrl && (
                                 <div className="mb-5 rounded-xl overflow-hidden border border-gray-200 bg-black flex items-center justify-center shadow-inner h-48">
                                     <img 
-                                        src={URL.createObjectURL(imgNoteModal.file)} 
+                                        src={imgNotePreviewUrl} 
                                         alt="Preview" 
                                         className="w-full h-full object-contain"
                                     />

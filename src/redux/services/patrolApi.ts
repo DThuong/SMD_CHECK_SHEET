@@ -1,12 +1,12 @@
 // src/services/patrolApi.ts
 import axios from "axios";
 import type { AxiosInstance } from "axios";
+import { clearAuthStorage } from "../../utils/authStorage";
 
 const BASE_URL = import.meta.env.VITE_API_PATROL;
 
 const clearAuthAndRedirect = () => {
-  localStorage.clear();
-  sessionStorage.clear();
+  clearAuthStorage();
   window.location.href = "/login";
 };
 

@@ -579,6 +579,16 @@ const changeModelSlice = createSlice({
       state.statusHistory = [];
       state.loadingHistory = false;
     },
+
+    // Gỡ 1 sheet khỏi danh sách đang cache sau khi xóa thành công.
+    // Nhờ vậy trang Logs không phải gọi lại API lấy toàn bộ danh sách.
+    removeSheetFromList: (state, action: { payload: number; type: string }) => {
+      const sheetId = action.payload;
+      if (state.filteredSheets)
+        state.filteredSheets = state.filteredSheets.filter((s) => s.id !== sheetId);
+      if (state.sheets) state.sheets = state.sheets.filter((s) => s.id !== sheetId);
+      if (state.currentSheet?.id === sheetId) state.currentSheet = null;
+    },
     
   },
   extraReducers: (builder) => {
@@ -935,5 +945,5 @@ const changeModelSlice = createSlice({
   },
 });
 
-export const { clearError, clearSheet, clearSheetList , reset, setCurrentSheet, clearStatusHistory } = changeModelSlice.actions;
+export const { clearError, clearSheet, clearSheetList , reset, setCurrentSheet, clearStatusHistory, removeSheetFromList } = changeModelSlice.actions;
 export default changeModelSlice.reducer;

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type React from "react";
 import { AiOutlineSearch, AiOutlineClose } from "react-icons/ai";
 import FuzzySearchInput from "./FuzzySearchInput";
 import CustomSelect from "./CustomSelect";
@@ -18,6 +19,8 @@ interface SmartSearchBarProps {
   values: Record<string, any>;
   onChange: (key: string, value: any) => void;
   onReset: () => void;
+  /** Nút phụ hiển thị cạnh nút "Xóa bộ lọc" (ví dụ nút "Xem tất cả"). */
+  extraActions?: React.ReactNode;
   loading?: boolean;
   resultCount?: {
     current: number;
@@ -32,6 +35,7 @@ export const SmartSearchBar = ({
   values,
   onChange,
   onReset,
+  extraActions,
   loading = false,
   resultCount,
 }: SmartSearchBarProps) => {
@@ -126,6 +130,8 @@ export const SmartSearchBar = ({
           <AiOutlineClose className="w-4 h-4" />
           Xóa bộ lọc
         </button>
+
+        {extraActions}
 
         {loading && <span className="text-sm text-gray-500">Đang tìm...</span>}
 

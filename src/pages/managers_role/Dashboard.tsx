@@ -24,7 +24,12 @@ import { FaMicrochip } from "react-icons/fa6";
 import { AiOutlineEye } from "react-icons/ai";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchUsers } from "../../redux/slices/authSlice";
-import { fetchChangeModel } from "../../redux/slices/changeModelSlice";
+import { fetchChangeModel, getSheetByFilter } from "../../redux/slices/changeModelSlice";
+import {
+  getDefaultDateRange,
+  toApiDateTime,
+  DASHBOARD_RANGE_DAYS,
+} from "../../utils/defaultDateRange";
 import {
   fetchPatrolSessions,
   fetchLineAreas,
@@ -670,6 +675,8 @@ const Dashboard = () => {
 
   const [fontSize, setFontSize] = useState(12);
   const [timeRange, setTimeRange] = useState<"week" | "month" | "all">("week");
+  // Đánh dấu đã tải toàn bộ sheet (khi người dùng chọn "Tất cả") để không tải lại.
+  const hasLoadedAllSheetsRef = useRef(false);
   // Khoảng thời gian RIÊNG cho biểu đồ patrol (độc lập với biểu đồ SMD).
   const [patrolTimeRange, setPatrolTimeRange] = useState<"week" | "month" | "all">("week");
   const [engTimeRange, setEngTimeRange] = useState<"week" | "month" | "all">("week");
@@ -743,12 +750,33 @@ const Dashboard = () => {
   // ==================== EFFECTS ====================
   useEffect(() => {
     dispatch(fetchUsers());
-    dispatch(fetchChangeModel());
     dispatch(fetchPatrolSessions());
     dispatch(fetchEngSessions());
     dispatch(fetchLineAreas());
     dispatch(getAllPlan());
   }, [dispatch]);
+
+  // SMD sheet: chỉ tải đúng khoảng thời gian mà biểu đồ đang hiển thị.
+  // TRƯỚC ĐÂY luôn gọi fetchChangeModel() — tải TOÀN BỘ sheet từ ngày mở hệ thống
+  // kèm 5 bảng con lồng nhau, nên Dashboard càng ngày càng chậm.
+  // Chọn "Tất cả" ở thanh chọn khoảng thời gian bên dưới thì mới tải đầy đủ.
+  useEffect(() => {
+    if (timeRange === "all") {
+      if (hasLoadedAllSheetsRef.current) return;
+      hasLoadedAllSheetsRef.current = true;
+      dispatch(fetchChangeModel());
+      return;
+    }
+    // Đã tải toàn bộ rồi thì không cần tải lại khoảng nhỏ hơn.
+    if (hasLoadedAllSheetsRef.current) return;
+    const { fromDate, toDate } = getDefaultDateRange(DASHBOARD_RANGE_DAYS);
+    dispatch(
+      getSheetByFilter({
+        fromDate: toApiDateTime(fromDate),
+        toDate: toApiDateTime(toDate),
+      }),
+    );
+  }, [dispatch, timeRange]);
 
   useEffect(() => {
     const handleResize = () =>
@@ -1626,6 +1654,13 @@ const Dashboard = () => {
             {t("adminDashboard.subtitle")}
           </p>
         </div>
+
+        {/* Ghi chú phạm vi dữ liệu — để số liệu trên các thẻ không bị hiểu nhầm */}
+        <p className="text-xs text-slate-500 mb-2 lg:text-left text-center">
+          {timeRange === "all"
+            ? "Số liệu SMD Sheet tính trên toàn bộ dữ liệu."
+            : `Số liệu SMD Sheet tính trên ${DASHBOARD_RANGE_DAYS} ngày gần nhất — chọn "Tất cả" ở biểu đồ bên dưới để xem toàn bộ.`}
+        </p>
 
         {/* Admin Stats Cards — 4 overview cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4">

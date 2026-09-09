@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaCamera } from 'react-icons/fa';
 import { IoEyeSharp } from 'react-icons/io5';
+import { normalizeImageUrl } from '../../utils/imageUrl';
 
 interface MultiImageUploadProps {
   label: string;
@@ -15,59 +16,258 @@ interface MultiImageUploadProps {
   showDeleteButton?: boolean;
 }
 
+/**
+ * Kích thước tối đa (cạnh dài nhất) của ảnh sau khi đóng dấu thời gian.
+ *
+ * Ảnh từ camera điện thoại thường 4000x3000 (12MP). Một canvas cỡ đó chiếm
+ * ~48 MB RAM. Mở tab lâu + upload nhiều tấm là Chrome hết ngân sách bộ nhớ
+ * canvas và trả về ảnh TRẮNG mà KHÔNG báo lỗi gì.
+ *
+ * 2560px vẫn dư nét cho ảnh check sheet nhưng giảm bộ nhớ canvas hơn 2 lần.
+ * Muốn giữ nguyên độ phân giải gốc thì đổi thành Infinity.
+ */
+const MAX_IMAGE_DIMENSION = 2560;
+const JPEG_QUALITY = 0.92;
+
+/** Ảnh load lâu quá thì bỏ đóng dấu, dùng ảnh gốc — không để người dùng chờ vô hạn. */
+const IMAGE_LOAD_TIMEOUT_MS = 20000;
+
+/**
+ * Kiểm tra canvas có bị trắng hoàn toàn không.
+ *
+ * Khi Chrome không cấp đủ bộ nhớ cho canvas, drawImage() im lặng không vẽ gì và
+ * toBlob() trả về một tấm ảnh trắng trơn — đúng hiện tượng người dùng gặp phải.
+ * Lấy mẫu vài chục điểm rải đều: nếu TẤT CẢ đều trắng tinh thì coi như hỏng.
+ */
+const isCanvasBlank = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+): boolean => {
+  const STEPS = 6; // 6x6 = 36 điểm mẫu
+  try {
+    for (let i = 1; i <= STEPS; i++) {
+      for (let j = 1; j <= STEPS; j++) {
+        const x = Math.floor((width * i) / (STEPS + 1));
+        const y = Math.floor((height * j) / (STEPS + 1));
+        const [r, g, b] = ctx.getImageData(x, y, 1, 1).data;
+        // Chỉ cần MỘT điểm không phải trắng tinh là canvas có nội dung thật
+        if (r < 250 || g < 250 || b < 250) return false;
+      }
+    }
+  } catch {
+    // getImageData có thể ném lỗi (tainted canvas) — coi như không rỗng
+    return false;
+  }
+  return true;
+};
+
 const addTimestampToImage = (file: File): Promise<File> => {
   return new Promise((resolve) => {
-    const img = new Image();
     const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d")!;
+    const img = new Image();
 
-      // Vẽ ảnh gốc
-      ctx.drawImage(img, 0, 0);
-
-      // Format timestamp: DD/MM/YYYY HH:mm:ss
-      const now = new Date();
-      const pad = (n: number) => String(n).padStart(2, "0");
-      const timestamp = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-
-      // Style chữ
-      const fontSize = Math.max(24, Math.floor(img.width * 0.035));
-      ctx.font = `bold ${fontSize}px monospace`;
-      ctx.textBaseline = "bottom";
-
-      // Đo width để tính vị trí
-      const textWidth = ctx.measureText(timestamp).width;
-      const padding = 10;
-      const x = img.width - textWidth - padding * 2;
-      const y = img.height - padding;
-
-      // Nền mờ phía sau chữ
-      ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
-      ctx.fillRect(x - padding, y - fontSize - padding, textWidth + padding * 2, fontSize + padding * 1.5);
-
-      // Chữ màu vàng
-      ctx.fillStyle = "#FFD600";
-      ctx.fillText(timestamp, x, y);
-
+    let settled = false;
+    /** Chỉ giải quyết Promise đúng MỘT lần, và luôn thu hồi blob URL. */
+    const finish = (result: File) => {
+      if (settled) return;
+      settled = true;
       URL.revokeObjectURL(url);
-
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            resolve(new File([blob], file.name, { type: "image/jpeg" }));
-          } else {
-            resolve(file); // fallback
-          }
-        },
-        "image/jpeg",
-        0.92,
-      );
+      resolve(result);
     };
+
+    const timeoutId = setTimeout(() => {
+      console.warn('[upload] Ảnh load quá lâu — dùng ảnh gốc, bỏ đóng dấu thời gian.');
+      finish(file);
+    }, IMAGE_LOAD_TIMEOUT_MS);
+
+    // TRƯỚC ĐÂY KHÔNG CÓ onerror: ảnh lỗi là Promise treo vĩnh viễn,
+    // người dùng bấm upload mà không thấy gì xảy ra.
+    img.onerror = () => {
+      clearTimeout(timeoutId);
+      console.warn('[upload] Không đọc được ảnh — dùng ảnh gốc.');
+      finish(file);
+    };
+
+    img.onload = async () => {
+      clearTimeout(timeoutId);
+      let canvas: HTMLCanvasElement | null = null;
+
+      /** Trả bộ nhớ canvas ngay thay vì chờ garbage collector. */
+      const releaseCanvas = () => {
+        if (!canvas) return;
+        canvas.width = 0;
+        canvas.height = 0;
+        canvas = null;
+      };
+
+      try {
+        // NGUYÊN NHÂN CHÍNH của lỗi "upload lên bị trắng hình":
+        // onload chỉ báo ảnh đã TẢI xong, KHÔNG bảo đảm đã GIẢI MÃ xong.
+        // Với ảnh lớn, drawImage() ngay lúc đó có thể vẽ ra một tấm trắng.
+        // decode() chờ tới khi pixel thật sự sẵn sàng. Đây cũng là lý do
+        // "xóa đi upload lại thì OK" — lần sau ảnh đã được giải mã rồi.
+        if (typeof img.decode === 'function') {
+          try {
+            await img.decode();
+          } catch {
+            /* decode lỗi thì vẫn thử vẽ bên dưới */
+          }
+        }
+
+        const srcW = img.naturalWidth || img.width;
+        const srcH = img.naturalHeight || img.height;
+        if (!srcW || !srcH) return finish(file);
+
+        const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(srcW, srcH));
+        const w = Math.max(1, Math.round(srcW * scale));
+        const h = Math.max(1, Math.round(srcH * scale));
+
+        canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          releaseCanvas();
+          return finish(file);
+        }
+
+        // Nền trắng: ảnh PNG có vùng trong suốt khi xuất ra JPEG sẽ thành đen
+        // nếu không tô nền trước.
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+
+        // Kiểm tra TRƯỚC khi vẽ timestamp: nếu canvas trắng trơn nghĩa là
+        // drawImage thất bại -> trả ảnh gốc thay vì upload một tấm trắng.
+        if (isCanvasBlank(ctx, w, h)) {
+          console.warn('[upload] Canvas ra ảnh trắng — dùng ảnh gốc thay thế.');
+          releaseCanvas();
+          return finish(file);
+        }
+
+        // ----- Vẽ dấu thời gian -----
+        const now = new Date();
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const timestamp =
+          `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ` +
+          `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+        const fontSize = Math.max(24, Math.floor(w * 0.035));
+        ctx.font = `bold ${fontSize}px monospace`;
+        ctx.textBaseline = 'bottom';
+
+        const textWidth = ctx.measureText(timestamp).width;
+        const padding = 10;
+        const x = w - textWidth - padding * 2;
+        const y = h - padding;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.fillRect(x - padding, y - fontSize - padding, textWidth + padding * 2, fontSize + padding * 1.5);
+
+        ctx.fillStyle = '#FFD600';
+        ctx.fillText(timestamp, x, y);
+
+        canvas.toBlob(
+          (blob) => {
+            releaseCanvas();
+            if (blob && blob.size > 0) {
+              const name = file.name.replace(/\.[^.]+$/, '') || 'photo';
+              finish(new File([blob], `${name}.jpg`, { type: 'image/jpeg' }));
+            } else {
+              console.warn('[upload] toBlob trả về rỗng — dùng ảnh gốc.');
+              finish(file);
+            }
+          },
+          'image/jpeg',
+          JPEG_QUALITY,
+        );
+      } catch (error) {
+        console.error('[upload] Lỗi khi đóng dấu thời gian:', error);
+        releaseCanvas();
+        finish(file);
+      }
+    };
+
     img.src = url;
   });
+};
+
+/**
+ * Ảnh trong gallery, có tự thử tải lại khi thất bại.
+ *
+ * TRƯỚC ĐÂY dùng <img src={...}> trần: nếu request ảnh hỏng giữa chừng (server
+ * vừa ghi file xong chưa phục vụ kịp, mạng nhà máy chớp một nhịp), thẻ img hiện
+ * một ô TRẮNG và không có cách nào biết — người dùng tưởng ảnh upload lên bị lỗi
+ * nên phải xóa đi upload lại.
+ *
+ * Nay: tự thử lại 2 lần (có cache-busting), rồi mới hiện nút bấm thử lại thủ công.
+ * Không bao giờ để lại một ô trắng câm lặng nữa.
+ */
+const MAX_AUTO_RETRY = 2;
+
+const ImageWithRetry: React.FC<{
+  src: string;
+  alt: string;
+  className?: string;
+  onClick?: () => void;
+}> = ({ src, alt, className, onClick }) => {
+  const [attempt, setAttempt] = React.useState(0);
+  const [status, setStatus] = React.useState<'loading' | 'ok' | 'error'>('loading');
+
+  React.useEffect(() => {
+    setAttempt(0);
+    setStatus('loading');
+  }, [src]);
+
+  const url = attempt === 0 ? src : `${src}${src.includes('?') ? '&' : '?'}_r=${attempt}`;
+
+  const handleError = () => {
+    if (attempt < MAX_AUTO_RETRY) {
+      // Chờ tăng dần rồi thử lại: 600ms, 1200ms
+      const delay = 600 * (attempt + 1);
+      setTimeout(() => setAttempt((a) => a + 1), delay);
+    } else {
+      setStatus('error');
+    }
+  };
+
+  if (status === 'error') {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setAttempt((a) => a + 1);
+          setStatus('loading');
+        }}
+        className="w-full h-32 flex flex-col items-center justify-center gap-1 bg-amber-50 border border-amber-300 text-amber-800 text-xs px-2 text-center"
+      >
+        <span className="font-semibold">Ảnh chưa tải được</span>
+        <span>Bấm để thử lại</span>
+      </button>
+    );
+  }
+
+  return (
+    <>
+      {status === 'loading' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
+          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+      <img
+        key={url}
+        src={url}
+        alt={alt}
+        className={className}
+        onClick={onClick}
+        onLoad={() => setStatus('ok')}
+        onError={handleError}
+        style={{ pointerEvents: 'auto' }}
+        data-view-image="true"
+      />
+    </>
+  );
 };
 
 const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
@@ -86,21 +286,39 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
   const canAddMore = !maxImages || imageCount < maxImages;
 
   // Handler wrapper để xử lý async
+  const [isProcessing, setIsProcessing] = React.useState(false);
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    // Giữ tham chiếu tới thẻ input NGAY, vì sau await thì event.target có thể
+    // không còn dùng được.
+    const inputEl = event.target as HTMLInputElement;
+    const file = inputEl.files?.[0];
     if (!file) return;
 
-    const stampedFile = await addTimestampToImage(file);
+    // Chặn bấm upload chồng nhau — hai canvas lớn chạy song song là một trong
+    // những nguyên nhân làm Chrome hết bộ nhớ và trả về ảnh trắng.
+    if (isProcessing) return;
 
-    // Tạo synthetic event với file đã có timestamp
-    const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(stampedFile);
-    const syntheticEvent = {
-      ...event,
-      target: { ...event.target, files: dataTransfer.files },
-    } as React.ChangeEvent<HTMLInputElement>;
+    setIsProcessing(true);
+    try {
+      const stampedFile = await addTimestampToImage(file);
 
-    onUpload(fieldName, syntheticEvent);
+      // Tạo synthetic event với file đã có timestamp
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(stampedFile);
+      const syntheticEvent = {
+        ...event,
+        target: { ...inputEl, files: dataTransfer.files },
+      } as unknown as React.ChangeEvent<HTMLInputElement>;
+
+      await onUpload(fieldName, syntheticEvent);
+    } finally {
+      setIsProcessing(false);
+      // Xóa giá trị input: nếu không, chọn LẠI ĐÚNG file vừa rồi sẽ không kích
+      // hoạt onChange (giá trị không đổi) -> người dùng tưởng hệ thống treo.
+      // Đây chính là tình huống "xóa ảnh trắng rồi chọn lại đúng file đó".
+      try { inputEl.value = ''; } catch { /* bỏ qua */ }
+    }
   };
 
   return (
@@ -116,7 +334,8 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
               type="file"
               accept="image/*"
               onChange={handleFileChange} // Sử dụng wrapper
-              className="border border-gray-300 rounded px-3 py-2 w-full"
+              disabled={isProcessing}
+              className="border border-gray-300 rounded px-3 py-2 w-full disabled:opacity-50"
             />
           </div>
 
@@ -127,15 +346,20 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
               accept="image/*"
               capture="environment"
               onChange={handleFileChange}
+              disabled={isProcessing}
               className="hidden"
               id={`camera-capture-${fieldName}`}
             />
             <label
               htmlFor={`camera-capture-${fieldName}`}
-              className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex! items-center! justify-center! gap-2 cursor-pointer transition-colors font-medium shadow-sm"
+              className={`mt-2 w-full text-white px-4 py-3 rounded-lg flex! items-center! justify-center! gap-2 transition-colors font-medium shadow-sm ${
+                isProcessing
+                  ? 'bg-blue-400 cursor-wait pointer-events-none'
+                  : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
+              }`}
             >
               <FaCamera size={15} />
-              Chụp ảnh
+              {isProcessing ? 'Đang xử lý ảnh...' : 'Chụp ảnh'}
             </label>
           </div>
         </>
@@ -162,13 +386,20 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
 
                 {/* Phần ảnh + nút xóa + số thứ tự */}
                 <div className="relative">
-                  <img
-                    src={imageUrl}
+                  {/* Chuẩn hoá URL trước khi hiển thị.
+                      TRƯỚC ĐÂY gallery dùng thẳng imageUrl còn ImagePreviewModal lại
+                      gọi normalizeImageUrl. Nếu API trả về đường dẫn TƯƠNG ĐỐI
+                      (ví dụ "/api/StandardVehicle/image-spi/123/abc.png"), thẻ img
+                      trong gallery sẽ ghép vào origin của frontend -> nginx trả về
+                      index.html -> ảnh KHÔNG hiện, thành một ô TRẮNG, trong khi bấm
+                      vào xem phóng to thì lại có hình.
+                      Lưu ý: chỉ chuẩn hoá để HIỂN THỊ. Các callback bên dưới vẫn nhận
+                      imageUrl gốc vì API xoá ảnh cần đúng giá trị server đã trả về. */}
+                  <ImageWithRetry
+                    src={normalizeImageUrl(imageUrl)}
                     alt={`${label} ${index + 1}`}
                     className="w-full h-auto object-cover cursor-pointer hover:opacity-80 transition-opacity"
                     onClick={() => onViewSingle(imageUrl, `${label} ${index + 1}`)}
-                    style={{ pointerEvents: 'auto' }}
-                    data-view-image="true"
                   />
                   {showDeleteButton && (
                     <button

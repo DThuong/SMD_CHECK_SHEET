@@ -23,49 +23,21 @@ export default defineConfig({
     assetsDir: 'assets',
     copyPublicDir: true,
     // Cảnh báo sớm nếu có chunk phình to trở lại
-    chunkSizeWarningLimit: 700,
+    chunkSizeWarningLimit: 900,
     rollupOptions: {
       output: {
-        // TRƯỚC: manualChunks: undefined -> mọi thư viện gộp chung vào index.js
-        // (2,5 MB), tải cả ở màn hình đăng nhập.
-        // NAY: tách các thư viện nặng thành chunk riêng, chỉ tải khi trang cần tới.
-        manualChunks(id: string) {
-          const m = id.replace(/\\/g, '/').match(/\/node_modules\/((?:@[^/]+\/)?[^/]+)\//);
-          if (!m) return undefined;
-          const pkg = m[1];
-
-          // Biểu đồ — chỉ Dashboard và các trang report dùng
-          if (pkg === 'recharts' || pkg === 'victory-vendor' || pkg.startsWith('d3-')) {
-            return 'vendor-charts';
-          }
-          // Xuất PDF — chỉ dùng khi bấm nút Export
-          if (pkg === 'jspdf' || pkg === 'html2canvas-pro' || pkg === 'html2canvas' || pkg === 'canvg' || pkg === 'dompurify') {
-            return 'vendor-pdf';
-          }
-          // React + router + redux: để CHUNG một chunk, tách nhỏ hơn dễ lỗi thứ tự khởi tạo
-          if (
-            pkg === 'react' || pkg === 'react-dom' || pkg === 'scheduler' ||
-            pkg === 'react-router' || pkg === 'react-router-dom' ||
-            pkg === '@reduxjs/toolkit' || pkg === 'react-redux' ||
-            pkg === 'redux' || pkg === 'redux-thunk' || pkg === 'redux-persist' ||
-            pkg === 'immer' || pkg === 'reselect' || pkg === 'use-sync-external-store'
-          ) {
-            return 'vendor-react';
-          }
-          // i18n
-          if (pkg === 'i18next' || pkg.startsWith('i18next-') || pkg === 'react-i18next') {
-            return 'vendor-i18n';
-          }
-          // Bootstrap / react-bootstrap
-          if (pkg === 'react-bootstrap' || pkg === 'bootstrap' || pkg === '@restart') {
-            return 'vendor-bootstrap';
-          }
-          // Các thư viện còn lại: KHÔNG gom vào một chunk chung.
-          // Trả về undefined để Rollup tự đặt chúng vào đúng chunk của trang dùng tới,
-          // nhờ vậy thư viện chỉ vài trang dùng (react-select, react-datepicker...)
-          // không bị tải ngay ở màn hình đăng nhập.
-          return undefined;
-        },
+        // KHÔNG tự chia manualChunks nữa.
+        //
+        // Lần trước tôi gom tay react/bootstrap/i18n thành các chunk riêng, kết quả
+        // là vendor-react và vendor-bootstrap import vòng lẫn nhau -> khi trình duyệt
+        // nạp, react-bootstrap gọi React.createContext trong khi React chưa khởi tạo
+        // xong -> "Cannot read properties of undefined (reading 'createContext')"
+        // -> TRẮNG TRANG toàn bộ ứng dụng.
+        //
+        // Để Rollup tự quyết định thứ tự và ranh giới chunk. Việc giảm dung lượng
+        // vẫn đạt được nhờ lazy-load route trong Routes.tsx và dynamic import
+        // jspdf/html2canvas — hai thứ đó an toàn vì không đụng tới thứ tự khởi tạo.
+        manualChunks: undefined,
         entryFileNames: `assets/[name]-[hash].js`,
         chunkFileNames: `assets/[name]-[hash].js`,
         assetFileNames: `assets/[name]-[hash].[ext]`

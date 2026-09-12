@@ -23,7 +23,7 @@ import {
 } from "../../redux/slices/patrolSlice";
 import PatrolFilterBar, {
   type PatrolFilter,
-  PATROL_FILTER_DEFAULT,
+  getDefaultListFilter,
 } from "../../components/general/PatrolFilterBar";
 import {
   readPatrolNavState,
@@ -76,10 +76,12 @@ const PatrolList: React.FC<PatrolListProps> = ({
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [searchParams] = useSearchParams();
   const statusFromUrl = searchParams.get("status") || "";
-  const [filter, setFilter] = useState<PatrolFilter>({
-    ...PATROL_FILTER_DEFAULT,
+  // Mở trang là đã có sẵn khoảng 30 ngày gần nhất trong ô Từ ngày / Đến ngày,
+  // nên lần gọi API đầu tiên cũng chỉ lấy 30 ngày thay vì toàn bộ session.
+  const [filter, setFilter] = useState<PatrolFilter>(() => ({
+    ...getDefaultListFilter(),
     status: statusFromUrl,
-  });
+  }));
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -133,18 +135,28 @@ const PatrolList: React.FC<PatrolListProps> = ({
           { silent: hasCache },
         );
       } else {
-        runFilter({}, { silent: hasCache });
+        // Quay lại từ trang chi tiết nhưng không kèm bộ lọc nào → vẫn dùng mặc
+        // định 30 ngày, không tải toàn bộ.
+        const defaultFilter = getDefaultListFilter();
+        setFilter(defaultFilter);
+        runFilter(buildFilterParams(defaultFilter), { silent: hasCache });
       }
     } else {
+      // Không có state điều hướng lưu lại → dùng bộ lọc mặc định 30 ngày gần nhất.
+      const defaultFilter: PatrolFilter = {
+        ...getDefaultListFilter(),
+        status: statusFromUrl,
+      };
+      setFilter(defaultFilter);
+
       if (statusFromUrl) {
-        setFilter((prev) => ({ ...prev, status: statusFromUrl }));
-        runFilter({ status: statusFromUrl }, { silent: hasCache });
+        runFilter(buildFilterParams(defaultFilter), { silent: hasCache });
       } else {
         // Daily & weekly dùng chung filteredSessionsResult (lọc theo patrolType ở
         // client). Khi chỉ đổi tab mà store đã có dữ liệu thì không cần gọi lại API
         // => tránh phải đợi tải lại toàn bộ danh sách.
         if (filteredSessionsResult.length === 0) {
-          runFilter({});
+          runFilter(buildFilterParams(defaultFilter));
         } else {
           setListLoading(false);
         }
@@ -341,9 +353,12 @@ const buildFilterParams = (f: PatrolFilter) => ({
     dispatchFilter(filter);
   };
   const handleReset = () => {
-    setFilter(PATROL_FILTER_DEFAULT);
+    // Về lại mặc định 30 ngày gần nhất, KHÔNG về bộ lọc rỗng: bộ lọc rỗng nghĩa
+    // là tải toàn bộ session — đúng thứ mà mặc định này đang tránh.
+    const defaultFilter = getDefaultListFilter();
+    setFilter(defaultFilter);
     setCurrentPage(0);
-    runFilter({});
+    runFilter(buildFilterParams(defaultFilter));
   };
 
   // ======================== ACTION HANDLERS ========================

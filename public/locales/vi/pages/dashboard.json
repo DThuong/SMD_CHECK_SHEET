@@ -26,7 +26,8 @@
       "pending": "Đang chờ",
       "completed": "Hoàn thành",
       "completionRate": "Tỷ lệ hoàn thành"
-    }
+    },
+    "sheetUnit": "sheet"
   },
   "adminDashboard": {
     "title": "Dashboard Analytics",
@@ -58,7 +59,12 @@
       "nightshift": "Ca tối",
       "both": "Cả 2 ca",
       "morningLegend": "Ca sáng (08:00–19:59)",
-      "nightLegend": "Ca tối (20:00–07:59)"
+      "nightLegend": "Ca tối (20:00–07:59)",
+      "rangeFilterLabel": "Khoảng thời gian",
+      "rangeNoteAll": "Đang tải toàn bộ dữ liệu — có thể chậm.",
+      "rangeNote": "Mọi thẻ số liệu bên dưới tính trên {{range}}.",
+      "rangeLastDays": "{{days}} ngày gần nhất",
+      "rangeAllData": "toàn bộ dữ liệu"
     },
     "roleDistribution": {
       "title": "Phân bổ Users theo Role",
@@ -110,5 +116,14 @@
     "supervisorDone": "Chờ Manager xác nhận",
     "managerDone": "Chờ Korea Manager xác nhận",
     "koreaManagerDone": "Đã hoàn thành"
+  },
+  "clickPointToView": "Nhấn vào một điểm trên biểu đồ để xem danh sách",
+  "dayshift": "Ca ngày",
+  "nightshift": "Ca tối",
+  "lineLabel": "Chuyền",
+  "engTimeline": {
+    "tabDaily": "Sheet Ngày",
+    "tabWeekly": "Sheet Tuần",
+    "tabMonthly": "Sheet Tháng"
   }
 }

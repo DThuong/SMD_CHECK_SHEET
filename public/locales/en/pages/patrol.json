@@ -108,6 +108,7 @@
   "msgDeviceNotSupportedForReport": "Your device is not supported to view this report",
   "noStandard": "None",
   "placeholderNote": "ex: xxx",
+  "notChecked": "Not approved",
   "notSigned": "Not signed",
   "loading": "Loading data...",
   "backBtn": "Back",
@@ -260,5 +261,7 @@
       "morningLegend": "Day Shift (08:00–19:59)",
       "nightLegend": "Night Shift (20:00–07:59)"
     }
-  }
+  },
+  "dayshift": "Day shift",
+  "nightshift": "Night shift"
 }

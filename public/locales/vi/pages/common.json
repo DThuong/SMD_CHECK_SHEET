@@ -87,5 +87,15 @@
     "detected_msg": "Đã có phiên bản mới được cập nhật. Vui lòng nhấn nút bên dưới để tải lại trang một lần nữa nhằm đảm bảo tính ổn định.",
     "reload_button": "Tải lại trang ngay"
   },
-  "changePassword": "Đổi mật khẩu"
+  "changePassword": "Đổi mật khẩu",
+  "searchBar": {
+    "title": "Tìm kiếm",
+    "reset": "Xóa bộ lọc",
+    "searching": "Đang tìm...",
+    "selectPlaceholder": "Chọn...",
+    "datePlaceholder": "Chọn thời gian",
+    "showing": "Hiển thị",
+    "sheetUnit": "sheets",
+    "pageIndicator": "(Trang {{page}}/{{pageCount}})"
+  }
 }

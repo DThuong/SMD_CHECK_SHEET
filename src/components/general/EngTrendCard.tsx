@@ -369,9 +369,9 @@ const EngTrendCard: React.FC<EngTrendCardProps> = ({
                       }`}
                   >
                     {tab === "all" ? `${tPatrol("all", { defaultValue: "Tất cả" })} (${counts.all})` :
-                      tab === "daily" ? `Sheet Ngày (${counts.daily})` :
-                        tab === "weekly" ? `Sheet Tuần (${counts.weekly})` :
-                          `Sheet Tháng (${counts.monthly})`}
+                      tab === "daily" ? `${pT("engTimeline.tabDaily")} (${counts.daily})` :
+                        tab === "weekly" ? `${pT("engTimeline.tabWeekly")} (${counts.weekly})` :
+                          `${pT("engTimeline.tabMonthly")} (${counts.monthly})`}
                   </button>
                 ))}
               </div>

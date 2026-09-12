@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import { AiOutlineSearch, AiOutlineClose } from "react-icons/ai";
 import FuzzySearchInput from "./FuzzySearchInput";
 import CustomSelect from "./CustomSelect";
@@ -39,6 +40,8 @@ export const SmartSearchBar = ({
   loading = false,
   resultCount,
 }: SmartSearchBarProps) => {
+  // Thanh tim kiem dung chung nen nhan nam o namespace `common`.
+  const { t } = useTranslation("common");
 
   const getInputValue = (field: SearchField) => {
     const val = values[field.key];
@@ -52,7 +55,7 @@ export const SmartSearchBar = ({
     <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
       <div className="flex items-center gap-2 mb-3">
         <AiOutlineSearch className="w-5 h-5 text-gray-600" />
-        <h3 className="font-semibold text-gray-700">Tìm kiếm</h3>
+        <h3 className="font-semibold text-gray-700">{t("searchBar.title")}</h3>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -66,7 +69,7 @@ export const SmartSearchBar = ({
                   value={values[field.key] ?? ''}
                   onChange={val => onChange(field.key, val)}
                   options={field.options || []}
-                  placeholder={field.placeholder || "Chọn..."}
+                  placeholder={field.placeholder || t("searchBar.selectPlaceholder")}
                   isClearable={true}
                 />
               </div>
@@ -76,7 +79,7 @@ export const SmartSearchBar = ({
                 <CustomDatePicker
                   value={getInputValue(field)}
                   onChange={val => onChange(field.key, val)}
-                  placeholder={field.placeholder || "Chọn thời gian"}
+                  placeholder={field.placeholder || t("searchBar.datePlaceholder")}
                   isClearable={true}
                 />
               </div>
@@ -128,21 +131,26 @@ export const SmartSearchBar = ({
           className="w-full sm:w-auto px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <AiOutlineClose className="w-4 h-4" />
-          Xóa bộ lọc
+          {t("searchBar.reset")}
         </button>
 
         {extraActions}
 
-        {loading && <span className="text-sm text-gray-500">Đang tìm...</span>}
+        {loading && <span className="text-sm text-gray-500">{t("searchBar.searching")}</span>}
 
         {resultCount !== undefined && (
           <span className="text-sm text-gray-600">
-            Hiển thị{' '}
+            {t("searchBar.showing")}{' '}
             <span className="font-semibold text-blue-600">{resultCount.current}</span>
             {' / '}
-            <span className="font-semibold">{resultCount.total}</span> sheets
+            <span className="font-semibold">{resultCount.total}</span> {t("searchBar.sheetUnit")}
             {resultCount.pageCount > 1 && (
-              <span className="ml-1">(Trang {resultCount.page + 1}/{resultCount.pageCount})</span>
+              <span className="ml-1">
+                {t("searchBar.pageIndicator", {
+                  page: resultCount.page + 1,
+                  pageCount: resultCount.pageCount,
+                })}
+              </span>
             )}
           </span>
         )}

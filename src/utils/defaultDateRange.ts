@@ -51,6 +51,46 @@ export const toApiDateTime = (datetimeLocal: string): string => {
   );
 };
 
-/** Khoảng mặc định của Dashboard — rộng hơn Logs/Home một chút để biểu đồ
- *  "30 ngày" không bị cắt ở rìa. */
-export const DASHBOARD_RANGE_DAYS = 35;
+/* ==================== KHOẢNG THỜI GIAN CỦA DASHBOARD ====================
+ *
+ * Dashboard có 3 lựa chọn: "7 ngày" / "30 ngày" / "Tất cả".
+ * Mỗi lựa chọn TẢI VỀ ĐÚNG khoảng đó, thay vì tải dư một cửa sổ cố định rồi
+ * lọc lại ở client. Nhờ vậy thẻ số liệu (card) và biểu đồ luôn nói về cùng
+ * một khoảng thời gian.
+ *
+ * TRƯỚC ĐÂY: một hằng số duy nhất DASHBOARD_RANGE_DAYS = 35 (30 + 5 ngày đệm
+ * tùy ý). Cả "7 ngày" lẫn "30 ngày" đều dùng chung cửa sổ 35 ngày này, mà card
+ * lại đọc thẳng state `sheets` không qua bộ lọc — nên bấm 7 hay 30 ngày card
+ * vẫn hiện y hệt nhau; chỉ "Tất cả" mới đổi vì nó gọi API khác.
+ *
+ * LƯU Ý: 7 ngày và 30 ngày LỒNG nhau chứ không cộng dồn — 30 ngày đã bao trùm
+ * 7 ngày, nên không cần cửa sổ 37 ngày.
+ */
+export const DASHBOARD_WEEK_DAYS = 7;
+export const DASHBOARD_MONTH_DAYS = 30;
+
+export type DashboardRange = 'week' | 'month' | 'all';
+
+/** Số ngày ứng với lựa chọn trên thanh lọc; 'all' → null (không giới hạn). */
+export const getRangeDays = (range: DashboardRange): number | null =>
+  range === 'week'
+    ? DASHBOARD_WEEK_DAYS
+    : range === 'month'
+      ? DASHBOARD_MONTH_DAYS
+      : null;
+
+/**
+ * Mốc cắt dưới của khoảng đang chọn — 00:00 của N ngày trước; null nếu 'all'.
+ *
+ * Dùng cộng trừ NGÀY, không dùng setMonth(x - 1): setMonth bị tràn tháng —
+ * ngày 31/03 lùi 1 tháng ra 03/03 chứ không phải 01/03, vì tháng 2 không có
+ * ngày 31.
+ */
+export const getRangeCutoff = (range: DashboardRange): Date | null => {
+  const days = getRangeDays(range);
+  if (days === null) return null;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  cutoff.setHours(0, 0, 0, 0);
+  return cutoff;
+};

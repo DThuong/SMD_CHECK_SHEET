@@ -6,7 +6,8 @@
     "supervisor": "You can view, edit and confirm at SUPERVISOR step",
     "manager": "You can view and confirm at MANAGER step (NO editing)",
     "koreaManager": "You can view and confirm at KOREA MANAGER step (NO editing)",
-    "admin": "You have permission to view all sheets"
+    "admin": "You have permission to view all sheets",
+    "pqcLeader": "You can view and sign sheets once PQC has completed them"
   },
   "search": {
     "title": "Search",
@@ -31,7 +32,10 @@
     "result": {
       "count": "Pages",
       "page": "page"
-    }
+    },
+    "viewAll": "View all",
+    "viewAllTitle": "Load every sheet ever created (slower)",
+    "viewingAllHint": "Viewing all data — click \"Clear filters\" to return to the last {{days}} days"
   },
   "status": {
     "all": "All Status",
@@ -58,7 +62,13 @@
     "viewFullSheet": "View Full Sheet",
     "sign": "Sign",
     "signConfirm": "Sign Confirmation",
-    "signFailed": "Cannot sign"
+    "signFailed": "Cannot sign",
+    "signing": "Signing...",
+    "signTitle": "Sign this sheet",
+    "delete": "Delete sheet",
+    "deleteTitle": "Delete sheet",
+    "return": "Return",
+    "returnTitle": "Return the sheet to Pending so PQC can edit it again"
   },
   "detail": {
     "title": "SMD Sheet Details",
@@ -91,10 +101,21 @@
     "confirmFailed": "Error occurred while confirming this step",
     "cannotLoadSheets": "Cannot load sheets",
     "loadSheetsFailed": "Failed to load sheets",
-    "fetchError": "Error occurred while loading data"
+    "fetchError": "Error occurred while loading data",
+    "title": "Error",
+    "deleteSheetFailed": "Failed to delete the sheet",
+    "returnFailed": "Could not return the sheet to Pending",
+    "missingFilesTitle": "Required files missing",
+    "missingFilesMessage": "Please upload both the LCR file and the reflow file before signing.",
+    "lcrInvalidTitle": "Invalid LCR file",
+    "lcrInvalidDefault": "The LCR file must be 100% OK",
+    "lcrInvalidStats": "Details: OK={{ok}}, NG={{ng}}, SKIP={{skip}}",
+    "lcrInvalidHint": "Please review the details and upload the file again."
   },
   "success": {
-    "confirmed": "Successfully confirmed by"
+    "confirmed": "Successfully confirmed by",
+    "deleted": "Sheet {{id}} deleted",
+    "returnedToPending": "Sheet #{{id}} has been returned to Pending"
   },
   "warning": {
     "selectToDate": "Please select \"To Date\"",
@@ -104,5 +125,21 @@
   "pagination": {
     "previous": "Previous",
     "next": "Next"
+  },
+  "confirmDelete": {
+    "title": "Confirm sheet deletion",
+    "message": "Are you sure you want to delete Sheet #{{id}}?",
+    "workOrder": "Work order: {{workOrder}}",
+    "cannotUndo": "This action cannot be undone !!!",
+    "confirm": "Delete",
+    "confirming": "Deleting",
+    "cancel": "Cancel"
+  },
+  "confirmReturn": {
+    "title": "Return sheet to Pending",
+    "message": "Return Sheet #{{id}} to Pending?",
+    "note": "PQC will have to sign it again from the start.",
+    "confirm": "Return",
+    "cancel": "Cancel"
   }
 }

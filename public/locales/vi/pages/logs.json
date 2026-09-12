@@ -1,108 +1,145 @@
 {
-    "title": "Quản lý SMD Logs",
-    "role": "Role",
-    "info": {
-      "eng": "Bạn có thể xem, chỉnh sửa và xác nhận ở bước ENG",
-      "supervisor": "Bạn có thể xem, chỉnh sửa và xác nhận ở bước SUPERVISOR",
-      "manager": "Bạn có thể xem và xác nhận ở bước MANAGER (KHÔNG sửa)",
-      "koreaManager": "Bạn có thể xem và xác nhận ở bước KOREA MANAGER (KHÔNG sửa)",
-      "admin": "Bạn có quyền xem tất cả sheets"
-    },
-    "search": {
-      "title": "Tìm kiếm",
-      "createrName": "Người tạo",
-      "id": "Id",
-      "fcode": "FCode",
-      "workOrder": "Work Order",
-      "status": "Trạng thái",
-      "fromDate": "Từ ngày",
-      "toDate": "Đến ngày",
-      "button": {
-        "search": "Tìm kiếm",
-        "searching": "Đang tìm kiếm...",
-        "reset": "Thay đổi bộ lọc"
-      },
-      "placeholder": {
-        "id": "Tìm kiếm theo Id...",
-        "fcode": "Tìm kiếm theo fcode...",
-        "workOrder": "Tìm kiếm theo work order...",
-        "createrName": "Nhập tên người tạo..."
-      },
-      "result": {
-        "count": "Số trang",
-        "page": "page"
-      }
-    },
-    "status": {
-      "all": "Tất cả trạng thái",
-      "pending": "Đang chờ",
-      "pqcDone": "PQC đã hoàn thành",
-      "pqcLeaderDone": "PQC Leader đã hoàn thành",
-      "engDone": "Engineering đã hoàn thành",
-      "supervisorDone": "Supervisor đã hoàn thành",
-      "managerDone": "Manager đã hoàn thành",
-      "koreaManagerDone": "Korea Manager đã hoàn thành"
-    },
-    "table": {
-      "id": "ID",
-      "sheetId": "Sheet id",
-      "createdBy": "Người tạo",
-      "createTime": "Thời gian tạo",
-      "status": "Trạng thái",
-      "action": "Hành động"
-    },
+  "title": "Quản lý SMD Logs",
+  "role": "Role",
+  "info": {
+    "eng": "Bạn có thể xem, chỉnh sửa và xác nhận ở bước ENG",
+    "supervisor": "Bạn có thể xem, chỉnh sửa và xác nhận ở bước SUPERVISOR",
+    "manager": "Bạn có thể xem và xác nhận ở bước MANAGER (KHÔNG sửa)",
+    "koreaManager": "Bạn có thể xem và xác nhận ở bước KOREA MANAGER (KHÔNG sửa)",
+    "admin": "Bạn có quyền xem tất cả sheets",
+    "pqcLeader": "Bạn có thể xem và ký xác nhận sheet khi PQC đã hoàn thành"
+  },
+  "search": {
+    "title": "Tìm kiếm",
+    "createrName": "Người tạo",
+    "id": "Id",
+    "fcode": "FCode",
+    "workOrder": "Work Order",
+    "status": "Trạng thái",
+    "fromDate": "Từ ngày",
+    "toDate": "Đến ngày",
     "button": {
-      "view": "Xem",
-      "edit": "Chỉnh sửa",
-      "back": "Quay lại",
-      "viewFullSheet": "Xem toàn bộ sheet",
-      "sign": "Ký ngay",
-      "signConfirm": "Ký xác nhận",
-      "signFailed": "Không thể ký"
+      "search": "Tìm kiếm",
+      "searching": "Đang tìm kiếm...",
+      "reset": "Thay đổi bộ lọc"
     },
-    "detail": {
-      "title": "Chi tiết SMD Sheet",
-      "createdBy": "Người tạo",
-      "time": "Thời gian",
-      "signatureProgress": "Tiến trình ký xác nhận",
-      "loading": "Đang tải lịch sử...",
-      "confirmed": "Đã xác nhận",
-      "notConfirmed": "Chưa xác nhận",
-      "signer": "Người ký",
-      "signButton": "Ký xác nhận",
-      "by": "bởi",
-      "donthave": "Không có"
+    "placeholder": {
+      "id": "Tìm kiếm theo Id...",
+      "fcode": "Tìm kiếm theo fcode...",
+      "workOrder": "Tìm kiếm theo work order...",
+      "createrName": "Nhập tên người tạo..."
     },
-    "roles": {
-      "engineering": "Engineering",
-      "supervisor": "Supervisor",
-      "manager": "Manager",
-      "koreaManager": "Korea Manager"
+    "result": {
+      "count": "Số trang",
+      "page": "page"
     },
-    "empty": {
-      "noSheets": "Tạm thời không có sheet nào phù hợp",
-      "changeFilter": "Thay đổi bộ lọc",
-      "createNew": "Tạo sheet mới",
-      "waitPQC": "Chờ PQC tạo sheet"
-    },
-    "error": {
-      "invalidUser": "Người dùng không hợp lệ!",
-      "noPermission": "Bạn không có quyền xác nhận bước này!",
-      "confirmFailed": "Đã xảy ra lỗi khi xác nhận bước này",
-      "cannotLoadSheets": "Không thể tải sheets",
-      "loadSheetsFailed": "Tải sheets thất bại",
-      "fetchError": "Có lỗi xảy ra khi tải dữ liệu"
-    },
-    "success": {
-      "confirmed": "Xác nhận thành công bởi"
-    },
-    "warning": {
-      "selectToDate": "Vui lòng chọn \"Đến ngày\"",
-      "selectFromDate": "Vui lòng chọn \"Từ ngày\"",
-      "invalidDateRange": "\"Từ ngày\" không được sau \"Đến ngày\""
-    },
-    "pagination": {
+    "viewAll": "Xem tất cả",
+    "viewAllTitle": "Tải toàn bộ sheet từ trước tới nay (chậm hơn)",
+    "viewingAllHint": "Đang xem toàn bộ dữ liệu — bấm \"Xóa bộ lọc\" để về {{days}} ngày gần nhất"
+  },
+  "status": {
+    "all": "Tất cả trạng thái",
+    "pending": "Đang chờ",
+    "pqcDone": "PQC đã hoàn thành",
+    "pqcLeaderDone": "PQC Leader đã hoàn thành",
+    "engDone": "Engineering đã hoàn thành",
+    "supervisorDone": "Supervisor đã hoàn thành",
+    "managerDone": "Manager đã hoàn thành",
+    "koreaManagerDone": "Korea Manager đã hoàn thành"
+  },
+  "table": {
+    "id": "ID",
+    "sheetId": "Sheet id",
+    "createdBy": "Người tạo",
+    "createTime": "Thời gian tạo",
+    "status": "Trạng thái",
+    "action": "Hành động"
+  },
+  "button": {
+    "view": "Xem",
+    "edit": "Chỉnh sửa",
+    "back": "Quay lại",
+    "viewFullSheet": "Xem toàn bộ sheet",
+    "sign": "Ký ngay",
+    "signConfirm": "Ký xác nhận",
+    "signFailed": "Không thể ký",
+    "signing": "Đang ký...",
+    "signTitle": "Ký xác nhận sheet này",
+    "delete": "Xóa Sheet",
+    "deleteTitle": "Xóa Sheet",
+    "return": "Trả về",
+    "returnTitle": "Trả sheet về Pending để PQC chỉnh sửa lại"
+  },
+  "detail": {
+    "title": "Chi tiết SMD Sheet",
+    "createdBy": "Người tạo",
+    "time": "Thời gian",
+    "signatureProgress": "Tiến trình ký xác nhận",
+    "loading": "Đang tải lịch sử...",
+    "confirmed": "Đã xác nhận",
+    "notConfirmed": "Chưa xác nhận",
+    "signer": "Người ký",
+    "signButton": "Ký xác nhận",
+    "by": "bởi",
+    "donthave": "Không có"
+  },
+  "roles": {
+    "engineering": "Engineering",
+    "supervisor": "Supervisor",
+    "manager": "Manager",
+    "koreaManager": "Korea Manager"
+  },
+  "empty": {
+    "noSheets": "Tạm thời không có sheet nào phù hợp",
+    "changeFilter": "Thay đổi bộ lọc",
+    "createNew": "Tạo sheet mới",
+    "waitPQC": "Chờ PQC tạo sheet"
+  },
+  "error": {
+    "invalidUser": "Người dùng không hợp lệ!",
+    "noPermission": "Bạn không có quyền xác nhận bước này!",
+    "confirmFailed": "Đã xảy ra lỗi khi xác nhận bước này",
+    "cannotLoadSheets": "Không thể tải sheets",
+    "loadSheetsFailed": "Tải sheets thất bại",
+    "fetchError": "Có lỗi xảy ra khi tải dữ liệu",
+    "title": "Lỗi",
+    "deleteSheetFailed": "Xóa sheet thất bại",
+    "returnFailed": "Không thể trả sheet về Pending",
+    "missingFilesTitle": "Thiếu File Bắt Buộc",
+    "missingFilesMessage": "Vui lòng upload đầy đủ các file: lcr file, reflow file trước khi ký xác nhận.",
+    "lcrInvalidTitle": "LCR File Không Hợp Lệ",
+    "lcrInvalidDefault": "File LCR phải có 100% kết quả OK",
+    "lcrInvalidStats": "Chi tiết: OK={{ok}}, NG={{ng}}, SKIP={{skip}}",
+    "lcrInvalidHint": "Vui lòng xem chi tiết và upload lại file."
+  },
+  "success": {
+    "confirmed": "Xác nhận thành công bởi",
+    "deleted": "Bạn đã xóa sheet: {{id}}",
+    "returnedToPending": "Sheet #{{id}} đã được trả về Pending"
+  },
+  "warning": {
+    "selectToDate": "Vui lòng chọn \"Đến ngày\"",
+    "selectFromDate": "Vui lòng chọn \"Từ ngày\"",
+    "invalidDateRange": "\"Từ ngày\" không được sau \"Đến ngày\""
+  },
+  "pagination": {
     "previous": "Trước",
     "next": "Sau"
+  },
+  "confirmDelete": {
+    "title": "Xác nhận xóa Sheet",
+    "message": "Bạn có chắc muốn xóa Sheet #{{id}}?",
+    "workOrder": "WorkOrder: {{workOrder}}",
+    "cannotUndo": "Hành động này sẽ không thể hoàn tác !!!",
+    "confirm": "Xóa",
+    "confirming": "Đang Xóa",
+    "cancel": "Hủy"
+  },
+  "confirmReturn": {
+    "title": "Trả sheet về Pending",
+    "message": "Trả Sheet #{{id}} về Pending?",
+    "note": "PQC sẽ cần ký lại từ đầu.",
+    "confirm": "Trả về",
+    "cancel": "Hủy"
   }
 }

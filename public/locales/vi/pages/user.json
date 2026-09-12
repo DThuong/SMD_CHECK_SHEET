@@ -1,0 +1,95 @@
+{
+  "title": "Quản lý người dùng",
+  "totalCount": "Tổng số: {{count}} người dùng",
+  "filteringById": " (Đang lọc theo ID: {{id}})",
+  "addUser": "Thêm người dùng",
+  "searchPlaceholder": "Tìm kiếm theo tên, username, số điện thoại, quyền...",
+  "table": {
+    "id": "ID",
+    "user": "Người dùng",
+    "contact": "Liên hệ",
+    "role": "Quyền",
+    "status": "Trạng thái",
+    "actions": "Thao tác",
+    "notFound": "Không tìm thấy người dùng nào"
+  },
+  "status": {
+    "active": "Hoạt động",
+    "inactive": "Không hoạt động"
+  },
+  "actions": {
+    "changePassword": "Đổi mật khẩu",
+    "changePasswordShort": "Đổi MK",
+    "edit": "Chỉnh sửa",
+    "editShort": "Sửa",
+    "delete": "Xóa",
+    "cancel": "Hủy"
+  },
+  "addModal": {
+    "title": "Thêm người dùng mới",
+    "username": "Username *",
+    "usernamePlaceholder": "Nhập username (dùng để đăng nhập)",
+    "password": "Mật khẩu *",
+    "passwordPlaceholder": "Tối thiểu 3 ký tự",
+    "confirmPassword": "Xác nhận mật khẩu *",
+    "confirmPasswordPlaceholder": "Nhập lại mật khẩu",
+    "fullName": "Họ và tên *",
+    "fullNamePlaceholder": "Nhập họ và tên đầy đủ",
+    "phone": "Số điện thoại *",
+    "phonePlaceholder": "Nhập số điện thoại",
+    "role": "Quyền *",
+    "submit": "Thêm người dùng",
+    "submitting": "Đang thêm..."
+  },
+  "filterModal": {
+    "title": "Lọc người dùng theo ID",
+    "label": "Nhập ID người dùng",
+    "placeholder": "Ví dụ: 1, 2, 3...",
+    "apply": "Áp dụng",
+    "clear": "Xóa bộ lọc"
+  },
+  "passwordModal": {
+    "title": "Đổi mật khẩu",
+    "newPassword": "Mật khẩu mới *",
+    "newPasswordPlaceholder": "Nhập mật khẩu mới (tối thiểu 6 ký tự)",
+    "confirmPassword": "Xác nhận mật khẩu *",
+    "confirmPasswordPlaceholder": "Nhập lại mật khẩu mới",
+    "submit": "Đổi mật khẩu",
+    "submitting": "Đang xử lý..."
+  },
+  "editModal": {
+    "title": "Chỉnh sửa người dùng",
+    "username": "Username",
+    "fullName": "Họ và tên *",
+    "phone": "Số điện thoại *",
+    "role": "Quyền *",
+    "status": "Trạng thái *",
+    "submit": "Cập nhật",
+    "submitting": "Đang cập nhật..."
+  },
+  "confirmDelete": {
+    "title": "Xác nhận xóa người dùng",
+    "message": "Bạn có chắc chắn muốn xóa người dùng này?",
+    "confirm": "Xóa",
+    "cancel": "Hủy"
+  },
+  "validation": {
+    "usernameRequired": "Vui lòng nhập username",
+    "passwordRequired": "Vui lòng nhập mật khẩu",
+    "passwordMismatch": "Mật khẩu xác nhận không khớp",
+    "fullNameRequired": "Vui lòng nhập họ và tên",
+    "phoneRequired": "Vui lòng nhập số điện thoại",
+    "newPasswordRequired": "Vui lòng nhập mật khẩu mới"
+  },
+  "toast": {
+    "addSuccess": "Thêm người dùng thành công!",
+    "addFailed": "Thêm người dùng thất bại",
+    "updateSuccess": "Cập nhật người dùng thành công!",
+    "updateFailed": "Cập nhật thất bại",
+    "deleteSuccess": "Xóa người dùng thành công!",
+    "deleteFailed": "Xóa thất bại",
+    "changePasswordSuccess": "Đổi mật khẩu thành công!",
+    "changePasswordFailed": "Đổi mật khẩu thất bại",
+    "errorPrefix": "Lỗi: {{message}}"
+  }
+}

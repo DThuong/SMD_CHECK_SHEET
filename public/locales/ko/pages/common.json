@@ -87,5 +87,15 @@
     "detected_msg": "새 버전이 배포되었습니다. 안정성을 위해 아래 버튼을 클릭하여 페이지를 한 번 더 새로고침해 주세요.",
     "reload_button": "지금 새로고침"
   },
-  "changePassword": "비밀번호 변경"
+  "changePassword": "비밀번호 변경",
+  "searchBar": {
+    "title": "검색",
+    "reset": "필터 초기화",
+    "searching": "검색 중...",
+    "selectPlaceholder": "선택...",
+    "datePlaceholder": "시간 선택",
+    "showing": "표시",
+    "sheetUnit": "건",
+    "pageIndicator": "(페이지 {{page}}/{{pageCount}})"
+  }
 }

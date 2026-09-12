@@ -251,7 +251,7 @@ const Logs = () => {
             console.error("❌ Lỗi khi fetch sheets:", error);
             showNotification(
               "error",
-              "Lỗi",
+              t("error.title"),
               error.message || t("error.cannotLoadSheets"),
             );
           });
@@ -557,21 +557,25 @@ const Logs = () => {
         if (!hasLCR || !hasReflow) {
           showNotification(
             "warning",
-            "Thiếu File Bắt Buộc",
-            "Vui lòng upload đầy đủ các file: lcr file, reflow file trước khi ký xác nhận.",
+            t("error.missingFilesTitle"),
+            t("error.missingFilesMessage"),
           );
           return;
         }
 
         if (!lcrValidation || !lcrValidation.isValid) {
           const errorDetail = lcrValidation?.stats
-            ? `\n\nChi tiết: OK=${lcrValidation.stats.ok}, NG=${lcrValidation.stats.ng}, SKIP=${lcrValidation.stats.skip}`
+            ? `\n\n${t("error.lcrInvalidStats", {
+              ok: lcrValidation.stats.ok,
+              ng: lcrValidation.stats.ng,
+              skip: lcrValidation.stats.skip,
+            })}`
             : "";
 
           showNotification(
             "error",
-            "LCR File Không Hợp Lệ",
-            `${lcrValidation?.errorMessage || "File LCR phải có 100% kết quả OK"}${errorDetail}\n\nVui lòng xem chi tiết và upload lại file.`,
+            t("error.lcrInvalidTitle"),
+            `${lcrValidation?.errorMessage || t("error.lcrInvalidDefault")}${errorDetail}\n\n${t("error.lcrInvalidHint")}`,
           );
           return;
         }
@@ -655,11 +659,11 @@ const Logs = () => {
     try {
       setConfirmingSheetId(sheet.id);
       await dispatch(returnSheetToPending({ sheetId: sheet.id })).unwrap();
-      showNotification("success", `Sheet #${sheet.id} đã được trả về Pending`);
+      showNotification("success", t("success.returnedToPending", { id: sheet.id }));
       // returnSheetToPending.fulfilled đã tự cập nhật status trong sheets/filteredSheets,
       // không cần gọi lại API lấy toàn bộ danh sách.
     } catch (error: any) {
-      showNotification("error", "Lỗi", error || "Không thể trả sheet về Pending");
+      showNotification("error", t("error.title"), error || t("error.returnFailed"));
     } finally {
       setConfirmingSheetId(null);
     }
@@ -674,7 +678,7 @@ const Logs = () => {
 
       await dispatch(deleteSheetById(sheetId)).unwrap();
 
-      showNotification("success", `Bạn đã xóa sheet: ${sheetId}`);
+      showNotification("success", t("success.deleted", { id: sheetId }));
 
       // Đóng modal
       setConfirmDeleteModal({ open: false, sheet: null });
@@ -924,8 +928,7 @@ const Logs = () => {
           {/* Info banner */}
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-xs sm:text-sm text-blue-800 text-center mb-0">
-              {user?.role === ROLES.PQCLEADER &&
-                "Bạn có thể xem và ký xác nhận sheet khi PQC đã hoàn thành"}
+              {user?.role === ROLES.PQCLEADER && t("info.pqcLeader")}
               {user?.role === ROLES.ENG && t("info.eng")}
               {user?.role === ROLES.SUPERVISOR && t("info.supervisor")}
               {user?.role === ROLES.MANAGER && t("info.manager")}
@@ -967,13 +970,13 @@ const Logs = () => {
                   onClick={loadAllSheets}
                   disabled={loadingList}
                   className="w-full sm:w-auto px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 text-sm font-medium disabled:opacity-50"
-                  title="Tải toàn bộ sheet từ trước tới nay (chậm hơn)"
+                  title={t("search.viewAllTitle")}
                 >
-                  Xem tất cả
+                  {t("search.viewAll")}
                 </button>
               ) : (
                 <span className="text-xs text-gray-500">
-                  Đang xem toàn bộ dữ liệu — bấm "Xóa bộ lọc" để về {DEFAULT_RANGE_DAYS} ngày gần nhất
+                  {t("search.viewingAllHint", { days: DEFAULT_RANGE_DAYS })}
                 </span>
               )
             }
@@ -1106,12 +1109,12 @@ const Logs = () => {
            text-white rounded hover:bg-orange-300 transition-colors text-xs 
            font-semibold whitespace-nowrap shadow-md hover:shadow-lg
            disabled:opacity-60 disabled:cursor-not-allowed"
-                              title="Ký xác nhận sheet này"
+                              title={t("button.signTitle")}
                             >
                               {confirmingSheetId === sheet.id ? (
                                 <>
                                   <AiOutlineLoading3Quarters className="w-4 h-4 animate-spin" />
-                                  <span>Signing...</span>
+                                  <span>{t("button.signing")}</span>
                                 </>
                               ) : (
                                 <>
@@ -1144,10 +1147,10 @@ const Logs = () => {
                               <button
                                 onClick={() => openDeleteConfirm(sheet)}
                                 className="inline-flex items-center justify-center gap-1 px-2 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs font-medium whitespace-nowrap"
-                                title="Xóa Sheet"
+                                title={t("button.deleteTitle")}
                               >
                                 <AiOutlineClose className="w-3 h-3" />
-                                <span>Xóa Sheet</span>
+                                <span>{t("button.delete")}</span>
                               </button>
                             )}
 
@@ -1157,10 +1160,10 @@ const Logs = () => {
                                 className="inline-flex items-center justify-center gap-1 px-2 py-2 
                                   bg-amber-500 text-white rounded hover:bg-amber-600 
                                   transition-colors text-xs font-medium whitespace-nowrap"
-                                title="Trả sheet về Pending để PQC chỉnh sửa lại"
+                                title={t("button.returnTitle")}
                               >
                                 <MdKeyboardReturn className="w-4 h-4" />
-                                <span>Trả về</span>
+                                <span>{t("button.return")}</span>
                               </button>
                             )}
                           </div>
@@ -1267,10 +1270,10 @@ const Logs = () => {
                         <button
                           onClick={() => openDeleteConfirm(sheet)}
                           className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-3 bg-red-600 text-white hover:bg-red-700 transition-colors text-xs font-medium whitespace-nowrap"
-                          title="Xóa Sheet"
+                          title={t("button.deleteTitle")}
                         >
                           <AiOutlineClose className="w-4 h-4" />
-                          <span>Xóa Sheet</span>
+                          <span>{t("button.delete")}</span>
                         </button>
                       )}
 
@@ -1282,7 +1285,7 @@ const Logs = () => {
                             transition-colors text-sm font-semibold"
                         >
                           <MdKeyboardReturn className="w-4 h-4" />
-                          <span>Trả về</span>
+                          <span>{t("button.return")}</span>
                         </button>
                       )}                
                     </div>
@@ -1338,16 +1341,18 @@ const Logs = () => {
 
       <ConfirmModal
         open={confirmDeleteModal.open}
-        title="Xác nhận xóa Sheet"
+        title={t("confirmDelete.title")}
         message={
           confirmDeleteModal.sheet
-            ? `Bạn có chắc muốn xóa Sheet #${confirmDeleteModal.sheet.id}?\n\n` +
-            `WorkOrder: ${confirmDeleteModal.sheet.checkModel?.workOrder || "N/A"}\n` +
-            `hành động này sẽ không thể hoàn tác !!!`
+            ? `${t("confirmDelete.message", { id: confirmDeleteModal.sheet.id })}\n\n` +
+            `${t("confirmDelete.workOrder", {
+              workOrder: confirmDeleteModal.sheet.checkModel?.workOrder || "N/A",
+            })}\n` +
+            `${t("confirmDelete.cannotUndo")}`
             : ""
         }
-        confirmText={deletingSheetId ? "Đang Xóa" : "Xóa"}
-        cancelText="Hủy"
+        confirmText={deletingSheetId ? t("confirmDelete.confirming") : t("confirmDelete.confirm")}
+        cancelText={t("confirmDelete.cancel")}
         onConfirm={handleDeleteSheet}
         onCancel={closeDeleteConfirm}
         type="danger"
@@ -1355,16 +1360,18 @@ const Logs = () => {
 
       <ConfirmModal
         open={confirmReturnModal.open}
-        title="Trả sheet về Pending"
+        title={t("confirmReturn.title")}
         message={
           confirmReturnModal.sheet
-            ? `Trả Sheet #${confirmReturnModal.sheet.id} về Pending?\n\n` +
-              `WorkOrder: ${confirmReturnModal.sheet.checkModel?.workOrder || "N/A"}\n` +
-              `PQC sẽ cần ký lại từ đầu.`
+            ? `${t("confirmReturn.message", { id: confirmReturnModal.sheet.id })}\n\n` +
+              `${t("confirmDelete.workOrder", {
+                workOrder: confirmReturnModal.sheet.checkModel?.workOrder || "N/A",
+              })}\n` +
+              `${t("confirmReturn.note")}`
             : ""
         }
-        confirmText="Trả về"
-        cancelText="Hủy"
+        confirmText={t("confirmReturn.confirm")}
+        cancelText={t("confirmReturn.cancel")}
         onConfirm={() => {
           if (confirmReturnModal.sheet) {
             handleReturnToPending(confirmReturnModal.sheet);

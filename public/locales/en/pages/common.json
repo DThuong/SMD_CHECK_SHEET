@@ -87,5 +87,15 @@
     "detected_msg": "A new version has been deployed. Please click the button below to reload the page one more time to ensure stability.",
     "reload_button": "Reload Now"
   },
-  "changePassword": "Change password"
+  "changePassword": "Change password",
+  "searchBar": {
+    "title": "Search",
+    "reset": "Clear filters",
+    "searching": "Searching...",
+    "selectPlaceholder": "Select...",
+    "datePlaceholder": "Pick a time",
+    "showing": "Showing",
+    "sheetUnit": "sheets",
+    "pageIndicator": "(Page {{page}}/{{pageCount}})"
+  }
 }

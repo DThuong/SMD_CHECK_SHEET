@@ -22,8 +22,10 @@ import { ConfirmModal } from '../../components/general/ConfirmModal';
 import LoadingSpinner from '../../components/general/LoadingSpinner';
 import { FaSpinner } from 'react-icons/fa6';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 const User = () => {
+  const { t } = useTranslation('user');
   const dispatch = useAppDispatch();
   const { users, usersLoading, usersError, selectedUser } = useAppSelector(state => state.auth);
 
@@ -49,6 +51,10 @@ const User = () => {
   });
   const [addUserError, setAddUserError] = useState<string>('');
   const [confirmAddPassword, setConfirmAddPassword] = useState<string>('');
+
+  // Truoc day dung window.confirm — hop thoai cua trinh duyet, khong dich duoc
+  // va khong dong bo giao dien. Dung ConfirmModal (da import san) thay the.
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState<number>(0);
@@ -173,35 +179,36 @@ const User = () => {
   const handleAddUser = async (): Promise<void> => {
     // Validate
     if (!addUserData.username.trim()) {
-      setAddUserError('Vui lòng nhập username');
+      setAddUserError(t('validation.usernameRequired'));
       return;
     }
     if (!addUserData.password) {
-      setAddUserError('Vui lòng nhập mật khẩu');
+      setAddUserError(t('validation.passwordRequired'));
       return;
     }
     if (addUserData.password !== confirmAddPassword) {
-      setAddUserError('Mật khẩu xác nhận không khớp');
+      setAddUserError(t('validation.passwordMismatch'));
       return;
     }
     if (!addUserData.fullName.trim()) {
-      setAddUserError('Vui lòng nhập họ và tên');
+      setAddUserError(t('validation.fullNameRequired'));
       return;
     }
     if (!addUserData.phoneNumber.trim()) {
-      setAddUserError('Vui lòng nhập số điện thoại');
+      setAddUserError(t('validation.phoneRequired'));
       return;
     }
 
     const result = await dispatch(registerUser(addUserData));
     
     if (registerUser.fulfilled.match(result)) {
-      showSuccessMessage('Thêm người dùng thành công!');
+      showSuccessMessage(t('toast.addSuccess'));
       handleCloseAddUserModal();
       await dispatch(fetchUsers()); // Refresh danh sách
     } else {
-      toast.error(result.payload as string || 'Thêm người dùng thất bại');
-      setAddUserError(result.payload as string || 'Thêm người dùng thất bại');
+      const message = (result.payload as string) || t('toast.addFailed');
+      toast.error(message);
+      setAddUserError(message);
     }
   };
 
@@ -217,7 +224,7 @@ const User = () => {
       
       const result = await dispatch(updateUser(updateData));
       if (updateUser.fulfilled.match(result)) {
-        showSuccessMessage('Cập nhật người dùng thành công!');
+        showSuccessMessage(t('toast.updateSuccess'));
         handleCloseModal();
         
         if (filterUserId && selectedUser) {
@@ -226,32 +233,38 @@ const User = () => {
           await dispatch(fetchUsers());
         }
       } else {
-        toast.error('Lỗi: ' + (result.payload as string || 'Cập nhật thất bại'));
+        toast.error(t('toast.errorPrefix', {
+          message: (result.payload as string) || t('toast.updateFailed'),
+        }));
       }
     }
   };
 
-  const handleDelete = async (userId: number): Promise<void> => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
-      const result = await dispatch(deleteUser(userId));
-      if (deleteUser.fulfilled.match(result)) {
-        showSuccessMessage('Xóa người dùng thành công!');
-        
-        if (filterUserId && selectedUser?.id === userId) {
-          setFilterUserId('');
-          dispatch(clearSelectedUser());
-        }
-        
-        await dispatch(fetchUsers());
-        
-        const remainingUsers = users.length - 1;
-        const maxPage = Math.ceil(remainingUsers / usersPerPage) - 1;
-        if (currentPage > maxPage && maxPage >= 0) {
-          setCurrentPage(maxPage);
-        }
-      } else {
-        toast.error('Lỗi: ' + (result.payload as string || 'Xóa thất bại'));
+  const handleConfirmDelete = async (): Promise<void> => {
+    const userId = deleteTargetId;
+    if (userId == null) return;
+    setDeleteTargetId(null);
+
+    const result = await dispatch(deleteUser(userId));
+    if (deleteUser.fulfilled.match(result)) {
+      showSuccessMessage(t('toast.deleteSuccess'));
+
+      if (filterUserId && selectedUser?.id === userId) {
+        setFilterUserId('');
+        dispatch(clearSelectedUser());
       }
+
+      await dispatch(fetchUsers());
+
+      const remainingUsers = users.length - 1;
+      const maxPage = Math.ceil(remainingUsers / usersPerPage) - 1;
+      if (currentPage > maxPage && maxPage >= 0) {
+        setCurrentPage(maxPage);
+      }
+    } else {
+      toast.error(t('toast.errorPrefix', {
+        message: (result.payload as string) || t('toast.deleteFailed'),
+      }));
     }
   };
 
@@ -294,11 +307,11 @@ const User = () => {
 
   const handleChangePassword = async (): Promise<void> => {
     if (!newPassword) {
-      setPasswordError('Vui lòng nhập mật khẩu mới');
+      setPasswordError(t('validation.newPasswordRequired'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError('Mật khẩu xác nhận không khớp');
+      setPasswordError(t('validation.passwordMismatch'));
       return;
     }
 
@@ -309,10 +322,10 @@ const User = () => {
       }));
 
       if (changePasswordByAdmin.fulfilled.match(result)) {
-        showSuccessMessage('Đổi mật khẩu thành công!');
+        showSuccessMessage(t('toast.changePasswordSuccess'));
         handleClosePasswordModal();
       } else {
-        setPasswordError(result.payload as string || 'Đổi mật khẩu thất bại');
+        setPasswordError((result.payload as string) || t('toast.changePasswordFailed'));
       }
     }
   };
@@ -367,10 +380,12 @@ const User = () => {
         <div className="bg-white rounded-xl shadow-lg p-4 mb-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Quản lý người dùng</h1>
+              <h1 className="text-2xl font-bold text-slate-800">{t('title')}</h1>
               <p className="text-slate-600 mt-1">
-                Tổng số: {filteredUsers.length} người dùng
-                {filterUserId && selectedUser && <span className="text-blue-600"> (Đang lọc theo ID: {filterUserId})</span>}
+                {t('totalCount', { count: filteredUsers.length })}
+                {filterUserId && selectedUser && (
+                  <span className="text-blue-600">{t('filteringById', { id: filterUserId })}</span>
+                )}
               </p>
             </div>
             <div className="flex gap-2">
@@ -380,7 +395,7 @@ const User = () => {
                 className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md"
               >
                 <FaUserPlus />
-                Thêm người dùng
+                {t('addUser')}
               </button>
             </div>
           </div>
@@ -390,7 +405,7 @@ const User = () => {
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Tìm kiếm theo tên, username, số điện thoại, quyền..."
+              placeholder={t('searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="user-search-admin w-full pl-10 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
@@ -409,12 +424,12 @@ const User = () => {
                 <table className="w-full">
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">ID</th>
-                      <th className="px-4 py-3 lg:text-left md:text-left text-center text-sm font-semibold text-slate-700">Người dùng</th>
-                      <th className="px-4 py-3 lg:text-left md:text-left text-center text-sm font-semibold text-slate-700">Liên hệ</th>
-                      <th className="px-4 py-3 lg:text-left md:text-left text-center text-sm font-semibold text-slate-700">Quyền</th>
-                      <th className="px-4 py-3 lg:text-left md:text-left text-center text-sm font-semibold text-slate-700">Trạng thái</th>
-                      <th className="px-4 py-3 lg:text-left md:text-left text-center text-sm font-semibold text-slate-700">Thao tác</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">{t('table.id')}</th>
+                      <th className="px-4 py-3 lg:text-left md:text-left text-center text-sm font-semibold text-slate-700">{t('table.user')}</th>
+                      <th className="px-4 py-3 lg:text-left md:text-left text-center text-sm font-semibold text-slate-700">{t('table.contact')}</th>
+                      <th className="px-4 py-3 lg:text-left md:text-left text-center text-sm font-semibold text-slate-700">{t('table.role')}</th>
+                      <th className="px-4 py-3 lg:text-left md:text-left text-center text-sm font-semibold text-slate-700">{t('table.status')}</th>
+                      <th className="px-4 py-3 lg:text-left md:text-left text-center text-sm font-semibold text-slate-700">{t('table.actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -450,7 +465,7 @@ const User = () => {
                           </td>
                           <td className="lg:px-4 lg:py-3 px-2 py-2 text-center lg:text-left">
                             <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeColor(user.isActive)}`}>
-                              {user.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                              {user.isActive ? t('status.active') : t('status.inactive')}
                             </span>
                           </td>
                           <td className="px-4 py-3">
@@ -458,21 +473,21 @@ const User = () => {
                               <button
                                 onClick={() => handleOpenPasswordModal(user)}
                                 className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                title="Đổi mật khẩu"
+                                title={t('actions.changePassword')}
                               >
                                 <FaKey />
                               </button>
                               <button
                                 onClick={() => handleOpenModal(user)}
                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                title="Chỉnh sửa"
+                                title={t('actions.edit')}
                               >
                                 <FaEdit color='gray' />
                               </button>
                               <button
-                                onClick={() => handleDelete(user.id)}
+                                onClick={() => setDeleteTargetId(user.id)}
                                 className="p-2 text-gray-600 hover:bg-red-50 rounded-lg transition-colors"
-                                title="Xóa"
+                                title={t('actions.delete')}
                                 disabled={user.role === 'Admin'}
                               >
                                 <FaTrash />
@@ -484,7 +499,7 @@ const User = () => {
                     ) : (
                       <tr>
                         <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
-                          Không tìm thấy người dùng nào
+                          {t('table.notFound')}
                         </td>
                       </tr>
                     )}
@@ -522,7 +537,7 @@ const User = () => {
                               {user.role}
                             </span>
                             <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeColor(user.isActive)}`}>
-                              {user.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                              {user.isActive ? t('status.active') : t('status.inactive')}
                             </span>
                           </div>
                         </div>
@@ -532,27 +547,27 @@ const User = () => {
                           <button
                             onClick={() => handleOpenPasswordModal(user)}
                             className="flex-1 flex items-center justify-center gap-2 p-2 text-green-600 border bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-sm"
-                            title="Đổi mật khẩu"
+                            title={t('actions.changePassword')}
                           >
                             <FaKey />
-                            <span>Đổi MK</span>
+                            <span>{t('actions.changePasswordShort')}</span>
                           </button>
                           <button
                             onClick={() => handleOpenModal(user)}
                             className="flex-1 flex items-center justify-center gap-2 p-2 text-gray-600 border bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-sm"
-                            title="Chỉnh sửa"
+                            title={t('actions.edit')}
                           >
                             <FaEdit />
-                            <span>Sửa</span>
+                            <span>{t('actions.editShort')}</span>
                           </button>
                           <button
-                            onClick={() => handleDelete(user.id)}
+                            onClick={() => setDeleteTargetId(user.id)}
                             className="flex-1 flex items-center justify-center gap-2 p-2 text-red-600 bg-red-50 border hover:bg-red-100 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Xóa"
+                            title={t('actions.delete')}
                             disabled={user.role === 'Admin'}
                           >
                             <FaTrash />
-                            <span>Xóa</span>
+                            <span>{t('actions.delete')}</span>
                           </button>
                         </div>
                       </div>
@@ -560,7 +575,7 @@ const User = () => {
                   </div>
                 ) : (
                   <div className="px-4 py-8 text-center text-slate-500">
-                    Không tìm thấy người dùng nào
+                    {t('table.notFound')}
                   </div>
                 )}
               </div>
@@ -602,7 +617,7 @@ const User = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-slate-200 px-4 py-4 flex items-center justify-between rounded-t-xl">
-              <h2 className="text-xl font-bold text-slate-800">Thêm người dùng mới</h2>
+              <h2 className="text-xl font-bold text-slate-800">{t('addModal.title')}</h2>
               <button
                 onClick={handleCloseAddUserModal}
                 className="text-slate-400 hover:text-slate-600 transition-colors"
@@ -622,14 +637,14 @@ const User = () => {
                 {/* Username */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Username *
+                    {t('addModal.username')}
                   </label>
                   <input
                     type="text"
                     name="username"
                     value={addUserData.username}
                     onChange={handleAddUserInputChange}
-                    placeholder="Nhập username (dùng để đăng nhập)"
+                    placeholder={t('addModal.usernamePlaceholder')}
                     required
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
@@ -638,14 +653,14 @@ const User = () => {
                 {/* Password */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Mật khẩu *
+                    {t('addModal.password')}
                   </label>
                   <input
                     type="password"
                     name="password"
                     value={addUserData.password}
                     onChange={handleAddUserInputChange}
-                    placeholder="Tối thiểu 3 ký tự"
+                    placeholder={t('addModal.passwordPlaceholder')}
                     required
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
@@ -654,13 +669,13 @@ const User = () => {
                 {/* Confirm Password */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Xác nhận mật khẩu *
+                    {t('addModal.confirmPassword')}
                   </label>
                   <input
                     type="password"
                     value={confirmAddPassword}
                     onChange={(e) => setConfirmAddPassword(e.target.value)}
-                    placeholder="Nhập lại mật khẩu"
+                    placeholder={t('addModal.confirmPasswordPlaceholder')}
                     required
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
@@ -669,14 +684,14 @@ const User = () => {
                 {/* Full Name */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Họ và tên *
+                    {t('addModal.fullName')}
                   </label>
                   <input
                     type="text"
                     name="fullName"
                     value={addUserData.fullName}
                     onChange={handleAddUserInputChange}
-                    placeholder="Nhập họ và tên đầy đủ"
+                    placeholder={t('addModal.fullNamePlaceholder')}
                     required
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
@@ -685,14 +700,14 @@ const User = () => {
                 {/* Phone */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Số điện thoại *
+                    {t('addModal.phone')}
                   </label>
                   <input
                     type="tel"
                     name="phoneNumber"
                     value={addUserData.phoneNumber}
                     onChange={handleAddUserInputChange}
-                    placeholder="Nhập số điện thoại"
+                    placeholder={t('addModal.phonePlaceholder')}
                     required
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
@@ -701,7 +716,7 @@ const User = () => {
                 {/* Role */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Quyền *
+                    {t('addModal.role')}
                   </label>
                   <CustomSelect
                     options={[
@@ -728,8 +743,8 @@ const User = () => {
                   className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {usersLoading
-                    ? <><FaSpinner className="animate-spin" /> Đang thêm...</>
-                    : <><FaUserPlus /> Thêm người dùng</>
+                    ? <><FaSpinner className="animate-spin" /> {t('addModal.submitting')}</>
+                    : <><FaUserPlus /> {t('addModal.submit')}</>
                   }
                 </button>
                 <button
@@ -738,7 +753,7 @@ const User = () => {
                   className="flex-1 flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
                 >
                   <FaTimes />
-                  Hủy
+                  {t('actions.cancel')}
                 </button>
               </div>
             </div>
@@ -752,7 +767,7 @@ const User = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
             <div className="bg-white border-b border-slate-200 px-4 py-4 flex items-center justify-between rounded-t-xl">
-              <h2 className="text-xl font-bold text-slate-800">Lọc người dùng theo ID</h2>
+              <h2 className="text-xl font-bold text-slate-800">{t('filterModal.title')}</h2>
               <button
                 onClick={() => setShowFilterModal(false)}
                 className="text-slate-400 hover:text-slate-600 transition-colors"
@@ -763,13 +778,13 @@ const User = () => {
 
             <div className="p-4">
               <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Nhập ID người dùng
+                {t('filterModal.label')}
               </label>
               <input
                 type="number"
                 value={filterUserId}
                 onChange={(e) => setFilterUserId(e.target.value)}
-                placeholder="Ví dụ: 1, 2, 3..."
+                placeholder={t('filterModal.placeholder')}
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
 
@@ -778,13 +793,13 @@ const User = () => {
                   onClick={handleFilterById}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
                 >
-                  Áp dụng
+                  {t('filterModal.apply')}
                 </button>
                 <button
                   onClick={handleClearFilter}
                   className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
                 >
-                  Xóa bộ lọc
+                  {t('filterModal.clear')}
                 </button>
               </div>
             </div>
@@ -797,7 +812,7 @@ const User = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
             <div className="bg-white border-b border-slate-200 px-4 py-4 flex items-center justify-between rounded-t-xl">
-              <h2 className="text-xl font-bold text-slate-800">Đổi mật khẩu</h2>
+              <h2 className="text-xl font-bold text-slate-800">{t('passwordModal.title')}</h2>
               <button
                 onClick={handleClosePasswordModal}
                 className="text-slate-400 hover:text-slate-600 transition-colors"
@@ -824,26 +839,26 @@ const User = () => {
               <div className="my-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Mật khẩu mới *
+                    {t('passwordModal.newPassword')}
                   </label>
                   <input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+                    placeholder={t('passwordModal.newPasswordPlaceholder')}
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Xác nhận mật khẩu *
+                    {t('passwordModal.confirmPassword')}
                   </label>
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Nhập lại mật khẩu mới"
+                    placeholder={t('passwordModal.confirmPasswordPlaceholder')}
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
@@ -856,8 +871,8 @@ const User = () => {
                   className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {usersLoading
-                    ? <><FaSpinner className="animate-spin" /> Đang xử lý...</>
-                    : <><FaKey /> Đổi mật khẩu</>
+                    ? <><FaSpinner className="animate-spin" /> {t('passwordModal.submitting')}</>
+                    : <><FaKey /> {t('passwordModal.submit')}</>
                   }
                 </button>
                 <button
@@ -865,7 +880,7 @@ const User = () => {
                   className="flex-1 flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
                 >
                   <FaTimes />
-                  Hủy
+                  {t('actions.cancel')}
                 </button>
               </div>
             </div>
@@ -879,7 +894,7 @@ const User = () => {
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-slate-200 px-4 py-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-800">
-                Chỉnh sửa người dùng
+                {t('editModal.title')}
               </h2>
               <button
                 onClick={handleCloseModal}
@@ -894,7 +909,7 @@ const User = () => {
                 {/* Username - Read only */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Username
+                    {t('editModal.username')}
                   </label>
                   <input
                     type="text"
@@ -907,7 +922,7 @@ const User = () => {
                 {/* Full Name */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Họ và tên *
+                    {t('editModal.fullName')}
                   </label>
                   <input
                     type="text"
@@ -922,7 +937,7 @@ const User = () => {
                 {/* Phone */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Số điện thoại *
+                    {t('editModal.phone')}
                   </label>
                   <input
                     type="tel"
@@ -937,7 +952,7 @@ const User = () => {
                 {/* Role */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Quyền *
+                    {t('editModal.role')}
                   </label>
                   <CustomSelect
                     options={[
@@ -958,12 +973,12 @@ const User = () => {
                 {/* Status */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Trạng thái *
+                    {t('editModal.status')}
                   </label>
                   <CustomSelect
                     options={[
-                      { value: 'true', label: 'Hoạt động' },
-                      { value: 'false', label: 'Không hoạt động' }
+                      { value: 'true', label: t('status.active') },
+                      { value: 'false', label: t('status.inactive') }
                     ]}
                     value={formData.isActive.toString()}
                     onChange={(val) => setFormData(prev => ({ ...prev, isActive: val === 'true' }))}
@@ -980,8 +995,8 @@ const User = () => {
                   className="flex-1 flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {usersLoading
-                    ? <><FaSpinner className="animate-spin" /> Đang cập nhật...</>
-                    : <><FaSave /> Cập nhật</>
+                    ? <><FaSpinner className="animate-spin" /> {t('editModal.submitting')}</>
+                    : <><FaSave /> {t('editModal.submit')}</>
                   }
                 </button>
                 <button
@@ -990,13 +1005,25 @@ const User = () => {
                   className="flex-1 flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
                 >
                   <FaTimes />
-                  Hủy
+                  {t('actions.cancel')}
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Xac nhan xoa nguoi dung */}
+      <ConfirmModal
+        open={deleteTargetId !== null}
+        title={t('confirmDelete.title')}
+        message={t('confirmDelete.message')}
+        confirmText={t('confirmDelete.confirm')}
+        cancelText={t('confirmDelete.cancel')}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTargetId(null)}
+        type="danger"
+      />
     </div>
   );
 };

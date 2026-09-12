@@ -261,5 +261,7 @@
       "morningLegend": "Ca sáng (08:00–19:59)",
       "nightLegend": "Ca tối (20:00–07:59)"
     }
-  }
+  },
+  "dayshift": "Ca ngày",
+  "nightshift": "Ca tối"
 }

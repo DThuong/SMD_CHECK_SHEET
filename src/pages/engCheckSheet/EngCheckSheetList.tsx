@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import {
-    fetchEngSessionsBySheetType,
     filterEngSessions,
     createEngSession,
     deleteEngSession,
@@ -17,7 +16,7 @@ import {
 import Modal from '../../components/general/Modal';
 import { ConfirmModal } from '../../components/general/ConfirmModal';
 import LoadingSpinner from '../../components/general/LoadingSpinner';
-import PatrolFilterBar, { PATROL_FILTER_DEFAULT } from '../../components/general/PatrolFilterBar';
+import PatrolFilterBar, { getDefaultListFilter } from '../../components/general/PatrolFilterBar';
 import CustomSelect from '../../components/general/CustomSelect';
 import type { PatrolFilter } from '../../components/general/PatrolFilterBar';
 import type { EngSharedProps, EngTab } from '../managers_role/EngCheckSheet';
@@ -33,7 +32,7 @@ const SHIFT_OPTIONS = ['Ca ngày', 'Ca đêm'];
 const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView }) => {
     const { t } = useTranslation('engCheckSheet');
     const dispatch = useAppDispatch();
-    const { sessions, filteredSessionsResult, lines, loading } = useAppSelector(state => state.eng);
+    const { filteredSessionsResult, lines, loading } = useAppSelector(state => state.eng);
 
     const sheetType = activeTab === 'daily' ? '1' : activeTab === 'weekly' ? '7' : '30';
 
@@ -42,19 +41,16 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
 
     // ------- Filter state (realtime: debounce + fuzzy + cache) -------
     const [searchParams] = useSearchParams();
-    const [filter, setFilter] = useState<PatrolFilter>(() => {
-        const queryStatus = searchParams.get('status');
-        return queryStatus
-            ? { ...PATROL_FILTER_DEFAULT, status: queryStatus }
-            : PATROL_FILTER_DEFAULT;
-    });
+    // Mở trang là đã có sẵn khoảng 30 ngày gần nhất trong ô Từ ngày / Đến ngày,
+    // nên lần gọi API đầu tiên cũng chỉ lấy 30 ngày thay vì toàn bộ session.
+    const [filter, setFilter] = useState<PatrolFilter>(() => ({
+        ...getDefaultListFilter(),
+        status: searchParams.get('status') || '',
+    }));
     const [filterLoading, setFilterLoading] = useState(false);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Cache: không gọi lại API nếu bộ lọc không đổi so với lần gọi gần nhất
     const lastFilterKeyRef = useRef<string>('');
-
-    const hasActiveFilter =
-        !!filter.fullName || !!filter.lineAreaName || !!filter.status || !!filter.fromDate || !!filter.toDate;
 
     // ------- Create modal -------
     const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -74,11 +70,12 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
     const [initialHighlightCheck, setInitialHighlightCheck] = useState(false);
 
     // Danh sách hiển thị: kết quả filter (đã lọc theo sheetType) hoặc list theo tab
+    // Mọi đường đi (mở trang, đổi bộ lọc, xoá lọc) đều gọi filterEngSessions,
+    // nên danh sách luôn lấy từ filteredSessionsResult — không còn nhánh `sessions`
+    // (nhánh đó ứng với fetch toàn bộ, thứ đã bỏ).
     const baseList = useMemo(() => {
-        return hasActiveFilter
-            ? filteredSessionsResult.filter(s => s.sheetType === sheetType)
-            : sessions.filter(s => s.sheetType === sheetType);
-    }, [hasActiveFilter, filteredSessionsResult, sessions, sheetType]);
+        return filteredSessionsResult.filter(s => s.sheetType === sheetType);
+    }, [filteredSessionsResult, sheetType]);
 
     const sortedList = useMemo(() => {
         return [...baseList].sort(
@@ -117,7 +114,7 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
     // Reset pagination when filter/tab changes
     useEffect(() => {
         setCurrentPage(0);
-    }, [sheetType, hasActiveFilter, filteredSessionsResult]);
+    }, [sheetType, filteredSessionsResult]);
 
     const pageCount = Math.ceil(sortedList.length / itemsPerPage);
     const displayList = useMemo(() => {
@@ -137,30 +134,28 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
         setIsFetchingSessions(true);
 
         const initStatus = searchParams.get('status') || '';
-        
-        const promises: Promise<any>[] = [
-            dispatch(fetchEngSessionsBySheetType(sheetType)).unwrap().catch(() => { }),
-            dispatch(fetchEngLines()).unwrap().catch(() => { })
-        ];
 
-        if (initStatus) {
-            promises.push(
-                dispatch(filterEngSessions({ status: initStatus })).unwrap().catch(() => { })
-            );
-            lastFilterKeyRef.current = JSON.stringify({ status: initStatus });
-        } else {
-            lastFilterKeyRef.current = '';
-        }
+        // Mở trang KHÔNG tải toàn bộ session nữa (fetchEngSessionsBySheetType cũ
+        // lấy hết từ ngày mở hệ thống). Thay bằng đúng một lần filter theo khoảng
+        // mặc định 30 ngày gần nhất; muốn xem cũ hơn thì chỉnh ô "Từ ngày".
+        const initFilter: PatrolFilter = {
+            ...getDefaultListFilter(),
+            status: initStatus,
+        };
+        const initParams = buildFilterParams(initFilter);
+        lastFilterKeyRef.current = JSON.stringify(initParams);
+
+        const promises: Promise<any>[] = [
+            dispatch(filterEngSessions(initParams)).unwrap().catch(() => { }),
+            dispatch(fetchEngLines()).unwrap().catch(() => { }),
+        ];
 
         Promise.all(promises).finally(() => {
             if (isMounted) setIsFetchingSessions(false);
         });
-        
-        setFilter({
-            ...PATROL_FILTER_DEFAULT,
-            status: initStatus
-        });
-        
+
+        setFilter(initFilter);
+
         return () => {
             isMounted = false;
             if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -171,15 +166,17 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
         goToView('list', null, tab);
     };
 
+    const buildFilterParams = (f: PatrolFilter) => ({
+        fullName: f.fullName || undefined,
+        lineAreaName: f.lineAreaName || undefined,
+        status: f.status || undefined,
+        fromDate: f.fromDate || undefined,
+        toDate: f.toDate || undefined,
+    });
+
     // ------- Filter realtime: debounce 400ms + cache theo key -------
     const dispatchFilter = async (f: PatrolFilter) => {
-        const params = {
-            fullName: f.fullName || undefined,
-            lineAreaName: f.lineAreaName || undefined,
-            status: f.status || undefined,
-            fromDate: f.fromDate || undefined,
-            toDate: f.toDate || undefined,
-        };
+        const params = buildFilterParams(f);
         const key = JSON.stringify(params);
         if (key === lastFilterKeyRef.current) return; // cache hit → khỏi gọi API
         lastFilterKeyRef.current = key;
@@ -211,9 +208,12 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
 
     const clearFilter = () => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
-        setFilter(PATROL_FILTER_DEFAULT);
+        // Về lại mặc định 30 ngày gần nhất, KHÔNG về bộ lọc rỗng: rỗng nghĩa là
+        // tải toàn bộ session — đúng thứ mà mặc định này đang tránh.
+        const defaultFilter = getDefaultListFilter();
+        setFilter(defaultFilter);
         lastFilterKeyRef.current = '';
-        dispatch(fetchEngSessionsBySheetType(sheetType));
+        dispatchFilter(defaultFilter);
     };
 
     // ------- Create session -------
@@ -249,11 +249,9 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
             await dispatch(deleteEngSession(deleteId)).unwrap();
             toast.success(t('list.toast.deleteSuccess'));
             // Re-fetch danh sách từ server để đảm bảo UI đồng bộ
+            // Tải lại theo đúng bộ lọc đang áp, không tải lại toàn bộ danh sách.
             lastFilterKeyRef.current = '';
-            if (hasActiveFilter) {
-                dispatchFilter(filter);
-            }
-            dispatch(fetchEngSessionsBySheetType(sheetType));
+            dispatchFilter(filter);
         } catch (err: any) {
             toast.error(typeof err === 'string' ? err : t('list.toast.deleteFailed'));
         }
@@ -262,8 +260,8 @@ const EngCheckSheetList: React.FC<EngSharedProps> = ({ user, activeTab, goToView
 
     // Candidates cho autocomplete/fuzzy search
     const fullNameCandidates = useMemo(
-        () => [...new Set(sessions.map(s => s.fullName).filter(Boolean))],
-        [sessions]
+        () => [...new Set(filteredSessionsResult.map(s => s.fullName).filter(Boolean))],
+        [filteredSessionsResult]
     );
     // Map Line của eng sang shape LineArea mà PatrolFilterBar cần
     const lineAreasForFilter = useMemo(

@@ -26,7 +26,8 @@
       "pending": "대기 중",
       "completed": "완료됨",
       "completionRate": "완료율"
-    }
+    },
+    "sheetUnit": "건"
   },
   "adminDashboard": {
     "title": "대시보드 분석",
@@ -58,7 +59,12 @@
       "nightshift": "야간 근무",
       "both": "전체",
       "morningLegend": "주간 (08:00–19:59)",
-      "nightLegend": "야간 (20:00–07:59)"
+      "nightLegend": "야간 (20:00–07:59)",
+      "rangeFilterLabel": "기간",
+      "rangeNoteAll": "전체 데이터를 불러오는 중입니다 — 다소 느릴 수 있습니다.",
+      "rangeNote": "아래 모든 지표는 {{range}} 기준입니다.",
+      "rangeLastDays": "최근 {{days}}일",
+      "rangeAllData": "전체 데이터"
     },
     "roleDistribution": {
       "title": "역할별 사용자 분포",
@@ -110,5 +116,14 @@
     "supervisorDone": "관리자 확인 대기 중",
     "managerDone": "한국 관리자 확인 대기 중",
     "koreaManagerDone": "완료됨"
+  },
+  "clickPointToView": "차트의 한 지점을 클릭하면 목록이 표시됩니다",
+  "dayshift": "주간 근무",
+  "nightshift": "야간 근무",
+  "lineLabel": "라인",
+  "engTimeline": {
+    "tabDaily": "일일 시트",
+    "tabWeekly": "주간 시트",
+    "tabMonthly": "월간 시트"
   }
 }

@@ -26,6 +26,7 @@ export const ALL_NAMESPACES = [
   'fileDetail',
   'patrol',
   'engCheckSheet',
+  'user',
 ] as const;
 
 export const SUPPORTED_LANGUAGES = ['vi', 'en', 'ko'] as const;

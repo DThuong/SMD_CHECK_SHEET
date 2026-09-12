@@ -26,7 +26,8 @@
       "pending": "Pending",
       "completed": "Completed",
       "completionRate": "Completion Rate"
-    }
+    },
+    "sheetUnit": "sheet"
   },
   "adminDashboard": {
     "title": "Dashboard Analytics",
@@ -58,7 +59,12 @@
       "nightshift": "Night Shift",
       "both": "Both Shifts",
       "morningLegend": "Day Shift (08:00–19:59)",
-      "nightLegend": "Night Shift (20:00–07:59)"
+      "nightLegend": "Night Shift (20:00–07:59)",
+      "rangeFilterLabel": "Time range",
+      "rangeNoteAll": "Loading all data — this may be slow.",
+      "rangeNote": "All figures below are based on {{range}}.",
+      "rangeLastDays": "the last {{days}} days",
+      "rangeAllData": "all data"
     },
     "roleDistribution": {
       "title": "User Distribution by Role",
@@ -110,5 +116,14 @@
     "supervisorDone": "Waiting for Manager confirmation",
     "managerDone": "Waiting for Korea Manager confirmation",
     "koreaManagerDone": "Completed"
+  },
+  "clickPointToView": "Click a point on the chart to see the list",
+  "dayshift": "Day shift",
+  "nightshift": "Night shift",
+  "lineLabel": "Line",
+  "engTimeline": {
+    "tabDaily": "Daily sheets",
+    "tabWeekly": "Weekly sheets",
+    "tabMonthly": "Monthly sheets"
   }
 }

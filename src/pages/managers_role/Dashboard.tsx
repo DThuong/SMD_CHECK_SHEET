@@ -28,8 +28,10 @@ import { fetchChangeModel, getSheetByFilter } from "../../redux/slices/changeMod
 import {
   getDefaultDateRange,
   toApiDateTime,
-  DASHBOARD_RANGE_DAYS,
+  getRangeDays,
+  getRangeCutoff,
 } from "../../utils/defaultDateRange";
+import type { DashboardRange } from "../../utils/defaultDateRange";
 import {
   fetchPatrolSessions,
   fetchLineAreas,
@@ -450,6 +452,55 @@ const SmdTimelineTooltip = ({ active, payload, label, t }: any) => {
   );
 };
 
+/**
+ * Thanh lọc thời gian CHUNG của Dashboard — đặt ngay đầu trang.
+ *
+ * Điều khiển toàn bộ thẻ số liệu (SMD + ENGINEER + PATROL) và biểu đồ SMD.
+ * Trước đây thanh chọn chỉ nằm bên trong thẻ biểu đồ SMD ở cuối trang, nên
+ * người dùng bấm ở dưới mà số ở trên không đổi — vừa khó thấy vừa dễ hiểu nhầm.
+ */
+const DashboardRangeFilter = ({
+  timeRange,
+  setTimeRange,
+  t,
+}: {
+  timeRange: DashboardRange;
+  setTimeRange: (v: DashboardRange) => void;
+  t: (key: string, opts?: any) => string;
+}) => (
+  <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-3 mb-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+    <span className="text-sm font-semibold text-slate-700 shrink-0">
+      {t("charts.timeline.rangeFilterLabel")}:
+    </span>
+    <div className="flex gap-2 flex-wrap">
+      {(["week", "month", "all"] as const).map((r) => (
+        <button
+          key={r}
+          onClick={() => setTimeRange(r)}
+          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+            timeRange === r
+              ? "bg-blue-500 text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          {t(
+            `charts.timeline.${r === "week" ? "7days" : r === "month" ? "30days" : "all"}`,
+          )}
+        </button>
+      ))}
+    </div>
+    <span className="text-xs text-slate-500 sm:ml-auto">
+      {timeRange === "all"
+        ? t("charts.timeline.rangeNoteAll")
+        : t("charts.timeline.rangeNote", {
+          range: t("charts.timeline.rangeLastDays", {
+            days: getRangeDays(timeRange),
+          }),
+        })}
+    </span>
+  </div>
+);
+
 /** Timeline chart — dùng chung */
 const SmdTrendCard = ({
   timelineStats,
@@ -502,7 +553,7 @@ const SmdTrendCard = ({
             {t("charts.timeline.title")}
           </h2>
           <span className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-3 rounded-lg border border-blue-200">
-            {t("adminDashboard.stats.totalSmdSheets", "Tổng SMD Sheets")}: {timelineStats.reduce((sum, item) => sum + item.count, 0)}
+            {t("adminDashboard.stats.totalSmdSheets")}: {timelineStats.reduce((sum, item) => sum + item.count, 0)}
           </span>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -674,12 +725,29 @@ const Dashboard = () => {
   const { plans } = useAppSelector((state) => state.planSlice);
 
   const [fontSize, setFontSize] = useState(12);
-  const [timeRange, setTimeRange] = useState<"week" | "month" | "all">("week");
-  // Đánh dấu đã tải toàn bộ sheet (khi người dùng chọn "Tất cả") để không tải lại.
-  const hasLoadedAllSheetsRef = useRef(false);
+  // Khoảng thời gian CHUNG: điều khiển mọi thẻ số liệu + biểu đồ SMD,
+  // và quyết định luôn khoảng dữ liệu SMD sheet tải về từ API.
+  const [timeRange, setTimeRange] = useState<DashboardRange>("week");
   // Khoảng thời gian RIÊNG cho biểu đồ patrol (độc lập với biểu đồ SMD).
-  const [patrolTimeRange, setPatrolTimeRange] = useState<"week" | "month" | "all">("week");
-  const [engTimeRange, setEngTimeRange] = useState<"week" | "month" | "all">("week");
+  const [patrolTimeRange, setPatrolTimeRange] = useState<DashboardRange>("week");
+  const [engTimeRange, setEngTimeRange] = useState<DashboardRange>("week");
+
+  /**
+   * Thanh lọc chung ở đầu trang: đổi khoảng cho CẢ BA biểu đồ (SMD, Patrol,
+   * Engineer) cùng lúc, chứ không chỉ riêng SMD.
+   *
+   * TRƯỚC ĐÂY thanh chung chỉ ghi vào `timeRange`, còn patrolTimeRange và
+   * engTimeRange nằm im ở giá trị khởi tạo "week" — nên chọn 30 ngày ở đầu
+   * trang thì biểu đồ SMD đổi mà hai biểu đồ kia vẫn hiển thị 7 ngày.
+   *
+   * Thanh chọn bên trong từng thẻ biểu đồ vẫn ghi vào state riêng của nó, nên
+   * sau khi đồng bộ người dùng vẫn chỉnh lẻ một biểu đồ được.
+   */
+  const applyGlobalRange = useCallback((range: DashboardRange) => {
+    setTimeRange(range);
+    setPatrolTimeRange(range);
+    setEngTimeRange(range);
+  }, []);
   const [smdShiftFilter, setSmdShiftFilter] = useState<"morning" | "night" | "both">("both");
   const [patrolShiftFilter, setPatrolShiftFilter] = useState<"morning" | "night" | "both">("both");
   const [engShiftFilter, setEngShiftFilter] = useState<"morning" | "night" | "both">("both");
@@ -756,20 +824,21 @@ const Dashboard = () => {
     dispatch(getAllPlan());
   }, [dispatch]);
 
-  // SMD sheet: chỉ tải đúng khoảng thời gian mà biểu đồ đang hiển thị.
-  // TRƯỚC ĐÂY luôn gọi fetchChangeModel() — tải TOÀN BỘ sheet từ ngày mở hệ thống
-  // kèm 5 bảng con lồng nhau, nên Dashboard càng ngày càng chậm.
-  // Chọn "Tất cả" ở thanh chọn khoảng thời gian bên dưới thì mới tải đầy đủ.
+  // SMD sheet: tải về ĐÚNG khoảng thời gian đang chọn trên thanh lọc chung.
+  //   "7 ngày"  → GET /ChangeModel/filterAll, 7 ngày gần nhất
+  //   "30 ngày" → GET /ChangeModel/filterAll, 30 ngày gần nhất
+  //   "Tất cả"  → GET /ChangeModel (toàn bộ sheet + 5 bảng con lồng nhau — nặng)
+  //
+  // TRƯỚC ĐÂY luôn fetch một cửa sổ cố định 35 ngày cho cả 7 lẫn 30 ngày, và có
+  // một ref khoá vĩnh viễn sau khi chọn "Tất cả" — nên quay lại 7/30 ngày thì
+  // dữ liệu vẫn là toàn bộ. Bỏ ref đó: mỗi lần đổi khoảng là tải lại đúng khoảng.
   useEffect(() => {
-    if (timeRange === "all") {
-      if (hasLoadedAllSheetsRef.current) return;
-      hasLoadedAllSheetsRef.current = true;
+    const days = getRangeDays(timeRange);
+    if (days === null) {
       dispatch(fetchChangeModel());
       return;
     }
-    // Đã tải toàn bộ rồi thì không cần tải lại khoảng nhỏ hơn.
-    if (hasLoadedAllSheetsRef.current) return;
-    const { fromDate, toDate } = getDefaultDateRange(DASHBOARD_RANGE_DAYS);
+    const { fromDate, toDate } = getDefaultDateRange(days);
     dispatch(
       getSheetByFilter({
         fromDate: toApiDateTime(fromDate),
@@ -911,27 +980,45 @@ const Dashboard = () => {
     return map;
   }, [plans]);
 
+  // ==================== LỌC THEO KHOẢNG THỜI GIAN CHUNG ====================
+  // Mốc cắt dưới của khoảng đang chọn. API đã trả về đúng khoảng rồi, nhưng vẫn
+  // lọc lại ở client để: (1) số liệu đúng ngay trong lúc request mới đang bay,
+  // (2) card và biểu đồ dùng chung một mốc nên không bao giờ lệch nhau.
+  const rangeCutoff = useMemo(() => getRangeCutoff(timeRange), [timeRange]);
+
+  const isInRange = useCallback(
+    (value?: string | null) => {
+      if (!rangeCutoff) return true; // "Tất cả"
+      if (!value) return false;
+      const d = new Date(value);
+      return !Number.isNaN(d.getTime()) && d >= rangeCutoff;
+    },
+    [rangeCutoff],
+  );
+
+  /** MỌI thẻ số liệu đọc từ 3 mảng này, không đọc thẳng state redux nữa. */
+  const rangeSheets = useMemo(
+    () => (displaySheets || []).filter((s) => isInRange(s.createAt)),
+    [displaySheets, isInRange],
+  );
+  const rangePatrolSessions = useMemo(
+    () => (patrolSessions || []).filter((s) => isInRange(s.createdAt)),
+    [patrolSessions, isInRange],
+  );
+  const rangeEngSessions = useMemo(
+    () => (engSessions || []).filter((s) => isInRange(s.createdAt)),
+    [engSessions, isInRange],
+  );
+
   const timelineStats = useMemo(() => {
-    if (!displaySheets?.length) return [];
-    const now = new Date();
-    let cutoff: Date | null = null;
-    if (timeRange === "week") {
-      cutoff = new Date();
-      cutoff.setDate(now.getDate() - 7);
-      cutoff.setHours(0, 0, 0, 0);
-    } else if (timeRange === "month") {
-      cutoff = new Date();
-      cutoff.setMonth(now.getMonth() - 1);
-      cutoff.setHours(0, 0, 0, 0);
-    }
+    if (!rangeSheets.length) return [];
 
     const morning: Record<string, number> = {};
     const night: Record<string, number> = {};
 
-    displaySheets.forEach((sheet) => {
+    rangeSheets.forEach((sheet) => {
       if (!sheet.createAt) return;
       const date = new Date(sheet.createAt);
-      if (cutoff && date < cutoff) return;
       const { shift, key } = getShiftDay(date);
       if (shift === "morning") morning[key] = (morning[key] || 0) + 1;
       else night[key] = (night[key] || 0) + 1;
@@ -954,17 +1041,12 @@ const Dashboard = () => {
           planDeficit: plan ? plan.total - plan.created : 0,
         };
       });
-  }, [displaySheets, timeRange, getShiftDay, planByDay]);
+  }, [rangeSheets, getShiftDay, planByDay]);
 
   const patrolTimelineStats = useMemo(() => {
     if (!patrolSessions?.length) return [];
-    const now = new Date();
-    let cutoff: Date | null = null;
-    if (patrolTimeRange === "week") {
-      cutoff = new Date(); cutoff.setDate(now.getDate() - 7); cutoff.setHours(0, 0, 0, 0);
-    } else if (patrolTimeRange === "month") {
-      cutoff = new Date(); cutoff.setMonth(now.getMonth() - 1); cutoff.setHours(0, 0, 0, 0);
-    }
+    // getRangeCutoff dùng trừ ngày — không bị tràn tháng như setMonth(-1) cũ.
+    const cutoff = getRangeCutoff(patrolTimeRange);
 
     const morning: Record<string, number> = {};
     const night: Record<string, number> = {};
@@ -995,13 +1077,8 @@ const Dashboard = () => {
   // ==================== ENGINEER TIMELINE STATS ====================
   const engTimelineStats = useMemo(() => {
     if (!engSessions?.length) return [];
-    const now = new Date();
-    let cutoff: Date | null = null;
-    if (engTimeRange === "week") {
-      cutoff = new Date(); cutoff.setDate(now.getDate() - 7); cutoff.setHours(0, 0, 0, 0);
-    } else if (engTimeRange === "month") {
-      cutoff = new Date(); cutoff.setMonth(now.getMonth() - 1); cutoff.setHours(0, 0, 0, 0);
-    }
+    // getRangeCutoff dùng trừ ngày — không bị tràn tháng như setMonth(-1) cũ.
+    const cutoff = getRangeCutoff(engTimeRange);
 
     const morning: Record<string, number> = {};
     const night: Record<string, number> = {};
@@ -1033,17 +1110,21 @@ const Dashboard = () => {
     () => users.filter((u) => u.isActive).length,
     [users],
   );
+  // Tính trên rangeSheets — tức là theo đúng khoảng thời gian đang chọn,
+  // thay vì trên toàn bộ state `sheets` như trước.
   const completionRate = useMemo(() => {
-    if (!sheets?.length) return 0;
+    if (!rangeSheets.length) return 0;
     return Math.round(
-      (sheets.filter((s) => s.status === "KoreaManagerDone").length /
-        sheets.length) *
+      (rangeSheets.filter((s) => s.status === "KoreaManagerDone").length /
+        rangeSheets.length) *
       100,
     );
-  }, [sheets]);
+  }, [rangeSheets]);
+  // Status trong slice là 'Pending' (viết hoa) — trước đây so với 'pending'
+  // nên thẻ này luôn bằng 0.
   const pendingSheets = useMemo(
-    () => sheets?.filter((s) => s.status === "pending").length || 0,
-    [sheets],
+    () => rangeSheets.filter((s) => s.status === "Pending").length,
+    [rangeSheets],
   );
   const userActivityRate = useMemo(
     () => (!users.length ? 0 : Math.round((activeUsers / users.length) * 100)),
@@ -1056,7 +1137,7 @@ const Dashboard = () => {
       const pointData = data?.payload ?? data;
       if (!pointData?.fullDate) return;
 
-      const filtered = (displaySheets || []).filter((sheet) => {
+      const filtered = rangeSheets.filter((sheet) => {
         if (!sheet.createAt) return false;
         const { shift: s, key: k } = getShiftDay(new Date(sheet.createAt));
         return k === pointData.fullDate && s === shift;
@@ -1081,7 +1162,7 @@ const Dashboard = () => {
         100,
       );
     },
-    [displaySheets, getShiftDay],
+    [rangeSheets, getShiftDay],
   );
 
   // ==================== LOADING ====================
@@ -1194,14 +1275,22 @@ const Dashboard = () => {
             </p>
           </div>
 
+          {/* Bộ lọc thời gian chung — áp cho mọi thẻ số liệu bên dưới */}
+          <DashboardRangeFilter
+            timeRange={timeRange}
+            setTimeRange={applyGlobalRange}
+            t={t}
+          />
+
           {/* Status Cards */}
           <h2 className="text-lg font-bold text-slate-700 flex items-center gap-2 mt-6! my-3">
             <FaFile className="text-blue-600" /> SMD Sheets
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {roleCards.map((card, index) => {
-              const count =
-                sheets?.filter((s) => s.status === card.status).length || 0;
+              const count = rangeSheets.filter(
+                (s) => s.status === card.status,
+              ).length;
               const colors = colorClasses[card.color];
               const ringColor = {
                 blue: "ring-blue-400",
@@ -1265,8 +1354,8 @@ const Dashboard = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
-                { label: t("adminDashboard.stats.pendingEngSheets"), status: "Pending", color: "yellow", count: engSessions.filter((s) => s.status === "Pending").length },
-                { label: t("adminDashboard.stats.submittedEngSheets"), status: "Submitted", color: "blue", count: engSessions.filter((s) => s.status === "Submitted").length },
+                { label: t("adminDashboard.stats.pendingEngSheets"), status: "Pending", color: "yellow", count: rangeEngSessions.filter((s) => s.status === "Pending").length },
+                { label: t("adminDashboard.stats.submittedEngSheets"), status: "Submitted", color: "blue", count: rangeEngSessions.filter((s) => s.status === "Submitted").length },
               ].map((card, i) => {
                 const colorMap: Record<string, { bg: string; hover: string; border: string; text: string }> = {
                   yellow: { bg: "bg-yellow-50", hover: "hover:bg-yellow-100", border: "border-yellow-400", text: "text-yellow-700" },
@@ -1302,7 +1391,7 @@ const Dashboard = () => {
                   description: tPatrol("dashboardStatus.pendingDescription"),
                   status: "Pending",
                   color: "yellow",
-                  count: patrolSessions.filter((s) => s.status === "Pending")
+                  count: rangePatrolSessions.filter((s) => s.status === "Pending")
                     .length,
                   showBadge: false,
                 },
@@ -1311,7 +1400,7 @@ const Dashboard = () => {
                   description: tPatrol("dashboardStatus.submittedDescription"),
                   status: "Submitted",
                   color: "blue",
-                  count: patrolSessions.filter((s) => s.status === "Submitted")
+                  count: rangePatrolSessions.filter((s) => s.status === "Submitted")
                     .length,
                   showBadge: true, // ← chỉ card này
                 },
@@ -1320,7 +1409,7 @@ const Dashboard = () => {
                   description: tPatrol("dashboardStatus.approvedDescription"),
                   status: "Approved",
                   color: "green",
-                  count: patrolSessions.filter((s) => s.status === "Approved")
+                  count: rangePatrolSessions.filter((s) => s.status === "Approved")
                     .length,
                   showBadge: false,
                 },
@@ -1405,27 +1494,27 @@ const Dashboard = () => {
                 data={[
                   {
                     label: tPatrol("summaryTotal"),
-                    smd: sheets?.length || 0,
-                    patrol: patrolSessions?.length || 0,
-                    eng: engSessions?.length || 0,
+                    smd: rangeSheets.length,
+                    patrol: rangePatrolSessions.length,
+                    eng: rangeEngSessions.length,
                   },
                   {
                     label: tPatrol("summaryPending"),
-                    smd: sheets?.filter((s) => s.status === "pending").length || 0,
-                    patrol: patrolSessions?.filter((s) => s.status === "Pending").length || 0,
-                    eng: engSessions?.filter((s) => s.status === "Pending").length || 0,
+                    smd: rangeSheets.filter((s) => s.status === "Pending").length,
+                    patrol: rangePatrolSessions.filter((s) => s.status === "Pending").length,
+                    eng: rangeEngSessions.filter((s) => s.status === "Pending").length,
                   },
                   {
                     label: tPatrol("summarySubmitted"),
-                    smd: sheets?.filter((s) => s.status === "PQCDone").length || 0,
-                    patrol: patrolSessions?.filter((s) => s.status === "Submitted").length || 0,
-                    eng: engSessions?.filter((s) => s.status === "Submitted").length || 0,
+                    smd: rangeSheets.filter((s) => s.status === "PQCDone").length,
+                    patrol: rangePatrolSessions.filter((s) => s.status === "Submitted").length,
+                    eng: rangeEngSessions.filter((s) => s.status === "Submitted").length,
                   },
                   {
                     label: tPatrol("summaryCompleted"),
-                    smd: sheets?.filter((s) => s.status === "KoreaManagerDone").length || 0,
-                    patrol: patrolSessions?.filter((s) => s.status === "Approved").length || 0,
-                    eng: engSessions?.filter((s) => s.status === "Approved").length || 0,
+                    smd: rangeSheets.filter((s) => s.status === "KoreaManagerDone").length,
+                    patrol: rangePatrolSessions.filter((s) => s.status === "Approved").length,
+                    eng: rangeEngSessions.filter((s) => s.status === "Approved").length,
                   },
                 ]}
                 barCategoryGap="20%"
@@ -1655,12 +1744,12 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {/* Ghi chú phạm vi dữ liệu — để số liệu trên các thẻ không bị hiểu nhầm */}
-        <p className="text-xs text-slate-500 mb-2 lg:text-left text-center">
-          {timeRange === "all"
-            ? "Số liệu SMD Sheet tính trên toàn bộ dữ liệu."
-            : `Số liệu SMD Sheet tính trên ${DASHBOARD_RANGE_DAYS} ngày gần nhất — chọn "Tất cả" ở biểu đồ bên dưới để xem toàn bộ.`}
-        </p>
+        {/* Bộ lọc thời gian chung — áp cho mọi thẻ số liệu bên dưới */}
+        <DashboardRangeFilter
+          timeRange={timeRange}
+          setTimeRange={applyGlobalRange}
+          t={t}
+        />
 
         {/* Admin Stats Cards — 4 overview cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4">
@@ -1676,7 +1765,7 @@ const Dashboard = () => {
             },
             {
               label: t("adminDashboard.stats.smdSheets"),
-              value: sheets?.length || 0,
+              value: rangeSheets.length,
               sub: `${pendingSheets} ${t("adminDashboard.stats.pending")}`,
               subColor: "text-orange-400",
               icon: (
@@ -1728,8 +1817,9 @@ const Dashboard = () => {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           {adminRoleCards.map((card, index) => {
-            const count =
-              sheets?.filter((s) => s.status === card.status).length || 0;
+            const count = rangeSheets.filter(
+              (s) => s.status === card.status,
+            ).length;
             const colors = colorClasses[card.color];
             return (
               <button
@@ -1771,8 +1861,8 @@ const Dashboard = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              { label: t("adminDashboard.stats.pendingEngSheets"), status: "Pending", color: "yellow", count: engSessions.filter((s) => s.status === "Pending").length },
-              { label: t("adminDashboard.stats.submittedEngSheets"), status: "Submitted", color: "blue", count: engSessions.filter((s) => s.status === "Submitted").length },
+              { label: t("adminDashboard.stats.pendingEngSheets"), status: "Pending", color: "yellow", count: rangeEngSessions.filter((s) => s.status === "Pending").length },
+              { label: t("adminDashboard.stats.submittedEngSheets"), status: "Submitted", color: "blue", count: rangeEngSessions.filter((s) => s.status === "Submitted").length },
             ].map((card, i) => {
               const colorMap: Record<string, { bg: string; hover: string; border: string; text: string }> = {
                 yellow: { bg: "bg-yellow-50", hover: "hover:bg-yellow-100", border: "border-yellow-400", text: "text-yellow-700" },
@@ -1793,7 +1883,9 @@ const Dashboard = () => {
                     <div>
                       <p className={`text-3xl font-bold ${colors.text}`}>{card.count}</p>
                       <p className="text-[10px] text-gray-500 mt-1">
-                        {card.count === 0 ? "Không có sheet" : `${card.count} sheet`}
+                        {card.count === 0
+                          ? t("roleBasedDashboard.noSheet")
+                          : `${card.count} ${t("roleBasedDashboard.sheetUnit")}`}
                       </p>
                     </div>
                     <FaWrench className={`w-5 h-5 ${colors.text} opacity-60`} />
@@ -1816,7 +1908,7 @@ const Dashboard = () => {
                 description: tPatrol("dashboardStatus.pendingDescription"),
                 status: "Pending",
                 color: "yellow",
-                count: patrolSessions.filter((s) => s.status === "Pending")
+                count: rangePatrolSessions.filter((s) => s.status === "Pending")
                   .length,
               },
               {
@@ -1824,7 +1916,7 @@ const Dashboard = () => {
                 description: tPatrol("dashboardStatus.submittedDescription"),
                 status: "Submitted",
                 color: "blue",
-                count: patrolSessions.filter((s) => s.status === "Submitted")
+                count: rangePatrolSessions.filter((s) => s.status === "Submitted")
                   .length,
               },
               {
@@ -1832,7 +1924,7 @@ const Dashboard = () => {
                 description: tPatrol("dashboardStatus.approvedDescription"),
                 status: "Approved",
                 color: "green",
-                count: patrolSessions.filter((s) => s.status === "Approved")
+                count: rangePatrolSessions.filter((s) => s.status === "Approved")
                   .length,
               },
             ].map((card, i) => {
@@ -1907,27 +1999,27 @@ const Dashboard = () => {
               data={[
                 {
                   label: tPatrol("summaryTotal"),
-                  smd: sheets?.length || 0,
-                  patrol: patrolSessions?.length || 0,
-                  eng: engSessions?.length || 0,
+                  smd: rangeSheets.length,
+                  patrol: rangePatrolSessions.length,
+                  eng: rangeEngSessions.length,
                 },
                 {
                   label: tPatrol("summaryPending"),
-                  smd: sheets?.filter((s) => s.status === "pending").length || 0,
-                  patrol: patrolSessions?.filter((s) => s.status === "Pending").length || 0,
-                  eng: engSessions?.filter((s) => s.status === "Pending").length || 0,
+                  smd: rangeSheets.filter((s) => s.status === "Pending").length,
+                  patrol: rangePatrolSessions.filter((s) => s.status === "Pending").length,
+                  eng: rangeEngSessions.filter((s) => s.status === "Pending").length,
                 },
                 {
                   label: tPatrol("summarySubmitted"),
-                  smd: sheets?.filter((s) => s.status === "PQCDone").length || 0,
-                  patrol: patrolSessions?.filter((s) => s.status === "Submitted").length || 0,
-                  eng: engSessions?.filter((s) => s.status === "Submitted").length || 0,
+                  smd: rangeSheets.filter((s) => s.status === "PQCDone").length,
+                  patrol: rangePatrolSessions.filter((s) => s.status === "Submitted").length,
+                  eng: rangeEngSessions.filter((s) => s.status === "Submitted").length,
                 },
                 {
                   label: tPatrol("summaryCompleted"),
-                  smd: sheets?.filter((s) => s.status === "KoreaManagerDone").length || 0,
-                  patrol: patrolSessions?.filter((s) => s.status === "Approved").length || 0,
-                  eng: engSessions?.filter((s) => s.status === "Approved").length || 0,
+                  smd: rangeSheets.filter((s) => s.status === "KoreaManagerDone").length,
+                  patrol: rangePatrolSessions.filter((s) => s.status === "Approved").length,
+                  eng: rangeEngSessions.filter((s) => s.status === "Approved").length,
                 },
               ]}
               barCategoryGap="20%"

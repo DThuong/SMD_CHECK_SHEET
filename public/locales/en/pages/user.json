@@ -1,0 +1,95 @@
+{
+  "title": "User management",
+  "totalCount": "Total: {{count}} users",
+  "filteringById": " (Filtering by ID: {{id}})",
+  "addUser": "Add user",
+  "searchPlaceholder": "Search by name, username, phone number, role...",
+  "table": {
+    "id": "ID",
+    "user": "User",
+    "contact": "Contact",
+    "role": "Role",
+    "status": "Status",
+    "actions": "Actions",
+    "notFound": "No users found"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "actions": {
+    "changePassword": "Change password",
+    "changePasswordShort": "Password",
+    "edit": "Edit",
+    "editShort": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel"
+  },
+  "addModal": {
+    "title": "Add a new user",
+    "username": "Username *",
+    "usernamePlaceholder": "Enter the username used to sign in",
+    "password": "Password *",
+    "passwordPlaceholder": "At least 3 characters",
+    "confirmPassword": "Confirm password *",
+    "confirmPasswordPlaceholder": "Re-enter the password",
+    "fullName": "Full name *",
+    "fullNamePlaceholder": "Enter the full name",
+    "phone": "Phone number *",
+    "phonePlaceholder": "Enter the phone number",
+    "role": "Role *",
+    "submit": "Add user",
+    "submitting": "Adding..."
+  },
+  "filterModal": {
+    "title": "Filter users by ID",
+    "label": "Enter a user ID",
+    "placeholder": "For example: 1, 2, 3...",
+    "apply": "Apply",
+    "clear": "Clear filter"
+  },
+  "passwordModal": {
+    "title": "Change password",
+    "newPassword": "New password *",
+    "newPasswordPlaceholder": "Enter the new password (at least 6 characters)",
+    "confirmPassword": "Confirm password *",
+    "confirmPasswordPlaceholder": "Re-enter the new password",
+    "submit": "Change password",
+    "submitting": "Processing..."
+  },
+  "editModal": {
+    "title": "Edit user",
+    "username": "Username",
+    "fullName": "Full name *",
+    "phone": "Phone number *",
+    "role": "Role *",
+    "status": "Status *",
+    "submit": "Update",
+    "submitting": "Updating..."
+  },
+  "confirmDelete": {
+    "title": "Confirm user deletion",
+    "message": "Are you sure you want to delete this user?",
+    "confirm": "Delete",
+    "cancel": "Cancel"
+  },
+  "validation": {
+    "usernameRequired": "Please enter a username",
+    "passwordRequired": "Please enter a password",
+    "passwordMismatch": "The confirmation password does not match",
+    "fullNameRequired": "Please enter the full name",
+    "phoneRequired": "Please enter the phone number",
+    "newPasswordRequired": "Please enter the new password"
+  },
+  "toast": {
+    "addSuccess": "User added successfully!",
+    "addFailed": "Failed to add the user",
+    "updateSuccess": "User updated successfully!",
+    "updateFailed": "Update failed",
+    "deleteSuccess": "User deleted successfully!",
+    "deleteFailed": "Delete failed",
+    "changePasswordSuccess": "Password changed successfully!",
+    "changePasswordFailed": "Failed to change the password",
+    "errorPrefix": "Error: {{message}}"
+  }
+}

@@ -5,6 +5,10 @@ import FuzzySearchInput from '../general/FuzzySearchInput';
 import CustomSelect from './CustomSelect';
 import CustomDatePicker from './CustomDatePicker';
 import type { LineArea } from '../../redux/slices/patrolSlice';
+import {
+  getDefaultDateRange,
+  DEFAULT_RANGE_DAYS,
+} from '../../utils/defaultDateRange';
 
 export interface PatrolFilter {
   fullName: string;
@@ -14,12 +18,28 @@ export interface PatrolFilter {
   toDate: string;
 }
 
+/** Bộ lọc RỖNG — không ràng buộc gì, tức là lấy toàn bộ dữ liệu. */
 export const PATROL_FILTER_DEFAULT: PatrolFilter = {
   fullName: '',
   lineAreaName: '',
   status: '',
   fromDate: '',
   toDate: '',
+};
+
+/**
+ * Bộ lọc MẶC ĐỊNH khi mở trang danh sách (Patrol / Engineer): 30 ngày gần nhất.
+ *
+ * LÝ DO: backend chưa phân trang, mở trang mà lấy toàn bộ session thì càng ngày
+ * càng chậm. 30 ngày đủ cho toàn bộ công việc ký hằng ngày; muốn xem cũ hơn thì
+ * chỉnh lại ô "Từ ngày" trên thanh lọc.
+ *
+ * Là HÀM chứ không phải hằng số vì mốc "30 ngày gần nhất" phải tính lại theo
+ * thời điểm mở trang — một hằng số ở mức module sẽ đóng băng ngày lúc tải bundle.
+ */
+export const getDefaultListFilter = (): PatrolFilter => {
+  const { fromDate, toDate } = getDefaultDateRange(DEFAULT_RANGE_DAYS);
+  return { ...PATROL_FILTER_DEFAULT, fromDate, toDate };
 };
 
 interface PatrolFilterBarProps {

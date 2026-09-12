@@ -108,6 +108,7 @@
   "msgDeviceNotSupportedForReport": "귀하의 기기는 보고서 보기를 지원하지 않습니다",
   "noStandard": "없음",
   "placeholderNote": "예: xxx",
+  "notChecked": "미승인",
   "notSigned": "서명되지 않음",
   "loading": "데이터를 불러오는 중...",
   "backBtn": "돌아가기",
@@ -260,5 +261,7 @@
       "morningLegend": "주간 (08:00–19:59)",
       "nightLegend": "야간 (20:00–07:59)"
     }
-  }
+  },
+  "dayshift": "주간 근무",
+  "nightshift": "야간 근무"
 }

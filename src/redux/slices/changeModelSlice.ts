@@ -70,6 +70,68 @@ const initialState: ChangeModelState = {
   loadingHistory: false,
 };
 
+/**
+ * CHUỖI TRẠNG THÁI KÝ của một sheet, đúng thứ tự backend chuyển tiếp.
+ * PQC ký ở bước Pending, PQCLeader ký ở PQCDone, ENG ký ở PQCLeaderDone, v.v.
+ */
+const STATUS_CHAIN = [
+  'Pending',
+  'PQCDone',
+  'PQCLeaderDone',
+  'ENGDone',
+  'SupervisiorDone',
+  'ManagerDone',
+  'KoreaManagerDone',
+] as const;
+
+/** So sánh status bỏ qua hoa thường, gộp luôn typo lịch sử "PQCLeaderLDone". */
+const normalizeStatus = (s?: string) =>
+  (s || '').toLowerCase().replace('pqcleaderldone', 'pqcleaderdone');
+
+/** Trạng thái kế tiếp trong chuỗi ký; null nếu đã ở bước cuối hoặc không nhận ra. */
+const nextStatusOf = (current?: string): string | null => {
+  const i = STATUS_CHAIN.findIndex(
+    (s) => normalizeStatus(s) === normalizeStatus(current),
+  );
+  if (i === -1 || i === STATUS_CHAIN.length - 1) return null;
+  return STATUS_CHAIN[i + 1];
+};
+
+/**
+ * Ghi status mới của MỘT sheet vào mọi nơi đang cache nó: `sheets`,
+ * `filteredSheets` và `currentSheet`.
+ *
+ * `newStatus` lấy từ response khi backend trả về nguyên object sheet. Nếu backend
+ * chỉ trả 204/message/DTO rút gọn (không có trường status) thì tự suy ra bước kế
+ * tiếp theo STATUS_CHAIN — giống cách returnSheetToPending đang làm.
+ *
+ * ĐÂY LÀ CHỖ QUYẾT ĐỊNH việc sheet vừa ký có biến mất khỏi danh sách ngay hay
+ * phải F5: màn hình Logs lọc client-side theo status, nên nếu status trong store
+ * không đổi thì sheet vẫn nằm nguyên đó.
+ */
+const applySheetStatus = (
+  state: ChangeModelState,
+  sheetId: number,
+  newStatus?: string,
+) => {
+  const cached =
+    state.filteredSheets?.find((s) => s.id === sheetId) ??
+    state.sheets?.find((s) => s.id === sheetId) ??
+    (state.currentSheet?.id === sheetId ? state.currentSheet : undefined);
+
+  const resolved = newStatus || nextStatusOf(cached?.status);
+  if (!resolved) return;
+
+  const merge = (sheet: ChangeModelResponse) =>
+    sheet.id === sheetId ? { ...sheet, status: resolved } : sheet;
+
+  if (state.filteredSheets) state.filteredSheets = state.filteredSheets.map(merge);
+  if (state.sheets) state.sheets = state.sheets.map(merge);
+  if (state.currentSheet?.id === sheetId) {
+    state.currentSheet = { ...state.currentSheet, status: resolved };
+  }
+};
+
 // ==================== ASYNC THUNKS ====================
 
 /** upload 1 file */
@@ -580,6 +642,28 @@ const changeModelSlice = createSlice({
       state.loadingHistory = false;
     },
 
+    /**
+     * Vá một phần dữ liệu của 1 sheet trong danh sách đang cache.
+     *
+     * Dùng khi sửa bảng con ở trang chi tiết: bảng Logs render
+     * sheet.checkModel?.workOrder, mà lưu Check Model chỉ cập nhật subTableSlice
+     * nên hàng trong Logs giữ giá trị cũ tới khi F5. Gọi action này sau khi lưu
+     * thành công thì hàng đó cập nhật ngay, không tốn thêm request nào.
+     */
+    patchSheetInList: (
+      state,
+      action: { payload: { sheetId: number; patch: Partial<ChangeModelResponse> }; type: string },
+    ) => {
+      const { sheetId, patch } = action.payload;
+      const merge = (sheet: ChangeModelResponse) =>
+        sheet.id === sheetId ? { ...sheet, ...patch } : sheet;
+      if (state.filteredSheets) state.filteredSheets = state.filteredSheets.map(merge);
+      if (state.sheets) state.sheets = state.sheets.map(merge);
+      if (state.currentSheet?.id === sheetId) {
+        state.currentSheet = { ...state.currentSheet, ...patch };
+      }
+    },
+
     // Gỡ 1 sheet khỏi danh sách đang cache sau khi xóa thành công.
     // Nhờ vậy trang Logs không phải gọi lại API lấy toàn bộ danh sách.
     removeSheetFromList: (state, action: { payload: number; type: string }) => {
@@ -661,21 +745,23 @@ const changeModelSlice = createSlice({
       })
       .addCase(updateSheetStatus.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentSheet = action.payload;
         state.error = null;
 
-        // Đồng bộ status mới vào danh sách đang cache để khi back về List
-        // (không gọi lại API vì danh sách rất lớn) vẫn hiển thị đúng trạng thái.
-        const updated = action.payload;
-        if (updated?.id) {
-          const mergeStatus = (sheet: ChangeModelResponse) =>
-            sheet.id === updated.id
-              ? { ...sheet, status: updated.status }
-              : sheet;
-          if (state.filteredSheets)
-            state.filteredSheets = state.filteredSheets.map(mergeStatus);
-          if (state.sheets) state.sheets = state.sheets.map(mergeStatus);
+        // sheetId lấy từ đối số đã truyền vào thunk — LUÔN có, không phụ thuộc
+        // backend trả về gì. Trước đây chỉ dựa vào action.payload.id: nếu endpoint
+        // PUT /ChangeModel/status/{id} trả 204 hoặc một DTO không có id/status thì
+        // toàn bộ khối merge bị bỏ qua trong im lặng -> danh sách không đổi, người
+        // dùng phải F5 mới thấy sheet vừa ký biến mất.
+        const sheetId = action.meta.arg;
+        const payload = action.payload as ChangeModelResponse | undefined;
+
+        // Chỉ nhận payload làm currentSheet khi backend thật sự trả object sheet,
+        // tránh ghi đè currentSheet bằng một message object.
+        if (payload && typeof payload === 'object' && payload.id) {
+          state.currentSheet = payload;
         }
+
+        applySheetStatus(state, sheetId, payload?.status);
       })
       .addCase(updateSheetStatus.rejected, (state, action) => {
         state.loading = false;
@@ -689,19 +775,17 @@ const changeModelSlice = createSlice({
       })
       .addCase(updateSheetStatusToPQCDone.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentSheet = action.payload;
         state.error = null;
 
-        const updated = action.payload;
-        if (updated?.id) {
-          const mergeStatus = (sheet: ChangeModelResponse) =>
-            sheet.id === updated.id
-              ? { ...sheet, status: updated.status }
-              : sheet;
-          if (state.filteredSheets)
-            state.filteredSheets = state.filteredSheets.map(mergeStatus);
-          if (state.sheets) state.sheets = state.sheets.map(mergeStatus);
+        // Cùng lý do như updateSheetStatus ở trên: bám vào meta.arg thay vì payload.
+        const sheetId = action.meta.arg;
+        const payload = action.payload as ChangeModelResponse | undefined;
+
+        if (payload && typeof payload === 'object' && payload.id) {
+          state.currentSheet = payload;
         }
+
+        applySheetStatus(state, sheetId, payload?.status);
       })
       .addCase(updateSheetStatusToPQCDone.rejected, (state, action) => {
         state.loading = false;
@@ -734,19 +818,21 @@ const changeModelSlice = createSlice({
         state.currentSheet = action.payload;
         state.error = null;
 
-        // Đồng bộ status mới nhất vào danh sách cache mỗi khi load đầy đủ 1 sheet
-        // (đặc biệt là sau khi ký ở trang chi tiết). Nhờ vậy khi quay lại danh
-        // sách (không gọi lại API), trạng thái trong cache luôn đúng với thực tế,
-        // và sheet vừa đổi trạng thái sẽ bị lọc khỏi bộ lọc cũ.
+        // Đồng bộ bản mới nhất của sheet vào danh sách cache mỗi khi load đầy đủ
+        // 1 sheet (sau khi ký hoặc sửa ở trang chi tiết). Nhờ vậy khi quay lại
+        // danh sách (không gọi lại API) thì hàng đó luôn đúng với thực tế.
+        //
+        // TRƯỚC ĐÂY chỉ merge mỗi `status`, nên sửa Work Order ở trang chi tiết
+        // xong quay lại Logs vẫn thấy Work Order cũ cho tới khi F5 — bảng Logs có
+        // render sheet.checkModel?.workOrder. Giờ merge cả object: trải bản cũ
+        // trước rồi bản mới đè lên, nên trường nào detail không trả về vẫn giữ.
         const updated = action.payload;
         if (updated?.id) {
-          const mergeStatus = (sheet: ChangeModelResponse) =>
-            sheet.id === updated.id
-              ? { ...sheet, status: updated.status }
-              : sheet;
+          const mergeSheet = (sheet: ChangeModelResponse) =>
+            sheet.id === updated.id ? { ...sheet, ...updated } : sheet;
           if (state.filteredSheets)
-            state.filteredSheets = state.filteredSheets.map(mergeStatus);
-          if (state.sheets) state.sheets = state.sheets.map(mergeStatus);
+            state.filteredSheets = state.filteredSheets.map(mergeSheet);
+          if (state.sheets) state.sheets = state.sheets.map(mergeSheet);
         }
       })
       .addCase(getSheetWithFullObject.rejected, (state, action) => {
@@ -945,5 +1031,5 @@ const changeModelSlice = createSlice({
   },
 });
 
-export const { clearError, clearSheet, clearSheetList , reset, setCurrentSheet, clearStatusHistory, removeSheetFromList } = changeModelSlice.actions;
+export const { clearError, clearSheet, clearSheetList , reset, setCurrentSheet, clearStatusHistory, removeSheetFromList, patchSheetInList } = changeModelSlice.actions;
 export default changeModelSlice.reducer;

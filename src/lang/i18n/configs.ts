@@ -52,6 +52,14 @@ const writeStoredLanguage = (lang: string) => {
 
 const isDev = import.meta.env.DEV;
 
+/**
+ * Phien ban build, do Vite thay the luc build (dinh nghia trong vite.config.ts,
+ * lay tu public/version.json ma script `generate-version` sinh ra truoc moi build).
+ */
+declare const __APP_VERSION__: string | undefined;
+const APP_VERSION =
+  typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
+
 i18n
   .use(Backend)
   .use(LanguageDetector)
@@ -69,11 +77,22 @@ i18n
     },
 
     backend: {
-      loadPath: '/locales/{{lng}}/pages/{{ns}}.json',
-      // Truoc day co queryStringParams: { v: Date.now() } -> moi lan mo trang la
-      // mot URL moi nen trinh duyet khong bao gio cache duoc 15 file ngon ngu.
-      // Bo di de nginx + trinh duyet cache binh thuong; UpdateChecker da lo viec
-      // phat hien ban deploy moi roi.
+      // GAN PHIEN BAN BUILD VAO URL — bat buoc, dung bo di.
+      //
+      // nginx.conf cho /locales/ cache 7 ngay (max-age=604800). File JS/CSS co
+      // hash trong ten nen deploy la doi URL, con file ngon ngu thi URL co dinh
+      // -> sau khi deploy, trinh duyet van lay ban JSON cu trong dia suot 7 ngay
+      // ma khong hoi lai server. Ket qua: bundle JS moi goi t('key.moi') nhung
+      // file JSON cu khong co key do -> giao dien hien key tho.
+      //
+      // window.location.reload() cua UpdateChecker KHONG giai quyet duoc: reload
+      // thuong van doc subresource tu HTTP cache (chi Ctrl+Shift+R moi bo qua).
+      //
+      // Khac voi queryStringParams: { v: Date.now() } da bi bo truoc day —
+      // Date.now() doi moi lan mo trang nen khong bao gio cache duoc. APP_VERSION
+      // chi doi khi deploy: trong mot ban deploy van cache du 7 ngay, deploy moi
+      // thi URL doi -> tai lai dung mot lan.
+      loadPath: `/locales/{{lng}}/pages/{{ns}}.json?v=${APP_VERSION}`,
       requestOptions: {
         cache: 'default' as RequestCache,
       },

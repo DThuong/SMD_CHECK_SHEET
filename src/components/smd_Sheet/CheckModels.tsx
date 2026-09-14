@@ -18,6 +18,7 @@ import {
   deleteCheckModelIssueImage,
 } from "../../redux/slices/subTableSlice";
 import { useSubTableFetch } from "../../utils/useSubTableFetch";
+import { patchSheetInList } from "../../redux/slices/changeModelSlice";
 import MultiImageUpload from "../files/MultiImageUpload";
 import CustomDatePicker from "../general/CustomDatePicker";
 
@@ -268,6 +269,16 @@ const CheckModels = memo(function CheckModels({
 
       if (currentSheet?.id) {
         await dispatch(fetchCheckModel(checkModelId)).unwrap();
+
+        // Bảng danh sách (Logs) render sheet.checkModel?.workOrder từ cache của
+        // changeModelSlice. fetchCheckModel chỉ cập nhật subTableSlice, nên nếu
+        // không vá thêm ở đây thì quay lại Logs vẫn thấy Work Order cũ tới khi F5.
+        dispatch(
+          patchSheetInList({
+            sheetId: currentSheet.id,
+            patch: { checkModel: { ...(checkModel ?? {}), ...apiData } },
+          }),
+        );
       }
 
       hasUserEditedRef.current = false;

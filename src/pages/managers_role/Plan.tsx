@@ -171,13 +171,14 @@ const PlanPage = () => {
   const { t } = useTranslation("common");
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { planByDate, loading } = useAppSelector((s) => s.planSlice);
+  const { planByDate, loading, uploading, uploadProgress } = useAppSelector(
+    (s) => s.planSlice,
+  );
   const { user } = useAppSelector((s) => s.auth);
 
   const [selectedDate, setSelectedDate] = useState(
     getPlanDate() ?? toInputDate(new Date()),
   );
-  const [uploading, setUploading] = useState(false);
   const [closing, setClosing] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deletingDate, setDeletingDate] = useState(false);
@@ -216,15 +217,23 @@ const PlanPage = () => {
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploading(true);
+    // Cờ uploading nay do planWorkSlice quản lý (state.uploading), tách khỏi
+    // `loading` dùng chung — nhờ vậy bảng dữ liệu không bị thay bằng vòng xoay
+    // trong lúc import.
     const result = await dispatch(uploadPlan({ file }));
-    setUploading(false);
+    // Xoá value để chọn LẠI ĐÚNG file vừa chọn vẫn kích hoạt onChange.
     if (fileRef.current) fileRef.current.value = "";
     if (uploadPlan.fulfilled.match(result)) {
       toast.success(t("plan.importSuccess"));
       fetchByDate(selectedDate);
     } else {
-      toast.error(t("plan.importFailed"));
+      // Hiện lỗi thật từ server thay vì luôn luôn một câu chung chung, để còn
+      // biết là sai định dạng file, quá thời gian chờ, hay lỗi phía backend.
+      const message =
+        typeof result.payload === "string" && result.payload
+          ? result.payload
+          : t("plan.importFailed");
+      toast.error(message);
     }
   };
 
@@ -353,7 +362,12 @@ const PlanPage = () => {
                 ) : (
                   <UploadSimple size={16} weight="bold" />
                 )}
-                <span>{t("plan.importPlan")}</span>
+                <span>
+                  {t("plan.importPlan")}
+                  {/* Chạm 100% mà nút vẫn quay = file đã lên xong, đang đợi backend
+                      đọc Excel và ghi DB. Không còn phải đoán xem có bị treo không. */}
+                  {uploading && uploadProgress > 0 && ` ${uploadProgress}%`}
+                </span>
               </button>
 
               {items.length > 0 && (

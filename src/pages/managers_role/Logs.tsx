@@ -818,7 +818,12 @@ const Logs = () => {
   }, [filteredSheets, filter.status]);
 
   const pageCount = Math.ceil(sortedSheets.length / itemsPerPage);
-  const offset = currentPage * itemsPerPage;
+  // Ký xong, sheet rơi khỏi bộ lọc hiện tại nên số trang có thể giảm. Nếu đang
+  // đứng ở trang vừa biến mất thì hiển thị trang cuối còn lại thay vì trang trắng.
+  // Kẹp ở chỗ tính toán (không dùng setState trong effect) để không thêm một
+  // vòng render thừa.
+  const safePage = pageCount > 0 ? Math.min(currentPage, pageCount - 1) : 0;
+  const offset = safePage * itemsPerPage;
   const currentSheets = sortedSheets.slice(offset, offset + itemsPerPage);
 
   // Restore highlight sau khi back từ SheetDetailViewer.
@@ -984,7 +989,7 @@ const Logs = () => {
             resultCount={{
               current: currentSheets.length,
               total: sortedSheets.length,
-              page: currentPage,
+              page: safePage,
               pageCount,
             }}
           />
@@ -1306,7 +1311,7 @@ const Logs = () => {
                         marginPagesDisplayed={1}
                         pageRangeDisplayed={2}
                         onPageChange={handlePageChange}
-                        forcePage={currentPage}
+                        forcePage={safePage}
                         containerClassName={
                           "flex items-center lg:justify-center md:justify-center gap-1 sm:gap-2 px-2 min-w-max sm:px-0"
                         }

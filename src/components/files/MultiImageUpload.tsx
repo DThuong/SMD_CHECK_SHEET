@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaCamera } from 'react-icons/fa';
 import { IoEyeSharp } from 'react-icons/io5';
-import { normalizeImageUrl } from '../../utils/imageUrl';
+import { normalizeImageUrl, IMAGE_WIDTH } from '../../utils/imageUrl';
 
 interface MultiImageUploadProps {
   label: string;
@@ -214,13 +214,34 @@ const ImageWithRetry: React.FC<{
 }> = ({ src, alt, className, onClick }) => {
   const [attempt, setAttempt] = React.useState(0);
   const [status, setStatus] = React.useState<'loading' | 'ok' | 'error'>('loading');
+  const imgRef = React.useRef<HTMLImageElement>(null);
 
   React.useEffect(() => {
     setAttempt(0);
     setStatus('loading');
   }, [src]);
 
+  // src giờ đã kèm sẵn ?w=..., nên tham số thử lại phải nối bằng '&'.
+  // Giữ nguyên nhánh includes('?') — đừng rút gọn thành `?_r=` sẽ làm mất w.
   const url = attempt === 0 ? src : `${src}${src.includes('?') ? '&' : '?'}_r=${attempt}`;
+
+  /**
+   * HỦY request còn dở khi thẻ ảnh bị gỡ khỏi DOM.
+   *
+   * Gỡ <img> KHÔNG hủy request của nó — trình duyệt vẫn giữ kết nối tới khi
+   * server trả lời. Một trang chi tiết sheet có 15+ ảnh; mỗi lần cây sheet bị
+   * tháo ra gắn lại là bấy nhiêu request "ma" tiếp tục chiếm 6 khe kết nối của
+   * host, đẩy ảnh mà người dùng đang thật sự chờ xuống cuối hàng đợi.
+   *
+   * Chụp phần tử vào biến ngay khi effect chạy, không đọc ref trong hàm dọn dẹp:
+   * lúc unmount React đã gỡ ref về null rồi.
+   */
+  React.useEffect(() => {
+    const el = imgRef.current;
+    return () => {
+      if (el && !el.complete) el.src = '';
+    };
+  }, [url]);
 
   const handleError = () => {
     if (attempt < MAX_AUTO_RETRY) {
@@ -257,6 +278,7 @@ const ImageWithRetry: React.FC<{
       )}
       <img
         key={url}
+        ref={imgRef}
         src={url}
         alt={alt}
         className={className}
@@ -396,7 +418,7 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
                       Lưu ý: chỉ chuẩn hoá để HIỂN THỊ. Các callback bên dưới vẫn nhận
                       imageUrl gốc vì API xoá ảnh cần đúng giá trị server đã trả về. */}
                   <ImageWithRetry
-                    src={normalizeImageUrl(imageUrl)}
+                    src={normalizeImageUrl(imageUrl, IMAGE_WIDTH.gallery)}
                     alt={`${label} ${index + 1}`}
                     className="w-full h-auto object-cover cursor-pointer hover:opacity-80 transition-opacity"
                     onClick={() => onViewSingle(imageUrl, `${label} ${index + 1}`)}

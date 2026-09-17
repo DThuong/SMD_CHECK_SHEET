@@ -471,8 +471,29 @@ const SheetDetailViewer = () => {
     }
   };
 
-  // Loading state
-  if (loading) {
+  /**
+   * Chỉ hiện khung xương ở LẦN TẢI ĐẦU của đúng sheet này.
+   *
+   * NGUYÊN NHÂN BUG "ký xong vào xem ảnh thì quay mãi rồi báo lỗi, phải F5":
+   * `loading` bật lên ở CẢ updateSheetStatus.pending LẪN
+   * getSheetWithFullObject.pending — mà handleConfirm gọi lần lượt cả hai. Trước
+   * đây chỉ cần `if (loading)` là toàn bộ cây sheet bị THÁO ra thay bằng khung
+   * xương rồi gắn lại; một lần ký là tháo/gắn HAI lượt.
+   *
+   * Mỗi lần tháo, hàng chục thẻ <img> của gallery bị gỡ khỏi DOM KHI REQUEST
+   * CÒN ĐANG CHẠY. Trình duyệt KHÔNG hủy request của thẻ img đã bị gỡ — chúng
+   * vẫn chiếm chỗ trong 6 kết nối đồng thời cho tới khi server trả lời. Gắn lại
+   * là tải lại từ đầu bấy nhiêu ảnh đó. Sau một lần ký có thể tồn đọng 30–45
+   * request ảnh, mỗi cái server còn phải resize. Ảnh chính của modal xếp cuối
+   * hàng đợi đó nên quá 12 giây -> "Ảnh chưa tải được". F5 hủy sạch hàng đợi
+   * nên xem lại được ngay — đúng như người dùng mô tả.
+   *
+   * Nay tải lại sau khi ký diễn ra ÂM THẦM: cây sheet giữ nguyên, ảnh đã tải
+   * xong vẫn nằm đó, không sinh thêm một request nào. Người dùng vẫn biết hệ
+   * thống đang làm việc nhờ nút ký chuyển sang trạng thái `confirming`.
+   */
+  const isFirstLoadOfThisSheet = !currentSheet || currentSheet.id !== id;
+  if (loading && isFirstLoadOfThisSheet) {
     return (
       <div className="max-w-8xl mx-auto p-4">
         <div className="animate-pulse space-y-4">

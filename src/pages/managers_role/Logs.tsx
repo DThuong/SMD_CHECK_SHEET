@@ -29,11 +29,9 @@ import {
 } from "../../utils/navigationState";
 import LoadingSpinner from "../../components/general/LoadingSpinner";
 import { SmartSearchBar } from "../../components/general/SmartSearchBar";
-import { getDefaultDateRange, DEFAULT_RANGE_DAYS } from "../../utils/defaultDateRange";
 
 // Redux actions
 import {
-  fetchChangeModel,
   getSheetByFilter,
   updateSheetStatus,
   returnSheetToPending,
@@ -91,6 +89,7 @@ const Logs = () => {
   const {
     filteredSheets,
     loadingList,
+    page,
     error: sheetError,
   } = useAppSelector((state) => state.changeModel);
 
@@ -121,18 +120,25 @@ const Logs = () => {
   }>({ open: false, sheet: null });
 
   // Filter state.
-  // Mặc định lọc 30 ngày gần nhất thay vì tải toàn bộ ~4000 sheet mỗi lần mở trang.
-  // Người dùng vẫn xem được toàn bộ bằng nút "Xem tất cả" bên dưới thanh tìm kiếm.
+  //
+  // TRƯỚC ĐÂY mặc định ràng buộc 30 ngày gần nhất, vì endpoint filterAll trả về
+  // TẤT CẢ sheet khớp bộ lọc trong một response — không giới hạn khoảng ngày là
+  // kéo về cả ngàn bản ghi kèm 5 bảng con.
+  //
+  // Backend đã thêm pageNumber/pageSize nên mỗi lần chỉ lấy đúng 20 dòng của
+  // trang đang xem. Ràng buộc ngày mặc định không còn cần thiết, và bỏ đi thì
+  // người dùng tra cứu lịch sử cũ không phải bấm thêm nút nào.
   const [filter, setFilter] = useState<SheetFilter>(() => ({
     workOrder: "",
-    ...getDefaultDateRange(),
+    fromDate: "",
+    toDate: "",
     fcode: "",
     id: 0,
     status: "all",
     createrName: "",
   }));
 
-  // Pagination
+  // Pagination — currentPage đếm từ 0 cho ReactPaginate, API đếm từ 1.
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 20;
   const [confirmingSheetId, setConfirmingSheetId] = useState<number | null>(
@@ -150,42 +156,42 @@ const Logs = () => {
   }>({ fcode: [], workOrder: [], createrName: [], id: [] });
   const [, setCandidatesTick] = useState(0);
 
-  // Load sheets với filter được truyền vào (không dùng state).
+  // Load MỘT TRANG sheet theo bộ lọc được truyền vào (không đọc từ state).
   // Trả về true nếu tải thành công, false nếu lỗi — KHÔNG throw, vì có nhiều chỗ
   // gọi hàm này trong setTimeout mà không bắt lỗi.
-  const loadSheetsWithFilter = async (filterToUse: SheetFilter): Promise<boolean> => {
+  //
+  // `pageIndex` đếm từ 0 (khớp ReactPaginate); API nhận pageNumber đếm từ 1.
+  //
+  // TRƯỚC ĐÂY khi không có bộ lọc nào thì rẽ sang fetchChangeModel() để lấy toàn
+  // bộ. Nhánh đó đã bỏ: filterAll không kèm điều kiện cũng trả về mọi sheet, mà
+  // lại có phân trang nên nhẹ hơn hẳn. Một đường đi duy nhất, dễ suy luận hơn.
+  const loadSheetsWithFilter = async (
+    filterToUse: SheetFilter,
+    pageIndex = 0,
+  ): Promise<boolean> => {
     try {
-      const hasWorkOrder = filterToUse.workOrder.trim() !== "";
       const hasDateRange =
         filterToUse.fromDate !== "" && filterToUse.toDate !== "";
-      const hasStatus =
-        filterToUse.status !== "" && filterToUse.status !== "all";
-      const hasFcode = filterToUse.fcode.trim() !== "";
-      const hasId = filterToUse.id && filterToUse.id > 0;
-      const hasCreaterName = filterToUse.createrName?.trim() !== '';
 
-      if (hasWorkOrder || hasDateRange || hasStatus || hasFcode || hasId || hasCreaterName) {
-        const filterParams: any = {
-          workOrder: hasWorkOrder ? filterToUse.workOrder.trim() : undefined,
-          fromDate: hasDateRange
-            ? formatDateTimeForAPI(filterToUse.fromDate)
+      const filterParams: any = {
+        workOrder: filterToUse.workOrder.trim() || undefined,
+        fromDate: hasDateRange ? formatDateTimeForAPI(filterToUse.fromDate) : undefined,
+        toDate: hasDateRange ? formatDateTimeForAPI(filterToUse.toDate) : undefined,
+        status:
+          filterToUse.status && filterToUse.status !== "all"
+            ? filterToUse.status
             : undefined,
-          toDate: hasDateRange
-            ? formatDateTimeForAPI(filterToUse.toDate)
-            : undefined,
-          status: hasStatus ? filterToUse.status : undefined,
-          fcode: hasFcode ? filterToUse.fcode.trim() : undefined,
-          createrName: hasCreaterName ? filterToUse.createrName.trim() : undefined,
-        };
+        fcode: filterToUse.fcode.trim() || undefined,
+        createrName: filterToUse.createrName?.trim() || undefined,
+        pageNumber: pageIndex + 1,
+        pageSize: itemsPerPage,
+      };
 
-        if (hasId) {
-          filterParams.id = filterToUse.id;
-        }
-        await dispatch(getSheetByFilter(filterParams)).unwrap();
-        return true;
+      if (filterToUse.id && filterToUse.id > 0) {
+        filterParams.id = filterToUse.id;
       }
 
-      await dispatch(fetchChangeModel()).unwrap();
+      await dispatch(getSheetByFilter(filterParams)).unwrap();
       return true;
     } catch (error: any) {
       console.error("❌ Lỗi khi tải sheets:", error);
@@ -221,7 +227,7 @@ const Logs = () => {
       setFilter(newFilter);
       setCurrentPage(0);
       setTimeout(() => {
-        dispatch(getSheetByFilter({ workOrder: workOrderFromUrl })).unwrap();
+        loadSheetsWithFilter(newFilter, 0);
       }, 100);
       return;
     }
@@ -242,19 +248,9 @@ const Logs = () => {
       setCurrentPage(0);
 
       setTimeout(() => {
-        dispatch(getSheetByFilter({ status: statusFromUrl }))
-          .unwrap()
-          .then(() => {
-            saveFilterState(newFilter, 0);
-          })
-          .catch((error: any) => {
-            console.error("❌ Lỗi khi fetch sheets:", error);
-            showNotification(
-              "error",
-              t("error.title"),
-              error.message || t("error.cannotLoadSheets"),
-            );
-          });
+        loadSheetsWithFilter(newFilter, 0).then((ok) => {
+          if (ok) saveFilterState(newFilter, 0);
+        });
       }, 100);
 
       return;
@@ -279,14 +275,12 @@ const Logs = () => {
 
         setFilter(restoreFilter);
         setCurrentPage(restorePage);
-        // Dữ liệu danh sách vẫn còn trong Redux store khi quay lại từ SheetDetail.
-        // Với ~4000 sheet, gọi lại API rất chậm => chỉ fetch khi store rỗng.
-        // Effect highlight/scroll bên dưới tự chạy dựa trên dữ liệu sẵn có.
-        if (!filteredSheets || filteredSheets.length === 0) {
-          setTimeout(() => {
-            loadSheetsWithFilter(restoreFilter);
-          }, 100);
-        }
+        // Với phân trang server, store chỉ giữ đúng 20 dòng của trang gần nhất —
+        // không còn là "cache cả danh sách" như trước, nên luôn tải lại đúng trang
+        // đã lưu. Một request 20 dòng, rẻ hơn nhiều so với ~4000 sheet ngày trước.
+        setTimeout(() => {
+          loadSheetsWithFilter(restoreFilter, restorePage);
+        }, 100);
         return;
       }
     }
@@ -298,11 +292,12 @@ const Logs = () => {
     if (hasSavedState) {
       console.log("🔄 Restoring from reload:", savedState);
 
+      const restoredPage = savedState.currentPage || 0;
       setFilter(savedState.filter);
-      setCurrentPage(savedState.currentPage || 0);
+      setCurrentPage(restoredPage);
 
       setTimeout(() => {
-        loadSheetsWithFilter(savedState.filter);
+        loadSheetsWithFilter(savedState.filter, restoredPage);
       }, 100);
 
       return;
@@ -311,15 +306,15 @@ const Logs = () => {
     // Priority 5: restore session khi user quay lại Logs bình thường
     const logsSession = readLogsSession();
     if (logsSession.filter && Object.keys(logsSession.filter).length > 0) {
+      const sessionPage = logsSession.currentPage || 0;
       setFilter(logsSession.filter);
-      setCurrentPage(logsSession.currentPage || 0);
-      setTimeout(() => loadSheetsWithFilter(logsSession.filter), 100);
+      setCurrentPage(sessionPage);
+      setTimeout(() => loadSheetsWithFilter(logsSession.filter, sessionPage), 100);
       return;
     }
 
-    // Priority 6: lần đầu vào trang — chỉ tải khoảng ngày mặc định (30 ngày),
-    // không tải toàn bộ danh sách nữa.
-    loadSheetsInitial(filter);
+    // Priority 6: lần đầu vào trang — tải trang 1, không ràng buộc ngày.
+    loadSheetsWithFilter(filter, 0);
   }, []);
 
   // clear state khi reload hoặc close tab
@@ -376,42 +371,13 @@ const Logs = () => {
   }, [filter, currentPage]);
 
   // ==================== LOAD SHEETS ====================
-  // Lần tải đầu tiên dùng khoảng ngày mặc định. Nếu vì lý do nào đó endpoint lọc
-  // theo ngày không trả về được, vẫn tải toàn bộ để người dùng không gặp màn hình
-  // trống — chậm nhưng không mất dữ liệu.
-  const loadSheetsInitial = async (filterToUse: SheetFilter) => {
-    const ok = await loadSheetsWithFilter(filterToUse);
-    if (ok) return;
-    console.error("❌ Lọc theo khoảng ngày mặc định thất bại — tải toàn bộ để dự phòng");
-    try {
-      await dispatch(fetchChangeModel()).unwrap();
-    } catch (fallbackError) {
-      console.error("❌ Tải toàn bộ cũng thất bại:", fallbackError);
-    }
-  };
-
-  // Xóa bộ lọc = quay về khoảng ngày mặc định (30 ngày gần nhất), KHÔNG tải tất cả.
+  // Xóa bộ lọc = bộ lọc rỗng, trang 1. Không còn khái niệm "khoảng ngày mặc định"
+  // lẫn nút "Xem tất cả" — phân trang server làm cả hai thứ đó thành thừa.
   const resetFilter = async () => {
     clearLogsSession();
     candidatesRef.current = { fcode: [], workOrder: [], createrName: [], id: [] };
     setCandidatesTick(0);
     const defaultFilter: SheetFilter = {
-      workOrder: "",
-      ...getDefaultDateRange(),
-      id: 0,
-      fcode: "",
-      status: "all",
-      createrName: "",
-    };
-    setFilter(defaultFilter);
-    setCurrentPage(0);
-    await loadSheetsWithFilter(defaultFilter);
-  };
-
-  // Nút "Xem tất cả": bỏ khoảng ngày và tải toàn bộ danh sách.
-  // Chậm (tải hết dữ liệu từ trước tới nay) nên chỉ chạy khi người dùng chủ động bấm.
-  const loadAllSheets = async () => {
-    const allFilter: SheetFilter = {
       workOrder: "",
       fromDate: "",
       toDate: "",
@@ -420,17 +386,10 @@ const Logs = () => {
       status: "all",
       createrName: "",
     };
-    setFilter(allFilter);
+    setFilter(defaultFilter);
     setCurrentPage(0);
-    try {
-      await dispatch(fetchChangeModel()).unwrap();
-    } catch (error) {
-      console.error("❌ Lỗi khi tải toàn bộ sheets:", error);
-    }
+    await loadSheetsWithFilter(defaultFilter, 0);
   };
-
-  const isDefaultRangeActive =
-    filter.fromDate !== "" && filter.toDate !== "";
 
   const handleFilterChange = (key: string, value: any) => {
     let parsedValue = value;
@@ -455,7 +414,8 @@ const Logs = () => {
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      loadSheetsWithFilter(newFilter);
+      // Đổi bộ lọc là về trang 1 — trang 5 của bộ lọc cũ không còn nghĩa lý gì.
+      loadSheetsWithFilter(newFilter, 0);
     }, 400);
   };
 
@@ -592,11 +552,17 @@ const Logs = () => {
       };
       showNotification("success", `${t("success.confirmed")} ${roleNames[role]}!`);
 
-      // KHÔNG gọi lại loadSheets() nữa.
-      // updateSheetStatus.fulfilled trong changeModelSlice đã tự merge status mới
-      // vào cả `sheets` và `filteredSheets`, nên danh sách đã hiển thị đúng.
-      // Trước đây mỗi chữ ký kéo về lại toàn bộ ~4000 sheet kèm 5 bảng con —
-      // đó chính là nguyên nhân "ký thì lag".
+      // updateSheetStatus.fulfilled trong changeModelSlice đã merge status mới vào
+      // dòng đang hiển thị, nên badge đổi ngay không cần gọi API.
+      //
+      // Nhưng khi ĐANG LỌC theo một status cụ thể, sheet vừa ký không còn thuộc
+      // bộ lọc nữa và phải biến mất khỏi danh sách. Trước đây việc đó do bộ lọc
+      // client-side lo; nay lọc nằm ở server nên phải tải lại trang. Một request
+      // 20 dòng — rẻ, khác hẳn thời phải kéo về ~4000 sheet mỗi chữ ký.
+      if (filter.status && filter.status !== "all") {
+        await loadSheetsWithFilter(filter, currentPage);
+      }
+
       // Lịch sử ký là call nhẹ (theo 1 sheet) nên vẫn giữ.
       await dispatch(getSheetStatusHistory(sheetId)).unwrap();
 
@@ -683,15 +649,15 @@ const Logs = () => {
       // Đóng modal
       setConfirmDeleteModal({ open: false, sheet: null });
 
-      // Gỡ sheet khỏi danh sách đang cache thay vì gọi lại API lấy toàn bộ.
+      // Gỡ ngay khỏi danh sách đang hiển thị để người dùng thấy phản hồi tức thì.
       dispatch(removeSheetFromList(sheetId));
 
-      // Reset về trang đầu nếu trang hiện tại không còn items
-      const remainingItems = sortedSheets.length - 1;
-      const newPageCount = Math.ceil(remainingItems / itemsPerPage);
-      if (currentPage >= newPageCount && newPageCount > 0) {
-        setCurrentPage(newPageCount - 1);
-      }
+      // Rồi tải lại đúng trang: với phân trang server, xoá một dòng làm các dòng
+      // sau dồn lên, và tổng số trang có thể giảm. Chỉ 20 dòng nên rất rẻ.
+      const targetPage =
+        currentSheets.length <= 1 && currentPage > 0 ? currentPage - 1 : currentPage;
+      if (targetPage !== currentPage) setCurrentPage(targetPage);
+      await loadSheetsWithFilter(filter, targetPage);
     } catch (error: any) {
       console.error("❌ Lỗi khi xóa sheet:", error);
       showNotification(
@@ -791,40 +757,29 @@ const Logs = () => {
   };
 
   // ==================== PAGINATION ====================
-  // Chuẩn hóa status để so sánh (xử lý cả typo lịch sử "PQCLeaderLDone").
-  const normalizeStatus = (s?: string) =>
-    (s || "").toLowerCase().replace("pqcleaderldone", "pqcleaderdone");
-
+  // store chỉ còn giữ đúng MỘT TRANG (20 dòng) nên không cắt trang ở client nữa.
+  //
+  // Cũng bỏ luôn bộ lọc status client-side: trước đây nó cần thiết vì cả danh
+  // sách nằm trong cache và một sheet vừa ký xong vẫn còn trong đó. Nay lọc
+  // status do server làm; lọc lại ở client chỉ khiến trang hiện ít hơn 20 dòng.
+  // Sheet vừa ký được xử lý bằng cách tải lại trang, xem handleConfirmStep.
   const sortedSheets = useMemo(() => {
-    let list = [...(filteredSheets || [])];
-
-    // Khi đang lọc theo 1 status cụ thể, ẩn các sheet mà status hiện tại
-    // KHÔNG còn khớp với bộ lọc. Cần thiết vì khi quay lại từ trang chi tiết,
-    // danh sách KHÔNG được gọi lại API (để tối ưu cho ~4000 sheet) mà chỉ
-    // được merge status mới vào cache trong Redux. Nếu không lọc lại ở client,
-    // một sheet vừa được ký (ví dụ PQCDone -> PQCLeaderDone) vẫn còn nằm trong
-    // cache và sẽ tiếp tục hiển thị dưới bộ lọc PQCDone. Lọc client-side ở đây
-    // giúp sheet đó biến mất ngay khi trạng thái thay đổi.
-    if (filter.status && filter.status !== "all") {
-      const want = normalizeStatus(filter.status);
-      list = list.filter((s) => normalizeStatus(s.status) === want);
-    }
-
-    return list.sort((a, b) => {
+    return [...(filteredSheets || [])].sort((a, b) => {
       const dateA = new Date(a.createAt || 0).getTime();
       const dateB = new Date(b.createAt || 0).getTime();
       return dateB - dateA;
     });
-  }, [filteredSheets, filter.status]);
+  }, [filteredSheets]);
 
-  const pageCount = Math.ceil(sortedSheets.length / itemsPerPage);
-  // Ký xong, sheet rơi khỏi bộ lọc hiện tại nên số trang có thể giảm. Nếu đang
-  // đứng ở trang vừa biến mất thì hiển thị trang cuối còn lại thay vì trang trắng.
-  // Kẹp ở chỗ tính toán (không dùng setState trong effect) để không thêm một
-  // vòng render thừa.
+  // Số trang và tổng số bản ghi lấy từ response của server, không tự tính nữa.
+  const pageCount = page?.totalPages ?? 0;
+  const totalCount = page?.totalCount ?? sortedSheets.length;
   const safePage = pageCount > 0 ? Math.min(currentPage, pageCount - 1) : 0;
+  // Số thứ tự hiển thị vẫn phải tính theo trang: dòng đầu của trang 3 là STT 41.
+  // (Trước đây offset dùng để CẮT mảng; nay server đã cắt sẵn, offset chỉ còn
+  // phục vụ đánh số — đừng bỏ đi.)
   const offset = safePage * itemsPerPage;
-  const currentSheets = sortedSheets.slice(offset, offset + itemsPerPage);
+  const currentSheets = sortedSheets;
 
   // Restore highlight sau khi back từ SheetDetailViewer.
   // Chỉ chạy một lần, sau khi list đã load và DOM đã render đúng page.
@@ -832,23 +787,18 @@ const Logs = () => {
     const targetId = pendingRestoreHighlightRef.current;
     if (!targetId || loadingList || sortedSheets.length === 0) return;
 
-    const targetIndex = sortedSheets.findIndex(
+    // Với phân trang server, store chỉ có 20 dòng của trang đang xem nên không
+    // thể tự tính sheet nằm ở trang nào nữa. Không cần: trang đã được khôi phục
+    // từ state điều hướng trước khi tải, nên sheet cần highlight nằm ngay ở đây.
+    // Nếu không thấy (ví dụ vừa ký xong nên rơi khỏi bộ lọc) thì bỏ highlight.
+    const isOnThisPage = sortedSheets.some(
       (sheet) => Number(sheet.id) === Number(targetId),
     );
 
-    // Sheet không còn trong danh sách đã lọc (ví dụ vừa ký xong nên đổi trạng
-    // thái và bị lọc khỏi bộ lọc hiện tại) => bỏ highlight, không cố scroll nữa.
-    if (targetIndex === -1) {
+    if (!isOnThisPage) {
       pendingRestoreHighlightRef.current = null;
       setSelectedSheetId(null);
       clearSelectedSheetId();
-      return;
-    }
-
-    const targetPage = Math.floor(targetIndex / itemsPerPage);
-
-    if (currentPage !== targetPage) {
-      setCurrentPage(targetPage);
       return;
     }
 
@@ -895,6 +845,8 @@ const Logs = () => {
     clearSelectedSheetId();
 
     setCurrentPage(selectedItem.selected);
+    // Phân trang server: mỗi lần đổi trang là một request 20 dòng.
+    loadSheetsWithFilter(filter, selectedItem.selected);
 
     if (resultsRef.current) {
       resultsRef.current.scrollIntoView({
@@ -968,27 +920,10 @@ const Logs = () => {
             values={filter}
             onChange={handleFilterChange}
             onReset={resetFilter}
-            extraActions={
-              isDefaultRangeActive ? (
-                <button
-                  type="button"
-                  onClick={loadAllSheets}
-                  disabled={loadingList}
-                  className="w-full sm:w-auto px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 text-sm font-medium disabled:opacity-50"
-                  title={t("search.viewAllTitle")}
-                >
-                  {t("search.viewAll")}
-                </button>
-              ) : (
-                <span className="text-xs text-gray-500">
-                  {t("search.viewingAllHint", { days: DEFAULT_RANGE_DAYS })}
-                </span>
-              )
-            }
             loading={loadingList}
             resultCount={{
               current: currentSheets.length,
-              total: sortedSheets.length,
+              total: totalCount,
               page: safePage,
               pageCount,
             }}
@@ -1008,10 +943,10 @@ const Logs = () => {
             <div className="text-center py-12">
               <AiOutlineClockCircle className="w-16 h-16 mx-auto text-gray-400 mb-4" />
               <p className="text-gray-600 text-lg">
-                {sortedSheets.length === 0 ? "" : t("empty.noSheets")}
+                {totalCount === 0 ? "" : t("empty.noSheets")}
               </p>
               <p className="text-gray-500 text-sm mt-2">
-                {sortedSheets.length === 0
+                {totalCount === 0
                   ? user?.role === ROLES.PQC
                     ? t("empty.createNew")
                     : t("empty.waitPQC")

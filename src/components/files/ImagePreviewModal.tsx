@@ -85,6 +85,26 @@ const ImagePreviewModal = ({
    */
   const [hiRes, setHiRes] = useState<"idle" | "done" | "failed">("idle");
 
+  /**
+   * Kích thước THẬT của bản 800px, chốt lại ngay khi nó tải xong.
+   *
+   * NGUYÊN NHÂN BUG "xem hình nháy một cái rồi tự resize": thẻ img chỉ có
+   * `max-w-full max-h-full`, nghĩa là KHUNG của nó do kích thước pixel thật của
+   * tấm ảnh quyết định. Bản 800px và bản 1600px có kích thước thật khác nhau,
+   * nên đúng lúc thay ảnh là khung bị tính lại -> ảnh nhảy sang cỡ khác ngay
+   * trước mắt người dùng.
+   *
+   * Chốt max-width/max-height theo bản 800px và KHÔNG cập nhật lại khi bản
+   * 1600px vào, nên bản nét cao được vẽ vừa khít đúng cái khung cũ: y nguyên vị
+   * trí, y nguyên kích thước, chỉ nét hơn.
+   */
+  const [baseSize, setBaseSize] = useState<{ w: number; h: number } | null>(null);
+  /**
+   * Giữ đối tượng Image đã nạp sẵn để trình duyệt không thu hồi bitmap vừa giải
+   * mã — nhờ vậy lúc thay src là vẽ được ngay, không nháy một khung trống.
+   */
+  const hiResImgRef = useRef<HTMLImageElement | null>(null);
+
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
@@ -190,6 +210,7 @@ const ImagePreviewModal = ({
     setStatus("loading");
     setAttempt(0);
     setHiRes("idle");
+    setBaseSize(null);
     resetView();
   }, [isOpen, initialIndex, totalImages, resetView]);
 
@@ -200,24 +221,34 @@ const ImagePreviewModal = ({
     setStatus("loading");
     setAttempt(0);
     setHiRes("idle");
+    setBaseSize(null);
     resetView();
   }, [currentIndex, isOpen, clearTimers, resetView]);
 
   /**
-   * Bản nét cao tải NGẦM, chỉ bắt đầu SAU KHI bản 800px đã hiện lên.
+   * Bản nét cao CHỈ tải khi người dùng thật sự phóng to (scale > 1).
    *
-   * Thứ tự này là cố ý: HTTP/1.1 chỉ cho 6 kết nối mỗi host, nên xin bản 1600px
-   * quá sớm là cướp mất khe của chính ảnh đang cần hiện.
+   * Xem ở 100% thì bản 800px đã phủ kín khung 95vh rồi — tải thêm bản 1600px
+   * chẳng nét hơn được chút nào mà tốn đúng số byte vừa tiết kiệm được, lại
+   * thêm một lần thay ảnh không ai cần. Phóng to mới là lúc thiếu pixel thật.
+   *
+   * Vẫn chờ bản 800px hiện xong mới tải: HTTP/1.1 chỉ cho 6 kết nối mỗi host,
+   * xin bản nét cao quá sớm là cướp khe của chính ảnh đang cần hiện.
    */
   useEffect(() => {
-    if (!isOpen || status !== "ok" || hiRes !== "idle") return;
+    if (!isOpen || status !== "ok" || hiRes !== "idle" || scale <= 1) return;
     const target = fullImages[currentIndex];
     if (!target) return;
 
     let cancelled = false;
     const pre = new Image();
     pre.decoding = "async";
-    pre.onload = () => { if (!cancelled) setHiRes("done"); };
+    pre.onload = () => {
+      if (cancelled) return;
+      // Giữ tham chiếu để bitmap đã giải mã không bị thu hồi trước lúc thay src.
+      hiResImgRef.current = pre;
+      setHiRes("done");
+    };
     pre.onerror = () => { if (!cancelled) setHiRes("failed"); };
     pre.src = target;
 
@@ -225,9 +256,9 @@ const ImagePreviewModal = ({
       cancelled = true;
       // Hủy request còn dở khi người dùng đổi ảnh/đóng modal, đừng để nó tiếp
       // tục chiếm khe kết nối của ảnh kế tiếp.
-      pre.src = "";
+      if (!pre.complete) pre.src = "";
     };
-  }, [isOpen, status, hiRes, currentIndex, fullImages]);
+  }, [isOpen, status, hiRes, scale, currentIndex, fullImages]);
 
   // Canh request treo: hết STALL_TIMEOUT_MS mà chưa load xong thì chuyển sang
   // trạng thái lỗi để người dùng có nút bấm tải lại, thay vì ngồi nhìn khung đen.
@@ -252,6 +283,7 @@ const ImagePreviewModal = ({
     const el = imgRef.current;
     if (el && el.complete && el.naturalWidth > 0) {
       clearTimers();
+      setBaseSize((prev) => prev ?? { w: el.naturalWidth, h: el.naturalHeight });
       setStatus("ok");
     }
   }, [isOpen, status, src, clearTimers]);
@@ -349,11 +381,10 @@ const ImagePreviewModal = ({
    *
    * Quan trọng là thứ tự: nạp sẵn trước khi ảnh chính load xong sẽ chiếm mất
    * khe kết nối của chính nó (HTTP/1.1 chỉ cho 6 kết nối đồng thời mỗi host).
-   * Vì vậy còn phải chờ bản nét cao của ảnh ĐANG XEM xong (hoặc hỏng) đã, và
-   * chỉ nạp sẵn bản 800px chứ không nạp bản 1600px.
+   * Chỉ nạp sẵn bản 800px, không nạp bản 1600px.
    */
   useEffect(() => {
-    if (!isOpen || status !== "ok" || hiRes === "idle" || totalImages < 2) return;
+    if (!isOpen || status !== "ok" || totalImages < 2) return;
     const neighbours = [
       (currentIndex + 1) % totalImages,
       (currentIndex - 1 + totalImages) % totalImages,
@@ -368,12 +399,19 @@ const ImagePreviewModal = ({
       // Hủy request còn dở khi người dùng đổi ảnh/đóng modal.
       preloaded.forEach((img) => { img.src = ""; });
     };
-  }, [isOpen, status, hiRes, currentIndex, previewImages, totalImages]);
+  }, [isOpen, status, currentIndex, previewImages, totalImages]);
 
   if (!isOpen || totalImages === 0) return null;
 
-  const handleLoaded = () => {
+  const handleLoaded = (e: React.SyntheticEvent<HTMLImageElement>) => {
     clearTimers();
+    // Chốt khung theo tấm ĐẦU TIÊN tải xong (bản 800px) và không bao giờ đổi
+    // nữa. Nhờ vậy lúc bản 1600px thay vào, khung không bị tính lại -> ảnh
+    // không nhảy cỡ trước mắt người dùng.
+    const el = e.currentTarget;
+    if (el.naturalWidth > 0) {
+      setBaseSize((prev) => prev ?? { w: el.naturalWidth, h: el.naturalHeight });
+    }
     setStatus("ok");
   };
 
@@ -596,6 +634,17 @@ const ImagePreviewModal = ({
               willChange: "transform",
               // Ẩn ảnh lỗi/chưa xong để không nhá một khung trống nửa vời.
               visibility: status === "ok" ? "visible" : "hidden",
+              // KHUNG ĐÃ CHỐT theo tấm đầu tiên tải xong.
+              //
+              // Không có hai dòng này thì khung do kích thước pixel thật của ảnh
+              // quyết định, nên thay bản 800px bằng bản 1600px là ảnh nhảy cỡ.
+              // Chốt lại: khung vẫn co theo cửa sổ nhờ max-w-full/max-h-full của
+              // Tailwind (max-width ở đây tính theo px, cái nào nhỏ hơn thắng),
+              // và object-contain lo phần vẽ vừa khít bên trong. Bản nét cao vào
+              // đúng vị trí, đúng kích thước, chỉ nét hơn.
+              ...(baseSize
+                ? { maxWidth: `min(100%, ${baseSize.w}px)`, maxHeight: `min(100%, ${baseSize.h}px)` }
+                : null),
             }}
             decoding="async"
             fetchPriority="high"

@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
 import { validateLcrFile, type LcrValidationResult } from "../../utils/lcrValidation";
+import { validateReflowPdf, type ReflowValidationResult } from "../../utils/reflowValidation";
 import smdApi from "../services/smdApi";
 
 // Interface cho LCR data item
-interface LcrDataItem {
+export interface LcrDataItem {
   no: string;
   ndx: string;
   loc: string;
@@ -50,6 +51,8 @@ interface FileState {
   lcrValidation: LcrValidationResult | null;
   reflowFileUrl: string | null;   
   reflowFileBlob: string | null;
+  reflowValidation: ReflowValidationResult | null;
+  reflowValidating: boolean;
   lcrLoading: boolean;
   lcrError: string | null;
   reflowLoading: boolean;
@@ -65,6 +68,8 @@ const initialState: FileState = {
   lcrValidation: null,
   reflowFileUrl: null,
   reflowFileBlob: null,
+  reflowValidation: null,
+  reflowValidating: false,
   lcrLoading: false,
   lcrError: null,
   reflowLoading: false,
@@ -113,23 +118,41 @@ export const getLcrFile = createAsyncThunk(
   }
 );
 
-// API get Reflow file
+const fetchReflowBlob = async (id: number): Promise<Blob> => {
+  const response = await smdApi.get(`/ChangeModel/files/${id}/pdf`, {
+    responseType: 'blob',
+  });
+  return response.data;
+};
+
+// API get Reflow file (xem PDF) — đồng thời kiểm tra tiêu chuẩn luôn từ blob đã tải
 export const getReflowFile = createAsyncThunk(
   'file/getReflowFile',
   async (id: number, { rejectWithValue }) => {
     try {
-      const response = await smdApi.get(`/ChangeModel/files/${id}/pdf`, {
-        responseType: 'blob', 
-      });
-      
-      const blob = response.data;
+      const blob = await fetchReflowBlob(id);
       const url = URL.createObjectURL(blob);
-      
-      return url;
+      const validation = await validateReflowPdf(blob, id);
+
+      return { url, validation };
       
     } catch (error: any) {
       console.error('Error fetching Reflow file:', error);
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch Reflow file');
+    }
+  }
+);
+
+// Chỉ kiểm tra tiêu chuẩn file Reflow (không giữ blob URL) — dùng ở màn hình sheet / ký
+export const validateReflowFile = createAsyncThunk(
+  'file/validateReflowFile',
+  async (id: number, { rejectWithValue }) => {
+    try {
+      const blob = await fetchReflowBlob(id);
+      return await validateReflowPdf(blob, id);
+    } catch (error: any) {
+      console.error('Error validating Reflow file:', error);
+      return rejectWithValue(error.response?.data?.message || 'Failed to validate Reflow file');
     }
   }
 );
@@ -184,6 +207,12 @@ const FileSlice = createSlice({
         URL.revokeObjectURL(state.reflowFileUrl);
       }
       state.reflowFileUrl = null;
+      state.reflowValidation = null;
+      state.reflowValidating = false;
+    },
+    /** Gán kết quả kiểm tra Reflow (vd: kiểm tra ngay file local khi PQCLeader upload) */
+    setReflowValidation: (state, action: PayloadAction<ReflowValidationResult | null>) => {
+      state.reflowValidation = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -231,14 +260,38 @@ const FileSlice = createSlice({
       .addCase(getReflowFile.fulfilled, (state, action) => {
         state.reflowLoading = false;
         // Thu hồi blob URL cũ trước khi ghi đè (mỗi file Reflow PDF có thể vài MB).
-        if (state.reflowFileUrl && state.reflowFileUrl !== action.payload) {
+        if (state.reflowFileUrl && state.reflowFileUrl !== action.payload.url) {
           URL.revokeObjectURL(state.reflowFileUrl);
         }
-        state.reflowFileUrl = action.payload;
+        state.reflowFileUrl = action.payload.url;
+        state.reflowValidation = action.payload.validation;
       })
       .addCase(getReflowFile.rejected, (state, action) => {
         state.reflowLoading = false;
         state.reflowError = action.payload as string;
+      })
+
+      // Reflow validation
+      .addCase(validateReflowFile.pending, (state) => {
+        state.reflowValidating = true;
+      })
+      .addCase(validateReflowFile.fulfilled, (state, action) => {
+        state.reflowValidating = false;
+        state.reflowValidation = action.payload;
+      })
+      .addCase(validateReflowFile.rejected, (state, action) => {
+        state.reflowValidating = false;
+        const msg = (action.payload as string) || 'Không tải được file Reflow để kiểm tra';
+        state.reflowValidation = {
+          isValid: false,
+          sheetId: action.meta.arg,
+          fileName: null,
+          side: null,
+          rows: [],
+          cellErrors: [],
+          errors: [msg],
+          errorMessage: `File Reflow không đạt tiêu chuẩn:\n- ${msg}`,
+        };
       })
 
       // download excel file
@@ -256,5 +309,5 @@ const FileSlice = createSlice({
   },
 });
 
-export const { clearLcrFile, clearReflowFile } = FileSlice.actions;
+export const { clearLcrFile, clearReflowFile, setReflowValidation } = FileSlice.actions;
 export default FileSlice.reducer;

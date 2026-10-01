@@ -10,6 +10,7 @@ import { getSheetWithFullObject } from '../redux/slices/changeModelSlice';
 import { useTranslation } from 'react-i18next';
 import { getLcrFileData, getReflowFile, clearLcrFile, clearReflowFile } from '../redux/slices/FileSlice';
 import { getFilterState } from '../utils/navigationState';
+import ReflowValidationPanel from '../components/files/ReflowValidationPanel';
 
 type FileType = 'lcr' | 'reflow';
 type LcrViewMode = 'expandable' | 'full';
@@ -31,7 +32,7 @@ const FileDetailViewer = () => {
 
   const user = useAppSelector((state) => state.auth.user);
   const { currentSheet, loading: sheetLoading } = useAppSelector((state) => state.changeModel);
-  const { lcrFileData, reflowFileUrl, lcrLoading, lcrError, reflowLoading, reflowError } = useAppSelector(
+  const { lcrFileData, reflowFileUrl, lcrLoading, lcrError, reflowLoading, reflowError, reflowValidation } = useAppSelector(
     (state) => state.fileSlice
   );
 
@@ -219,6 +220,11 @@ const FileDetailViewer = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
               Reflow PDF
+              {!reflowError && reflowValidation && (
+                reflowValidation.isValid
+                  ? <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">OK</span>
+                  : <span className="px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-bold">NG</span>
+              )}
               {reflowError && (
                 <span className="px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-bold">!</span>
               )}
@@ -337,7 +343,10 @@ const FileDetailViewer = () => {
             )}
 
             {!reflowLoading && !reflowError && hasReflowFile && reflowUrl && (
-              <ReflowPDFViewer fileUrl={reflowUrl} />
+              <>
+                {reflowValidation && <ReflowValidationPanel validation={reflowValidation} />}
+                <ReflowPDFViewer fileUrl={reflowUrl} />
+              </>
             )}
 
             {!reflowLoading && !reflowError && !hasReflowFile && (

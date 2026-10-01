@@ -28,6 +28,7 @@ import {
   clearFilterState,
 } from "../../utils/navigationState";
 import LoadingSpinner from "../../components/general/LoadingSpinner";
+import { validateReflowFile } from "../../redux/slices/FileSlice";
 import { SmartSearchBar } from "../../components/general/SmartSearchBar";
 
 // Redux actions
@@ -48,6 +49,7 @@ const ROLES = {
   MANAGER: "Manager",
   KOREA_MANAGER: "KoreaManager",
   PQCLEADER: "PQCLeader",
+  ADMIN: "Admin",
 } as const;
 
 const STATUS = {
@@ -539,6 +541,28 @@ const Logs = () => {
           );
           return;
         }
+
+        // Kiểm tra lại file Reflow của đúng sheet này trước khi ký
+        let reflowResult;
+        try {
+          reflowResult = await dispatch(validateReflowFile(sheetId)).unwrap();
+        } catch (err: any) {
+          showNotification(
+            "error",
+            "Không thể ký xác nhận",
+            `Không tải được file Reflow để kiểm tra: ${err || ""}`,
+          );
+          return;
+        }
+        if (!reflowResult.isValid) {
+          console.error("[Reflow Validation] File Reflow không đạt tiêu chuẩn:", reflowResult.errors);
+          showNotification(
+            "error",
+            "Không thể ký xác nhận",
+            reflowResult.errorMessage || "File Reflow không đạt tiêu chuẩn",
+          );
+          return;
+        }
       }
 
       await dispatch(updateSheetStatus(sheetId)).unwrap();
@@ -617,8 +641,13 @@ const Logs = () => {
 
   const canReturnToPending = (sheet: ChangeModelResponse): boolean => {
     if (!user) return false;
+    const status = sheet.status?.toLowerCase();
+    // Admin: được trả về Pending ở mọi trạng thái (trừ khi đã là Pending)
+    if (user.role === ROLES.ADMIN) {
+      return !!status && status !== STATUS.PENDING.toLowerCase();
+    }
     if (user.role !== ROLES.PQCLEADER) return false;
-    return sheet.status?.toLowerCase() === STATUS.PQC_DONE.toLowerCase();
+    return status === STATUS.PQC_DONE.toLowerCase();
   };
 
   const handleReturnToPending = async (sheet: ChangeModelResponse) => {

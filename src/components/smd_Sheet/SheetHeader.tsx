@@ -15,7 +15,12 @@ import Notification from "../general/Notification";
 import { useNavigate, useLocation } from "react-router-dom";
 import { IoEyeSharp } from "react-icons/io5";
 import { useTranslation } from "react-i18next";
-import { getLcrFileData } from "../../redux/slices/FileSlice";
+import { getLcrFileData, setReflowValidation } from "../../redux/slices/FileSlice";
+import {
+  validateReflowPdf,
+  REFLOW_STANDARDS,
+  type ReflowValidationResult,
+} from "../../utils/reflowValidation";
 interface FileUploadState {
   lcr?: File;
   reflow?: File;
@@ -46,9 +51,8 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
   const { t } = useTranslation("sheetHeader");
   const { t: t2 } = useTranslation("common");
   const [tempNoteFile, setTempNoteFile] = useState<string>("");
-  const { lcrFileData, lcrValidation } = useAppSelector(
-    (state) => state.fileSlice,
-  );
+  const { lcrFileData, lcrValidation, reflowValidation, reflowValidating } =
+    useAppSelector((state) => state.fileSlice);
 
   useEffect(() => {
     if (currentSheet?.noteFile) {
@@ -157,6 +161,19 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
       return;
     }
 
+    // KIỂM TRA FILE REFLOW NGAY KHI CHỌN UPLOAD (đọc trực tiếp file local, không chờ server)
+    let reflowCheck: ReflowValidationResult | null = null;
+    if (tempFileState.reflow) {
+      reflowCheck = await validateReflowPdf(tempFileState.reflow, currentSheet.id);
+      if (!reflowCheck.isValid) {
+        console.error(
+          "[Reflow Validation] File Reflow không đạt tiêu chuẩn:",
+          reflowCheck.errors,
+          reflowCheck.rows,
+        );
+      }
+    }
+
     try {
       // Flag để biết có upload LCR file mới không
       const uploadedNewLcr = !!tempFileState.lcr;
@@ -216,7 +233,20 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
         await dispatch(getLcrFileData(currentSheet.id)).unwrap();
       }
 
-      showNotification("success", "Upload thành công!", t("success_msg"));
+      // Cập nhật kết quả kiểm tra Reflow lên header
+      if (reflowCheck) {
+        dispatch(setReflowValidation(reflowCheck));
+      }
+
+      if (reflowCheck && !reflowCheck.isValid) {
+        showNotification(
+          "error",
+          "Đã upload — nhưng file Reflow KHÔNG đạt tiêu chuẩn",
+          reflowCheck.errorMessage || "File Reflow không hợp lệ",
+        );
+      } else {
+        showNotification("success", "Upload thành công!", t("success_msg"));
+      }
       setTempFileState({});
       setOpen(false);
     } catch (err: any) {
@@ -359,6 +389,61 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
     };
   }, [currentSheet?.excelFileUrl, lcrFileData, lcrValidation, lcrName]);
 
+  // Kiểm tra tiêu chuẩn file Reflow (Max'C, ov-220, T4-s, T2-s của S1 → S6)
+  const reflowFileStatus = useMemo(() => {
+    if (!currentSheet?.pdfFileUrl || currentSheet.pdfFileUrl.trim() === "") {
+      return {
+        status: "none" as const,
+        message: `⚠️ ${t("notUploaded")}`,
+        detail: "",
+        bgColor: "bg-orange-50",
+      };
+    }
+
+    const v =
+      reflowValidation && reflowValidation.sheetId === currentSheet.id
+        ? reflowValidation
+        : null;
+
+    if (!v) {
+      return {
+        status: "checking" as const,
+        message: `${reflowName}`,
+        detail: reflowValidating ? "Đang kiểm tra tiêu chuẩn..." : "",
+        bgColor: "bg-gray-50",
+      };
+    }
+
+    const sideText = v.side
+      ? `${v.side} – ${REFLOW_STANDARDS[v.side].label}`
+      : "";
+
+    if (!v.isValid) {
+      return {
+        status: "invalid" as const,
+        message: `❌ ${reflowName}`,
+        detail:
+          v.cellErrors.length > 0
+            ? `${v.cellErrors.length} giá trị ngoài chuẩn (${sideText})`
+            : v.errors[0] || "File Reflow không hợp lệ",
+        bgColor: "bg-red-50",
+      };
+    }
+
+    return {
+      status: "valid" as const,
+      message: `${reflowName}`,
+      detail: `✓ Đạt chuẩn ${sideText}`,
+      bgColor: "bg-green-50",
+    };
+  }, [
+    currentSheet?.pdfFileUrl,
+    currentSheet?.id,
+    reflowValidation,
+    reflowValidating,
+    reflowName,
+  ]);
+
   const hasExistingLcr =
     currentSheet?.excelFileUrl && currentSheet.excelFileUrl.trim() !== "";
   const hasExistingReflow =
@@ -386,7 +471,10 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
 
       {/* WARNING BANNER - File LCR không hợp lệ */}
       {lcrFileStatus.hasFile && !lcrFileStatus.isValid && lcrFileData && (
-        <div className="mb-3 p-4 bg-red-50 border-2 border-red-400 rounded-lg no-print animate-pulse">
+        <div className="mb-3 p-4 bg-red-50 border-2 border-red-400 rounded-lg no-print shadow-[0_0_12px_rgba(248,113,113,0.6)]">
+          <p className="mb-2 text-sm text-red-700 font-semibold whitespace-pre-line text-center">
+            {lcrFileStatus.message}
+          </p>
           <div className="flex items-center justify-center gap-3">
             {lcrFileStatus.stats && (
               <div className="flex gap-4 text-xs bg-white p-2 rounded border border-red-200">
@@ -402,14 +490,31 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                 <span className="text-orange-600 font-bold">
                   <strong>SKIP:</strong> {lcrFileStatus.stats.skip}
                 </span>
+                <span className="text-purple-600 font-bold">
+                  <strong>Chưa đo:</strong> {lcrFileStatus.stats.notMeasured}
+                </span>
+                <span className="text-blue-600 font-bold">
+                  <strong>Pass Rate:</strong> {lcrFileStatus.stats.passRate.toFixed(1)}%
+                </span>
               </div>
             )}
           </div>
         </div>
       )}
 
+      {/* WARNING BANNER - File Reflow không đạt tiêu chuẩn */}
+      {reflowFileStatus.status === "invalid" && reflowValidation?.errorMessage && (
+        <div className="mb-3 p-4 bg-red-50 border-2 border-red-400 rounded-lg no-print shadow-[0_0_12px_rgba(248,113,113,0.6)]">
+          <p className="mb-0 text-sm text-red-700 font-semibold whitespace-pre-line text-center">
+            ❌ {reflowValidation.errorMessage}
+          </p>
+        </div>
+      )}
+
       {/* CHỈ HIỂN THỊ KHI CẢ 2 ĐIỀU KIỆN ĐỀU ĐÚNG */}
-      {bothFilesUploaded && lcrFileStatus.isValid && (
+      {bothFilesUploaded &&
+        lcrFileStatus.isValid &&
+        reflowFileStatus.status !== "invalid" && (
         <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-xs text-green-800 font-semibold flex items-center gap-2 mb-0">
             ✓ {t("success_msg")}
@@ -483,21 +588,24 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                 {/* REFLOW FILE DATA */}
                 <td
                   colSpan={2}
-                  className={`border border-gray-600 px-2 py-1 text-xs text-left w-48 ${
-                    currentSheet?.pdfFileUrl &&
-                    currentSheet.pdfFileUrl.trim() !== ""
-                      ? "bg-green-50"
-                      : "bg-orange-50"
-                  }`}
+                  className={`border border-gray-600 px-2 py-1 text-xs text-left w-48 ${reflowFileStatus.bgColor}`}
                 >
                   <div className="text-sm font-semibold text-gray-800 wrap-break-words whitespace-normal">
-                    {currentSheet?.pdfFileUrl &&
-                    currentSheet.pdfFileUrl.trim() !== "" ? (
-                      <>{reflowName}</>
-                    ) : (
-                      <>⚠️ {t("notUploaded")}</>
-                    )}
+                    {reflowFileStatus.message}
                   </div>
+                  {reflowFileStatus.detail && (
+                    <div
+                      className={`text-xs mt-1 font-semibold ${
+                        reflowFileStatus.status === "invalid"
+                          ? "text-red-600"
+                          : reflowFileStatus.status === "valid"
+                            ? "text-green-700"
+                            : "text-gray-500"
+                      }`}
+                    >
+                      {reflowFileStatus.detail}
+                    </div>
+                  )}
 
                   {/* Hiển thị tên người đo Reflow */}
                   {getWorkerNames.reflowWorker && (
@@ -592,15 +700,23 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                 </div>
                 <div
                   className={`w-full text-sm px-2 py-1 border rounded truncate overflow-hidden ${
-                    currentSheet?.pdfFileUrl
-                      ? "bg-green-50 border-green-300 text-green-800"
-                      : "bg-red-50 border-red-300 text-red-800"
+                    reflowFileStatus.status === "none" ||
+                    reflowFileStatus.status === "invalid"
+                      ? "bg-red-50 border-red-300 text-red-800"
+                      : reflowFileStatus.status === "valid"
+                        ? "bg-green-50 border-green-300 text-green-800"
+                        : "bg-gray-50 border-gray-300 text-gray-700"
                   }`}
                 >
-                  {currentSheet?.pdfFileUrl
+                  {reflowFileStatus.status === "valid"
                     ? `✓ ${reflowName}`
-                    : `⚠️ ${t("notUploaded")}`}
+                    : reflowFileStatus.message}
                 </div>
+                {reflowFileStatus.status === "invalid" && (
+                  <div className="text-xs mt-1 text-red-600 font-semibold">
+                    {reflowFileStatus.detail}
+                  </div>
+                )}
               </div>
 
               <div className="mb-3">

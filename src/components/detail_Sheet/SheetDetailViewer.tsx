@@ -50,7 +50,7 @@ import {
   getMissingFields,
 } from "../../utils/requiredFieldsConfig";
 import { useTranslation } from "react-i18next";
-import { clearLcrFile, clearReflowFile, getLcrFileData } from "../../redux/slices/FileSlice";
+import { clearLcrFile, clearReflowFile, getLcrFileData, validateReflowFile } from "../../redux/slices/FileSlice";
 // import { saveFilterState } from '../../utils/navigationState';
 
 
@@ -144,15 +144,18 @@ const SheetDetailViewer = () => {
   };
 
   const contentRef = useRef<HTMLDivElement>(null);
-  const { lcrValidation } = useAppSelector((state) => state.fileSlice);
+  const { lcrValidation, reflowValidation, reflowValidating } = useAppSelector((state) => state.fileSlice);
 
   const [returningToPending, setReturningToPending] = useState(false);
   const [confirmReturnModal, setConfirmReturnModal] = useState(false);
 
   const canReturnToPending = (): boolean => {
     if (!user || !currentSheet) return false;
+    const status = currentSheet.status?.toLowerCase();
+    // Admin: được trả về Pending ở mọi trạng thái (trừ khi đã là Pending)
+    if (user.role === 'Admin') return !!status && status !== 'pending';
     if (user.role !== 'PQCLeader') return false;
-    return currentSheet.status?.toLowerCase() === 'pqcdone';
+    return status === 'pqcdone';
   };
 
   const handleReturnToPending = async () => {
@@ -187,6 +190,18 @@ const SheetDetailViewer = () => {
     return lcrValidation.isValid;
   };
 
+  // File Reflow phải đạt tiêu chuẩn (Max'C, ov-220, T4-s, T2-s của S1 → S6).
+  // Chưa upload file thì để bước "Thiếu File Bắt Buộc" bên dưới báo lỗi.
+  const checkReflowFileValidity = (): boolean => {
+    if (!currentSheet?.pdfFileUrl || currentSheet.pdfFileUrl.trim() === "") {
+      return true;
+    }
+    if (!reflowValidation || reflowValidation.sheetId !== currentSheet.id) {
+      return false; // Chưa kiểm tra xong
+    }
+    return reflowValidation.isValid;
+  };
+
   // PHÂN QUYỀN CHÍNH XÁC
   const canEdit = () => {
     if (!user || !currentSheet) return false;
@@ -216,6 +231,11 @@ const SheetDetailViewer = () => {
 
       // CHECK LCR FILE - Phải 100% OK
       if (!checkLcrFileValidity()) {
+        return false;
+      }
+
+      // CHECK REFLOW FILE - Phải đạt tiêu chuẩn
+      if (!checkReflowFileValidity()) {
         return false;
       }
 
@@ -361,6 +381,11 @@ const SheetDetailViewer = () => {
               console.error("❌ Lỗi khi load LCR data:", error);
             });
         }
+
+        // Reflow file: tải PDF + kiểm tra tiêu chuẩn (chạy nền, không chặn render)
+        if (result.pdfFileUrl && result.pdfFileUrl.trim() !== "") {
+          dispatch(validateReflowFile(Number(id)));
+        }
       } catch (error: any) {
         console.error("❌ Error loading sheet:", error);
       }
@@ -397,13 +422,43 @@ const SheetDetailViewer = () => {
         let errorDetail = "";
 
         if (validation?.stats) {
-          errorDetail = `Total: ${validation.stats.total}\n- OK: ${validation.stats.ok}\n- NG: ${validation.stats.ng}\n- SKIP: ${validation.stats.skip}`;
+          const s = validation.stats;
+          errorDetail = `Pass Rate: ${s.passRate.toFixed(1)}% (yêu cầu 100%)\nTotal: ${s.total} | OK: ${s.ok} | NG: ${s.ng} | SKIP: ${s.skip} | Chưa đo: ${s.notMeasured}`;
+        }
+        const errorList = validation?.errors?.length
+          ? `\n\n- ${validation.errors.join("\n- ")}`
+          : "";
+
+        if (validation?.errors?.length) {
+          console.error("[LCR Validation] File LCR không hợp lệ:", validation.errors, validation.stats);
         }
 
         showNotification(
           "error",
           "Không thể ký xác nhận",
-          `File LCR không hợp lệ!\n\n${errorDetail || validation?.errorMessage || "Tất cả kết quả phải là OK"}`,
+          `File LCR không hợp lệ!\n\n${errorDetail || "Vui lòng kiểm tra LCR file có dữ liệu chưa hợp lệ"}${errorList}`,
+        );
+        return;
+      }
+
+      // Thông báo cụ thể cho PQCLeader về Reflow file
+      if (user?.role === "PQCLeader" && !checkReflowFileValidity()) {
+        const isMine = reflowValidation?.sheetId === currentSheet?.id;
+        if (!isMine || !reflowValidation) {
+          showNotification(
+            "warning",
+            "Không thể ký xác nhận",
+            reflowValidating
+              ? "Đang kiểm tra file Reflow, vui lòng thử lại sau giây lát."
+              : "Chưa kiểm tra được file Reflow, vui lòng tải lại trang.",
+          );
+          return;
+        }
+        console.error("[Reflow Validation] File Reflow không đạt tiêu chuẩn:", reflowValidation.errors);
+        showNotification(
+          "error",
+          "Không thể ký xác nhận",
+          reflowValidation.errorMessage || "File Reflow không đạt tiêu chuẩn",
         );
         return;
       }

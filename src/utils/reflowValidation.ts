@@ -59,10 +59,15 @@ export interface ReflowValidationResult {
   appliedSide: ReflowSide | null;
   /** Khi không xác định được mặt: các chuẩn mà số liệu đạt trọn vẹn */
   passedSides: ReflowSide[];
+  /** Kênh S2–S6 có cả 4 cột = 0.0 (không đo) và được chấp nhận (tối đa 1 kênh) */
+  skippedChannels: string[];
   rows: ReflowRow[];
   cellErrors: ReflowCellError[];
   /** Danh sách lỗi (mỗi dòng 1 lỗi) — có lỗi => isValid = false */
   errors: string[];
+  /** Lỗi KHÔNG gắn với 1 ô cụ thể (thiếu kênh, S1 rỗng, quá nhiều kênh không đo, không đọc được file...).
+   *  Lỗi ngoài chuẩn từng ô đã thể hiện bằng bảng (tô đỏ) nên không nằm ở đây. */
+  generalErrors: string[];
   /** Cảnh báo (vàng) — không làm file bị NG */
   warnings: string[];
   errorMessage?: string;
@@ -220,9 +225,9 @@ const inRange = (v: number, [lo, hi]: Range) => v >= lo && v <= hi;
 
 type ResultInput = Omit<
   ReflowValidationResult,
-  'isValid' | 'errorMessage' | 'warningMessage' | 'appliedSide' | 'passedSides' | 'warnings'
+  'isValid' | 'errorMessage' | 'warningMessage' | 'appliedSide' | 'passedSides' | 'warnings' | 'skippedChannels' | 'generalErrors'
 > &
-  Partial<Pick<ReflowValidationResult, 'appliedSide' | 'passedSides' | 'warnings'>>;
+  Partial<Pick<ReflowValidationResult, 'appliedSide' | 'passedSides' | 'warnings' | 'skippedChannels' | 'generalErrors'>>;
 
 const buildResult = (partial: ResultInput): ReflowValidationResult => {
   const warnings = partial.warnings ?? [];
@@ -235,6 +240,8 @@ const buildResult = (partial: ResultInput): ReflowValidationResult => {
     ...partial,
     appliedSide,
     passedSides: partial.passedSides ?? [],
+    skippedChannels: partial.skippedChannels ?? [],
+    generalErrors: partial.generalErrors ?? partial.errors,
     warnings,
     isValid,
     errorMessage: isValid
@@ -244,12 +251,68 @@ const buildResult = (partial: ResultInput): ReflowValidationResult => {
   };
 };
 
-/** So toàn bộ S1 → S6 với 1 chuẩn */
-const compareWithStandard = (rows: ReflowRow[], side: ReflowSide) => {
-  const std = REFLOW_STANDARDS[side];
-  const cellErrors: ReflowCellError[] = [];
+const CHECK_FIELDS = ['maxC', 'ov220', 't2', 't4'] as const;
+/** Tối đa số kênh (S2–S6) được phép không đo (cả 4 cột = 0.0) */
+const MAX_SKIPPED_CHANNELS = 1;
+
+/**
+ * Kiểm tra cấu trúc dữ liệu 0.0 (không phụ thuộc chuẩn TOP/BOT):
+ *  - S1 bắt buộc có giá trị ở cả 4 cột
+ *  - S2–S6: cả 4 cột = 0.0 => kênh không đo (chấp nhận tối đa 1 kênh)
+ *  - S2–S6: chỗ 0.0 chỗ có giá trị => NG
+ */
+const checkZeroRows = (rows: ReflowRow[]) => {
   const errors: string[] = [];
+  const cellErrors: ReflowCellError[] = [];
+  const emptyRows: ReflowRow[] = [];
+  /** Hàng còn lại cần so với chuẩn */
+  const measuredRows: ReflowRow[] = [];
+
   for (const r of rows) {
+    const zeroFields = CHECK_FIELDS.filter((f) => r[f] === 0);
+
+    if (r.ch === 'S1') {
+      if (zeroFields.length > 0) {
+        errors.push(`S1 bắt buộc có giá trị — đang = 0.0 ở cột: ${zeroFields.map((f) => FIELD_LABEL[f]).join(', ')}`);
+        zeroFields.forEach((f) => cellErrors.push({ ch: r.ch, field: f, value: 0, range: [0, 0] }));
+      }
+      measuredRows.push(r);
+      continue;
+    }
+
+    if (zeroFields.length === CHECK_FIELDS.length) {
+      emptyRows.push(r);
+      continue;
+    }
+
+    if (zeroFields.length > 0) {
+      errors.push(`${r.ch} thiếu giá trị (0.0) ở cột: ${zeroFields.map((f) => FIELD_LABEL[f]).join(', ')} — các cột khác có số liệu`);
+      zeroFields.forEach((f) => cellErrors.push({ ch: r.ch, field: f, value: 0, range: [0, 0] }));
+    }
+    measuredRows.push(r);
+  }
+
+  let skippedChannels: string[] = [];
+  if (emptyRows.length > MAX_SKIPPED_CHANNELS) {
+    const chs = emptyRows.map((r) => r.ch);
+    errors.push(`${chs.length} kênh không có số liệu (${chs.join(', ')}) — chỉ cho phép tối đa ${MAX_SKIPPED_CHANNELS} kênh không đo`);
+    emptyRows.forEach((r) =>
+      CHECK_FIELDS.forEach((f) => cellErrors.push({ ch: r.ch, field: f, value: 0, range: [0, 0] })),
+    );
+  } else {
+    skippedChannels = emptyRows.map((r) => r.ch);
+  }
+
+  return { errors, cellErrors, measuredRows, skippedChannels };
+};
+
+/** So toàn bộ S1 → S6 với 1 chuẩn */
+const compareWithStandard = (allRows: ReflowRow[], side: ReflowSide) => {
+  const std = REFLOW_STANDARDS[side];
+  const zero = checkZeroRows(allRows);
+  const cellErrors: ReflowCellError[] = [...zero.cellErrors];
+  const errors: string[] = [...zero.errors];
+  for (const r of zero.measuredRows) {
     const checks: [ReflowCellError['field'], number, Range][] = [
       ['maxC', r.maxC, std.maxC],
       ['ov220', r.ov220, std.ov220],
@@ -257,6 +320,7 @@ const compareWithStandard = (rows: ReflowRow[], side: ReflowSide) => {
       ['t2', r.t2, std.t2],
     ];
     for (const [field, value, range] of checks) {
+      if (value === 0) continue; // ô 0.0 đã được xử lý ở checkZeroRows
       if (Number.isFinite(value) && inRange(value, range)) continue;
       cellErrors.push({ ch: r.ch, field, value, range });
       const stdText = field === 't2' ? 'chung' : side;
@@ -265,7 +329,7 @@ const compareWithStandard = (rows: ReflowRow[], side: ReflowSide) => {
       );
     }
   }
-  return { cellErrors, errors };
+  return { cellErrors, errors, generalErrors: zero.errors, skippedChannels: zero.skippedChannels };
 };
 
 export const validateReflowData = (parsed: ParsedReflowPdf): ReflowValidationResult => {
@@ -287,8 +351,15 @@ export const validateReflowData = (parsed: ParsedReflowPdf): ReflowValidationRes
 
   // 1. Xác định được mặt -> so đúng chuẩn của mặt đó
   if (side) {
-    const { cellErrors, errors } = compareWithStandard(rows, side);
-    return buildResult({ ...base, side, cellErrors, errors: [...missingErrors, ...errors] });
+    const { cellErrors, errors, generalErrors, skippedChannels } = compareWithStandard(rows, side);
+    return buildResult({
+      ...base,
+      side,
+      cellErrors,
+      skippedChannels,
+      errors: [...missingErrors, ...errors],
+      generalErrors: [...missingErrors, ...generalErrors],
+    });
   }
 
   // 2. Không xác định được mặt -> CẢNH BÁO (vàng), vẫn so số liệu với cả 2 chuẩn:
@@ -318,7 +389,9 @@ export const validateReflowData = (parsed: ParsedReflowPdf): ReflowValidationRes
     appliedSide: bestSide,
     passedSides: [...passedSides],
     cellErrors: best.cellErrors,
+    skippedChannels: best.skippedChannels,
     errors: [...missingErrors, ...best.errors],
+    generalErrors: [...missingErrors, ...best.generalErrors],
     warnings,
   });
 };

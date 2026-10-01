@@ -16,6 +16,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { IoEyeSharp } from "react-icons/io5";
 import { useTranslation } from "react-i18next";
 import { getLcrFileData, setReflowValidation } from "../../redux/slices/FileSlice";
+import ReflowResultTable from "../files/ReflowResultTable";
 import {
   validateReflowPdf,
   REFLOW_STANDARDS,
@@ -242,7 +243,14 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
         showNotification(
           "error",
           "Đã upload — nhưng file Reflow KHÔNG đạt tiêu chuẩn",
-          reflowCheck.errorMessage || "File Reflow không hợp lệ",
+          [
+            ...reflowCheck.generalErrors,
+            reflowCheck.cellErrors.length > 0
+              ? `${reflowCheck.cellErrors.length} giá trị ngoài chuẩn — xem bảng chi tiết ở đầu trang.`
+              : "",
+          ]
+            .filter(Boolean)
+            .join("\n"),
         );
       } else if (reflowCheck && reflowCheck.warnings.length > 0) {
         showNotification(
@@ -530,9 +538,21 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
       {/* WARNING BANNER - File Reflow không đạt tiêu chuẩn */}
       {reflowFileStatus.status === "invalid" && reflowValidation?.errorMessage && (
         <div className="mb-3 p-4 bg-red-50 border-2 border-red-400 rounded-lg no-print shadow-[0_0_12px_rgba(248,113,113,0.6)]">
-          <p className="mb-0 text-sm text-red-700 font-semibold whitespace-pre-line text-center">
-            ❌ {reflowValidation.errorMessage}
+          <p className="mb-2 text-sm text-red-700 font-semibold text-center">
+            ❌ File Reflow không đạt tiêu chuẩn
+            {reflowValidation.appliedSide &&
+              ` (${reflowValidation.side ? "" : "so theo chuẩn gần nhất: "}${reflowValidation.appliedSide} – ${REFLOW_STANDARDS[reflowValidation.appliedSide].label})`}
           </p>
+          <div className="flex justify-center">
+            <ReflowResultTable validation={reflowValidation} />
+          </div>
+          {(reflowValidation.generalErrors ?? reflowValidation.errors).length > 0 && (
+            <ul className="mt-2 mb-0 text-xs text-red-700 font-semibold text-center list-none p-0">
+              {(reflowValidation.generalErrors ?? reflowValidation.errors).map((e, i) => (
+                <li key={i}>- {e}</li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 

@@ -1,8 +1,5 @@
-import {
-  REFLOW_STANDARDS,
-  type ReflowCellError,
-  type ReflowValidationResult,
-} from '../../utils/reflowValidation';
+import { REFLOW_STANDARDS, type ReflowValidationResult } from '../../utils/reflowValidation';
+import ReflowResultTable from './ReflowResultTable';
 
 interface Props {
   validation: ReflowValidationResult;
@@ -10,13 +7,11 @@ interface Props {
 
 /** Kết quả kiểm tra tiêu chuẩn file Reflow — hiển thị phía trên PDF viewer */
 const ReflowValidationPanel = ({ validation }: Props) => {
-  const { isValid, side, appliedSide, passedSides, fileName, rows, cellErrors, errors, warnings } =
-    validation;
-  const std = appliedSide ? REFLOW_STANDARDS[appliedSide] : null;
+  const {
+    isValid, side, appliedSide, passedSides,
+    fileName, rows, errors, generalErrors = errors, warnings,
+  } = validation;
   const hasWarning = warnings.length > 0;
-  const isError = (ch: string, field: ReflowCellError['field']) =>
-    cellErrors.some((e) => e.ch === ch && e.field === field);
-
   const tone = !isValid
     ? 'bg-red-50 border-red-400'
     : hasWarning
@@ -60,36 +55,7 @@ const ReflowValidationPanel = ({ validation }: Props) => {
         {fileName && <span className="text-xs text-gray-600">File Name: {fileName}</span>}
       </div>
 
-      {rows.length > 0 && std && (
-        <table className="text-xs bg-white border border-gray-300 mb-2">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="px-3 py-1 border border-gray-300"></th>
-              <th className="px-3 py-1 border border-gray-300">Max'C ({std.maxC[0]}–{std.maxC[1]})</th>
-              <th className="px-3 py-1 border border-gray-300">ov-220 ({std.ov220[0]}–{std.ov220[1]})</th>
-              <th className="px-3 py-1 border border-gray-300">T2-s ({std.t2[0]}–{std.t2[1]})</th>
-              <th className="px-3 py-1 border border-gray-300">T4-s ({std.t4[0]}–{std.t4[1]})</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.ch}>
-                <td className="px-3 py-1 border border-gray-300 font-semibold">{r.ch}</td>
-                {(['maxC', 'ov220', 't2', 't4'] as const).map((f) => (
-                  <td
-                    key={f}
-                    className={`px-3 py-1 border border-gray-300 text-center ${
-                      isError(r.ch, f) ? 'bg-red-100 text-red-700 font-bold' : 'text-gray-800'
-                    }`}
-                  >
-                    {r[f].toFixed(1)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <ReflowResultTable validation={validation} className="mb-2" />
 
       {hasWarning && (
         <ul className="mb-1 pl-5 text-xs text-yellow-800 list-disc">
@@ -99,9 +65,9 @@ const ReflowValidationPanel = ({ validation }: Props) => {
         </ul>
       )}
 
-      {!isValid && (
+      {!isValid && generalErrors.length > 0 && (
         <ul className="mb-0 pl-5 text-xs text-red-700 list-disc">
-          {errors.map((e, i) => (
+          {generalErrors.map((e, i) => (
             <li key={i}>{e}</li>
           ))}
         </ul>

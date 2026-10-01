@@ -289,9 +289,11 @@ const FileSlice = createSlice({
           side: null,
           appliedSide: null,
           passedSides: [],
+          skippedChannels: [],
           rows: [],
           cellErrors: [],
           errors: [msg],
+          generalErrors: [msg],
           warnings: [],
           errorMessage: `File Reflow không đạt tiêu chuẩn:\n- ${msg}`,
         };

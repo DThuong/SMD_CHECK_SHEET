@@ -121,9 +121,12 @@ export const groupPiecesIntoLines = (pieces: TextPiece[]): string[] => {
 
 export const extractPdfLines = async (data: ArrayBuffer): Promise<string[]> => {
   const pdfjs = await import('pdfjs-dist');
-  if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-    const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
-    pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+  if (!pdfjs.GlobalWorkerOptions.workerPort) {
+    // Dùng "?worker" để Vite đóng gói worker thành file .js thường.
+    // KHÔNG dùng "?url" (ra file .mjs): nginx mặc định trả .mjs với MIME
+    // application/octet-stream -> trình duyệt chặn module -> "Setting up fake worker failed".
+    const { default: PdfWorker } = await import('pdfjs-dist/build/pdf.worker.min.mjs?worker');
+    pdfjs.GlobalWorkerOptions.workerPort = new PdfWorker();
   }
 
   // pdfjs "chiếm" (transfer) buffer truyền vào -> truyền bản copy

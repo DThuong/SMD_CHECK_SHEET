@@ -422,10 +422,8 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
       return {
         status: "invalid" as const,
         message: `❌ ${reflowName}`,
-        detail:
-          v.cellErrors.length > 0
-            ? `${v.cellErrors.length} giá trị ngoài chuẩn (${sideText})`
-            : v.errors[0] || "File Reflow không hợp lệ",
+        // Chi tiết lỗi chỉ hiển thị ở banner phía trên, ô này chỉ giữ tên file + người đo
+        detail: "",
         bgColor: "bg-red-50",
       };
     }
@@ -712,11 +710,7 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                     ? `✓ ${reflowName}`
                     : reflowFileStatus.message}
                 </div>
-                {reflowFileStatus.status === "invalid" && (
-                  <div className="text-xs mt-1 text-red-600 font-semibold">
-                    {reflowFileStatus.detail}
-                  </div>
-                )}
+
               </div>
 
               <div className="mb-3">

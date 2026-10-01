@@ -622,6 +622,24 @@ const SheetDetailViewer = () => {
   };
 
   const isEditable = canEdit();
+
+  // SheetHeader (upload LCR / Reflow / ghi chú): PQCLeader được chỉnh sửa ở mọi bước ký
+  // (Pending → PQC Done → PQCLeader → ENG → Supervisor → Manager → chờ KoreaManager ký),
+  // chỉ khóa khi KoreaManager đã ký (KoreaManagerDone).
+  const PQCLEADER_HEADER_EDITABLE_STATUSES = [
+    "pending",
+    "pqcdone",
+    "pqcleaderdone",
+    "engdone",
+    "supervisiordone",
+    "managerdone",
+  ];
+  const canEditHeader =
+    isEditable ||
+    (user?.role === "PQCLeader" &&
+      PQCLEADER_HEADER_EDITABLE_STATUSES.includes(
+        currentSheet?.status?.toLowerCase() ?? "",
+      ));
   const isConfirmable = canConfirm();
 
   // EXPORT PDF với html2canvas-pro
@@ -1101,7 +1119,7 @@ const SheetDetailViewer = () => {
         <div>
           <div className="pdf-section">
             <SheetHeader
-              canEdit={isEditable}
+              canEdit={canEditHeader}
               returnPath={returnPath || window.location.pathname}
             />
           </div>

@@ -598,7 +598,10 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                 >
                   <div className="text-sm font-semibold text-gray-800">
                     <div className="wrap-break-words whitespace-normal">
-                      {lcrFileStatus.message}
+                      {/* Lỗi chi tiết đã hiển thị ở banner phía trên -> ô này chỉ giữ tên file */}
+                      {lcrFileStatus.hasFile && !lcrFileStatus.isValid
+                        ? `❌ ${lcrName}`
+                        : lcrFileStatus.message}
                     </div>
                   </div>
 
@@ -606,27 +609,6 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                   {getWorkerNames.lcrWorker && (
                     <div className="text-xs mt-1 text-blue-600 font-medium">
                       Người đo: {getWorkerNames.lcrWorker}
-                    </div>
-                  )}
-
-                  {/* Stats */}
-                  {!lcrFileStatus.isValid && lcrFileStatus.stats && (
-                    <div className="text-xs mt-1 flex flex-wrap gap-2">
-                      {lcrFileStatus.stats.notMeasured > 0 && (
-                        <span className="text-purple-600 font-semibold whitespace-nowrap">
-                          {lcrFileStatus.stats.notMeasured} partCode chưa đo
-                        </span>
-                      )}
-                      {lcrFileStatus.stats.ng > 0 && (
-                        <span className="text-red-600 font-semibold whitespace-nowrap">
-                          NG: {lcrFileStatus.stats.ng}
-                        </span>
-                      )}
-                      {lcrFileStatus.stats.skip > 0 && (
-                        <span className="text-orange-600 font-semibold whitespace-nowrap">
-                          SKIP: {lcrFileStatus.stats.skip}
-                        </span>
-                      )}
                     </div>
                   )}
                 </td>
@@ -715,29 +697,10 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                         : "bg-red-50 border-red-300 text-red-800"
                   }`}
                 >
-                  {lcrFileStatus.message}
+                  {lcrFileStatus.hasFile && !lcrFileStatus.isValid
+                    ? `❌ ${lcrName}`
+                    : lcrFileStatus.message}
                 </div>
-
-                {/* HIỂN THỊ STATS CHO MOBILE */}
-                {!lcrFileStatus.isValid && lcrFileStatus.stats && (
-                  <div className="text-xs mt-1 space-y-1">
-                    {lcrFileStatus.stats.notMeasured > 0 && (
-                      <div className="text-purple-600 font-semibold">
-                        Có: {lcrFileStatus.stats.notMeasured} partCode chưa đo
-                      </div>
-                    )}
-                    {lcrFileStatus.stats.ng > 0 && (
-                      <div className="text-red-600">
-                        NG: {lcrFileStatus.stats.ng}
-                      </div>
-                    )}
-                    {lcrFileStatus.stats.skip > 0 && (
-                      <div className="text-orange-600">
-                        SKIP: {lcrFileStatus.stats.skip}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
 
               <div className="min-w-0">

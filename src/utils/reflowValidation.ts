@@ -53,12 +53,20 @@ export interface ReflowValidationResult {
   /** Sheet (Change Model) mà kết quả này thuộc về — tránh dùng nhầm kết quả của sheet khác */
   sheetId?: number;
   fileName: string | null;
+  /** Mặt đọc được từ File Name (null nếu không xác định được) */
   side: ReflowSide | null;
+  /** Chuẩn thực tế dùng để so sánh / tô đỏ ô. Khi không xác định được mặt = chuẩn khớp nhất */
+  appliedSide: ReflowSide | null;
+  /** Khi không xác định được mặt: các chuẩn mà số liệu đạt trọn vẹn */
+  passedSides: ReflowSide[];
   rows: ReflowRow[];
   cellErrors: ReflowCellError[];
-  /** Danh sách lỗi (mỗi dòng 1 lỗi) */
+  /** Danh sách lỗi (mỗi dòng 1 lỗi) — có lỗi => isValid = false */
   errors: string[];
+  /** Cảnh báo (vàng) — không làm file bị NG */
+  warnings: string[];
   errorMessage?: string;
+  warningMessage?: string;
 }
 
 export interface ParsedReflowPdf {
@@ -210,18 +218,54 @@ export const detectReflowSide = (
 
 const inRange = (v: number, [lo, hi]: Range) => v >= lo && v <= hi;
 
-const buildResult = (
-  partial: Omit<ReflowValidationResult, 'isValid' | 'errorMessage'>,
-): ReflowValidationResult => {
+type ResultInput = Omit<
+  ReflowValidationResult,
+  'isValid' | 'errorMessage' | 'warningMessage' | 'appliedSide' | 'passedSides' | 'warnings'
+> &
+  Partial<Pick<ReflowValidationResult, 'appliedSide' | 'passedSides' | 'warnings'>>;
+
+const buildResult = (partial: ResultInput): ReflowValidationResult => {
+  const warnings = partial.warnings ?? [];
+  const appliedSide = partial.appliedSide ?? partial.side;
   const isValid = partial.errors.length === 0;
-  const sideText = partial.side ? ` (${partial.side} – ${REFLOW_STANDARDS[partial.side].label})` : '';
+  const sideText = appliedSide
+    ? ` (${partial.side ? '' : 'so theo chuẩn gần nhất: '}${appliedSide} – ${REFLOW_STANDARDS[appliedSide].label})`
+    : '';
   return {
     ...partial,
+    appliedSide,
+    passedSides: partial.passedSides ?? [],
+    warnings,
     isValid,
     errorMessage: isValid
       ? undefined
       : `File Reflow không đạt tiêu chuẩn${sideText}:\n- ${partial.errors.join('\n- ')}`,
+    warningMessage: warnings.length ? `Cảnh báo file Reflow:\n- ${warnings.join('\n- ')}` : undefined,
   };
+};
+
+/** So toàn bộ S1 → S6 với 1 chuẩn */
+const compareWithStandard = (rows: ReflowRow[], side: ReflowSide) => {
+  const std = REFLOW_STANDARDS[side];
+  const cellErrors: ReflowCellError[] = [];
+  const errors: string[] = [];
+  for (const r of rows) {
+    const checks: [ReflowCellError['field'], number, Range][] = [
+      ['maxC', r.maxC, std.maxC],
+      ['ov220', r.ov220, std.ov220],
+      ['t4', r.t4, std.t4],
+      ['t2', r.t2, std.t2],
+    ];
+    for (const [field, value, range] of checks) {
+      if (Number.isFinite(value) && inRange(value, range)) continue;
+      cellErrors.push({ ch: r.ch, field, value, range });
+      const stdText = field === 't2' ? 'chung' : side;
+      errors.push(
+        `${r.ch} – ${FIELD_LABEL[field]} = ${value.toFixed(1)}${FIELD_UNIT[field]} ngoài chuẩn ${stdText} ${range[0]}–${range[1]}${FIELD_UNIT[field]}`,
+      );
+    }
+  }
+  return { cellErrors, errors };
 };
 
 export const validateReflowData = (parsed: ParsedReflowPdf): ReflowValidationResult => {
@@ -236,35 +280,47 @@ export const validateReflowData = (parsed: ParsedReflowPdf): ReflowValidationRes
     });
   }
 
-  const { side, error } = detectReflowSide(fileName);
-  if (!side) {
-    return buildResult({ ...base, side: null, errors: [error!] });
-  }
-
-  const std = REFLOW_STANDARDS[side];
-  const errors: string[] = [];
-  const cellErrors: ReflowCellError[] = [];
-
   const missing = REFLOW_CHANNELS.filter((c) => !rows.some((r) => r.ch === c));
-  if (missing.length) errors.push(`Không đọc được dữ liệu kênh: ${missing.join(', ')}`);
+  const missingErrors = missing.length ? [`Không đọc được dữ liệu kênh: ${missing.join(', ')}`] : [];
 
-  for (const r of rows) {
-    const checks: [ReflowCellError['field'], number, Range][] = [
-      ['maxC', r.maxC, std.maxC],
-      ['ov220', r.ov220, std.ov220],
-      ['t4', r.t4, std.t4],
-      ['t2', r.t2, std.t2],
-    ];
-    for (const [field, value, range] of checks) {
-      if (Number.isFinite(value) && inRange(value, range)) continue;
-      cellErrors.push({ ch: r.ch, field, value, range });
-      errors.push(
-        `${r.ch} – ${FIELD_LABEL[field]} = ${value.toFixed(1)}${FIELD_UNIT[field]} ngoài chuẩn ${side} ${range[0]}–${range[1]}${FIELD_UNIT[field]}`,
-      );
-    }
+  const { side, error: sideError } = detectReflowSide(fileName);
+
+  // 1. Xác định được mặt -> so đúng chuẩn của mặt đó
+  if (side) {
+    const { cellErrors, errors } = compareWithStandard(rows, side);
+    return buildResult({ ...base, side, cellErrors, errors: [...missingErrors, ...errors] });
   }
 
-  return buildResult({ ...base, side, cellErrors, errors });
+  // 2. Không xác định được mặt -> CẢNH BÁO (vàng), vẫn so số liệu với cả 2 chuẩn:
+  //    - Đạt trọn vẹn ít nhất 1 chuẩn  -> không lỗi, chỉ cảnh báo
+  //    - Không đạt chuẩn nào           -> lỗi theo chuẩn khớp nhất (ít ô sai nhất)
+  const top = compareWithStandard(rows, 'TOP');
+  const bot = compareWithStandard(rows, 'BOT');
+  const passedSides = (['TOP', 'BOT'] as const).filter((sd) =>
+    (sd === 'TOP' ? top : bot).errors.length === 0,
+  );
+  const bestSide: ReflowSide =
+    passedSides[0] ?? (top.cellErrors.length <= bot.cellErrors.length ? 'TOP' : 'BOT');
+  const best = bestSide === 'TOP' ? top : bot;
+
+  const warnings = [sideError!];
+  if (passedSides.length > 0) {
+    warnings.push(
+      `Số liệu S1–S6 đạt chuẩn ${passedSides
+        .map((sd) => `${REFLOW_STANDARDS[sd].label} (${sd})`)
+        .join(' và ')} — vui lòng kiểm tra lại mặt TOP/BOT của file.`,
+    );
+  }
+
+  return buildResult({
+    ...base,
+    side: null,
+    appliedSide: bestSide,
+    passedSides: [...passedSides],
+    cellErrors: best.cellErrors,
+    errors: [...missingErrors, ...best.errors],
+    warnings,
+  });
 };
 
 /** Đọc + kiểm tra file Reflow PDF (File người dùng chọn, hoặc Blob tải từ server). */

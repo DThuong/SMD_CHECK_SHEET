@@ -221,9 +221,11 @@ const FileDetailViewer = () => {
               </svg>
               Reflow PDF
               {!reflowError && reflowValidation && (
-                reflowValidation.isValid
-                  ? <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">OK</span>
-                  : <span className="px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-bold">NG</span>
+                !reflowValidation.isValid
+                  ? <span className="px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-bold">NG</span>
+                  : reflowValidation.warnings.length > 0
+                  ? <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">!</span>
+                  : <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">OK</span>
               )}
               {reflowError && (
                 <span className="px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-bold">!</span>

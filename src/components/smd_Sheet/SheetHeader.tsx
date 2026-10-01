@@ -244,6 +244,12 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
           "Đã upload — nhưng file Reflow KHÔNG đạt tiêu chuẩn",
           reflowCheck.errorMessage || "File Reflow không hợp lệ",
         );
+      } else if (reflowCheck && reflowCheck.warnings.length > 0) {
+        showNotification(
+          "warning",
+          "Đã upload — file Reflow có cảnh báo",
+          reflowCheck.warningMessage || "",
+        );
       } else {
         showNotification("success", "Upload thành công!", t("success_msg"));
       }
@@ -428,6 +434,16 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
       };
     }
 
+    // Đạt số liệu nhưng có cảnh báo (vd: không xác định được mặt TOP/BOT)
+    if (v.warnings.length > 0) {
+      return {
+        status: "warning" as const,
+        message: `⚠️ ${reflowName}`,
+        detail: "",
+        bgColor: "bg-yellow-50",
+      };
+    }
+
     return {
       status: "valid" as const,
       message: `${reflowName}`,
@@ -500,6 +516,17 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
         </div>
       )}
 
+      {/* WARNING BANNER (vàng) - File Reflow có cảnh báo, vd không xác định được mặt TOP/BOT */}
+      {reflowValidation?.sheetId === currentSheet?.id &&
+        reflowFileStatus.status !== "none" &&
+        reflowValidation?.warningMessage && (
+          <div className="mb-3 p-4 bg-yellow-50 border-2 border-yellow-400 rounded-lg no-print shadow-[0_0_12px_rgba(250,204,21,0.5)]">
+            <p className="mb-0 text-sm text-yellow-800 font-semibold whitespace-pre-line text-center">
+              ⚠️ {reflowValidation.warningMessage}
+            </p>
+          </div>
+        )}
+
       {/* WARNING BANNER - File Reflow không đạt tiêu chuẩn */}
       {reflowFileStatus.status === "invalid" && reflowValidation?.errorMessage && (
         <div className="mb-3 p-4 bg-red-50 border-2 border-red-400 rounded-lg no-print shadow-[0_0_12px_rgba(248,113,113,0.6)]">
@@ -512,7 +539,8 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
       {/* CHỈ HIỂN THỊ KHI CẢ 2 ĐIỀU KIỆN ĐỀU ĐÚNG */}
       {bothFilesUploaded &&
         lcrFileStatus.isValid &&
-        reflowFileStatus.status !== "invalid" && (
+        reflowFileStatus.status !== "invalid" &&
+        reflowFileStatus.status !== "warning" && (
         <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-xs text-green-800 font-semibold flex items-center gap-2 mb-0">
             ✓ {t("success_msg")}
@@ -701,7 +729,9 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                     reflowFileStatus.status === "none" ||
                     reflowFileStatus.status === "invalid"
                       ? "bg-red-50 border-red-300 text-red-800"
-                      : reflowFileStatus.status === "valid"
+                      : reflowFileStatus.status === "warning"
+                        ? "bg-yellow-50 border-yellow-300 text-yellow-800"
+                        : reflowFileStatus.status === "valid"
                         ? "bg-green-50 border-green-300 text-green-800"
                         : "bg-gray-50 border-gray-300 text-gray-700"
                   }`}

@@ -287,9 +287,12 @@ const FileSlice = createSlice({
           sheetId: action.meta.arg,
           fileName: null,
           side: null,
+          appliedSide: null,
+          passedSides: [],
           rows: [],
           cellErrors: [],
           errors: [msg],
+          warnings: [],
           errorMessage: `File Reflow không đạt tiêu chuẩn:\n- ${msg}`,
         };
       })

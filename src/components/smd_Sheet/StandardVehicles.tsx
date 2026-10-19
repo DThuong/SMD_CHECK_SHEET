@@ -33,6 +33,12 @@ import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import { useTranslation } from "react-i18next";
 import MultiImageUpload from "../files/MultiImageUpload";
+import {
+  beginUploadBatch,
+  createUploadBatchTracker,
+  reportUploadBatch,
+  type UploadBatchInfo,
+} from "../../utils/uploadBatch";
 import { useSubTableFetch } from "../../utils/useSubTableFetch";
 
 const initialStandardVehiclesState: StandardVehicleData = {
@@ -134,6 +140,8 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
   // const isModalInitializedRef = useRef(false);
   const hasUserEditedRef = useRef(false);
   const isUploadingRef = useRef(false);
+  // Đếm số ảnh thành công/lỗi khi chọn nhiều ảnh một lúc -> chỉ hiện 1 thông báo
+  const uploadBatchRef = useRef(createUploadBatchTracker());
   const deletingRef = useRef(false);
 
   const { t } = useTranslation("standardVehicle");
@@ -256,12 +264,15 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
   const handleImageUpload = async (
     field: string,
     event: React.ChangeEvent<HTMLInputElement>,
+    batch?: UploadBatchInfo,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    const tracker = beginUploadBatch(uploadBatchRef.current, batch);
 
     if (!standardVehicleId) {
-      showNotification(
+      // Chọn nhiều ảnh: chỉ báo lỗi này một lần
+      if (!batch || batch.index === 0) showNotification(
         "error",
         "Lỗi upload",
         "Không tìm thấy StandardVehicle ID",
@@ -384,16 +395,15 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
         });
       }
 
-      showNotification("success", "Thành công", successMessage);
+      tracker.success++;
+      tracker.message = successMessage;
     } catch (error) {
       console.error("Failed to upload image:", error);
-      showNotification(
-        "error",
-        "Lỗi upload",
-        `Không thể upload hình ảnh ${field}`,
-      );
+      tracker.fail++;
     } finally {
       isUploadingRef.current = false;
+      // Gộp thông báo: chọn nhiều ảnh chỉ hiện 1 thông báo sau ảnh cuối
+      reportUploadBatch(tracker, batch, showNotification);
     }
   };
 

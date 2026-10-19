@@ -52,8 +52,11 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
   const { t } = useTranslation("sheetHeader");
   const { t: t2 } = useTranslation("common");
   const [tempNoteFile, setTempNoteFile] = useState<string>("");
-  const { lcrFileData, lcrValidation, reflowValidation, reflowValidating } =
-    useAppSelector((state) => state.fileSlice);
+  const {
+    lcrValidation,
+    lcrError,
+    reflowValidation,
+  } = useAppSelector((state) => state.fileSlice);
 
   useEffect(() => {
     if (currentSheet?.noteFile) {
@@ -371,7 +374,8 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
     }
 
     // Nếu chưa load được data từ API
-    if (!lcrFileData) {
+    // Chưa có kết quả kiểm tra (đang tải / chưa có trong cache)
+    if (!lcrValidation) {
       return {
         hasFile: true,
         isValid: true,
@@ -401,7 +405,7 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
       bgColor: "bg-green-50",
       notMeasuredCount: 0,
     };
-  }, [currentSheet?.excelFileUrl, lcrFileData, lcrValidation, lcrName]);
+  }, [currentSheet?.excelFileUrl, lcrValidation, lcrName]);
 
   // Kiểm tra tiêu chuẩn file Reflow (Max'C, ov-220, T4-s, T2-s của S1 → S6)
   const reflowFileStatus = useMemo(() => {
@@ -423,8 +427,9 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
       return {
         status: "checking" as const,
         message: `${reflowName}`,
-        detail: reflowValidating ? "Đang kiểm tra tiêu chuẩn..." : "",
-        bgColor: "bg-gray-50",
+        // Luôn giữ chỗ dòng giữa để tên người đo không bị đẩy xuống khi có kết quả
+        detail: "Đang kiểm tra tiêu chuẩn...",
+        bgColor: "bg-green-50",
       };
     }
 
@@ -462,7 +467,6 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
     currentSheet?.pdfFileUrl,
     currentSheet?.id,
     reflowValidation,
-    reflowValidating,
     reflowName,
   ]);
 
@@ -492,7 +496,7 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
       />
 
       {/* WARNING BANNER - File LCR không hợp lệ */}
-      {lcrFileStatus.hasFile && !lcrFileStatus.isValid && lcrFileData && (
+      {lcrFileStatus.hasFile && !lcrFileStatus.isValid && lcrValidation && (
         <div className="mb-3 p-4 bg-red-50 border-2 border-red-400 rounded-lg no-print shadow-[0_0_12px_rgba(248,113,113,0.6)]">
           <p className="mb-2 text-sm text-red-700 font-semibold whitespace-pre-line text-center">
             {lcrFileStatus.message}
@@ -605,6 +609,21 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                     </div>
                   </div>
 
+                  {/* Dòng giữa: Đạt chuẩn LCR (cho đều với ô Reflow).
+                      Khi chưa có kết quả -> giữ sẵn chỗ bằng dòng "Đang kiểm tra..."
+                      để tên người đo không bị đẩy xuống khi kết quả về. */}
+                  {lcrFileStatus.hasFile &&
+                    (lcrValidation?.isValid ? (
+                      <div className="text-xs mt-1 font-semibold text-green-700">
+                        ✓ Đạt chuẩn LCR – Pass Rate{" "}
+                        {lcrValidation.stats.passRate.toFixed(0)}%
+                      </div>
+                    ) : !lcrValidation && !lcrError ? (
+                      <div className="text-xs mt-1 font-semibold text-gray-400">
+                        Đang kiểm tra tiêu chuẩn...
+                      </div>
+                    ) : null)}
+
                   {/* Hiển thị tên người đo LCR */}
                   {getWorkerNames.lcrWorker && (
                     <div className="text-xs mt-1 text-blue-600 font-medium">
@@ -628,7 +647,7 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                           ? "text-red-600"
                           : reflowFileStatus.status === "valid"
                             ? "text-green-700"
-                            : "text-gray-500"
+                            : "text-gray-400"
                       }`}
                     >
                       {reflowFileStatus.detail}

@@ -2,12 +2,18 @@ import React from 'react';
 import { FaCamera } from 'react-icons/fa';
 import { IoEyeSharp } from 'react-icons/io5';
 import { normalizeImageUrl, IMAGE_WIDTH } from '../../utils/imageUrl';
+import type { UploadBatchInfo } from '../../utils/uploadBatch';
 
 interface MultiImageUploadProps {
   label: string;
   images: string[] | undefined;
   fieldName: string; // Giữ nguyên string
-  onUpload: (fieldName: string, event: React.ChangeEvent<HTMLInputElement>) => void | Promise<void>; // Support cả sync và async
+  onUpload: (
+    fieldName: string,
+    event: React.ChangeEvent<HTMLInputElement>,
+    /** Vị trí ảnh trong lô khi chọn nhiều ảnh — để màn hình cha chỉ hiện 1 thông báo */
+    batch?: UploadBatchInfo,
+  ) => void | Promise<void>; // Support cả sync và async
   onRemove: (index: number) => void;
   onViewAll: () => void;
   notes?: string[];
@@ -309,39 +315,77 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
 
   // Handler wrapper để xử lý async
   const [isProcessing, setIsProcessing] = React.useState(false);
+  /** Tiến độ khi chọn nhiều ảnh cùng lúc: đang xử lý ảnh thứ `current` / `total`. */
+  const [progress, setProgress] = React.useState<{ current: number; total: number } | null>(null);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     // Giữ tham chiếu tới thẻ input NGAY, vì sau await thì event.target có thể
     // không còn dùng được.
     const inputEl = event.target as HTMLInputElement;
-    const file = inputEl.files?.[0];
-    if (!file) return;
+
+    // Sao chép danh sách file ra mảng TRƯỚC mọi await: FileList là đối tượng
+    // "sống", bị xóa sạch ngay khi reset inputEl.value.
+    let files = Array.from(inputEl.files ?? []);
+    if (files.length === 0) return;
 
     // Chặn bấm upload chồng nhau — hai canvas lớn chạy song song là một trong
     // những nguyên nhân làm Chrome hết bộ nhớ và trả về ảnh trắng.
     if (isProcessing) return;
 
+    // Tôn trọng giới hạn maxImages: chỉ lấy đủ số ảnh còn trống.
+    if (maxImages) {
+      const remaining = Math.max(0, maxImages - imageCount);
+      if (files.length > remaining) {
+        alert(
+          `Chỉ có thể thêm ${remaining} ảnh nữa (tối đa ${maxImages}). ` +
+          `Hệ thống sẽ upload ${remaining} ảnh đầu tiên.`,
+        );
+        files = files.slice(0, remaining);
+      }
+      if (files.length === 0) {
+        try { inputEl.value = ''; } catch { /* bỏ qua */ }
+        return;
+      }
+    }
+
     setIsProcessing(true);
     try {
-      const stampedFile = await addTimestampToImage(file);
+      // Xử lý TUẦN TỰ từng ảnh (không chạy song song): mỗi lần chỉ một canvas
+      // lớn trong bộ nhớ -> tránh lỗi ảnh trắng. Mỗi ảnh vẫn đi qua đúng luồng
+      // onUpload cũ với MỘT file, nên các màn hình cha không cần sửa gì.
+      for (let i = 0; i < files.length; i++) {
+        setProgress({ current: i + 1, total: files.length });
+        try {
+          const stampedFile = await addTimestampToImage(files[i]);
 
-      // Tạo synthetic event với file đã có timestamp
-      const dataTransfer = new DataTransfer();
-      dataTransfer.items.add(stampedFile);
-      const syntheticEvent = {
-        ...event,
-        target: { ...inputEl, files: dataTransfer.files },
-      } as unknown as React.ChangeEvent<HTMLInputElement>;
+          // Tạo synthetic event với file đã có timestamp
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(stampedFile);
+          const syntheticEvent = {
+            ...event,
+            target: { ...inputEl, files: dataTransfer.files },
+          } as unknown as React.ChangeEvent<HTMLInputElement>;
 
-      await onUpload(fieldName, syntheticEvent);
+          await onUpload(fieldName, syntheticEvent, { index: i, total: files.length });
+        } catch (error) {
+          // Một ảnh lỗi không được làm dừng các ảnh còn lại.
+          console.error(`[upload] Lỗi khi upload ảnh ${i + 1}/${files.length}:`, error);
+        }
+      }
     } finally {
       setIsProcessing(false);
+      setProgress(null);
       // Xóa giá trị input: nếu không, chọn LẠI ĐÚNG file vừa rồi sẽ không kích
       // hoạt onChange (giá trị không đổi) -> người dùng tưởng hệ thống treo.
       // Đây chính là tình huống "xóa ảnh trắng rồi chọn lại đúng file đó".
       try { inputEl.value = ''; } catch { /* bỏ qua */ }
     }
   };
+
+  const processingText =
+    progress && progress.total > 1
+      ? `Đang xử lý ảnh ${progress.current}/${progress.total}...`
+      : 'Đang xử lý ảnh...';
 
   return (
     <div className="min-w-0 mb-3 mt-2">
@@ -352,13 +396,18 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
         <>
           {/* File Input */}
           <div className="">
+            {/* multiple: cho phép chọn nhiều ảnh một lúc từ thư viện */}
             <input
               type="file"
               accept="image/*"
+              multiple
               onChange={handleFileChange} // Sử dụng wrapper
               disabled={isProcessing}
               className="border border-gray-300 rounded px-3 py-2 w-full disabled:opacity-50"
             />
+            <p className="mt-1 text-[11px] text-gray-500">
+              {isProcessing ? processingText : 'Có thể chọn nhiều ảnh cùng lúc'}
+            </p>
           </div>
 
           {/* Camera Capture */}
@@ -381,7 +430,7 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
               }`}
             >
               <FaCamera size={15} />
-              {isProcessing ? 'Đang xử lý ảnh...' : 'Chụp ảnh'}
+              {isProcessing ? processingText : 'Chụp ảnh'}
             </label>
           </div>
         </>

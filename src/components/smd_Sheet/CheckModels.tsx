@@ -20,6 +20,12 @@ import {
 import { useSubTableFetch } from "../../utils/useSubTableFetch";
 import { patchSheetInList } from "../../redux/slices/changeModelSlice";
 import MultiImageUpload from "../files/MultiImageUpload";
+import {
+  beginUploadBatch,
+  createUploadBatchTracker,
+  reportUploadBatch,
+  type UploadBatchInfo,
+} from "../../utils/uploadBatch";
 import CustomDatePicker from "../general/CustomDatePicker";
 
 const getWorkOrderPrefix = () => {
@@ -64,6 +70,8 @@ const CheckModels = memo(function CheckModels({
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<CheckModelData>(initialFormState);
   const isUploadingRef = useRef(false);
+  // Đếm số ảnh thành công/lỗi khi chọn nhiều ảnh một lúc -> chỉ hiện 1 thông báo
+  const uploadBatchRef = useRef(createUploadBatchTracker());
   const hasUserEditedRef = useRef(false);
   const isSaved = completedTables.includes("CheckModel");
   const { t } = useTranslation("checkModel");
@@ -132,12 +140,15 @@ const CheckModels = memo(function CheckModels({
   const handleImageUpload = async (
     field: string,
     event: React.ChangeEvent<HTMLInputElement>,
+    batch?: UploadBatchInfo,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    const tracker = beginUploadBatch(uploadBatchRef.current, batch);
 
     if (!checkModelId) {
-      showNotification("error", "Lỗi upload", "Không tìm thấy CheckModel ID");
+      // Chọn nhiều ảnh: chỉ báo lỗi này một lần
+      if (!batch || batch.index === 0) showNotification("error", "Lỗi upload", "Không tìm thấy CheckModel ID");
       return;
     }
 
@@ -163,21 +174,16 @@ const CheckModels = memo(function CheckModels({
             };
           });
         }
-        showNotification(
-          "success",
-          "Thành công",
-          "Upload hình ảnh Vấn đề phát sinh thành công",
-        );
+        tracker.success++;
+      tracker.message = "Upload hình ảnh Vấn đề phát sinh thành công";
       }
     } catch (error) {
       console.error("Failed to upload image:", error);
-      showNotification(
-        "error",
-        "Lỗi upload",
-        "Có lỗi xảy ra khi upload hình ảnh",
-      );
+      tracker.fail++;
     } finally {
       isUploadingRef.current = false;
+      // Gộp thông báo: chọn nhiều ảnh chỉ hiện 1 thông báo sau ảnh cuối
+      reportUploadBatch(tracker, batch, showNotification);
     }
   };
 

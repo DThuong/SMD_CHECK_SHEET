@@ -61,6 +61,12 @@ interface FileState {
   error: string | null;
 }
 
+// Cache kết quả kiểm tra theo sheetId (sống trong phiên trình duyệt).
+// Mở lại sheet đã xem -> hiển thị "Đạt chuẩn" ngay, đồng thời vẫn tải + kiểm tra lại ở nền
+// để cập nhật nếu file đã bị thay đổi (stale-while-revalidate).
+const lcrValidationCache = new Map<number, LcrValidationResult>();
+const reflowValidationCache = new Map<number, ReflowValidationResult>();
+
 const initialState: FileState = {
   lcrFileUrl: null,
   lcrFileBlob: null,
@@ -213,19 +219,26 @@ const FileSlice = createSlice({
     /** Gán kết quả kiểm tra Reflow (vd: kiểm tra ngay file local khi PQCLeader upload) */
     setReflowValidation: (state, action: PayloadAction<ReflowValidationResult | null>) => {
       state.reflowValidation = action.payload;
+      if (action.payload?.sheetId != null) {
+        reflowValidationCache.set(action.payload.sheetId, action.payload);
+      }
     },
   },
   extraReducers: (builder) => {
     builder
       // LCR File Data (JSON)
-      .addCase(getLcrFileData.pending, (state) => {
+      .addCase(getLcrFileData.pending, (state, action) => {
         state.lcrLoading = true;
         state.lcrError = null;
+        const cached = lcrValidationCache.get(action.meta.arg);
+        if (cached) state.lcrValidation = cached;
       })
       .addCase(getLcrFileData.fulfilled, (state, action) => {
         state.lcrLoading = false;
         state.lcrFileData = action.payload;
-        state.lcrValidation = validateLcrFile(action.payload);
+        const validation = validateLcrFile(action.payload);
+        state.lcrValidation = validation;
+        lcrValidationCache.set(action.meta.arg, validation);
       })
       .addCase(getLcrFileData.rejected, (state, action) => {
         state.lcrLoading = false;
@@ -265,6 +278,7 @@ const FileSlice = createSlice({
         }
         state.reflowFileUrl = action.payload.url;
         state.reflowValidation = action.payload.validation;
+        reflowValidationCache.set(action.meta.arg, action.payload.validation);
       })
       .addCase(getReflowFile.rejected, (state, action) => {
         state.reflowLoading = false;
@@ -272,12 +286,15 @@ const FileSlice = createSlice({
       })
 
       // Reflow validation
-      .addCase(validateReflowFile.pending, (state) => {
+      .addCase(validateReflowFile.pending, (state, action) => {
         state.reflowValidating = true;
+        const cached = reflowValidationCache.get(action.meta.arg);
+        if (cached) state.reflowValidation = cached;
       })
       .addCase(validateReflowFile.fulfilled, (state, action) => {
         state.reflowValidating = false;
         state.reflowValidation = action.payload;
+        reflowValidationCache.set(action.meta.arg, action.payload);
       })
       .addCase(validateReflowFile.rejected, (state, action) => {
         state.reflowValidating = false;

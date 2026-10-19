@@ -124,7 +124,7 @@ function SmdSheetContent({ sheetData, onCompleted }: SmdSheetUserProps) {
       </div>
 
       {/* Các component form */}
-      <SheetHeader canEdit />
+      <SheetHeader canEdit canUploadXray />
       
       <CheckModels canEdit />
       

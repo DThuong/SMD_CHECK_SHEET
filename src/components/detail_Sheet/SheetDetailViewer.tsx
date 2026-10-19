@@ -1120,6 +1120,8 @@ const SheetDetailViewer = () => {
           <div className="pdf-section">
             <SheetHeader
               canEdit={canEditHeader}
+              // Nút "Upload X-ray" mở modal StandardVehicle -> theo đúng quyền sửa StandardVehicle
+              canUploadXray={isEditable}
               returnPath={returnPath || window.location.pathname}
             />
           </div>

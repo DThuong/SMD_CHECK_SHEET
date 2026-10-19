@@ -3,5 +3,7 @@
     "saved": "Đã lưu",
     "success_msg": "Cả hai file đã được upload thành công.",
     "notUploaded": "Chưa upload",
-    "noNotes": "Chưa có ghi chú"
+    "noNotes": "Chưa có ghi chú",
+    "uploadXray": "Upload X-ray",
+    "uploadXrayHint": "Mở nhanh phần upload hình ảnh X-ray"
 }

@@ -3,5 +3,7 @@
     "saved": "Saved",
     "success_msg": "Both files have been uploaded successfully.",
     "notUploaded": "Not uploaded",
-    "noNotes": "No notes"
+    "noNotes": "No notes",
+    "uploadXray": "Upload X-ray",
+    "uploadXrayHint": "Quickly open the X-ray image upload section"
 }

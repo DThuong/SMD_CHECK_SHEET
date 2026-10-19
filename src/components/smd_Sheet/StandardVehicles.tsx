@@ -32,6 +32,7 @@ import { uploadXRayImage } from "../../redux/slices/subTableSlice";
 import { useNotification } from "../../redux/hooks";
 import Notification from "../general/Notification";
 import { useTranslation } from "react-i18next";
+import { OPEN_XRAY_UPLOAD_EVENT } from "../../utils/xrayUploadEvent";
 import MultiImageUpload from "../files/MultiImageUpload";
 import {
   beginUploadBatch,
@@ -130,6 +131,8 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
     ocr: useRef<HTMLDivElement>(null),
     worker: useRef<HTMLDivElement>(null),
     issue: useRef<HTMLDivElement>(null),
+    // Ô upload hình X-ray (nằm trong mục AOI) — nút "Upload X-ray" ở SheetHeader (PQCLeader) cuộn thẳng tới đây
+    xray: useRef<HTMLDivElement>(null),
   };
 
   const isSaved = completedTables.includes("StandardVehicle");
@@ -243,6 +246,18 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, scrollTarget]);
+
+  // Nút "Upload X-ray" ở SheetHeader (PQCLeader) -> mở modal và cuộn thẳng tới ô upload X-ray
+  useEffect(() => {
+    const handleOpenXray = () => {
+      if (!canEdit || !standardVehicleId) return;
+      setScrollTarget("xray");
+      setOpen(true);
+    };
+    window.addEventListener(OPEN_XRAY_UPLOAD_EVENT, handleOpenXray);
+    return () =>
+      window.removeEventListener(OPEN_XRAY_UPLOAD_EVENT, handleOpenXray);
+  }, [canEdit, standardVehicleId]);
 
   const openModalAt = (section: string) => {
     if (!canEdit) return;
@@ -2692,17 +2707,19 @@ const StandardVehicles = memo(({ canEdit }: { canEdit: boolean }) => {
                 </label>
               </div>
               {/** Hình ảnh xray */}
-              <MultiImageUpload
-                label="Xray"
-                images={form.imgXray}
-                fieldName="imgXray"
-                onUpload={handleImageUpload}
-                onRemove={(index) => handleRemoveImage("imgXray", index)}
-                onViewAll={() =>
-                  openImagePreview(form.imgXray || [], "Hình ảnh Xray", 0)
-                }
-                onViewSingle={(url, title) => openImagePreview(url, title)}
-              />
+              <div ref={sectionRefs.xray} className="scroll-mt-2">
+                <MultiImageUpload
+                  label="Xray"
+                  images={form.imgXray}
+                  fieldName="imgXray"
+                  onUpload={handleImageUpload}
+                  onRemove={(index) => handleRemoveImage("imgXray", index)}
+                  onViewAll={() =>
+                    openImagePreview(form.imgXray || [], "Hình ảnh Xray", 0)
+                  }
+                  onViewSingle={(url, title) => openImagePreview(url, title)}
+                />
+              </div>
               {/** maoi program */}
               <div className="min-w-0 mb-3">
                 <label className="text-xs block mb-1">Chương trình mAoi</label>

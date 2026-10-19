@@ -15,6 +15,8 @@ import Notification from "../general/Notification";
 import { useNavigate, useLocation } from "react-router-dom";
 import { IoEyeSharp } from "react-icons/io5";
 import { useTranslation } from "react-i18next";
+import { FaXRay } from "react-icons/fa";
+import { requestOpenXrayUpload } from "../../utils/xrayUploadEvent";
 import { getLcrFileData, setReflowValidation } from "../../redux/slices/FileSlice";
 import ReflowResultTable from "../files/ReflowResultTable";
 import {
@@ -32,10 +34,12 @@ interface FileUploadState {
 
 interface SheetHeaderProps {
   canEdit: boolean;
+  /** PQCLeader: được mở nhanh phần upload X-ray của StandardVehicle hay không (theo quyền sửa StandardVehicle) */
+  canUploadXray?: boolean;
   returnPath?: string;
 }
 
-const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
+const SheetHeader = memo(({ canEdit, canUploadXray = false, returnPath }: SheetHeaderProps) => {
   const dispatch = useAppDispatch();
   const { currentSheet, error, uploadLoading } = useAppSelector(
     (state) => state.changeModel,
@@ -767,7 +771,7 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
         </div>
 
         {/* Buttons */}
-        <div className="flex flex-row justify-end w-full gap-2 mt-3 no-print">
+        <div className="flex flex-row flex-wrap items-center justify-end w-full gap-2 mt-3 no-print">
           {bothFilesUploaded && (
             <ViewDetailButton
               onOpen={handleViewFiles}
@@ -781,6 +785,26 @@ const SheetHeader = memo(({ canEdit, returnPath }: SheetHeaderProps) => {
                 <div>{t2("button.viewDetail")}</div>
               </div>
             </ViewDetailButton>
+          )}
+
+          {/* Nút mở nhanh phần upload X-ray (nằm trong StandardVehicle) — chỉ dành cho PQCLeader */}
+          {user?.role === "PQCLeader" && (
+            <button
+              type="button"
+              onClick={() => canUploadXray && requestOpenXrayUpload()}
+              disabled={!canUploadXray}
+              title={t("uploadXrayHint")}
+              aria-label={t("uploadXrayHint")}
+              {...(!canUploadXray ? {} : { "data-edit-button": "true" })}
+              className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium shadow-sm whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 ${
+                canUploadXray
+                  ? "bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-400 active:scale-[0.97]"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+            >
+              <FaXRay className="shrink-0" size={16} />
+              <span>{t("uploadXray")}</span>
+            </button>
           )}
 
           <ViewDetailButton

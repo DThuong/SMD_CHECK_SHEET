@@ -551,7 +551,7 @@ const SmdSheetDetail = () => {
 
       {/* Hiển thị các component */}
       <div className={!canEdit ? 'pointer-events-none' : ''}>
-        <SheetHeader canEdit={canEdit} returnPath={returnPath} />
+        <SheetHeader canEdit={canEdit} canUploadXray={canEdit} returnPath={returnPath} />
         <CheckModels canEdit={canEdit} />
         <StandardProductionSection canEdit={canEdit} />
         <TimeChangeModels canEdit={canEdit} />

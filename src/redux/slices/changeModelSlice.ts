@@ -712,6 +712,34 @@ export const getSheetByFilter = createAsyncThunk(
   },
 )
 
+/**
+ * Tổng số sheet đang nằm ở từng status — TOÀN BỘ thời gian, không theo khoảng ngày.
+ *
+ * Dùng cho các card "Sheets cần ... ký" trên Dashboard: đó là việc đang tồn, nên
+ * phải đếm hết, kể cả sheet tạo từ lâu mà chưa ai ký. Nếu cắt theo 7/30 ngày thì
+ * chính những sheet tồn lâu nhất (cần xử lý gấp nhất) lại biến mất khỏi con số,
+ * và số trên card không khớp với trang danh sách khi bấm vào (trang đó lọc theo
+ * status, không lọc ngày).
+ *
+ * Mỗi status chỉ gọi filterAll với pageSize=1 để lấy totalCount — không tải dữ liệu.
+ * Không đi qua Redux để không đè state filteredSheets của trang Logs.
+ */
+export const fetchSheetStatusTotals = async (
+  statuses: string[],
+): Promise<Record<string, number>> => {
+  const entries = await Promise.all(
+    statuses.map(async (status) => {
+      const res = await smdApi.get('ChangeModel/filterAll', {
+        params: { Status: status, pageNumber: '1', pageSize: '1' },
+      });
+      const data = res.data as Partial<PagedResult<ChangeModelResponse>> | ChangeModelResponse[];
+      const total = Array.isArray(data) ? data.length : Number(data?.totalCount ?? 0);
+      return [status, Number.isFinite(total) ? total : 0] as const;
+    }),
+  );
+  return Object.fromEntries(entries);
+};
+
 // api xóa sheet id
 export const deleteSheetById = createAsyncThunk(
   'changeModel/delete',

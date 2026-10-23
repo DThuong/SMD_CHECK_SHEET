@@ -5,6 +5,7 @@
   "roleBasedDashboard": {
     "needProcess": "조치 필요!",
     "noSheet": "시트 없음",
+    "allTime": "전체 기간 (날짜 필터 미적용)",
     "sheets": "시트",
     "statusCards": {
       "needPQCLeader": "PQC Leader 서명 필요 시트",

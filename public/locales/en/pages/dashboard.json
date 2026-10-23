@@ -5,6 +5,7 @@
   "roleBasedDashboard": {
     "needProcess": "Need Action!",
     "noSheet": "No sheets",
+    "allTime": "All time (ignores date filter)",
     "sheets": "sheet",
     "statusCards": {
       "needPQCLeader": "Sheets need PQC Leader signature",

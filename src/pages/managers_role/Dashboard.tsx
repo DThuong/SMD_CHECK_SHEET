@@ -24,7 +24,10 @@ import { FaMicrochip } from "react-icons/fa6";
 import { AiOutlineEye } from "react-icons/ai";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchUsers } from "../../redux/slices/authSlice";
-import { fetchDashboardSheets } from "../../redux/slices/changeModelSlice";
+import {
+  fetchDashboardSheets,
+  fetchSheetStatusTotals,
+} from "../../redux/slices/changeModelSlice";
 import {
   getRangeDays,
   getRangeCutoff,
@@ -55,6 +58,19 @@ import EngTrendCard from "../../components/general/EngTrendCard";
 
 // ==================== CONSTANTS ====================
 const DETAIL_PAGE_SIZE = 10;
+
+/**
+ * Status của các card "Sheets cần ... ký" — việc đang tồn. Các card này đếm
+ * TOÀN BỘ thời gian, bỏ qua bộ lọc 7/30 ngày (xem fetchSheetStatusTotals).
+ * Card "Hoàn thành" (KoreaManagerDone) và biểu đồ vẫn theo khoảng đang chọn.
+ */
+const BACKLOG_STATUSES = [
+  "PQCDone",
+  "PQCLeaderDone",
+  "ENGDone",
+  "SupervisiorDone",
+  "ManagerDone",
+];
 
 /** Thứ hạng độ rộng của ba khoảng thời gian: 7 ngày ⊂ 30 ngày ⊂ Tất cả. */
 const RANGE_RANK: Record<DashboardRange, number> = { week: 1, month: 2, all: 3 };
@@ -761,6 +777,8 @@ const Dashboard = () => {
   // Khoảng RỘNG NHẤT đã tải về. null = chưa tải lần nào.
   const loadedRangeRef = useRef<DashboardRange | null>(null);
 
+  const [backlogCounts, setBacklogCounts] = useState<Record<string, number> | null>(null);
+  const [backlogFailed, setBacklogFailed] = useState(false);
   const [smdShiftFilter, setSmdShiftFilter] = useState<"morning" | "night" | "both">("both");
   const [patrolShiftFilter, setPatrolShiftFilter] = useState<"morning" | "night" | "both">("both");
   const [engShiftFilter, setEngShiftFilter] = useState<"morning" | "night" | "both">("both");
@@ -863,6 +881,32 @@ const Dashboard = () => {
         loadedRangeRef.current = previous;
       });
   }, [dispatch, timeRange]);
+
+  // Tổng tồn của các card "cần ký" — không phụ thuộc timeRange nên chỉ tải khi
+  // vào trang, và tải lại khi người dùng quay lại tab (đi ký xong rồi quay về).
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      fetchSheetStatusTotals(BACKLOG_STATUSES)
+        .then((totals) => {
+          if (cancelled) return;
+          setBacklogCounts(totals);
+          setBacklogFailed(false);
+        })
+        .catch(() => {
+          if (!cancelled) setBacklogFailed(true);
+        });
+    };
+    load();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") load();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
 
   useEffect(() => {
     const handleResize = () =>
@@ -1050,6 +1094,18 @@ const Dashboard = () => {
   const engCounts = useMemo(() => countByStatus(rangeEngSessions), [rangeEngSessions]);
 
   const smdCount = (status: string) => smdCounts[status] ?? 0;
+
+  const isBacklogStatus = (status: string) => BACKLOG_STATUSES.includes(status);
+  /**
+   * Số hiển thị trên card SMD. Card "cần ký" → tổng tồn toàn thời gian từ server
+   * (null = đang tải). Nếu gọi server lỗi thì lùi về số theo khoảng đang chọn,
+   * còn hơn để trống card.
+   */
+  const cardCount = (status: string): number | null => {
+    if (!isBacklogStatus(status) || backlogFailed) return smdCount(status);
+    return backlogCounts ? (backlogCounts[status] ?? 0) : null;
+  };
+  const showsAllTime = (status: string) => isBacklogStatus(status) && !backlogFailed;
   const patrolCount = (status: string) => patrolCounts[status] ?? 0;
   const engCount = (status: string) => engCounts[status] ?? 0;
 
@@ -1325,7 +1381,9 @@ const Dashboard = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {roleCards.map((card, index) => {
-              const count = smdCount(card.status);
+              const rawCount = cardCount(card.status);
+              const countLoading = rawCount === null;
+              const count = rawCount ?? 0;
               const colors = colorClasses[card.color];
               const ringColor = {
                 blue: "ring-blue-400",
@@ -1363,12 +1421,19 @@ const Dashboard = () => {
                   <div className="flex items-end justify-between">
                     <div>
                       <p className={`text-3xl font-bold ${colors.text}`}>
-                        {count}
+                        {countLoading ? "…" : count}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {count === 0
-                          ? t("roleBasedDashboard.noSheet")
-                          : `${count} sheet${count > 1 ? "s" : ""}`}
+                        {countLoading
+                          ? ""
+                          : count === 0
+                            ? t("roleBasedDashboard.noSheet")
+                            : `${count} sheet${count > 1 ? "s" : ""}`}
+                        {showsAllTime(card.status) && (
+                          <span className="block text-[11px] text-gray-400">
+                            {t("roleBasedDashboard.allTime")}
+                          </span>
+                        )}
                       </p>
                     </div>
                     <div
@@ -1849,7 +1914,9 @@ const Dashboard = () => {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           {adminRoleCards.map((card, index) => {
-            const count = smdCount(card.status);
+            const rawCount = cardCount(card.status);
+            const countLoading = rawCount === null;
+            const count = rawCount ?? 0;
             const colors = colorClasses[card.color];
             return (
               <button
@@ -1867,12 +1934,19 @@ const Dashboard = () => {
                 <div className="flex items-end justify-between">
                   <div>
                     <p className={`text-3xl font-bold ${colors.text}`}>
-                      {count}
+                      {countLoading ? "…" : count}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      {count === 0
-                        ? t("roleBasedDashboard.noSheet")
-                        : `${count} sheet${count > 1 ? "s" : ""}`}
+                      {countLoading
+                          ? ""
+                          : count === 0
+                            ? t("roleBasedDashboard.noSheet")
+                            : `${count} sheet${count > 1 ? "s" : ""}`}
+                        {showsAllTime(card.status) && (
+                          <span className="block text-[11px] text-gray-400">
+                            {t("roleBasedDashboard.allTime")}
+                          </span>
+                        )}
                     </p>
                   </div>
                   <div className={`p-2 ${colors.bg} rounded-lg`}>

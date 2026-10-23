@@ -5,6 +5,7 @@
   "roleBasedDashboard": {
     "needProcess": "Cần xử lý!",
     "noSheet": "Không có sheet",
+    "allTime": "Toàn bộ thời gian (không theo bộ lọc ngày)",
     "sheets": "sheet",
     "statusCards": {
       "needPQCLeader": "Sheets cần PQC Leader ký",
